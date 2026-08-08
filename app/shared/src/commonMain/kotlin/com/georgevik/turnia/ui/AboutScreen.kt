@@ -16,7 +16,7 @@ import androidx.compose.ui.Modifier
 fun AboutScreen(onBack: () -> Unit) {
     Column(
         modifier = Modifier
-            .background(MaterialTheme.colorScheme.surface)
+            .background(MaterialTheme.colorScheme.background)
             .safeContentPadding()
             .fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
