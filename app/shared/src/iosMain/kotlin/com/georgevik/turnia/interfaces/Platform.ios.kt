@@ -1,4 +1,4 @@
-package com.georgevik.turnia
+package com.georgevik.turnia.interfaces
 
 import platform.UIKit.UIDevice
 
