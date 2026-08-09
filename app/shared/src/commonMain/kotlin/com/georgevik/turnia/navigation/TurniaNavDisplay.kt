@@ -1,5 +1,6 @@
 package com.georgevik.turnia.navigation
 
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavKey
@@ -10,6 +11,7 @@ import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
 import com.georgevik.turnia.ui.AboutScreen
 import com.georgevik.turnia.ui.HomeScreen
+import com.georgevik.turnia.ui.splash.SplashScreen
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 
@@ -21,8 +23,8 @@ import kotlinx.serialization.modules.polymorphic
  * instead of being shared across the whole host.
  */
 @Composable
-fun TurniaNavDisplay() {
-    val backStack = rememberNavBackStack(navKeySavedStateConfiguration, Route.HomeKey)
+fun TurniaNavDisplay(snackbarHostState: SnackbarHostState) {
+    val backStack = rememberNavBackStack(navKeySavedStateConfiguration, Route.SpashKey)
     NavDisplay(
         backStack = backStack,
         entryDecorators = listOf(
@@ -30,6 +32,12 @@ fun TurniaNavDisplay() {
             rememberViewModelStoreNavEntryDecorator(),
         ),
         entryProvider = entryProvider {
+            entry<Route.SpashKey> {
+                SplashScreen(snackbar = snackbarHostState, onNextScreen = { key ->
+                    backStack.clear()
+                    backStack.add(key)
+                })
+            }
             entry<Route.HomeKey> {
                 HomeScreen(onOpenAbout = { backStack.add(Route.AboutKey) })
             }
@@ -51,6 +59,7 @@ val navKeySavedStateConfiguration: SavedStateConfiguration = SavedStateConfigura
         polymorphic(NavKey::class) {
             subclass(Route.HomeKey::class, Route.HomeKey.serializer())
             subclass(Route.AboutKey::class, Route.AboutKey.serializer())
+            subclass(Route.SpashKey::class, Route.SpashKey.serializer())
         }
     }
 }

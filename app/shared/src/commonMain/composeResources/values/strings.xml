@@ -1,5 +1,26 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <resources>
     <string name="app_name">Turnia</string>
-
+    <string-array name="loading_phrases">
+        <item>Negociando con el destino (y con tu compañero del turno de noche)…</item>
+        <item>Alineando los astros… y las agendas del equipo.</item>
+        <item>Descifrando la compleja física cuántica de cuadrar un fin de semana libre.</item>
+        <item>Encajando los turnos mejor que en una partida de Tetris.</item>
+        <item>Buscando el milagro de que a todos les cuadre el horario…</item>
+        <item>Calculando cuántos cafés harán falta para esta semana.</item>
+        <item>Cambiando mañanas por tardes y salvando planes de última hora…</item>
+        <item>Reorganizando el tiempo para que por fin tengas vida social.</item>
+        <item>Poniendo en marcha la diplomacia del intercambio de turnos…</item>
+        <item>Validando cuadrantes: un segundo, que casi lo tenemos.</item>
+        <item>Negociando el turno de noche por un trozo de tarta...</item>
+        <item>Buscando a la persona valiente que cubra el festivo...</item>
+        <item>Reorganizando las fichas del puzle semanal.</item>
+        <item>Sincronizando relojes y evitando solapamientos misteriosos.</item>
+        <item>Comprobando si el viernes libre es un mito o una realidad.</item>
+        <item>Convirtiendo el caos de horarios en paz mental.</item>
+        <item>Haciendo encajar las piezas antes de que alguien pida cambio.</item>
+        <item>Calculando la probabilidad matemática de librar dos días seguidos.</item>
+        <item>Ajustando la plantilla para que todo el mundo pueda respirar.</item>
+        <item>Desplegando la alfombra roja para tu próximo turno libre.</item>
+    </string-array>
 </resources>
