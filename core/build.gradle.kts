@@ -36,6 +36,9 @@ kotlin {
         }
         androidMain.dependencies {
             api(project.dependencies.platform(libs.firebase.bom))
+            implementation(libs.androidx.credentials)
+            implementation(libs.androidx.credentials.playServicesAuth)
+            implementation(libs.googleid)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

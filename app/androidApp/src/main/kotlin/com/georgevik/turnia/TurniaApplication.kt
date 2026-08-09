@@ -2,7 +2,7 @@ package com.georgevik.turnia
 
 import android.app.Application
 import com.georgevik.turnia.di.initKoin
-import com.georgevik.turnia.interfaces.androidAuthModule
+import com.georgevik.turnia.core.data.auth.androidAuthModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.logger.Level

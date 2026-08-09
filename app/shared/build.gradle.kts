@@ -47,9 +47,6 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.compose.uiTooling)
-            implementation(libs.androidx.credentials)
-            implementation(libs.androidx.credentials.playServicesAuth)
-            implementation(libs.googleid)
             implementation(libs.firebase.uiAuth)
         }
         commonMain.dependencies {

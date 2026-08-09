@@ -10,7 +10,6 @@ import com.georgevik.turnia.core.domain.model.GoogleSignInError
 import com.georgevik.turnia.core.domain.model.GoogleSignInResult
 import com.georgevik.turnia.core.domain.repo.AuthRepository
 import com.georgevik.turnia.core.sayHello
-import com.georgevik.turnia.interfaces.AuthProvider
 import com.georgevik.turnia.interfaces.getPlatform
 import kotlinx.coroutines.launch
 
@@ -18,7 +17,6 @@ private const val TAG = "GreetingViewModel"
 
 class GreetingViewModel(
     private val authRepository: AuthRepository,
-    private val authProvider: AuthProvider,
 ) : ViewModel() {
 
     /** Last Google sign-in error, for the UI to react to; `null` when none. */
@@ -27,11 +25,8 @@ class GreetingViewModel(
 
     fun signIn() {
         viewModelScope.launch {
-            when (val result = authProvider.getGoogleToken()) {
-                is GoogleSignInResult.Success -> {
-                    lastSignInError = null
-                    authRepository.signWithGoogle(result.token)
-                }
+            when (val result = authRepository.signInWithGoogle()) {
+                is GoogleSignInResult.Success -> lastSignInError = null
                 is GoogleSignInResult.Failure -> {
                     lastSignInError = result.error
                     Logger.e(TAG, "Google sign-in failed: ${result.error}")

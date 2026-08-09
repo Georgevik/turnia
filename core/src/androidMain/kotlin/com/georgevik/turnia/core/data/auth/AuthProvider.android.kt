@@ -1,4 +1,4 @@
-package com.georgevik.turnia.interfaces
+package com.georgevik.turnia.core.data.auth
 
 import android.content.Context
 import androidx.credentials.CredentialManager

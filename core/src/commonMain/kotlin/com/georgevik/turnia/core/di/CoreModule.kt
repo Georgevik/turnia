@@ -13,5 +13,5 @@ import org.koin.dsl.module
  */
 val coreModule: Module = module {
     single { FirebaseDataSource(Firebase.auth) }
-    single { AuthRepository(get()) }
+    single { AuthRepository(get(), get()) }
 }

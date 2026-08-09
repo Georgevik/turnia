@@ -1,6 +1,6 @@
 package com.georgevik.turnia.di
 
-import com.georgevik.turnia.interfaces.AuthProvider
+import com.georgevik.turnia.core.data.auth.AuthProvider
 import org.koin.dsl.module
 
 /**
