@@ -20,7 +20,7 @@ kotlin {
     }
     
     android {
-       namespace = "com.georgevik.turnia.app.shared"
+       namespace = "com.georgevik.turnia"
        compileSdk = libs.versions.android.compileSdk.get().toInt()
        minSdk = libs.versions.android.minSdk.get().toInt()
     

@@ -1,0 +1,95 @@
+rules_version = '2';
+
+// Starting point that mirrors the model documented in firestore-schema.md.
+// Review and tighten before going to production.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isMember(groupId) {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid));
+    }
+    function isAdmin(groupId) {
+      return isMember(groupId) &&
+        get(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid)).data.role == 'admin';
+    }
+    function ownerOrShared(uid) {
+      return isSignedIn() && (request.auth.uid == uid ||
+        request.auth.uid in get(/databases/$(database)/documents/users/$(uid)).data.calendarSharedWith);
+    }
+    // A non-owner may only add/remove their own uid, and only in `calendarsSharedWithMe`.
+    function selfDeltaInSharedWithMe() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['calendarsSharedWithMe']) &&
+        request.resource.data.get('calendarsSharedWithMe', []).toSet()
+          .difference(resource.data.get('calendarsSharedWithMe', []).toSet()).hasOnly([request.auth.uid]) &&
+        resource.data.get('calendarsSharedWithMe', []).toSet()
+          .difference(request.resource.data.get('calendarsSharedWithMe', []).toSet()).hasOnly([request.auth.uid]);
+    }
+
+    match /users/{uid} {
+      allow read: if isSignedIn() && (request.auth.uid == uid ||
+        request.auth.uid in resource.data.calendarSharedWith);
+      allow write: if isSignedIn() && request.auth.uid == uid;
+      // Another user records a grant by adding themselves to `calendarsSharedWithMe`.
+      allow update: if isSignedIn() && request.auth.uid != uid && selfDeltaInSharedWithMe();
+
+      // Personal event types & events: owner writes; owner and shared users read.
+      match /personalEventTypes/{typeId} {
+        allow read: if ownerOrShared(uid);
+        allow write: if isSignedIn() && request.auth.uid == uid;
+      }
+      match /personalEvents/{eventId} {
+        allow read: if ownerOrShared(uid);
+        allow write: if isSignedIn() && request.auth.uid == uid;
+      }
+
+    }
+
+    match /groups/{groupId} {
+      allow read: if isMember(groupId);
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin(groupId);
+
+      // Membership is granted by the acceptJoinRequest Cloud Function (or an admin).
+      match /members/{memberUid} {
+        allow read: if isMember(groupId);
+        allow write: if isAdmin(groupId);
+
+        // Group events, stored under the assignee (memberUid == assigneeId).
+        // Taking (cross-member move) is done by the takeEvent Cloud Function.
+        match /event/{eventId} {
+          allow read: if isMember(groupId);
+          allow create: if isMember(groupId) &&
+            memberUid == request.auth.uid &&
+            request.resource.data.ownerId == request.auth.uid &&
+            request.resource.data.assigneeId == request.auth.uid;
+          // ownerId/assigneeId are immutable from the client — transfers go through takeEvent.
+          allow update: if isMember(groupId) &&
+            (memberUid == request.auth.uid || isAdmin(groupId)) &&
+            request.resource.data.ownerId == resource.data.ownerId &&
+            request.resource.data.assigneeId == resource.data.assigneeId;
+          allow delete: if isMember(groupId) &&
+            (memberUid == request.auth.uid || isAdmin(groupId));
+
+          // Append-only history alongside the event.
+          match /history/{historyId} {
+            allow read: if isMember(groupId);
+            allow create: if isMember(groupId) && memberUid == request.auth.uid;
+            allow update, delete: if false;
+          }
+        }
+      }
+
+      // Join requests: created only by requestToJoinGroup (Cloud Function).
+      match /joinRequests/{requestUid} {
+        allow read: if isAdmin(groupId) || (isSignedIn() && request.auth.uid == requestUid);
+        allow create: if false;
+        allow delete: if isAdmin(groupId) || (isSignedIn() && request.auth.uid == requestUid);
+        allow update: if false;
+      }
+    }
+  }
+}

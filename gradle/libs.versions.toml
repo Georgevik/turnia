@@ -17,6 +17,7 @@ kotlinxSerialization = "1.9.0"
 lifecycleNavigation3 = "2.11.0"
 material3 = "1.11.0-alpha07"
 navigation3 = "1.1.1"
+firebase = "2.5.0"
 
 
 [libraries]
@@ -45,6 +46,11 @@ kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "navigation3" }
 navigation3-ui = { module = "org.jetbrains.androidx.navigation3:navigation3-ui", version.ref = "navigation3" }
 lifecycle-viewmodel-navigation3 = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "lifecycleNavigation3" }
+firebase-auth = { module = "dev.gitlive:firebase-auth", version.ref = "firebase" }
+firebase-firestore = { module = "dev.gitlive:firebase-firestore", version.ref = "firebase" }
+firebase-functions = { module = "dev.gitlive:firebase-functions", version.ref = "firebase" }
+firebase-analytics = { module = "dev.gitlive:firebase-analytics", version.ref = "firebase" }
+firebase-messaging = { module = "dev.gitlive:firebase-messaging", version.ref = "firebase" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
