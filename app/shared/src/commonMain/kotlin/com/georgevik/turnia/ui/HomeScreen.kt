@@ -18,7 +18,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.georgevik.turnia.GreetingViewModel
-import dev.gitlive.firebase.auth.GoogleAuthProvider
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -27,8 +26,8 @@ import turnia.app.shared.generated.resources.app_name
 import turnia.app.shared.generated.resources.compose_multiplatform
 
 @Composable
-fun HomeScreen(onOpenAbout: () -> Unit) {
-    
+fun HomeScreen(viewModel: GreetingViewModel = koinViewModel(), onOpenAbout: () -> Unit) {
+
 
     Column(
         modifier = Modifier
@@ -38,11 +37,12 @@ fun HomeScreen(onOpenAbout: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         var showContent by remember { mutableStateOf(false) }
-        Button(onClick = { showContent = !showContent }) {
+        Button(onClick = { showContent = !showContent
+            viewModel.signIn()
+        }) {
             Text("Click me!")
         }
         AnimatedVisibility(showContent) {
-            val viewModel = koinViewModel<GreetingViewModel>()
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
