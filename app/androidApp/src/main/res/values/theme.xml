@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tema específico para la Splash Screen nativa -->
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <!-- Fondo mientras la app inicializa -->
+        <item name="windowSplashScreenBackground">@android:color/white</item>
+
+        <!-- Si no quieres icono en la splash nativa, puedes usar una imagen transparente -->
+        <item name="windowSplashScreenAnimatedIcon">@android:color/transparent</item>
+
+        <!-- Tema al que cambiará la app una vez lista -->
+        <item name="postSplashScreenTheme">@style/Theme.App</item>
+    </style>
+
+    <!-- Tu tema principal de la app -->
+    <style name="Theme.App" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="backgroundTint">@android:color/black</item>
+    </style>
+</resources>
