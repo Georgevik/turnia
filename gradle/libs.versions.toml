@@ -17,7 +17,9 @@ kotlinxSerialization = "1.9.0"
 lifecycleNavigation3 = "2.11.0"
 material3 = "1.11.0-alpha07"
 navigation3 = "1.1.1"
-firebase = "2.5.0"
+firebase = "3.0.0-alpha01"
+googleServices = "4.5.0"
+firebaseBom = "34.17.0"
 
 
 [libraries]
@@ -51,6 +53,7 @@ firebase-firestore = { module = "dev.gitlive:firebase-firestore", version.ref = 
 firebase-functions = { module = "dev.gitlive:firebase-functions", version.ref = "firebase" }
 firebase-analytics = { module = "dev.gitlive:firebase-analytics", version.ref = "firebase" }
 firebase-messaging = { module = "dev.gitlive:firebase-messaging", version.ref = "firebase" }
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
@@ -59,3 +62,4 @@ composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "composeMul
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+googleServices = { id = "com.google.gms.google-services", version.ref = "googleServices" }

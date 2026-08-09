@@ -18,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.georgevik.turnia.GreetingViewModel
+import dev.gitlive.firebase.auth.GoogleAuthProvider
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -27,6 +28,8 @@ import turnia.app.shared.generated.resources.compose_multiplatform
 
 @Composable
 fun HomeScreen(onOpenAbout: () -> Unit) {
+    
+
     Column(
         modifier = Modifier
             .background(MaterialTheme.colorScheme.background)
