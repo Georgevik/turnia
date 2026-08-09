@@ -1,7 +1,7 @@
 package com.georgevik.turnia.di
 
 import com.georgevik.turnia.core.di.coreModule
-import com.georgevik.turnia.interfaces.Logger
+import com.georgevik.turnia.core.data.logger.Logger
 import org.koin.core.KoinApplication
 import org.koin.core.context.startKoin
 import org.koin.dsl.KoinAppDeclaration

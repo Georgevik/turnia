@@ -20,6 +20,9 @@ navigation3 = "1.1.1"
 firebase = "3.0.0-alpha01"
 googleServices = "4.5.0"
 firebaseBom = "34.17.0"
+androidxCredentials = "1.3.0"
+googleid = "1.1.1"
+firebaseUiAuth = "9.0.0"
 
 
 [libraries]
@@ -54,6 +57,10 @@ firebase-functions = { module = "dev.gitlive:firebase-functions", version.ref = 
 firebase-analytics = { module = "dev.gitlive:firebase-analytics", version.ref = "firebase" }
 firebase-messaging = { module = "dev.gitlive:firebase-messaging", version.ref = "firebase" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "androidxCredentials" }
+androidx-credentials-playServicesAuth = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "androidxCredentials" }
+googleid = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleid" }
+firebase-uiAuth = { module = "com.firebaseui:firebase-ui-auth", version.ref = "firebaseUiAuth" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

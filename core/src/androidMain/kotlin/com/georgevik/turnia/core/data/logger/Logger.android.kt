@@ -1,4 +1,4 @@
-package com.georgevik.turnia.interfaces
+package com.georgevik.turnia.core.data.logger
 
 import android.util.Log
 
@@ -13,5 +13,9 @@ actual object Logger {
 
     actual fun e(tag: String, message: String, throwable: Throwable?) {
         Log.e(tag, message, throwable)
+    }
+
+    actual fun e(tag: String, throwable: Throwable?) {
+        Log.e(tag, throwable?.message, throwable)
     }
 }

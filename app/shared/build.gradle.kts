@@ -47,10 +47,10 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.compose.uiTooling)
-            implementation("androidx.credentials:credentials:1.3.0")
-            implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
-            implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
-            implementation("com.firebaseui:firebase-ui-auth:9.0.0")
+            implementation(libs.androidx.credentials)
+            implementation(libs.androidx.credentials.playServicesAuth)
+            implementation(libs.googleid)
+            implementation(libs.firebase.uiAuth)
         }
         commonMain.dependencies {
             api(project(":core"))

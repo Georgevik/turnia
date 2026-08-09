@@ -13,7 +13,7 @@ class TurniaApplication : Application() {
         initKoin {
             androidLogger(Level.INFO)
             androidContext(this@TurniaApplication)
-            modules(androidAuthModule)
+            modules(androidAuthModule(BuildConfig.WEB_CLIENT_ID))
         }
     }
 }

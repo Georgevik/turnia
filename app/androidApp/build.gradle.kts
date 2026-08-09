@@ -1,4 +1,6 @@
+import com.android.build.api.dsl.VariantDimension
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.androidApplication)
@@ -21,6 +23,21 @@ dependencies {
     debugImplementation(libs.compose.uiTooling)
 }
 
+// local.properties (git-ignored) → BuildConfig, so config values aren't hardcoded in source.
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+
+/**
+ * Exposes a [localProperty] from local.properties as a String BuildConfig field
+ * named [buildConfigName]. Defaults to empty when the property is missing.
+ */
+fun VariantDimension.localPropertyToBuildConfig(localProperty: String, buildConfigName: String) {
+    val value = localProperties.getProperty(localProperty).orEmpty().trim().removeSurrounding("\"")
+    buildConfigField("String", buildConfigName, "\"$value\"")
+}
+
 android {
     namespace = "com.georgevik.turnia"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
@@ -31,6 +48,8 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0"
+
+        localPropertyToBuildConfig("WEB_CLIENT_ID", "WEB_CLIENT_ID")
     }
     packaging {
         resources {
@@ -52,5 +71,6 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }

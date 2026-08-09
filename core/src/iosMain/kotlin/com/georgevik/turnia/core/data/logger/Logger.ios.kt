@@ -1,4 +1,4 @@
-package com.georgevik.turnia.interfaces
+package com.georgevik.turnia.core.data.logger
 
 import platform.Foundation.NSLog
 
@@ -13,5 +13,9 @@ actual object Logger {
 
     actual fun e(tag: String, message: String, throwable: Throwable?) {
         NSLog("[$tag] ERROR: $message. ${throwable?.message ?: ""}")
+    }
+
+    actual fun e(tag: String, throwable: Throwable?) {
+        NSLog("[$tag] ERROR: ${throwable?.message ?: ""}")
     }
 }

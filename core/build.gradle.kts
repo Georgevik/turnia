@@ -8,9 +8,7 @@ plugins {
 kotlin {
     iosArm64()
     iosSimulatorArm64()
-    
-    jvm()
-    
+
     android {
        namespace = "com.georgevik.turnia.core"
        compileSdk = libs.versions.android.compileSdk.get().toInt()
