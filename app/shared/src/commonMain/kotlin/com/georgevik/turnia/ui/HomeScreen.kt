@@ -1,56 +1,45 @@
 package com.georgevik.turnia.ui
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.georgevik.turnia.GreetingViewModel
-import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.resources.stringResource
+import com.mmk.kmpauth.google.rememberGoogleAuthState
+import com.mmk.kmpauth.uihelper.google.GoogleSignInButton
 import org.koin.compose.viewmodel.koinViewModel
-import turnia.app.shared.generated.resources.Res
-import turnia.app.shared.generated.resources.app_name
-import turnia.app.shared.generated.resources.compose_multiplatform
 
 @Composable
 fun HomeScreen(viewModel: GreetingViewModel = koinViewModel(), onOpenAbout: () -> Unit) {
-
+    val googleAuth = rememberGoogleAuthState(onResult = viewModel::onSignInResult)
 
     Column(
         modifier = Modifier
             .background(MaterialTheme.colorScheme.background)
             .safeContentPadding()
-            .fillMaxSize(),
+            .fillMaxSize()
+            .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        var showContent by remember { mutableStateOf(false) }
-        Button(onClick = { showContent = !showContent
-            viewModel.signIn()
-        }) {
-            Text("Click me!")
-        }
-        AnimatedVisibility(showContent) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Image(painterResource(Res.drawable.compose_multiplatform), null)
-                Text("Compose: ${viewModel.message} + ${stringResource(Res.string.app_name)}")
-            }
-        }
+        GoogleSignInButton(
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+        ) { googleAuth.launch() }
+
+        viewModel.signedInUser?.let { Text("Signed in: ${it.uid}") }
+        viewModel.lastSignInError?.let { Text("Error: $it") }
+
         Button(onClick = onOpenAbout) {
             Text("Go to About")
         }

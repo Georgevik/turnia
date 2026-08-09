@@ -1,26 +1,25 @@
 package com.georgevik.turnia.di
 
 import com.georgevik.turnia.core.di.coreModule
-import com.georgevik.turnia.core.data.logger.Logger
+import com.mmk.kmpauth.core.KMPAuth
+import com.mmk.kmpauth.google.google
 import org.koin.core.KoinApplication
 import org.koin.core.context.startKoin
 import org.koin.dsl.KoinAppDeclaration
 
 /**
- * Common entry point to start Koin on every platform.
+ * Common startup: initializes KMPAuth (Google provider + Firebase backend, which
+ * registers itself) and Koin.
  *
- * @param config additional platform-specific configuration
- *   (e.g. `androidContext(...)` on Android).
+ * @param webClientId the Google OAuth **web** client id used as `serverId`.
+ * @param config additional platform-specific Koin config (e.g. `androidContext(...)`).
  */
-fun initKoin(config: KoinAppDeclaration? = null): KoinApplication {
-    Logger.i( TAG, "Starting Koin")
+fun initKoin(webClientId: String, config: KoinAppDeclaration? = null): KoinApplication {
+    KMPAuth.initialize {
+        google(serverId = webClientId)
+    }
     return startKoin {
-        Logger.i( TAG, "Invoking platform dependencies")
         config?.invoke(this)
-        Logger.i( TAG, "Invoking shared dependencies")
         modules(coreModule, appModule)
-        Logger.i( TAG, "Finish")
     }
 }
-
-private const val TAG = "Koin"

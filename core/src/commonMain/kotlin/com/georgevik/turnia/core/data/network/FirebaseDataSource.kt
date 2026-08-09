@@ -1,21 +1,11 @@
 package com.georgevik.turnia.core.data.network
 
-import com.georgevik.turnia.core.domain.model.GoogleSignInToken
 import dev.gitlive.firebase.auth.FirebaseAuth
-import dev.gitlive.firebase.auth.GoogleAuthProvider
 
+/**
+ * Firebase data source. Google sign-in is handled by KMPAuth; use this for
+ * further Firebase/Firestore access as the domain grows.
+ */
 class FirebaseDataSource(
-    private val firebaseAuth: FirebaseAuth
-) {
-
-    suspend fun signInUser(tokens: GoogleSignInToken) {
-        val credential = GoogleAuthProvider.credential(tokens.idToken, tokens.accessToken)
-        val authResult = firebaseAuth.signInWithCredential(credential)
-        authResult.user
-
-    }
-
-    companion object {
-        private const val TAG = "FirebaseDataSource"
-    }
-}
+    val firebaseAuth: FirebaseAuth,
+)

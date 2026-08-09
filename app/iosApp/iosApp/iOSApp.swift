@@ -5,12 +5,14 @@ import GoogleSignIn
 
 @main
 struct iOSApp: App {
+
+    // Public Google OAuth web client id (serverId) — same value as google-services.json.
+    private static let webClientId =
+        "570433560233-ip7aut9frd2l629vkhe34s5b6j49ojgc.apps.googleusercontent.com"
+
     init() {
         FirebaseApp.configure()
-        if let clientID = FirebaseApp.app()?.options.clientID {
-            GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID)
-        }
-        KoinIOSKt.doInitKoin(authProvider: IOSAuthProvider())
+        KoinIOSKt.doInitKoin(webClientId: Self.webClientId)
     }
 
     var body: some Scene {

@@ -3,7 +3,7 @@ import PackageDescription
 let package = Package(
   name: "dev_gitlive_firebase_messaging_3_0_0_alpha01",
   platforms: [
-    .iOS("15.0")
+    .iOS("16.0")
   ],
   products: [
     .library(
