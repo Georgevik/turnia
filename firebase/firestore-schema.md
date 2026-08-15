@@ -44,9 +44,21 @@ Everything on a calendar is an **event** (there is no separate "shift" term). Tw
 | `calendarSharedWith` | string[] | UIDs this user grants read access to **their** calendar. Written only by the owner. |
 | `calendarsSharedWithMe` | string[] | UIDs **whose** calendars this user may read. Written by those granters (each adds/removes only themselves). |
 | `groupEventTypeColors` | map&lt;string,string&gt; | Color per group event type, keyed by `"{groupId}_{groupEventTypeId}"` → hex. |
+| `subscription` | map \| null | Premium entitlement, **written only server-side** — see below. `null` / absent = free tier. |
+
+**`subscription`** map — set only by the subscription-verification Cloud Function after validating a store receipt:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `tier` | string | `free` \| `premium`. |
+| `plan` | string \| null | `monthly` ([redacted]) \| `annual` ([redacted]); `null` when free. |
+| `platform` | string \| null | `play` \| `appstore` — where it was purchased. |
+| `expiresAt` | timestamp \| null | Current period end; entitlement is active while now &lt; `expiresAt`. |
+| `updatedAt` | timestamp | Last time the server updated this from a store notification. |
 
 **Access**: readable by the owner and by UIDs in `calendarSharedWith`. The whole doc is writable only by the owner,
-**except** `calendarsSharedWithMe`, which another user may update by adding/removing **only their own uid**.
+**except**: (1) `calendarsSharedWithMe`, which another user may update by adding/removing **only their own uid**; and
+(2) `subscription`, which the **client can never write** — only the subscription-verification Cloud Function sets it.
 
 **Double check** — a user A may read B's calendar only if **both** hold: `B ∈ users/A.calendarsSharedWithMe`
 **and** `A ∈ users/B.calendarSharedWith`. To grant, the owner B writes A into `users/B.calendarSharedWith`
@@ -196,6 +208,23 @@ Represented by the boolean `event.onSale`.
 
 `member.role`: `admin` | `member`.
 
+### Subscription tier
+
+`users/{uid}.subscription.tier`: `free` | `premium`. `plan`: `monthly` | `annual` | `null`. Premium is active
+while `now < subscription.expiresAt`. Free-tier users are shown AdMob ads; premium users are not.
+
+---
+
+## Data retention
+
+Firestore keeps only a **recent window** of events; older events are purged and preserved in each user's on-device cache.
+
+- **Purge threshold**: any event with `date` older than **1 month** (relative to the cleanup run) is eligible for deletion.
+- **What is deleted**: matching group events and personal events **and their `history` subcollection**.
+- **Who deletes**: a **Cloud Scheduler**-triggered Cloud Function (admin privileges). Clients never bulk-delete past events.
+- **Where old data survives**: the client's **local NoSQL cache** (normalized), populated as events are synced from Firestore.
+  Once purged from Firestore, old events (and their A→B→C chain) exist only in that local cache.
+
 ---
 
 ## Invariants (do not break)
@@ -213,5 +242,7 @@ Represented by the boolean `event.onSale`.
 - **Cross-group shared calendars** are served on demand by the `getSharedCalendar` Cloud Function
   (collection-group on `event` filtered by `assigneeId` + date range); nothing is mirrored.
 - **Calendar sharing needs both sides**: `B ∈ users/A.calendarsSharedWithMe` and `A ∈ users/B.calendarSharedWith`.
+- **`subscription` is server-only**: only the subscription-verification Cloud Function writes `users/{uid}.subscription`; the client can never set itself premium.
+- **Firestore holds only recent events**: events with `date` older than 1 month are purged by the scheduled cleanup function; older events live only in the client's local NoSQL cache. History is append-only *within the retention window*, not forever in Firebase.
 
 See the domain overview in the root [`CLAUDE.md`](../CLAUDE.md) and the enforcement in [`firestore.rules`](./firestore.rules).

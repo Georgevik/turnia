@@ -16,6 +16,8 @@ Without a single source of truth it is easy to lose track of who actually covers
 - Full traceability of the chain of changes (auditable, append-only history).
 - Conflict prevention (double assignments, changes over already-reassigned shifts).
 - Notifications to the parties involved on every relevant change.
+- **Monetization** via ads (free tier) and premium subscriptions (see *Monetization*).
+- **Bounded backend storage**: Firebase only keeps recent events; older ones are purged and live on-device (see *Data retention & local cache*).
 
 ## Domain concepts
 
@@ -45,6 +47,22 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
 - **Colors**: a group event type has no color; each user picks a color per group event type, shared by all their events of that type. Personal event types carry their own color.
 - A user can belong to **several groups** and can invite another user to view **their entire calendar** (crossing groups).
 
+## Monetization — pricing and ads/premium business rules redacted from this repository's history; see CLAUDE.local.md.
+## Data retention & local cache
+
+Firebase must **not** accumulate every past event forever. The backend keeps only a **recent window**; anything older is purged from Firestore and preserved **on the device**.
+
+- **Retention window** — an event whose `date` is **older than 1 month** is eligible for deletion from Firestore.
+- **Scheduled cleanup** — a **Cloud Scheduler**-triggered Cloud Function periodically deletes old group events, personal events and their `history` from Firestore. This is the only writer allowed to delete past events in bulk.
+- **Local NoSQL cache** — events fetched from Firestore are stored in an **on-device NoSQL/document store**, in a **normalized** shape, so they can still be listed and shown after the server purge. The calendar reads from this local cache and only syncs the recent window from Firestore.
+- **Traceability caveat** — because `history` older than the window is purged from Firebase, the full A→B→C chain for old events survives **only in the local cache** of the users who synced it. Retention is a deliberate trade-off against the append-only-forever history.
+
+### Business rules — retention
+
+- The client treats Firestore as the source of truth for the **recent window** and the local cache as the store of record for **older** events.
+- Only the scheduled Cloud Function deletes past events in bulk; clients never mass-delete history.
+- The local cache is normalized (events reference their types/users by id) to avoid duplication and allow rendering colors/types offline.
+
 ## Tech stack
 
 - **Kotlin Multiplatform (KMP)** — shared business logic.
@@ -53,11 +71,18 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
 - **Koin** — dependency injection (DI).
 - **Navigation 3 (Nav3)** — shared, back-stack-based navigation.
 - **kotlinx.serialization** — serialization (navigation keys, DTOs).
+- **Local NoSQL cache** — on-device document store (candidate: Realm Kotlin) holding events fetched from
+  Firestore in a **normalized** shape, so past events stay viewable after Firebase purges them (see *Data retention & local cache*).
+- **AdMob** — ads for free-tier users (banner / interstitial / rewarded). Hidden for premium users.
+- **In-app subscriptions** — **Google Play Billing** (Android) and **StoreKit / App Store** (iOS) for premium plans.
 - **Firebase** — backend, no custom server:
   - **Firestore** — data.
   - **Firebase Auth** — authentication.
-  - **Cloud Functions (TypeScript)** — join requests, taking events, push, shared-calendar aggregation.
+  - **Cloud Functions (TypeScript)** — join requests, taking events, push, shared-calendar aggregation,
+    **subscription receipt verification** (Play RTDN / App Store Server Notifications) and the
+    **scheduled retention cleanup** (see *Data retention & local cache*).
   - **FCM** — push notifications.
+  - **Cloud Scheduler** — triggers the periodic retention cleanup of old events.
 - **GitLive Firebase Kotlin SDK** (`dev.gitlive:firebase-*`) — Firebase access from `commonMain`.
 - **Native FCM per platform** — push reception uses the native SDK on each platform (iOS involves APNs, `AppDelegate` and permissions).
 
@@ -89,6 +114,8 @@ See [firebase/firestore-schema.md](firebase/firestore-schema.md) — the single 
 2. **Viewing another user's full calendar (crosses groups)** — group events live under group members, so a user **outside** the group cannot read them directly. The cross-group shared calendar is served **on demand** by the `getSharedCalendar` Cloud Function. Sharing is **double-verified**: A may read B only if `B ∈ users/A.calendarsSharedWithMe` **and** `A ∈ users/B.calendarSharedWith`. The function checks both, then aggregates the owner's group + personal events for a bounded date range (admin privileges, no stored copy).
 3. **Joining a group is two steps via Cloud Functions** — `requestToJoinGroup` validates the code/expiration and creates a `joinRequests` doc; `acceptJoinRequest` (admin only) moves it to `members`. Do **not** let the client write directly to `members`.
 4. **Taking / push are server-only** — `takeEvent` performs the cross-member move (verifying `onSale` in a transaction) and copies history forward; **push** is sent only from Cloud Functions, never from the client.
+5. **Premium entitlement is server-verified** — the client may *request* a purchase but must never mark itself premium. Only a Cloud Function that validated the store receipt (Play RTDN / App Store Server Notifications) writes `users/{uid}.subscription`; security rules forbid the client from setting it. Ad-hiding and premium gating must read the server-verified state, not a local flag.
+6. **Retention is destructive & only server-side** — the scheduled cleanup Cloud Function is the *only* thing that bulk-deletes events older than the 1-month window (events + `history`); clients must not. Before purging, the data must already be in each user's local cache, or old events (and their traceability chain) are lost. Sync into the local NoSQL cache before, not after, relying on the purge.
 
 ## Project structure
 
@@ -101,7 +128,7 @@ turnia/
 ├── core/               # Shared domain + business logic (KMP)
 └── firebase/           # Firebase project: config + Cloud Functions (deployed separately)
     ├── firebase.json · .firebaserc · firestore.rules · firestore.indexes.json · firestore-schema.md
-    └── functions/      # Cloud Functions (TypeScript): join requests, taking events, push
+    └── functions/      # Cloud Functions (TypeScript): join requests, taking events, push, subscription verification, retention cleanup
 ```
 
 > `firebase/` holds everything Firebase. `firebase/functions/` is a standalone Node.js/TypeScript project (Firebase CLI, deployed with `firebase deploy`). It runs on Google's servers, not inside the KMP app, and is not part of the Gradle build. Run all `firebase` CLI commands from the `firebase/` directory (where `firebase.json` lives). It exists only to hold backend logic the client must not do itself (see *Sensitive points*).
