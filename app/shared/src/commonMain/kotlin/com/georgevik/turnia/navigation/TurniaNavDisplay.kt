@@ -3,14 +3,14 @@ package com.georgevik.turnia.navigation
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
-import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
 import com.georgevik.turnia.ui.AboutScreen
-import com.georgevik.turnia.ui.HomeScreen
+import com.georgevik.turnia.ui.signin.SignInScreen
 import com.georgevik.turnia.ui.splash.SplashScreen
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
@@ -23,8 +23,7 @@ import kotlinx.serialization.modules.polymorphic
  * instead of being shared across the whole host.
  */
 @Composable
-fun TurniaNavDisplay(snackbarHostState: SnackbarHostState) {
-    val backStack = rememberNavBackStack(navKeySavedStateConfiguration, Route.SpashKey)
+fun TurniaNavDisplay(snackbarHostState: SnackbarHostState, backStack : NavBackStack<NavKey>) {
     NavDisplay(
         backStack = backStack,
         entryDecorators = listOf(
@@ -38,8 +37,8 @@ fun TurniaNavDisplay(snackbarHostState: SnackbarHostState) {
                     backStack.add(key)
                 })
             }
-            entry<Route.HomeKey> {
-                HomeScreen(onOpenAbout = { backStack.add(Route.AboutKey) })
+            entry<Route.SignInKey> {
+                SignInScreen(onOpenAbout = { backStack.add(Route.AboutKey) })
             }
             entry<Route.AboutKey> {
                 AboutScreen(onBack = { backStack.removeLastOrNull() })
@@ -57,7 +56,7 @@ fun TurniaNavDisplay(snackbarHostState: SnackbarHostState) {
 val navKeySavedStateConfiguration: SavedStateConfiguration = SavedStateConfiguration {
     serializersModule = SerializersModule {
         polymorphic(NavKey::class) {
-            subclass(Route.HomeKey::class, Route.HomeKey.serializer())
+            subclass(Route.SignInKey::class, Route.SignInKey.serializer())
             subclass(Route.AboutKey::class, Route.AboutKey.serializer())
             subclass(Route.SpashKey::class, Route.SpashKey.serializer())
         }

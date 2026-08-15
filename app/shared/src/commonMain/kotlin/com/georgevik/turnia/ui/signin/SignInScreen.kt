@@ -1,4 +1,4 @@
-package com.georgevik.turnia.ui
+package com.georgevik.turnia.ui.signin
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -15,13 +15,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.georgevik.turnia.GreetingViewModel
 import com.mmk.kmpauth.google.rememberGoogleAuthState
 import com.mmk.kmpauth.uihelper.google.GoogleSignInButton
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun HomeScreen(viewModel: GreetingViewModel = koinViewModel(), onOpenAbout: () -> Unit) {
+fun SignInScreen(viewModel: SignInViewModel = koinViewModel(), onOpenAbout: () -> Unit) {
     val googleAuth = rememberGoogleAuthState(onResult = viewModel::onSignInResult)
 
     Column(

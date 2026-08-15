@@ -11,7 +11,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 sealed interface Route : NavKey {
     @Serializable
-    data object HomeKey : Route
+    data object SignInKey : Route
 
     @Serializable
     data object AboutKey : Route

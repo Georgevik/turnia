@@ -1,15 +1,18 @@
-package com.georgevik.turnia
+package com.georgevik.turnia.ui.signin
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.georgevik.turnia.core.data.logger.Logger
+import com.georgevik.turnia.core.domain.repository.UserRepository
 import com.mmk.kmpauth.core.auth.KMPAuthUser
 
 private const val TAG = "GreetingViewModel"
 
-class GreetingViewModel : ViewModel() {
+class SignInViewModel(
+    private val userRepository: UserRepository
+) : ViewModel() {
 
     /** Signed-in Firebase user (KMPAuth already completed the Firebase sign-in). */
     var signedInUser by mutableStateOf<KMPAuthUser?>(null)

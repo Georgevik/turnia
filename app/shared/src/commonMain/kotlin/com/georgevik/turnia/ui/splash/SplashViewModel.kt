@@ -2,22 +2,37 @@ package com.georgevik.turnia.ui.splash
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.georgevik.turnia.core.data.logger.Logger
+import com.georgevik.turnia.core.domain.model.UserSession
+import com.georgevik.turnia.core.domain.repository.UserRepository
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
-class SplashViewModel : ViewModel() {
+class SplashViewModel(
+    private val userRepository: UserRepository
+) : ViewModel() {
     private val _uiEvent = Channel<SplashUiEvent>(Channel.BUFFERED)
     val uiEvent = _uiEvent.receiveAsFlow()
 
     init {
         viewModelScope.launch {
-            loadUser()
+            userRepository.userSession.collect {
+                val event = when (it) {
+                    is UserSession.Authenticated -> SplashUiEvent.UserLoaded
+                    UserSession.Unauthenticated -> SplashUiEvent.NewUser
+                    UserSession.Loading -> null
+                }
+
+                Logger.d(TAG, "UserSession: $it")
+
+                event?.let { _uiEvent.send(event) }
+            }
         }
     }
 
-    private suspend fun loadUser() {
-        _uiEvent.send(SplashUiEvent.UserLoaded)
+    companion object {
+        private const val TAG = "SplashViewModel"
     }
 }
 

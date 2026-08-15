@@ -50,8 +50,7 @@ fun SplashScreen(
         vm.uiEvent.collect { event ->
             when (event) {
                 is SplashUiEvent.Error -> snackbar.showSnackbar(event.message.toErrorSnackbar())
-
-                SplashUiEvent.NewUser -> onNextScreen(Route.HomeKey)
+                SplashUiEvent.NewUser -> onNextScreen(Route.SignInKey)
                 SplashUiEvent.UserLoaded -> onNextScreen(Route.AboutKey)
             }
         }
