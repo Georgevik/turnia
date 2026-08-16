@@ -1,9 +1,8 @@
 package com.georgevik.turnia.ui.components.calendar
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalGridApi
-import androidx.compose.foundation.layout.Grid
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -32,8 +31,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
+import kotlinx.datetime.todayIn
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
@@ -42,16 +43,18 @@ import turnia.app.shared.generated.resources.calendar_months
 import turnia.app.shared.generated.resources.calendar_next_month
 import turnia.app.shared.generated.resources.calendar_previous_month
 import turnia.app.shared.generated.resources.calendar_weekday_initials
+import kotlin.time.Clock
 
-@OptIn(ExperimentalGridApi::class)
+private const val WEEKS = 6
+
 @Composable
 fun CalendarViewer(
     modifier: Modifier = Modifier.Companion,
     theme: CalendarTheme = CalendarThemes.primary(),
+    eventsByDate: Map<LocalDate, List<CalendarEventUi>> = emptyMap(),
 ) {
     // Today is resolved here and always highlighted in the grid.
-//    val today = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()) }
-    val today = remember { LocalDate(2023, 10, 1) }
+    val today = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()) }
     // Always work from the first day of the displayed month.
     var month by remember { mutableStateOf(LocalDate(today.year, today.month, 1)) }
     var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
@@ -111,41 +114,58 @@ fun CalendarViewer(
             }
         }
 
-        // Monday-first grid: how many leading days from the previous month, and
-        // how many whole weeks (5–6) this month spans.
+        // Monday-first grid. Leading days come from the previous month; the grid
+        // spans a fixed number of weeks so every cell is the same size.
         val leadingDays = month.dayOfWeek.ordinal
-        val weeks = 6
         val gridStart = month.minus(leadingDays, DateTimeUnit.DAY)
 
-        Grid(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f),
-            config = {
-                repeat(7) { column(1.fr) }
-                repeat(weeks) { row(1.fr) }
-            },
         ) {
-            repeat(weeks * 7) { index ->
-                val date = gridStart.plus(index, DateTimeUnit.DAY)
-                val dateInMonth = date.month == month.month && date.year == month.year
-                CalendarCell(
-                    date = date,
-                    inMonth = dateInMonth,
-                    isToday = date == today,
-                    isSelected = date == selectedDate,
-                    theme = theme,
-                    onClick = {
-                        if (dateInMonth) {
-                            // Toggle selection for days in the displayed month.
-                            selectedDate = if (selectedDate == date) null else date
-                        } else {
-                            // Jump to the tapped day's month and select it.
-                            month = LocalDate(date.year, date.month, 1)
-                            selectedDate = date
+            // Cells are uniform, so how many event rows fit is computed once here
+            // (rather than measuring every cell) and passed down.
+            val cellHeight = maxHeight / WEEKS
+            val eventArea = cellHeight - CalendarCellNumberHeight - 12.dp
+            val maxEventRows = (eventArea / CalendarEventSlotHeight).toInt().coerceAtLeast(0)
+
+            // A Column of weighted Rows keeps all cells equal and, unlike the
+            // experimental Grid, never lets a long event name stretch a column.
+            Column(modifier = Modifier.fillMaxSize()) {
+                repeat(WEEKS) { week ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                    ) {
+                        repeat(7) { dayOfWeek ->
+                            val date = gridStart.plus(week * 7 + dayOfWeek, DateTimeUnit.DAY)
+                            val dateInMonth =
+                                date.month == month.month && date.year == month.year
+                            CalendarCell(
+                                modifier = Modifier.weight(1f),
+                                date = date,
+                                inMonth = dateInMonth,
+                                isToday = date == today,
+                                isSelected = date == selectedDate,
+                                theme = theme,
+                                events = eventsByDate[date].orEmpty(),
+                                maxEventRows = maxEventRows,
+                                onClick = {
+                                    if (dateInMonth) {
+                                        // Toggle selection for days in the month.
+                                        selectedDate = if (selectedDate == date) null else date
+                                    } else {
+                                        // Jump to the tapped day's month and select it.
+                                        month = LocalDate(date.year, date.month, 1)
+                                        selectedDate = date
+                                    }
+                                },
+                            )
                         }
-                    },
-                )
+                    }
+                }
             }
         }
     }

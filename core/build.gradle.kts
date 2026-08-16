@@ -33,6 +33,7 @@ kotlin {
             implementation(libs.firebase.functions)
             implementation(libs.firebase.analytics)
             api(libs.koin.core)
+            api(libs.kotlinx.datetime)
         }
         androidMain.dependencies {
             api(project.dependencies.platform(libs.firebase.bom))

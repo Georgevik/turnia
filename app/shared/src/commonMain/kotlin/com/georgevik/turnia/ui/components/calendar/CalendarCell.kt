@@ -3,7 +3,10 @@ package com.georgevik.turnia.ui.components.calendar
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -19,8 +22,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
+
+/** Height of a single event row (and of the "•••" overflow indicator). */
+internal val CalendarEventSlotHeight = 16.dp
+
+/** Height reserved at the top of a cell for the day number. */
+internal val CalendarCellNumberHeight = 30.dp
 
 @Composable
 fun CalendarCell(
@@ -31,6 +41,8 @@ fun CalendarCell(
     theme: CalendarTheme,
     onClick: () -> Unit,
     modifier: Modifier = Modifier.Companion,
+    events: List<CalendarEventUi> = emptyList(),
+    maxEventRows: Int = 0,
 ) {
     val indicatorColor = if (isToday) theme.accentColor else Color.Transparent
     val numberColor = when {
@@ -56,26 +68,88 @@ fun CalendarCell(
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         border = if (isSelected) BorderStroke(2.dp, theme.accentColor) else null,
     ) {
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 4.dp),
-            contentAlignment = Alignment.TopCenter,
+                .padding(horizontal = 3.dp, vertical = 3.dp),
         ) {
+            // Day number, centered at the top.
             Box(
                 modifier = Modifier
-                    .size(32.dp)
-                    .clip(CircleShape)
-                    .background(indicatorColor),
+                    .fillMaxWidth()
+                    .height(CalendarCellNumberHeight),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(
-                    text = date.day.toString(),
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = if (inMonth || isToday) FontWeight.SemiBold else FontWeight.Normal,
-                    color = numberColor,
-                )
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clip(CircleShape)
+                        .background(indicatorColor),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = date.day.toString(),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = if (inMonth || isToday) FontWeight.SemiBold else FontWeight.Normal,
+                        color = numberColor,
+                    )
+                }
+            }
+
+            // Show as many event rows as fit ([maxEventRows], computed once from
+            // the cell size); if there are more, the last slot becomes "•••".
+            if (events.isNotEmpty() && maxEventRows > 0) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                ) {
+                    if (events.size <= maxEventRows) {
+                        events.forEach { EventRow(it) }
+                    } else {
+                        events.take(maxEventRows - 1).forEach { EventRow(it) }
+                        OverflowRow()
+                    }
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun EventRow(event: CalendarEventUi) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(CalendarEventSlotHeight)
+            .padding(vertical = 1.dp)
+            .clip(RoundedCornerShape(4.dp))
+            .background(event.background)
+            .padding(horizontal = 4.dp),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Text(
+            text = event.text,
+            style = MaterialTheme.typography.labelSmall,
+            color = event.textColor,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
+private fun OverflowRow() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(CalendarEventSlotHeight),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = "•••",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
