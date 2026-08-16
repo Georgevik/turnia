@@ -42,11 +42,27 @@ class MyCalendarViewModel : ViewModel() {
         val sand = Color(0xFFFFDDB8)
         val red = Color(0xFFBA1A1A)
 
-        fun group(id: String, text: String, color: Color) =
-            CalendarEventUi.create(id, CalendarEventType.GROUP, text, color)
+        fun group(
+            id: String,
+            text: String,
+            color: Color,
+            time: String?,
+            subtitle: String,
+            onSale: Boolean = false,
+            isOwner: Boolean = false,
+        ) = CalendarEventUi.create(
+            id, CalendarEventType.GROUP, text, color, time, subtitle, onSale, isOwner,
+        )
 
-        fun personal(id: String, text: String, color: Color) =
-            CalendarEventUi.create(id, CalendarEventType.PERSONAL, text, color)
+        fun personal(
+            id: String,
+            text: String,
+            color: Color,
+            time: String?,
+            subtitle: String,
+        ) = CalendarEventUi.create(
+            id, CalendarEventType.PERSONAL, text, color, time, subtitle, isOwner = true,
+        )
 
         // Anchor the mock data to the current month so it lands on "today".
         val firstOfMonth = Clock.System.todayIn(TimeZone.currentSystemDefault())
@@ -55,29 +71,29 @@ class MyCalendarViewModel : ViewModel() {
 
         return mapOf(
             day(0) to listOf(
-                group("g1", "Guardia de noche larga", teal),
-                personal("p1", "Cita médica", sand),
+                group("g1", "Guardia noche", teal, "20:00 - 08:00", "Propietario: Yo", onSale = true, isOwner = true),
+                personal("p1", "Cita médica", sand, "09:30 - 10:00", "Revisión anual"),
             ),
             day(3) to listOf(
-                group("g2", "Turno mañana", slate),
+                group("g2", "Turno mañana", slate, "08:00 - 15:00", "Revisión mensual"),
             ),
             day(9) to listOf(
-                group("g3", "Noche", teal),
-                personal("p2", "Gimnasio", lightAmber),
+                group("g3", "Noche", teal, "22:00 - 06:00", "Grupo UCI"),
+                personal("p2", "Gimnasio", lightAmber, "18:00 - 19:00", "Rutina semanal"),
             ),
             day(15) to listOf(
-                group("g4", "Cambio", red),
-                personal("p3", "Cena con el equipo", sand),
-                group("g5", "Formación", slate),
-                personal("p4", "Recados", amber),
-                group("g6", "Extra", teal),
+                group("g4", "Cambio", red, "07:00 - 15:00", "Grupo UCI", onSale = true, isOwner = true),
+                personal("p3", "Cena con el equipo", sand, "21:00 - 23:00", "Restaurante"),
+                group("g5", "Formación", slate, "16:00 - 18:00", "Sala 3"),
+                personal("p4", "Recados", amber, "12:00 - 13:00", "Varios"),
+                group("g6", "Extra", teal, "18:00 - 22:00", "Grupo Urgencias"),
             ),
             day(22) to listOf(
-                personal("p5", "Vacaciones", lightAmber),
+                personal("p5", "Vacaciones", lightAmber, null, "Todo el día"),
             ),
             day(27) to listOf(
-                group("g7", "Halloween", amber),
-                personal("p6", "Fiesta", teal),
+                group("g7", "Halloween", amber, "20:00 - 23:00", "Fiesta de grupo"),
+                personal("p6", "Fiesta", teal, "23:00 - 02:00", "Con amigos"),
             ),
         )
     }

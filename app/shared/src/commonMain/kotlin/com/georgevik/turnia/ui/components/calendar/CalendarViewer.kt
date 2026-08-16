@@ -16,10 +16,13 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.DateTimeUnit
@@ -47,11 +51,14 @@ import kotlin.time.Clock
 
 private const val WEEKS = 6
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalendarViewer(
     modifier: Modifier = Modifier.Companion,
     theme: CalendarTheme = CalendarThemes.primary(),
     eventsByDate: Map<LocalDate, List<CalendarEventUi>> = emptyMap(),
+    onAddEvent: (LocalDate) -> Unit = {},
+    onManageEvent: (CalendarEventUi) -> Unit = {},
 ) {
     // Today is resolved here and always highlighted in the grid.
     val today = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()) }
@@ -68,7 +75,7 @@ fun CalendarViewer(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
@@ -79,7 +86,8 @@ fun CalendarViewer(
                     monthNames[month.month.ordinal],
                     month.year,
                 ),
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.headlineSmallEmphasized,
+                fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground,
             )
 
@@ -153,20 +161,33 @@ fun CalendarViewer(
                                 events = eventsByDate[date].orEmpty(),
                                 maxEventRows = maxEventRows,
                                 onClick = {
-                                    if (dateInMonth) {
-                                        // Toggle selection for days in the month.
-                                        selectedDate = if (selectedDate == date) null else date
-                                    } else {
-                                        // Jump to the tapped day's month and select it.
+                                    if (!dateInMonth) {
+                                        // Jump to the tapped day's month first.
                                         month = LocalDate(date.year, date.month, 1)
-                                        selectedDate = date
                                     }
+                                    // Select the day and open its details sheet.
+                                    selectedDate = date
                                 },
                             )
                         }
                     }
                 }
             }
+        }
+    }
+
+    // Details of the selected day, shown in a modal bottom sheet.
+    selectedDate?.let { date ->
+        ModalBottomSheet(
+            onDismissRequest = { selectedDate = null },
+            sheetState = rememberModalBottomSheetState(),
+        ) {
+            EventDetailsSheetContent(
+                date = date,
+                events = eventsByDate[date].orEmpty(),
+                onAddEvent = { onAddEvent(date) },
+                onManageEvent = onManageEvent,
+            )
         }
     }
 }
