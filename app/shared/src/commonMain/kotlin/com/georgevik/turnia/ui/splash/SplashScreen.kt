@@ -51,7 +51,7 @@ fun SplashScreen(
             when (event) {
                 is SplashUiEvent.Error -> snackbar.showSnackbar(event.message.toErrorSnackbar())
                 SplashUiEvent.NewUser -> onNextScreen(Route.SignInKey)
-                SplashUiEvent.UserLoaded -> onNextScreen(Route.AboutKey)
+                SplashUiEvent.UserLoaded -> onNextScreen(Route.MainTabKey)
             }
         }
     }

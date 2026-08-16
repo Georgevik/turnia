@@ -62,6 +62,7 @@ kotlin {
             implementation(libs.koin.compose)
             implementation(libs.koin.composeViewmodel)
             implementation(libs.kotlinx.serialization.core)
+            implementation(libs.kotlinx.datetime)
             implementation(libs.navigation3.runtime)
             implementation(libs.navigation3.ui)
             implementation(libs.lifecycle.viewmodel.navigation3)

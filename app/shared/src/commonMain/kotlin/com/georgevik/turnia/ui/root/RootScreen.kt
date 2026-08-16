@@ -1,5 +1,6 @@
 package com.georgevik.turnia.ui.root
 
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
@@ -44,6 +45,7 @@ fun App(vm: RootViewModel = koinViewModel()) {
         val snackbarHostState = remember { SnackbarHostState() }
 
         Scaffold(
+            contentWindowInsets = WindowInsets(0,0,0,0),
             snackbarHost = {
                 SnackbarHost(hostState = snackbarHostState) { data ->
                     val isError = (data.visuals as? TurniaSnackbarVisual)?.isError ?: false

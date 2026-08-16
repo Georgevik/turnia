@@ -38,9 +38,9 @@ fun TurniaNavDisplay(snackbarHostState: SnackbarHostState, backStack : NavBackSt
                 })
             }
             entry<Route.SignInKey> {
-                SignInScreen(onOpenAbout = { backStack.add(Route.AboutKey) })
+                SignInScreen(onOpenAbout = { backStack.add(Route.MainTabKey) })
             }
-            entry<Route.AboutKey> {
+            entry<Route.MainTabKey> {
                 MainNavBarScreen(onBack = { backStack.removeLastOrNull() })
             }
         },
@@ -57,7 +57,7 @@ val navKeySavedStateConfiguration: SavedStateConfiguration = SavedStateConfigura
     serializersModule = SerializersModule {
         polymorphic(NavKey::class) {
             subclass(Route.SignInKey::class, Route.SignInKey.serializer())
-            subclass(Route.AboutKey::class, Route.AboutKey.serializer())
+            subclass(Route.MainTabKey::class, Route.MainTabKey.serializer())
             subclass(Route.SpashKey::class, Route.SpashKey.serializer())
         }
     }
