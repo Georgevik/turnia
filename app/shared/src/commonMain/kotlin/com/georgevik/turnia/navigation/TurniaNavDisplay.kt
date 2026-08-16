@@ -9,7 +9,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
-import com.georgevik.turnia.ui.AboutScreen
+import com.georgevik.turnia.ui.main.MainNavBarScreen
 import com.georgevik.turnia.ui.signin.SignInScreen
 import com.georgevik.turnia.ui.splash.SplashScreen
 import kotlinx.serialization.modules.SerializersModule
@@ -41,7 +41,7 @@ fun TurniaNavDisplay(snackbarHostState: SnackbarHostState, backStack : NavBackSt
                 SignInScreen(onOpenAbout = { backStack.add(Route.AboutKey) })
             }
             entry<Route.AboutKey> {
-                AboutScreen(onBack = { backStack.removeLastOrNull() })
+                MainNavBarScreen(onBack = { backStack.removeLastOrNull() })
             }
         },
     )
