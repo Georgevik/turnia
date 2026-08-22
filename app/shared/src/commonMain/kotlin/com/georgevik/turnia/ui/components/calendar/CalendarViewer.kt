@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -43,7 +44,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -64,6 +67,7 @@ import turnia.app.shared.generated.resources.calendar_months
 import turnia.app.shared.generated.resources.calendar_next_month
 import turnia.app.shared.generated.resources.calendar_previous_month
 import turnia.app.shared.generated.resources.calendar_weekday_initials
+import kotlin.math.abs
 import kotlin.time.Clock
 
 private const val WEEKS = 6
@@ -111,7 +115,8 @@ fun CalendarViewer(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 CalendarMonthHeader(
-                    monthDate = monthForPage(pagerState.currentPage),
+                    pagerState = pagerState,
+                    monthForPage = ::monthForPage,
                     onPrevious = {
                         scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) }
                     },
@@ -185,7 +190,8 @@ fun CalendarViewer(
 
 @Composable
 private fun CalendarMonthHeader(
-    monthDate: LocalDate,
+    pagerState: PagerState,
+    monthForPage: (Int) -> LocalDate,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
 ) {
@@ -194,17 +200,40 @@ private fun CalendarMonthHeader(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        val monthNames = stringArrayResource(Res.array.calendar_months)
-        Text(
-            text = stringResource(
-                Res.string.calendar_month_year,
-                monthNames[monthDate.month.ordinal],
-                monthDate.year,
-            ),
-            style = MaterialTheme.typography.headlineSmallEmphasized,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground,
-        )
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .clipToBounds(),
+            contentAlignment = Alignment.CenterStart,
+        ) {
+            val monthNames = stringArrayResource(Res.array.calendar_months)
+            val currentPage = pagerState.currentPage
+
+            // Only the current page and its two neighbours can be on screen at once.
+            (currentPage - 1..currentPage + 1).forEach { page ->
+                val month = monthForPage(page)
+                Text(
+                    text = stringResource(
+                        Res.string.calendar_month_year,
+                        monthNames[month.month.ordinal],
+                        month.year,
+                    ),
+                    maxLines = 1,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .graphicsLayer {
+                            // Distance (in pages) from the settled viewport position.
+                            val progress =
+                                page - (pagerState.currentPage + pagerState.currentPageOffsetFraction)
+                            translationX = progress * size.width
+                            alpha = (1f - abs(progress)).coerceIn(0f, 1f)
+                        },
+                    style = MaterialTheme.typography.headlineSmallEmphasized,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+            }
+        }
 
         Row(modifier = Modifier.wrapContentSize()) {
             IconButton(onClick = onPrevious) {
