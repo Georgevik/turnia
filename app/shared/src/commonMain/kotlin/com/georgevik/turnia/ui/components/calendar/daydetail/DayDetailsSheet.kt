@@ -77,7 +77,7 @@ fun SharedTransitionScope.DayDetailsSheet(
                 .padding(top = 12.dp)
                 .padding(horizontal = 20.dp)
                 .windowInsetsPadding(WindowInsets.navigationBars)
-                .padding(bottom = 24.dp),
+                .padding(bottom = 16.dp),
         ) {
             // Drag handle — fades in with the rest of the sheet chrome.
             Box(

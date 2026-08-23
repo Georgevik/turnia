@@ -35,17 +35,17 @@ fun DayDetailAddEvent(
     predefinedEvents: List<PredefinedEventUi>,
     onPickPredefined: (PredefinedEventUi) -> Unit,
     onAddCustom: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(16.dp)) {
         if (predefinedEvents.isEmpty()) {
             NoPredefinedBanner()
         } else {
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 predefinedEvents.forEach { predefined ->
-                    PredefinedChip(
+                    PredefinedEventChip(
                         predefined = predefined,
                         onClick = { onPickPredefined(predefined) })
                 }
@@ -63,27 +63,6 @@ fun DayDetailAddEvent(
     }
 }
 
-@Composable
-private fun PredefinedChip(predefined: PredefinedEventUi, onClick: () -> Unit) {
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(percent = 50),
-        color = predefined.color,
-        contentColor = predefined.textColor,
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            Text(
-                text = predefined.name,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
-    }
-}
 
 @Composable
 private fun NoPredefinedBanner() {
