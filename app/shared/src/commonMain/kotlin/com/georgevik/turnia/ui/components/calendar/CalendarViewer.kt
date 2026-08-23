@@ -42,6 +42,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
@@ -87,7 +88,7 @@ fun CalendarViewer(
     modifier: Modifier = Modifier,
     theme: CalendarTheme = CalendarThemes.myCalendar(),
     eventsByDate: Map<LocalDate, List<CalendarEventUi>> = emptyMap(),
-    titleBar : @Composable () -> Unit = {},
+    titleBar: @Composable () -> Unit = {},
     // Quick-add: predefined events offered when the user taps "+" on a day.
     predefinedEvents: List<PredefinedEventUi> = emptyList(),
     onAddPredefinedEvent: (date: LocalDate, predefinedId: String) -> Unit = { _, _ -> },
@@ -107,11 +108,14 @@ fun CalendarViewer(
     fun pageForMonth(target: LocalDate): Int =
         MONTH_PAGE_ANCHOR + anchorMonth.monthsUntil(target)
 
-    // The tapped day drives both selection highlight and the sheet transition.
-    var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
+    // Whether the sheet is open — drives visibility; flips to false at once on close.
+    var isSheetOpen by remember { mutableStateOf(false) }
+    // The day the sheet renders and the tile shares bounds with. Retained through the
+    // close animation so the morph keeps its content and a source to collapse back into.
     var sheetDate by remember { mutableStateOf<LocalDate?>(null) }
 
     SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -160,32 +164,43 @@ fun CalendarViewer(
                             month = monthForPage(page),
                             maxEventRows = maxEventRows,
                             calendarTheme = theme,
-                            selectedDate = selectedDate,
-                            // SheetDate <-> TileDate relation
+                            // "Selected" = the retained day, but only while open.
+                            selectedDate = sheetDate.takeIf { isSheetOpen },
                             sharedDate = sheetDate,
                             eventsByDate = eventsByDate,
                             sharedScope = this@SharedTransitionLayout,
                             onDateSelected = { date ->
                                 sheetDate = date
-                                selectedDate = date
+                                scope.launch {
+                                    withFrameNanos { }
+                                    isSheetOpen = true
+                                }
                             },
                             onMonthChanged = { newMonth ->
-                                scope.launch { pagerState.animateScrollToPage(pageForMonth(newMonth)) }
+                                scope.launch {
+                                    pagerState.animateScrollToPage(
+                                        pageForMonth(
+                                            newMonth
+                                        )
+                                    )
+                                }
                             },
                         )
                     }
                 }
             }
 
-            BottomSheetShadow(visible = selectedDate != null, onClick = { selectedDate = null })
+            BottomSheetShadow(visible = isSheetOpen, onClick = { isSheetOpen = false })
 
             // BottomSheet
             AnimatedVisibility(
-                visible = selectedDate != null,
+                visible = isSheetOpen,
                 enter = EnterTransition.None,
                 exit = ExitTransition.None,
                 modifier = Modifier.align(Alignment.BottomCenter),
             ) {
+                // Content uses the retained [sheetDate] so it stays stable while the
+                // sheet animates back into the tile (isSheetOpen is already false).
                 sheetDate?.let { date ->
                     DayDetailsSheet(
                         animatedVisibilityScope = this,
@@ -194,17 +209,18 @@ fun CalendarViewer(
                         predefinedEvents = predefinedEvents,
                         onPickPredefined = { predefined ->
                             onAddPredefinedEvent(date, predefined.id)
-                            selectedDate = null
+                            isSheetOpen = false
                         },
                         onAddCustom = {
                             onAddCustomEvent(date)
-                            selectedDate = null
+                            isSheetOpen = false
                         },
                         onManageEvent = onManageEvent,
                     )
                 }
             }
         }
+
     }
 }
 
@@ -327,7 +343,8 @@ private fun CalendarGrid(
                         theme = calendarTheme,
                         events = eventsByDate[date].orEmpty(),
                         maxEventRows = maxEventRows,
-                        // Shared scope arguments. Filtered bottom sheet to dates in month
+                        // Only the retained sheet date's in-month tile is a shared
+                        // element (kept registered through the close animation).
                         sharedScope = if (dateInMonth && date == sharedDate) sharedScope else null,
                         isExpanded = date == selectedDate,
                         onClick = {
