@@ -1,124 +1,152 @@
 package com.georgevik.turnia.ui.main.group
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Circle
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.georgevik.turnia.core.domain.model.CalendarKind
+import com.georgevik.turnia.ui.components.calendar.CalendarThemes
+import com.georgevik.turnia.ui.components.calendar.CalendarViewer
+import com.georgevik.turnia.ui.main.group.components.CalendarTitleBar
+import com.georgevik.turnia.ui.main.group.components.ColleagueCard
+import com.georgevik.turnia.ui.main.group.components.GroupCard
+import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
+import turnia.app.shared.generated.resources.Res
+import turnia.app.shared.generated.resources.group_groups_header
+import turnia.app.shared.generated.resources.group_people_header
+import turnia.app.shared.generated.resources.group_search_hint
+import turnia.app.shared.generated.resources.group_see_all
 
-/**
- * "Turnos" tab — a draft calendar: a month header, a weekday strip and a list
- * of upcoming events. The real month grid and Firestore sync come later.
- */
 @Composable
-fun GroupScreen() {
-    Column(
+fun GroupScreen(viewModel: GroupViewModel = koinViewModel()) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var query by rememberSaveable { mutableStateOf("") }
+
+    uiState.openCalendar?.let { calendar ->
+        val isGroup = calendar.kind == CalendarKind.GROUP
+        val theme = if (isGroup) CalendarThemes.group() else CalendarThemes.colleague()
+        CalendarViewer(
+            theme = theme,
+            titleBar = {
+                CalendarTitleBar(
+                    title = calendar.name,
+                    icon = if (isGroup) Icons.Default.Groups else Icons.Default.Person,
+                    theme = theme,
+                    onBack = { viewModel.closeCalendar() },
+                )
+
+            },
+            eventsByDate = calendar.events,
+        )
+        return
+    }
+
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .safeContentPadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top)),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(
+            start = 16.dp,
+            end = 16.dp,
+            top = 16.dp,
+            bottom = 24.dp,
+        ),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        item(key = "search") {
+            OutlinedTextField(
+                value = query,
+                onValueChange = {
+                    query = it
+                    viewModel.searchBy(it)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                shape = RoundedCornerShape(16.dp),
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                placeholder = { Text(stringResource(Res.string.group_search_hint)) },
+            )
+        }
+
+        if (uiState.colleagues.isNotEmpty()) {
+            item(key = "colleagues-header") {
+                SectionHeader(
+                    title = stringResource(Res.string.group_people_header),
+                    action = stringResource(Res.string.group_see_all),
+                    onAction = null,
+                )
+            }
+            items(uiState.colleagues, key = { it.id }) { colleague ->
+                ColleagueCard(
+                    colleague = colleague,
+                    onClick = { viewModel.openCalendar(colleague.id, CalendarKind.COLLEAGUE) },
+                )
+            }
+        }
+
+        if (uiState.groups.isNotEmpty()) {
+            item(key = "groups-header") {
+                SectionHeader(title = stringResource(Res.string.group_groups_header))
+            }
+            items(uiState.groups, key = { it.id }) { group ->
+                GroupCard(
+                    group = group,
+                    onClick = { viewModel.openCalendar(group.id, CalendarKind.GROUP) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SectionHeader(
+    title: String,
+    action: String? = null,
+    onAction: (() -> Unit)? = null,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(
-            text = "Agosto 2026",
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onBackground,
+            text = title,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            listOf("L", "M", "X", "J", "V", "S", "D").forEach { day ->
-                Text(
-                    text = day,
-                    modifier = Modifier.weight(1f),
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
-            shape = MaterialTheme.shapes.large,
-        ) {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = "Cuadrícula del mes (próximamente)",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-
-        Text(
-            text = "Próximos turnos",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onBackground,
-        )
-
-        val upcoming = listOf(
-            Triple("18 ago", "Turno de mañana", MaterialTheme.colorScheme.primary),
-            Triple("20 ago", "Guardia de noche", MaterialTheme.colorScheme.tertiary),
-            Triple("24 ago", "Evento personal", MaterialTheme.colorScheme.secondary),
-        )
-        upcoming.forEach { (date, label, color) ->
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                ),
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Circle,
-                        contentDescription = null,
-                        tint = color,
-                        modifier = Modifier.size(12.dp),
-                    )
-                    Text(
-                        text = date,
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Text(
-                        text = label,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                }
+        if (action != null && onAction != null) {
+            TextButton(onClick = onAction) {
+                Text(action, fontWeight = FontWeight.SemiBold)
             }
         }
     }

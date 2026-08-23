@@ -82,8 +82,9 @@ private const val MONTH_PAGE_ANCHOR = MONTH_PAGE_COUNT / 2
 @Composable
 fun CalendarViewer(
     modifier: Modifier = Modifier,
-    theme: CalendarTheme = CalendarThemes.primary(),
+    theme: CalendarTheme = CalendarThemes.myCalendar(),
     eventsByDate: Map<LocalDate, List<CalendarEventUi>> = emptyMap(),
+    titleBar : @Composable () -> Unit = {},
     onAddEvent: (LocalDate) -> Unit = {},
     onManageEvent: (CalendarEventUi) -> Unit = {},
 ) {
@@ -105,7 +106,11 @@ fun CalendarViewer(
     var sheetDate by remember { mutableStateOf<LocalDate?>(null) }
 
     SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(theme.background),
+        ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -114,6 +119,7 @@ fun CalendarViewer(
                     .padding(horizontal = 2.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
+                titleBar()
                 CalendarMonthHeader(
                     pagerState = pagerState,
                     monthForPage = ::monthForPage,

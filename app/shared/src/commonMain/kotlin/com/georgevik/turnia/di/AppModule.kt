@@ -1,5 +1,6 @@
 package com.georgevik.turnia.di
 
+import com.georgevik.turnia.ui.main.group.GroupViewModel
 import com.georgevik.turnia.ui.main.mycalendar.MyCalendarViewModel
 import com.georgevik.turnia.ui.root.RootViewModel
 import com.georgevik.turnia.ui.signin.SignInViewModel
@@ -16,4 +17,5 @@ val appModule: Module = module {
     viewModelOf(::SplashViewModel)
     viewModelOf(::RootViewModel)
     viewModelOf(::MyCalendarViewModel)
+    viewModelOf(::GroupViewModel)
 }

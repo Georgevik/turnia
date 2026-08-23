@@ -27,6 +27,7 @@
     <!-- Calendar -->
     <string name="calendar_previous_month">Mes anterior</string>
     <string name="calendar_next_month">Mes siguiente</string>
+    <string name="calendar_back">Volver</string>
     <string name="calendar_month_year">%1$s %2$d</string>
     <string-array name="calendar_weekday_initials">
         <item>L</item>
@@ -60,4 +61,14 @@
         <item>Noviembre</item>
         <item>Diciembre</item>
     </string-array>
+
+    <!-- Groups tab -->
+    <string name="group_search_hint">Buscar personas o grupos...</string>
+    <string name="group_people_header">PERSONAS</string>
+    <string name="group_groups_header">GRUPOS</string>
+    <string name="group_see_all">Ver todos</string>
+    <plurals name="group_member_count">
+        <item quantity="one">%1$d miembro</item>
+        <item quantity="other">%1$d miembros</item>
+    </plurals>
 </resources>
