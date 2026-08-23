@@ -1,5 +1,6 @@
 package com.georgevik.turnia.di
 
+import com.georgevik.turnia.ui.main.MainViewModel
 import com.georgevik.turnia.ui.main.group.GroupViewModel
 import com.georgevik.turnia.ui.main.mycalendar.MyCalendarViewModel
 import com.georgevik.turnia.ui.root.RootViewModel
@@ -18,4 +19,5 @@ val appModule: Module = module {
     viewModelOf(::RootViewModel)
     viewModelOf(::MyCalendarViewModel)
     viewModelOf(::GroupViewModel)
+    viewModelOf(::MainViewModel)
 }

@@ -4,18 +4,26 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.UserSession
+import com.georgevik.turnia.core.domain.repository.AppConfigRepository
 import com.georgevik.turnia.core.domain.repository.UserRepository
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 class SplashViewModel(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val appConfigRepository: AppConfigRepository,
 ) : ViewModel() {
     private val _uiEvent = Channel<SplashUiEvent>(Channel.BUFFERED)
     val uiEvent = _uiEvent.receiveAsFlow()
 
     init {
+        // Download feature flags while the splash is on screen; the result is
+        // cached in the repository and read later (e.g. to gate the Swap tab).
+        viewModelScope.launch {
+            appConfigRepository.refreshFeatureFlags()
+        }
+
         viewModelScope.launch {
             userRepository.userSession.collect {
                 val event = when (it) {
