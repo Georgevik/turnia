@@ -51,6 +51,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.georgevik.turnia.ui.components.calendar.animtransition.CALENDAR_TRANSITION_MILLIS
+import com.georgevik.turnia.ui.components.calendar.daydetail.DayDetailsSheet
+import com.georgevik.turnia.ui.components.calendar.daydetail.model.PredefinedEventUi
+import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
@@ -85,7 +88,10 @@ fun CalendarViewer(
     theme: CalendarTheme = CalendarThemes.myCalendar(),
     eventsByDate: Map<LocalDate, List<CalendarEventUi>> = emptyMap(),
     titleBar : @Composable () -> Unit = {},
-    onAddEvent: (LocalDate) -> Unit = {},
+    // Quick-add: predefined events offered when the user taps "+" on a day.
+    predefinedEvents: List<PredefinedEventUi> = emptyList(),
+    onAddPredefinedEvent: (date: LocalDate, predefinedId: String) -> Unit = { _, _ -> },
+    onAddCustomEvent: (date: LocalDate) -> Unit = {},
     onManageEvent: (CalendarEventUi) -> Unit = {},
 ) {
     val anchorMonth = remember {
@@ -185,7 +191,15 @@ fun CalendarViewer(
                         animatedVisibilityScope = this,
                         date = date,
                         events = eventsByDate[date].orEmpty(),
-                        onAddEvent = { onAddEvent(date) },
+                        predefinedEvents = predefinedEvents,
+                        onPickPredefined = { predefined ->
+                            onAddPredefinedEvent(date, predefined.id)
+                            selectedDate = null
+                        },
+                        onAddCustom = {
+                            onAddCustomEvent(date)
+                            selectedDate = null
+                        },
                         onManageEvent = onManageEvent,
                     )
                 }

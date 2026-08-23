@@ -4,8 +4,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.georgevik.turnia.core.domain.model.CalendarKind
-import com.georgevik.turnia.ui.components.calendar.CalendarEventType
-import com.georgevik.turnia.ui.components.calendar.CalendarEventUi
+import com.georgevik.turnia.ui.components.calendar.model.CalendarEventType
+import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import com.georgevik.turnia.ui.main.group.model.ColleageRowUi
 import com.georgevik.turnia.ui.main.group.model.GroupRowUi
 import com.georgevik.turnia.ui.main.group.model.GroupScreenUi

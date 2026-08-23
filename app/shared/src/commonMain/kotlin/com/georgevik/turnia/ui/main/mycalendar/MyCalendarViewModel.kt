@@ -3,11 +3,15 @@ package com.georgevik.turnia.ui.main.mycalendar
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
-import com.georgevik.turnia.ui.components.calendar.CalendarEventType
-import com.georgevik.turnia.ui.components.calendar.CalendarEventUi
+import com.georgevik.turnia.core.data.logger.Logger
+import com.georgevik.turnia.ui.components.calendar.daydetail.model.PredefinedEventUi
+import com.georgevik.turnia.ui.components.calendar.model.CalendarEventType
+import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
+import com.georgevik.turnia.ui.system.createUuid
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -18,6 +22,7 @@ import kotlin.time.Clock
 @Immutable
 data class MyCalendarUiState(
     val eventsByDate: Map<LocalDate, List<CalendarEventUi>> = emptyMap(),
+    val predefinedEvents: List<PredefinedEventUi> = emptyList(),
 )
 
 /**
@@ -30,7 +35,46 @@ class MyCalendarViewModel : ViewModel() {
     val uiState: StateFlow<MyCalendarUiState> = _uiState.asStateFlow()
 
     init {
-        _uiState.value = MyCalendarUiState(eventsByDate = mockEvents())
+        _uiState.value = MyCalendarUiState(
+            eventsByDate = mockEvents(),
+            predefinedEvents = mockPredefined(),
+        )
+    }
+
+    /** Quick-add: drop a new personal event of the chosen predefined type on [date]. */
+    fun addPredefinedEvent(date: LocalDate, predefinedId: String) {
+        val predefined = uiState.value.predefinedEvents.firstOrNull { it.id == predefinedId }
+            ?: return
+        val event = CalendarEventUi.create(
+            id = createUuid(),
+            type = CalendarEventType.PERSONAL,
+            text = predefined.name,
+            background = predefined.color,
+            subtitle = predefined.name,
+            isOwner = true,
+        )
+        _uiState.update { state ->
+            val forDay = state.eventsByDate[date].orEmpty() + event
+            state.copy(eventsByDate = state.eventsByDate + (date to forDay))
+        }
+    }
+
+    /** Custom event: will open the "new event" screen. Stubbed until it exists. */
+    fun addCustomEvent(date: LocalDate) {
+        Logger.d(TAG, "TODO: open new event screen for $date")
+    }
+
+    private fun mockPredefined(): List<PredefinedEventUi> {
+        val teal = Color(0xFF006B5F)
+        val slate = Color(0xFF4F6D7A)
+        val amber = Color(0xFFC0873E)
+        val sand = Color(0xFFFFDDB8)
+        return listOf(
+            PredefinedEventUi("pt-night", "Guardia noche", teal),
+            PredefinedEventUi("pt-morning", "Turno mañana", slate),
+            PredefinedEventUi("pt-evening", "Turno tarde", amber),
+            PredefinedEventUi("pt-gym", "Gimnasio", sand),
+        )
     }
 
     private fun mockEvents(): Map<LocalDate, List<CalendarEventUi>> {
@@ -67,11 +111,20 @@ class MyCalendarViewModel : ViewModel() {
         // Anchor the mock data to the current month so it lands on "today".
         val firstOfMonth = Clock.System.todayIn(TimeZone.currentSystemDefault())
             .let { LocalDate(it.year, it.month, 1) }
+
         fun day(offset: Int) = firstOfMonth.plus(offset, DateTimeUnit.DAY)
 
         return mapOf(
             day(0) to listOf(
-                group("g1", "Guardia noche", teal, "20:00 - 08:00", "Propietario: Yo", onSale = true, isOwner = true),
+                group(
+                    "g1",
+                    "Guardia noche",
+                    teal,
+                    "20:00 - 08:00",
+                    "Propietario: Yo",
+                    onSale = true,
+                    isOwner = true
+                ),
                 personal("p1", "Cita médica", sand, "09:30 - 10:00", "Revisión anual"),
             ),
             day(3) to listOf(
@@ -82,7 +135,15 @@ class MyCalendarViewModel : ViewModel() {
                 personal("p2", "Gimnasio", lightAmber, "18:00 - 19:00", "Rutina semanal"),
             ),
             day(15) to listOf(
-                group("g4", "Cambio", red, "07:00 - 15:00", "Grupo UCI", onSale = true, isOwner = true),
+                group(
+                    "g4",
+                    "Cambio",
+                    red,
+                    "07:00 - 15:00",
+                    "Grupo UCI",
+                    onSale = true,
+                    isOwner = true
+                ),
                 personal("p3", "Cena con el equipo", sand, "21:00 - 23:00", "Restaurante"),
                 group("g5", "Formación", slate, "16:00 - 18:00", "Sala 3"),
                 personal("p4", "Recados", amber, "12:00 - 13:00", "Varios"),
@@ -96,5 +157,9 @@ class MyCalendarViewModel : ViewModel() {
                 personal("p6", "Fiesta", teal, "23:00 - 02:00", "Con amigos"),
             ),
         )
+    }
+
+    companion object {
+        private const val TAG = "MyCalendarViewModel"
     }
 }

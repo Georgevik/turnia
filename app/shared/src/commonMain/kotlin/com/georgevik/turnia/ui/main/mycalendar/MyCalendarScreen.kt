@@ -13,5 +13,10 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun MyCalendarScreen(viewModel: MyCalendarViewModel = koinViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    CalendarViewer(eventsByDate = uiState.eventsByDate)
+    CalendarViewer(
+        eventsByDate = uiState.eventsByDate,
+        predefinedEvents = uiState.predefinedEvents,
+        onAddPredefinedEvent = viewModel::addPredefinedEvent,
+        onAddCustomEvent = viewModel::addCustomEvent,
+    )
 }

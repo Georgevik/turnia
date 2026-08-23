@@ -46,6 +46,10 @@
     <string name="event_status_active">Activo</string>
     <string name="event_manage">Gestionar</string>
     <string name="event_add">Añadir evento</string>
+    <string name="event_add_close">Cerrar</string>
+    <string name="event_add_custom">Evento personalizado</string>
+    <string name="event_no_predefined_title">No tienes eventos predefinidos</string>
+    <string name="event_no_predefined_body">Crea uno personalizado para empezar.</string>
 
     <string-array name="calendar_months">
         <item>Enero</item>

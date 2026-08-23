@@ -1,4 +1,4 @@
-package com.georgevik.turnia.ui.components.calendar
+package com.georgevik.turnia.ui.components.calendar.model
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color

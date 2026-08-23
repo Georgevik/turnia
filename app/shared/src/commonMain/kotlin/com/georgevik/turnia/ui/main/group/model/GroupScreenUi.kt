@@ -1,7 +1,7 @@
 package com.georgevik.turnia.ui.main.group.model
 
 import com.georgevik.turnia.core.domain.model.CalendarKind
-import com.georgevik.turnia.ui.components.calendar.CalendarEventUi
+import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import kotlinx.datetime.LocalDate
 
 
