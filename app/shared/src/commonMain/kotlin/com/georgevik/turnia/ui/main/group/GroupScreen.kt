@@ -1,6 +1,7 @@
 package com.georgevik.turnia.ui.main.group
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -14,8 +15,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -33,11 +32,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.georgevik.turnia.core.domain.model.CalendarKind
-import com.georgevik.turnia.ui.components.calendar.CalendarThemes
-import com.georgevik.turnia.ui.components.calendar.CalendarViewer
-import com.georgevik.turnia.ui.main.group.components.CalendarTitleBar
 import com.georgevik.turnia.ui.main.group.components.ColleagueCard
 import com.georgevik.turnia.ui.main.group.components.GroupCard
+import com.georgevik.turnia.ui.main.group.components.OverlayCalendar
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import turnia.app.shared.generated.resources.Res
@@ -51,30 +48,11 @@ fun GroupScreen(viewModel: GroupViewModel = koinViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var query by rememberSaveable { mutableStateOf("") }
 
-    uiState.openCalendar?.let { calendar ->
-        val isGroup = calendar.kind == CalendarKind.GROUP
-        val theme = if (isGroup) CalendarThemes.group() else CalendarThemes.colleague()
-        CalendarViewer(
-            theme = theme,
-            titleBar = {
-                CalendarTitleBar(
-                    title = calendar.name,
-                    icon = if (isGroup) Icons.Default.Groups else Icons.Default.Person,
-                    theme = theme,
-                    onBack = { viewModel.closeCalendar() },
-                )
-
-            },
-            eventsByDate = calendar.events,
-        )
-        return
-    }
-
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top)),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(
+        contentPadding = PaddingValues(
             start = 16.dp,
             end = 16.dp,
             top = 16.dp,
@@ -125,6 +103,8 @@ fun GroupScreen(viewModel: GroupViewModel = koinViewModel()) {
             }
         }
     }
+
+    OverlayCalendar(uiState.openCalendar, viewModel::closeCalendar)
 }
 
 @Composable
