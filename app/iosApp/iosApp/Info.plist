@@ -4,6 +4,11 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<!-- iOS OAuth client id (from GoogleService-Info.plist CLIENT_ID). The GoogleSignIn
+	     SDK reads this to build its active configuration; KMPAuth never sets one itself,
+	     so without this key signInWithPresentingViewController has no configuration and fails. -->
+	<key>GIDClientID</key>
+	<string>570433560233-5vkolbvu74mg78tjpq3l06kmnivih2oi.apps.googleusercontent.com</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
