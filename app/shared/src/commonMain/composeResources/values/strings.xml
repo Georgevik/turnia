@@ -66,6 +66,17 @@
         <item>Diciembre</item>
     </string-array>
 
+    <!-- Welcome / Sign in -->
+    <string name="welcome_headline">Tus turnos, sin líos</string>
+    <string name="welcome_body">Cambios de última hora, coberturas y favores entre compañeros… por fin en un solo sitio. Se acabó perderse entre mensajes de WhatsApp.</string>
+    <string name="welcome_feature_trace_title">Cada cambio, siempre trazado</string>
+    <string name="welcome_feature_trace_body">Sigue el rastro de un turno de principio a fin, aunque pase por varias manos.</string>
+    <string name="welcome_feature_clear_title">Sin dobles turnos ni sorpresas</string>
+    <string name="welcome_feature_clear_body">Siempre sabrás quién cubre cada turno.</string>
+    <string name="welcome_feature_notify_title">Te avisamos cuando importa</string>
+    <string name="welcome_feature_notify_body">Una notificación en cuanto algo afecta a tu horario.</string>
+    <string name="welcome_signin_hint">Inicia sesión para empezar</string>
+
     <!-- Groups tab -->
     <string name="group_search_hint">Buscar personas o grupos...</string>
     <string name="group_people_header">PERSONAS</string>
