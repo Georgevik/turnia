@@ -148,11 +148,6 @@ fun CalendarViewer(
                         .fillMaxWidth()
                         .weight(1f),
                 ) {
-                    val cellHeight = this.maxHeight / WEEKS
-                    val eventArea = cellHeight - CalendarCellNumberHeight - 12.dp
-                    val maxEventRows =
-                        (eventArea / CalendarEventSlotHeight).toInt().coerceAtLeast(0)
-
                     HorizontalPager(
                         state = pagerState,
                         modifier = Modifier.fillMaxSize(),
@@ -162,7 +157,6 @@ fun CalendarViewer(
                     ) { page ->
                         CalendarGrid(
                             month = monthForPage(page),
-                            maxEventRows = maxEventRows,
                             calendarTheme = theme,
                             // "Selected" = the retained day, but only while open.
                             selectedDate = sheetDate.takeIf { isSheetOpen },
@@ -216,6 +210,7 @@ fun CalendarViewer(
                             isSheetOpen = false
                         },
                         onManageEvent = onManageEvent,
+                        onClose = { isSheetOpen = false },
                     )
                 }
             }
@@ -309,7 +304,6 @@ private fun CalendarWeekTitles() {
 @Composable
 private fun CalendarGrid(
     month: LocalDate,
-    maxEventRows: Int,
     calendarTheme: CalendarTheme,
     selectedDate: LocalDate?,
     sharedDate: LocalDate?,
@@ -342,7 +336,6 @@ private fun CalendarGrid(
                         isSelected = date == selectedDate,
                         theme = calendarTheme,
                         events = eventsByDate[date].orEmpty(),
-                        maxEventRows = maxEventRows,
                         // Only the retained sheet date's in-month tile is a shared
                         // element (kept registered through the close animation).
                         sharedScope = if (dateInMonth && date == sharedDate) sharedScope else null,

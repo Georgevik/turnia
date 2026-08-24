@@ -6,6 +6,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -30,11 +31,18 @@ import com.georgevik.turnia.ui.components.calendar.animtransition.CalendarSheetB
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import kotlinx.datetime.LocalDate
 
-/** Height of a single event row (and of the "•••" overflow indicator). */
-internal val CalendarEventSlotHeight = 16.dp
-
 /** Height reserved at the top of a cell for the day number. */
-internal val CalendarCellNumberHeight = 30.dp
+private val CalendarCellNumberHeight = 24.dp
+
+/** Diameter of the "today" highlight circle behind the day number. */
+private val CalendarDayNumberCircle = 24.dp
+
+/** Margin between adjacent tiles (applied on all sides of each cell). */
+private val CellOuterMargin = 2.dp
+
+/** Inner padding between the tile edge and its content. */
+private val CellContentPadding = 2.dp
+
 
 /**
  * Shared-element keys used to morph a calendar tile into the day details sheet.
@@ -55,7 +63,6 @@ fun CalendarCell(
     onClick: () -> Unit,
     modifier: Modifier = Modifier.Companion,
     events: List<CalendarEventUi> = emptyList(),
-    maxEventRows: Int = 0,
     // Expand animation via SharedTransition
     sharedScope: SharedTransitionScope? = null,
     isExpanded: Boolean = false,
@@ -85,7 +92,7 @@ fun CalendarCell(
     Card(
         onClick = onClick,
         modifier = modifier
-            .padding(2.dp)
+            .padding(CellOuterMargin)
             .then(containerModifier)
             .fillMaxSize(),
         shape = RoundedCornerShape(8.dp),
@@ -102,7 +109,7 @@ fun CalendarCell(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 3.dp, vertical = 3.dp),
+                .padding(horizontal = 3.dp, vertical = CellContentPadding),
         ) {
             // Day number, centered at the top.
             Box(
@@ -113,7 +120,7 @@ fun CalendarCell(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(28.dp)
+                        .size(CalendarDayNumberCircle)
                         .clip(CircleShape)
                         .background(indicatorColor),
                     contentAlignment = Alignment.Center,
@@ -128,19 +135,31 @@ fun CalendarCell(
                 }
             }
 
-            // Show as many event rows as fit ([maxEventRows], computed once from
-            // the cell size); if there are more, the last slot becomes "•••".
-            if (events.isNotEmpty() && maxEventRows > 0) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                ) {
-                    if (events.size <= maxEventRows) {
-                        events.forEach { EventRow(it) }
-                    } else {
-                        events.take(maxEventRows - 1).forEach { EventRow(it) }
-                        OverflowRow()
+            when {
+                events.isEmpty() -> Unit
+                events.size == 1 -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                    ) {
+                        EventRow(modifier = Modifier.weight(1f), event = events.first())
+                        Spacer(modifier.weight(1f))
+                    }
+                }
+
+                events.size > 1 -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                    ) {
+                        EventRow(modifier = Modifier.weight(1f), event = events[0])
+                        EventRow(modifier = Modifier.weight(1f), event = events[1])
+                        if (events.size > 2) {
+                            OverflowRow()
+                        }
+
                     }
                 }
             }
@@ -175,11 +194,10 @@ internal fun getShareModifier(
 }
 
 @Composable
-private fun EventRow(event: CalendarEventUi) {
+private fun EventRow(event: CalendarEventUi, modifier: Modifier = Modifier) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .height(CalendarEventSlotHeight)
             .padding(vertical = 1.dp)
             .clip(RoundedCornerShape(4.dp))
             .background(event.background)
@@ -199,9 +217,7 @@ private fun EventRow(event: CalendarEventUi) {
 @Composable
 private fun OverflowRow() {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(CalendarEventSlotHeight),
+        modifier = Modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center,
     ) {
         Text(
