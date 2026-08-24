@@ -17,8 +17,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.filled.LocalOffer
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -28,13 +28,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.georgevik.turnia.ui.components.calendar.diagonalHatch
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
+import turnia.app.shared.generated.resources.event_assigned_other
 import turnia.app.shared.generated.resources.event_manage
-import turnia.app.shared.generated.resources.event_status_active
-import turnia.app.shared.generated.resources.event_status_on_sale
+import turnia.app.shared.generated.resources.event_status_on_swap
 
 @Composable
 fun DayEventRow(
@@ -47,56 +49,93 @@ fun DayEventRow(
         color = MaterialTheme.colorScheme.surfaceContainerLowest,
         shadowElevation = 1.dp,
     ) {
-        Row(modifier = Modifier.height(IntrinsicSize.Min)) {
-            // Accent bar in the event's color.
-            Box(
-                modifier = Modifier
-                    .width(6.dp)
-                    .fillMaxHeight()
-                    .background(event.background),
-            )
-            Column(modifier = Modifier.weight(1f).padding(16.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    TypeChip(event.text)
-                    StatusChip(onSale = event.onSale)
-                    Spacer(Modifier.weight(1f))
-                    if (event.isOwner) {
-                        FilledTonalButton(
-                            onClick = onManage,
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
-                        ) {
-                            Text(stringResource(Res.string.event_manage))
+        Box(modifier = Modifier.height(IntrinsicSize.Min)) {
+            if (event.assignedToOther) {
+                Box(
+                    Modifier
+                        .matchParentSize()
+                        .diagonalHatch(
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f),
+                            strokeWidth = 2.dp,
+                            spacing = 8.dp,
+                        ),
+                )
+            }
+
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Box(
+                    modifier = Modifier
+                        .width(6.dp)
+                        .fillMaxHeight()
+                        .background(event.background),
+                )
+
+                Column(modifier = Modifier.weight(1f).padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        event.acronym?.takeIf { it.isNotBlank() }?.let { AcronymChip(it) }
+                        Text(
+                            text = event.name,
+                            modifier = Modifier.weight(1f),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        if (event.isOwner) {
+                            FilledTonalButton(
+                                onClick = onManage,
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                            ) {
+                                Text(stringResource(Res.string.event_manage))
+                            }
                         }
                     }
-                }
 
-                event.timeRange?.let { time ->
-                    Spacer(Modifier.height(10.dp))
-                    Text(
-                        text = time,
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                }
+                    Spacer(Modifier.height(8.dp))
 
-                Spacer(Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = if (event.isOwner) Icons.Default.Person else Icons.Default.Groups,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    Text(
-                        text = event.subtitle,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    // Status chips.
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        SwapChip()
+                        if (event.assignedToOther) AssignedOtherChip()
+                    }
+
+                    event.timeRange?.let { time ->
+                        Spacer(Modifier.height(10.dp))
+                        Text(
+                            text = time,
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = if (event.isOwner && !event.assignedToOther) {
+                                Icons.Default.Person
+                            } else {
+                                Icons.Default.Groups
+                            },
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = event.subtitle,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
         }
@@ -104,56 +143,69 @@ fun DayEventRow(
 }
 
 @Composable
-private fun TypeChip(text: String) {
+private fun AcronymChip(acronym: String) {
     Surface(
         shape = RoundedCornerShape(8.dp),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
         Text(
-            text = text,
+            text = acronym,
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
             style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold,
+            fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
         )
     }
 }
 
 @Composable
-private fun StatusChip(onSale: Boolean) {
-    if (onSale) {
-        Surface(
-            shape = RoundedCornerShape(8.dp),
-            color = MaterialTheme.colorScheme.tertiaryContainer,
-            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+private fun SwapChip() {
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.tertiaryContainer,
+        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Default.LocalOffer,
-                    contentDescription = null,
-                    modifier = Modifier.size(14.dp),
-                )
-                Text(
-                    text = stringResource(Res.string.event_status_on_sale),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
-        }
-    } else {
-        Surface(
-            shape = RoundedCornerShape(8.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        ) {
+            Icon(
+                imageVector = Icons.Default.SwapHoriz,
+                contentDescription = null,
+                modifier = Modifier.size(14.dp),
+            )
             Text(
-                text = stringResource(Res.string.event_status_active),
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                text = stringResource(Res.string.event_status_on_swap),
                 style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+    }
+}
+
+/** Marks an event the current user owns but that another member performs. */
+@Composable
+private fun AssignedOtherChip() {
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Default.Groups,
+                contentDescription = null,
+                modifier = Modifier.size(14.dp),
+            )
+            Text(
+                text = stringResource(Res.string.event_assigned_other),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
             )
         }
     }

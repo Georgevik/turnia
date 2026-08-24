@@ -48,7 +48,8 @@ class MyCalendarViewModel : ViewModel() {
         val event = CalendarEventUi.create(
             id = createUuid(),
             type = CalendarEventType.PERSONAL,
-            text = predefined.name,
+            name = predefined.name,
+            acronym = predefined.acronym,
             background = predefined.color,
             subtitle = predefined.name,
             isOwner = true,
@@ -70,10 +71,10 @@ class MyCalendarViewModel : ViewModel() {
         val amber = Color(0xFFC0873E)
         val sand = Color(0xFFFFDDB8)
         return listOf(
-            PredefinedEventUi("pt-night", "Guardia noche", teal),
-            PredefinedEventUi("pt-morning", "Turno mañana", slate),
-            PredefinedEventUi("pt-evening", "Turno tarde", amber),
-            PredefinedEventUi("pt-gym", "Gimnasio", sand),
+            PredefinedEventUi(createUuid(), "Guardia noche", teal, acronym = "GN"),
+            PredefinedEventUi(createUuid(), "Turno mañana", slate, acronym = "M"),
+            PredefinedEventUi(createUuid(), "Turno tarde", amber, acronym = "T"),
+            PredefinedEventUi(createUuid(), "Gimnasio", sand, acronym = "GYM"),
         )
     }
 
@@ -88,24 +89,43 @@ class MyCalendarViewModel : ViewModel() {
 
         fun group(
             id: String,
-            text: String,
+            name: String,
+            acronym: String?,
             color: Color,
             time: String?,
             subtitle: String,
-            onSale: Boolean = false,
+            onSwap: Boolean = false,
             isOwner: Boolean = false,
+            assignedToOther: Boolean = false,
         ) = CalendarEventUi.create(
-            id, CalendarEventType.GROUP, text, color, time, subtitle, onSale, isOwner,
+            id = id,
+            type = CalendarEventType.GROUP,
+            name = name,
+            acronym = acronym,
+            background = color,
+            timeRange = time,
+            subtitle = subtitle,
+            onSwap = onSwap,
+            isOwner = isOwner,
+            assignedToOther = assignedToOther,
         )
 
         fun personal(
             id: String,
-            text: String,
+            name: String,
+            acronym: String?,
             color: Color,
             time: String?,
             subtitle: String,
         ) = CalendarEventUi.create(
-            id, CalendarEventType.PERSONAL, text, color, time, subtitle, isOwner = true,
+            id = id,
+            type = CalendarEventType.PERSONAL,
+            name = name,
+            acronym = acronym,
+            background = color,
+            timeRange = time,
+            subtitle = subtitle,
+            isOwner = true,
         )
 
         // Anchor the mock data to the current month so it lands on "today".
@@ -119,42 +139,53 @@ class MyCalendarViewModel : ViewModel() {
                 group(
                     "g1",
                     "Guardia noche",
+                    "GN",
                     teal,
                     "20:00 - 08:00",
                     "Propietario: Yo",
-                    onSale = true,
-                    isOwner = true
+                    onSwap = true,
+                    isOwner = true,
                 ),
-                personal("p1", "Cita médica", sand, "09:30 - 10:00", "Revisión anual"),
+                personal("p1", "Cita médica", null, sand, "09:30 - 10:00", "Revisión anual"),
             ),
             day(3) to listOf(
-                group("g2", "Turno mañana", slate, "08:00 - 15:00", "Revisión mensual"),
+                group("g2", "Turno mañana", "M", slate, "08:00 - 15:00", "Revisión mensual"),
+                group(
+                    "g6",
+                    "Extra",
+                    "EX",
+                    teal,
+                    "18:00 - 22:00",
+                    "La cubre: Marta L.",
+                    isOwner = true,
+                    assignedToOther = true,
+                ),
             ),
             day(9) to listOf(
-                group("g3", "Noche", teal, "22:00 - 06:00", "Grupo UCI"),
-                personal("p2", "Gimnasio", lightAmber, "18:00 - 19:00", "Rutina semanal"),
+                group("g3", "Noche", "N", teal, "22:00 - 06:00", "Grupo UCI"),
+                personal("p2", "Gimnasio", "GYM", lightAmber, "18:00 - 19:00", "Rutina semanal"),
             ),
             day(15) to listOf(
                 group(
                     "g4",
                     "Cambio",
+                    "C",
                     red,
                     "07:00 - 15:00",
                     "Grupo UCI",
-                    onSale = true,
-                    isOwner = true
+                    onSwap = true,
+                    isOwner = true,
                 ),
-                personal("p3", "Cena con el equipo", sand, "21:00 - 23:00", "Restaurante"),
-                group("g5", "Formación", slate, "16:00 - 18:00", "Sala 3"),
-                personal("p4", "Recados", amber, "12:00 - 13:00", "Varios"),
-                group("g6", "Extra", teal, "18:00 - 22:00", "Grupo Urgencias"),
+                personal("p3", "Cena con el equipo", null, sand, "21:00 - 23:00", "Restaurante"),
+                group("g5", "Formación", "F", slate, "16:00 - 18:00", "Sala 3"),
+                personal("p4", "Recados", null, amber, "12:00 - 13:00", "Varios"),
             ),
             day(22) to listOf(
-                personal("p5", "Vacaciones", lightAmber, null, "Todo el día"),
+                personal("p5", "Vacaciones", "VAC", lightAmber, null, "Todo el día"),
             ),
             day(27) to listOf(
-                group("g7", "Halloween", amber, "20:00 - 23:00", "Fiesta de grupo"),
-                personal("p6", "Fiesta", teal, "23:00 - 02:00", "Con amigos"),
+                group("g7", "Halloween", null, amber, "20:00 - 23:00", "Fiesta de grupo"),
+                personal("p6", "Fiesta", null, teal, "23:00 - 02:00", "Con amigos"),
             ),
         )
     }

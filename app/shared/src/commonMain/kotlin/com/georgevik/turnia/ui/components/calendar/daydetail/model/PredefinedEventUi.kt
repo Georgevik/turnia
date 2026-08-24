@@ -9,6 +9,7 @@ data class PredefinedEventUi(
     val id: String,
     val name: String,
     val color: Color,
+    val acronym: String? = null,
 ) {
     val textColor: Color = if (color.luminance() > 0.5f) Color.Black else Color.White
 }

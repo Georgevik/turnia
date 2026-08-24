@@ -12,26 +12,36 @@ enum class CalendarEventType { GROUP, PERSONAL }
  * precomputed here (in the view model, off the Compose thread) so the cell and
  * the details sheet only draw.
  *
- * @param text short name shown as the cell chip and the sheet's title chip.
+ * @param name full event name (e.g. "Guardia noche").
+ * @param acronym optional short siglas (e.g. "GN") the user set for the event;
+ *   preferred on the tight calendar grid. `null`/blank means fall back to [name].
  * @param background cell chip fill and the sheet card's accent bar color.
  * @param textColor readable on-color for [background] (from its luminance).
  * @param timeRange e.g. "20:00 - 08:00", or `null` for an all-day event.
  * @param subtitle owner/description line shown in the details sheet.
- * @param onSale group event offered for another member to take.
- * @param isOwner the current user owns it (can manage it).
+ * @param onSwap group event offered for another member to take it over.
+ * @param isOwner the current user created it (can manage it).
+ * @param assignedToOther the current user owns it but another member performs it
+ *   (owner != assignee) — rendered with diagonal hatching so it's clearly not
+ *   yours to do even though you own it.
  */
 @Immutable
 data class CalendarEventUi(
     val id: String,
     val type: CalendarEventType,
-    val text: String,
+    val name: String,
+    val acronym: String?,
     val background: Color,
     val textColor: Color,
     val timeRange: String?,
     val subtitle: String,
-    val onSale: Boolean,
+    val onSwap: Boolean,
     val isOwner: Boolean,
+    val assignedToOther: Boolean,
 ) {
+    /** What the calendar grid chip shows: the siglas if set, else the full name. */
+    val gridLabel: String get() = acronym?.takeIf { it.isNotBlank() } ?: name
+
     companion object {
         /**
          * Builds an event, choosing a light or dark [textColor] from the
@@ -40,22 +50,26 @@ data class CalendarEventUi(
         fun create(
             id: String,
             type: CalendarEventType,
-            text: String,
+            name: String,
             background: Color,
+            acronym: String? = null,
             timeRange: String? = null,
             subtitle: String = "",
-            onSale: Boolean = false,
+            onSwap: Boolean = false,
             isOwner: Boolean = false,
+            assignedToOther: Boolean = false,
         ): CalendarEventUi = CalendarEventUi(
             id = id,
             type = type,
-            text = text,
+            name = name,
+            acronym = acronym,
             background = background,
             textColor = if (background.luminance() > 0.5f) Color.Black else Color.White,
             timeRange = timeRange,
             subtitle = subtitle,
-            onSale = onSale,
+            onSwap = onSwap,
             isOwner = isOwner,
+            assignedToOther = assignedToOther,
         )
     }
 }

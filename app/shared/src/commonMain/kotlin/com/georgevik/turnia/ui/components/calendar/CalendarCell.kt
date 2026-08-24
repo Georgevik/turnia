@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -24,9 +26,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.georgevik.turnia.ui.components.calendar.animtransition.CalendarSheetBoundsTransform
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import kotlinx.datetime.LocalDate
@@ -202,14 +206,26 @@ private fun EventRow(event: CalendarEventUi, modifier: Modifier = Modifier) {
             .clip(RoundedCornerShape(4.dp))
             .background(event.background)
             .padding(horizontal = 4.dp),
-        contentAlignment = Alignment.CenterStart,
+        contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text = event.text,
-            style = MaterialTheme.typography.labelSmall,
-            color = event.textColor,
+        // Owned by me but performed by someone else — hatch it (stripes under text).
+        if (event.assignedToOther) {
+            Box(Modifier.matchParentSize().diagonalHatch(event.textColor.copy(alpha = 0.65f)))
+        }
+        // Grow the label to fill the tiny tile so short siglas stay big and legible.
+        BasicText(
+            text = event.gridLabel,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
+            style = TextStyle(
+                color = event.textColor,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+            ),
+            autoSize = TextAutoSize.StepBased(
+                minFontSize = 10.sp,
+                maxFontSize = 20.sp,
+                stepSize = 1.sp,
+            ),
         )
     }
 }

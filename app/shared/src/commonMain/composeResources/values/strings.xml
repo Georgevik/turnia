@@ -42,8 +42,9 @@
     <string name="event_full_date">%2$s %1$d, %3$d</string>
     <string name="event_details_count">%1$d eventos</string>
     <string name="event_details_empty">No hay eventos este día</string>
-    <string name="event_status_on_sale">En venta</string>
+    <string name="event_status_on_swap">En intercambio</string>
     <string name="event_status_active">Activo</string>
+    <string name="event_assigned_other">Cedido</string>
     <string name="event_manage">Gestionar</string>
     <string name="event_add">Añadir evento</string>
     <string name="event_add_close">Cerrar</string>
