@@ -1,5 +1,6 @@
 package com.georgevik.turnia.ui.main.group.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,9 +35,10 @@ fun GroupCard(group: GroupRowUi, onClick: () -> Unit) {
         modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             // Deterministic left color bar, keyed off the group id.
