@@ -4,6 +4,9 @@ import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -29,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import com.georgevik.turnia.ui.components.calendar.animtransition.CalendarSheetBoundsTransform
 import com.georgevik.turnia.ui.components.calendar.calendarContainerKey
@@ -43,6 +47,9 @@ import turnia.app.shared.generated.resources.event_details_empty
 /** Top corner radius the tile animates towards as it becomes the sheet. */
 private val SheetCornerRadius = 28.dp
 
+/** Downward drag distance (px) on the handle past which the sheet dismisses. */
+private const val DragDismissThresholdPx = 120f
+
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun SharedTransitionScope.DayDetailsSheet(
@@ -53,6 +60,7 @@ fun SharedTransitionScope.DayDetailsSheet(
     onPickPredefined: (PredefinedEventUi) -> Unit,
     onAddCustom: () -> Unit,
     onManageEvent: (CalendarEventUi) -> Unit,
+    onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var adding by remember { mutableStateOf(false) }
@@ -79,16 +87,39 @@ fun SharedTransitionScope.DayDetailsSheet(
                 .windowInsetsPadding(WindowInsets.navigationBars)
                 .padding(bottom = 16.dp),
         ) {
-            // Drag handle — fades in with the rest of the sheet chrome.
+            // Drag handle — tap or drag it down to dismiss the sheet. The wrapper
+            // enlarges the touch target around the thin visual bar.
+            var dragOffset by remember { mutableStateOf(0f) }
             Box(
                 modifier = Modifier
-                    .padding(bottom = 12.dp)
                     .align(Alignment.CenterHorizontally)
-                    .size(width = 32.dp, height = 4.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = onClose,
+                    )
+                    .pointerInput(Unit) {
+                        detectVerticalDragGestures(
+                            onDragEnd = {
+                                if (dragOffset > DragDismissThresholdPx) onClose()
+                                dragOffset = 0f
+                            },
+                            onDragCancel = { dragOffset = 0f },
+                            onVerticalDrag = { _, delta -> dragOffset += delta },
+                        )
+                    }
+                    .padding(vertical = 10.dp, horizontal = 24.dp)
                     .fadeInContent(animatedVisibilityScope),
-            )
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(width = 32.dp, height = 4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)),
+                )
+            }
 
             DayDetailHeader(
                 animatedVisibilityScope = animatedVisibilityScope,
