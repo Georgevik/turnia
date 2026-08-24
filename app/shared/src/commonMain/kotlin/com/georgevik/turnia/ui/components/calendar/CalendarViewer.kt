@@ -14,7 +14,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -126,7 +125,7 @@ fun CalendarViewer(
                     .fillMaxSize()
                     // Keep the top (status bar) inset, but only a small horizontal margin.
                     .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
-                    .padding(horizontal = 2.dp),
+                    .padding(all = 2.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 titleBar()
@@ -143,11 +142,7 @@ fun CalendarViewer(
 
                 CalendarWeekTitles()
 
-                BoxWithConstraints(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                ) {
+                Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
                     HorizontalPager(
                         state = pagerState,
                         modifier = Modifier.fillMaxSize(),
