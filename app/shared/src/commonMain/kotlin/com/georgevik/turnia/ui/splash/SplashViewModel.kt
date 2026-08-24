@@ -7,8 +7,11 @@ import com.georgevik.turnia.core.domain.model.UserSession
 import com.georgevik.turnia.core.domain.repository.AppConfigRepository
 import com.georgevik.turnia.core.domain.repository.UserRepository
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
 
 class SplashViewModel(
     private val userRepository: UserRepository,
@@ -16,6 +19,8 @@ class SplashViewModel(
 ) : ViewModel() {
     private val _uiEvent = Channel<SplashUiEvent>(Channel.BUFFERED)
     val uiEvent = _uiEvent.receiveAsFlow()
+
+    private val startMark = TimeSource.Monotonic.markNow()
 
     init {
         // Download feature flags while the splash is on screen; the result is
@@ -34,13 +39,18 @@ class SplashViewModel(
 
                 Logger.d(TAG, "UserSession: $it")
 
-                event?.let { _uiEvent.send(event) }
+                event?.let {
+                    val remaining = MIN_SPLASH_DURATION - startMark.elapsedNow()
+                    if (remaining.isPositive()) delay(remaining)
+                    _uiEvent.send(event)
+                }
             }
         }
     }
 
     companion object {
         private const val TAG = "SplashViewModel"
+        private val MIN_SPLASH_DURATION = 1.seconds
     }
 }
 

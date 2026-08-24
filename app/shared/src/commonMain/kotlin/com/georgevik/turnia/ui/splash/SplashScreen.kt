@@ -25,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.georgevik.turnia.navigation.Route
@@ -74,6 +75,7 @@ fun SplashScreenContent() {
                 modifier = Modifier.weight(1f).fillMaxWidth(0.5f),
                 alignment = Alignment.BottomEnd,
                 painter = painterResource(Res.drawable.logo),
+                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
                 contentDescription = "Logo"
             )
         }
