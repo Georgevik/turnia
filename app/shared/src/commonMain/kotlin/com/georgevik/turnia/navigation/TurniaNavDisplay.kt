@@ -38,7 +38,10 @@ fun TurniaNavDisplay(snackbarHostState: SnackbarHostState, backStack : NavBackSt
                 })
             }
             entry<Route.SignInKey> {
-                SignInScreen(onOpenAbout = { backStack.add(Route.MainTabKey) })
+                SignInScreen(onSignedIn = {
+                    backStack.clear()
+                    backStack.add(Route.MainTabKey)
+                })
             }
             entry<Route.MainTabKey> {
                 MainNavBarScreen(onBack = { backStack.removeLastOrNull() })
