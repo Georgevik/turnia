@@ -21,9 +21,10 @@ enum class CalendarEventType { GROUP, PERSONAL }
  * @param subtitle owner/description line shown in the details sheet.
  * @param onSwap group event offered for another member to take it over.
  * @param isOwner the current user created it (can manage it).
- * @param assignedToOther the current user owns it but another member performs it
- *   (owner != assignee) — rendered with diagonal hatching so it's clearly not
- *   yours to do even though you own it.
+ * @param transferChain ordered names of every holder from the owner to the
+ *   current performer (owner → … → assignee). Empty (or a single name) when the
+ *   event was never handed over; two or more names means it's been ceded, which
+ *   drives the "Cedido a X" chip, the diagonal hatch and the history trail.
  */
 @Immutable
 data class CalendarEventUi(
@@ -37,10 +38,16 @@ data class CalendarEventUi(
     val subtitle: String,
     val onSwap: Boolean,
     val isOwner: Boolean,
-    val assignedToOther: Boolean,
+    val transferChain: List<String>,
 ) {
     /** What the calendar grid chip shows: the siglas if set, else the full name. */
     val gridLabel: String get() = acronym?.takeIf { it.isNotBlank() } ?: name
+
+    /** Owned by the current user but performed by someone else — hatch it. */
+    val assignedToOther: Boolean get() = transferChain.size >= 2
+
+    /** Name of the current performer when it differs from the owner, else `null`. */
+    val assigneeName: String? get() = transferChain.takeIf { it.size >= 2 }?.last()
 
     companion object {
         /**
@@ -57,7 +64,7 @@ data class CalendarEventUi(
             subtitle: String = "",
             onSwap: Boolean = false,
             isOwner: Boolean = false,
-            assignedToOther: Boolean = false,
+            transferChain: List<String> = emptyList(),
         ): CalendarEventUi = CalendarEventUi(
             id = id,
             type = type,
@@ -69,7 +76,7 @@ data class CalendarEventUi(
             subtitle = subtitle,
             onSwap = onSwap,
             isOwner = isOwner,
-            assignedToOther = assignedToOther,
+            transferChain = transferChain,
         )
     }
 }

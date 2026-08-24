@@ -96,7 +96,7 @@ class MyCalendarViewModel : ViewModel() {
             subtitle: String,
             onSwap: Boolean = false,
             isOwner: Boolean = false,
-            assignedToOther: Boolean = false,
+            transferChain: List<String> = emptyList(),
         ) = CalendarEventUi.create(
             id = id,
             type = CalendarEventType.GROUP,
@@ -107,7 +107,7 @@ class MyCalendarViewModel : ViewModel() {
             subtitle = subtitle,
             onSwap = onSwap,
             isOwner = isOwner,
-            assignedToOther = assignedToOther,
+            transferChain = transferChain,
         )
 
         fun personal(
@@ -156,9 +156,9 @@ class MyCalendarViewModel : ViewModel() {
                     "EX",
                     teal,
                     "18:00 - 22:00",
-                    "La cubre: Marta L.",
+                    "Grupo Urgencias",
                     isOwner = true,
-                    assignedToOther = true,
+                    transferChain = listOf("Yo", "Carlos R.", "Marta L."),
                 ),
             ),
             day(9) to listOf(

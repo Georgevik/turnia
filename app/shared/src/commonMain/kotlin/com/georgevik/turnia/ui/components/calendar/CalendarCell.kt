@@ -16,8 +16,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.contentColorFor
@@ -227,6 +230,17 @@ private fun EventRow(event: CalendarEventUi, modifier: Modifier = Modifier) {
                 stepSize = 1.sp,
             ),
         )
+        // On swap — small corner marker so it stands out at a glance in the grid.
+        if (event.onSwap) {
+            Icon(
+                imageVector = Icons.Default.SwapHoriz,
+                contentDescription = null,
+                tint = event.textColor,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .size(11.dp),
+            )
+        }
     }
 }
 

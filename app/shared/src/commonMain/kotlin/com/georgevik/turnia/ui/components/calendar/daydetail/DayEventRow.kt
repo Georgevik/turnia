@@ -1,6 +1,8 @@
 package com.georgevik.turnia.ui.components.calendar.daydetail
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.SwapHoriz
@@ -96,16 +99,17 @@ fun DayEventRow(
                         }
                     }
 
-                    Spacer(Modifier.height(8.dp))
-
-                    // Status chips.
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        SwapChip()
-                        if (event.assignedToOther) AssignedOtherChip()
+                    // Status chips — only shown when there's a status to show.
+                    if (event.onSwap || event.assigneeName != null) {
+                        Spacer(Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            if (event.onSwap) SwapChip()
+                            event.assigneeName?.let { AssignedOtherChip(name = it) }
+                        }
                     }
 
                     event.timeRange?.let { time ->
@@ -136,9 +140,63 @@ fun DayEventRow(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
+
+                    // Traceability trail: owner → … → current holder.
+                    if (event.transferChain.size >= 2) {
+                        Spacer(Modifier.height(12.dp))
+                        TransferTrail(chain = event.transferChain)
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun TransferTrail(chain: List<String>) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        chain.forEachIndexed { index, holder ->
+            if (index > 0) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = null,
+                    modifier = Modifier.size(14.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            HolderPill(name = holder, highlighted = index == chain.lastIndex)
+        }
+    }
+}
+
+@Composable
+private fun HolderPill(name: String, highlighted: Boolean) {
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = if (highlighted) {
+            MaterialTheme.colorScheme.secondaryContainer
+        } else {
+            MaterialTheme.colorScheme.surfaceContainerHigh
+        },
+        contentColor = if (highlighted) {
+            MaterialTheme.colorScheme.onSecondaryContainer
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
+        },
+    ) {
+        Text(
+            text = name,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = if (highlighted) FontWeight.SemiBold else FontWeight.Normal,
+            maxLines = 1,
+        )
     }
 }
 
@@ -184,9 +242,8 @@ private fun SwapChip() {
     }
 }
 
-/** Marks an event the current user owns but that another member performs. */
 @Composable
-private fun AssignedOtherChip() {
+private fun AssignedOtherChip(name: String) {
     Surface(
         shape = RoundedCornerShape(8.dp),
         color = MaterialTheme.colorScheme.secondaryContainer,
@@ -203,7 +260,7 @@ private fun AssignedOtherChip() {
                 modifier = Modifier.size(14.dp),
             )
             Text(
-                text = stringResource(Res.string.event_assigned_other),
+                text = stringResource(Res.string.event_assigned_other, name),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
             )
