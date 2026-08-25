@@ -37,6 +37,9 @@ import androidx.compose.ui.unit.dp
 import com.georgevik.turnia.ui.components.calendar.animtransition.CalendarSheetBoundsTransform
 import com.georgevik.turnia.ui.components.calendar.calendarContainerKey
 import com.georgevik.turnia.ui.components.calendar.daydetail.animation.fadeInContent
+import com.georgevik.turnia.ui.components.calendar.daydetail.components.DayDetailAddEvent
+import com.georgevik.turnia.ui.components.calendar.daydetail.components.DayDetailHeader
+import com.georgevik.turnia.ui.components.calendar.daydetail.components.DayEventRow
 import com.georgevik.turnia.ui.components.calendar.daydetail.model.PredefinedEventUi
 import com.georgevik.turnia.ui.components.calendar.daydetail.model.PredefinedSectionUi
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi

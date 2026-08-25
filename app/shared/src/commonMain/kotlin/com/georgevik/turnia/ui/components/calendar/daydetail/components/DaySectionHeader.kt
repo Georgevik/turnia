@@ -1,4 +1,4 @@
-package com.georgevik.turnia.ui.components.calendar.daydetail
+package com.georgevik.turnia.ui.components.calendar.daydetail.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row

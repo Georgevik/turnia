@@ -1,4 +1,4 @@
-package com.georgevik.turnia.ui.components.calendar.daydetail
+package com.georgevik.turnia.ui.components.calendar.daydetail.components
 
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.SharedTransitionScope
