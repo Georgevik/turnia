@@ -3,14 +3,25 @@ package com.georgevik.turnia.ui.main.mycalendar
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.georgevik.turnia.core.data.logger.Logger
+import com.georgevik.turnia.core.domain.model.GroupEventType
+import com.georgevik.turnia.core.domain.model.PersonalEventType
+import com.georgevik.turnia.core.domain.repository.GroupRepository
+import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
 import com.georgevik.turnia.ui.components.calendar.daydetail.model.PredefinedEventUi
+import com.georgevik.turnia.ui.components.calendar.daydetail.model.PredefinedSectionUi
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventType
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import com.georgevik.turnia.ui.system.createUuid
+import com.georgevik.turnia.ui.system.entityColor
+import com.georgevik.turnia.ui.system.toComposeColorOr
+import com.georgevik.turnia.ui.system.toComposeColorOrNull
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
@@ -22,28 +33,36 @@ import kotlin.time.Clock
 @Immutable
 data class MyCalendarUiState(
     val eventsByDate: Map<LocalDate, List<CalendarEventUi>> = emptyMap(),
-    val predefinedEvents: List<PredefinedEventUi> = emptyList(),
+    val predefinedSections: List<PredefinedSectionUi> = emptyList(),
 )
 
-/**
- * Owns the calendar UI state. All render-ready values — including each event's
- * readable text color — are precomputed here so composition only draws.
- */
-class MyCalendarViewModel : ViewModel() {
+class MyCalendarViewModel(
+    private val groupRepository: GroupRepository,
+    personalRepository: PersonalEventRepository,
+) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(MyCalendarUiState())
-    val uiState: StateFlow<MyCalendarUiState> = _uiState.asStateFlow()
+    private val _eventsByDate = MutableStateFlow(mockEvents())
 
-    init {
-        _uiState.value = MyCalendarUiState(
-            eventsByDate = mockEvents(),
-            predefinedEvents = mockPredefined(),
+    val uiState: StateFlow<MyCalendarUiState> = combine(
+        _eventsByDate,
+        groupRepository.groupTypeColors,
+        personalRepository.personalEventTypes,
+    ) { eventsByDate, _, personalTypes ->
+        MyCalendarUiState(
+            eventsByDate = eventsByDate,
+            predefinedSections = buildSections(personalTypes),
         )
-    }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = MyCalendarUiState(eventsByDate = _eventsByDate.value),
+    )
 
     /** Quick-add: drop a new personal event of the chosen predefined type on [date]. */
     fun addPredefinedEvent(date: LocalDate, predefinedId: String) {
-        val predefined = uiState.value.predefinedEvents.firstOrNull { it.id == predefinedId }
+        val predefined = uiState.value.predefinedSections
+            .flatMap { it.events }
+            .firstOrNull { it.id == predefinedId }
             ?: return
         val event = CalendarEventUi.create(
             id = createUuid(),
@@ -54,9 +73,9 @@ class MyCalendarViewModel : ViewModel() {
             subtitle = predefined.name,
             isOwner = true,
         )
-        _uiState.update { state ->
-            val forDay = state.eventsByDate[date].orEmpty() + event
-            state.copy(eventsByDate = state.eventsByDate + (date to forDay))
+        _eventsByDate.update { events ->
+            val forDay = events[date].orEmpty() + event
+            events + (date to forDay)
         }
     }
 
@@ -65,18 +84,38 @@ class MyCalendarViewModel : ViewModel() {
         Logger.d(TAG, "TODO: open new event screen for $date")
     }
 
-    private fun mockPredefined(): List<PredefinedEventUi> {
-        val teal = Color(0xFF006B5F)
-        val slate = Color(0xFF4F6D7A)
-        val amber = Color(0xFFC0873E)
-        val sand = Color(0xFFFFDDB8)
-        return listOf(
-            PredefinedEventUi(createUuid(), "Guardia noche", teal, acronym = "GN"),
-            PredefinedEventUi(createUuid(), "Turno mañana", slate, acronym = "M"),
-            PredefinedEventUi(createUuid(), "Turno tarde", amber, acronym = "T"),
-            PredefinedEventUi(createUuid(), "Gimnasio", sand, acronym = "GYM"),
+    /**
+     * Personal section first (no header), then one section per group with its name.
+     * Empty sections are dropped so the sheet never shows a bare header.
+     */
+    private fun buildSections(personalTypes: List<PersonalEventType>): List<PredefinedSectionUi> {
+        val personal = PredefinedSectionUi(
+            groupId = null,
+            groupName = null,
+            events = personalTypes.map { it.toPredefined() },
         )
+        val group = PredefinedSectionUi(
+            groupId = DEMO_GROUP_ID,
+            groupName = DEMO_GROUP_NAME,
+            events = groupRepository.groupEventTypes(DEMO_GROUP_ID).map { it.toPredefined() },
+        )
+        return listOf(personal, group).filter { it.events.isNotEmpty() }
     }
+
+    private fun GroupEventType.toPredefined() = PredefinedEventUi(
+        id = id,
+        name = name,
+        color = groupRepository.colorHexFor(DEMO_GROUP_ID, id)?.toComposeColorOrNull()
+            ?: entityColor(id),
+        acronym = acronym,
+    )
+
+    private fun PersonalEventType.toPredefined() = PredefinedEventUi(
+        id = id,
+        name = name,
+        color = color.toComposeColorOr(entityColor(id)),
+        acronym = acronym,
+    )
 
     private fun mockEvents(): Map<LocalDate, List<CalendarEventUi>> {
         // Palette samples that exercise both light- and dark-on-color text.
@@ -192,5 +231,11 @@ class MyCalendarViewModel : ViewModel() {
 
     companion object {
         private const val TAG = "MyCalendarViewModel"
+
+        // Mock: the personal calendar has no selected group, and the mock repo serves
+        // the same demo type set for any id, so a fixed placeholder id is enough to
+        // surface the group's published types (and their per-user colors) as chips.
+        private const val DEMO_GROUP_ID = "demo-group"
+        private const val DEMO_GROUP_NAME = "UCI Turno Noche"
     }
 }

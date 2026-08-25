@@ -52,7 +52,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.georgevik.turnia.ui.components.calendar.animtransition.CALENDAR_TRANSITION_MILLIS
 import com.georgevik.turnia.ui.components.calendar.daydetail.DayDetailsSheet
-import com.georgevik.turnia.ui.components.calendar.daydetail.model.PredefinedEventUi
+import com.georgevik.turnia.ui.components.calendar.daydetail.model.PredefinedSectionUi
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
@@ -88,9 +88,9 @@ fun CalendarViewer(
     theme: CalendarTheme = CalendarThemes.myCalendar(),
     eventsByDate: Map<LocalDate, List<CalendarEventUi>> = emptyMap(),
     titleBar: @Composable () -> Unit = {},
-    // Quick-add: predefined events offered when the user taps "+" on a day.
-    predefinedEvents: List<PredefinedEventUi> = emptyList(),
+    predefinedSections: List<PredefinedSectionUi> = emptyList(),
     onAddPredefinedEvent: (date: LocalDate, predefinedId: String) -> Unit = { _, _ -> },
+    onEditGroup: (groupId: String, groupName: String) -> Unit = { _, _ -> },
     onAddCustomEvent: (date: LocalDate) -> Unit = {},
     onManageEvent: (CalendarEventUi) -> Unit = {},
 ) {
@@ -188,16 +188,18 @@ fun CalendarViewer(
                 exit = ExitTransition.None,
                 modifier = Modifier.align(Alignment.BottomCenter),
             ) {
-                // Content uses the retained [sheetDate] so it stays stable while the
-                // sheet animates back into the tile (isSheetOpen is already false).
                 sheetDate?.let { date ->
                     DayDetailsSheet(
                         animatedVisibilityScope = this,
                         date = date,
                         events = eventsByDate[date].orEmpty(),
-                        predefinedEvents = predefinedEvents,
+                        predefinedSections = predefinedSections,
                         onPickPredefined = { predefined ->
                             onAddPredefinedEvent(date, predefined.id)
+                            isSheetOpen = false
+                        },
+                        onEditGroup = { groupId, groupName ->
+                            onEditGroup(groupId, groupName)
                             isSheetOpen = false
                         },
                         onAddCustom = {

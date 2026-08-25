@@ -10,7 +10,10 @@ import com.georgevik.turnia.ui.components.calendar.CalendarViewer
 import com.georgevik.turnia.ui.main.group.model.GroupScreenUi.OpenCalendar
 
 @Composable
-fun OverlayCalendar(calendar: OpenCalendar, onBack: () -> Unit) {
+fun OverlayCalendar(
+    calendar: OpenCalendar,
+    onBack: () -> Unit,
+) {
     val isGroup = calendar.kind == CalendarKind.GROUP
     val theme = if (isGroup) CalendarThemes.group() else CalendarThemes.colleague()
     CalendarViewer(
@@ -22,7 +25,6 @@ fun OverlayCalendar(calendar: OpenCalendar, onBack: () -> Unit) {
                 theme = theme,
                 onBack = { onBack() },
             )
-
         },
         eventsByDate = calendar.events,
     )

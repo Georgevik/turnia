@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
@@ -24,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.georgevik.turnia.ui.components.calendar.daydetail.model.PredefinedEventUi
+import com.georgevik.turnia.ui.components.calendar.daydetail.model.PredefinedSectionUi
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.event_add_custom
@@ -32,22 +32,34 @@ import turnia.app.shared.generated.resources.event_no_predefined_title
 
 @Composable
 fun DayDetailAddEvent(
-    predefinedEvents: List<PredefinedEventUi>,
+    sections: List<PredefinedSectionUi>,
     onPickPredefined: (PredefinedEventUi) -> Unit,
+    onEditGroup: (groupId: String, groupName: String) -> Unit,
     onAddCustom: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        if (predefinedEvents.isEmpty()) {
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        if (sections.all { it.events.isEmpty() }) {
             NoPredefinedBanner()
         } else {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                predefinedEvents.forEach { predefined ->
-                    PredefinedEventChip(
-                        predefined = predefined,
-                        onClick = { onPickPredefined(predefined) })
+            sections.forEach { section ->
+                if (section.events.isEmpty()) return@forEach
+
+                if (section.groupId != null && section.groupName != null) {
+                    DaySectionHeader(
+                        title = section.groupName,
+                        onEdit = { onEditGroup(section.groupId, section.groupName) },
+                    )
+                }
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    section.events.forEach { predefined ->
+                        PredefinedEventChip(
+                            predefined = predefined,
+                            onClick = { onPickPredefined(predefined) })
+                    }
                 }
             }
         }
@@ -57,7 +69,7 @@ fun DayDetailAddEvent(
             modifier = Modifier.fillMaxWidth(),
         ) {
             Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.size(8.dp))
             Text(stringResource(Res.string.event_add_custom))
         }
     }

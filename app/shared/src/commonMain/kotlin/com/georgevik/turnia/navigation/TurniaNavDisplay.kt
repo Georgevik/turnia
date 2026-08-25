@@ -10,10 +10,16 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
 import com.georgevik.turnia.ui.main.MainNavBarScreen
+import com.georgevik.turnia.ui.main.eventtypes.EventMasterScreen
+import com.georgevik.turnia.ui.main.eventtypes.EventMasterViewModel
+import com.georgevik.turnia.ui.main.eventtypes.EventTypeDetailScreen
+import com.georgevik.turnia.ui.main.eventtypes.EventTypeDetailViewModel
 import com.georgevik.turnia.ui.signin.SignInScreen
 import com.georgevik.turnia.ui.splash.SplashScreen
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 /**
  * Root Navigation 3 host. Owns the back stack and maps each key to its screen.
@@ -23,7 +29,7 @@ import kotlinx.serialization.modules.polymorphic
  * instead of being shared across the whole host.
  */
 @Composable
-fun TurniaNavDisplay(snackbarHostState: SnackbarHostState, backStack : NavBackStack<NavKey>) {
+fun TurniaNavDisplay(snackbarHostState: SnackbarHostState, backStack: NavBackStack<NavKey>) {
     NavDisplay(
         backStack = backStack,
         entryDecorators = listOf(
@@ -44,7 +50,30 @@ fun TurniaNavDisplay(snackbarHostState: SnackbarHostState, backStack : NavBackSt
                 })
             }
             entry<Route.MainTabKey> {
-                MainNavBarScreen(onBack = { backStack.removeLastOrNull() })
+                MainNavBarScreen(
+                    onEditGroupTypes = { id, name ->
+                        backStack.add(Route.EventMasterKey(id, name))
+                    },
+                )
+            }
+            entry<Route.EventMasterKey> { key ->
+                val viewModel = koinViewModel<EventMasterViewModel> {
+                    parametersOf(key.groupId, key.groupName)
+                }
+                EventMasterScreen(
+                    viewModel = viewModel,
+                    onOpenDetail = { backStack.add(it) },
+                    onBack = { backStack.removeLastOrNull() },
+                )
+            }
+            entry<Route.EventTypeDetailKey> { key ->
+                val viewModel = koinViewModel<EventTypeDetailViewModel> {
+                    parametersOf(key.kind, key.groupId, key.typeId)
+                }
+                EventTypeDetailScreen(
+                    viewModel = viewModel,
+                    onBack = { backStack.removeLastOrNull() },
+                )
             }
         },
     )
@@ -62,6 +91,8 @@ val navKeySavedStateConfiguration: SavedStateConfiguration = SavedStateConfigura
             subclass(Route.SignInKey::class, Route.SignInKey.serializer())
             subclass(Route.MainTabKey::class, Route.MainTabKey.serializer())
             subclass(Route.SpashKey::class, Route.SpashKey.serializer())
+            subclass(Route.EventMasterKey::class, Route.EventMasterKey.serializer())
+            subclass(Route.EventTypeDetailKey::class, Route.EventTypeDetailKey.serializer())
         }
     }
 }

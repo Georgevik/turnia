@@ -38,6 +38,7 @@ import com.georgevik.turnia.ui.components.calendar.animtransition.CalendarSheetB
 import com.georgevik.turnia.ui.components.calendar.calendarContainerKey
 import com.georgevik.turnia.ui.components.calendar.daydetail.animation.fadeInContent
 import com.georgevik.turnia.ui.components.calendar.daydetail.model.PredefinedEventUi
+import com.georgevik.turnia.ui.components.calendar.daydetail.model.PredefinedSectionUi
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
@@ -56,8 +57,9 @@ fun SharedTransitionScope.DayDetailsSheet(
     animatedVisibilityScope: AnimatedVisibilityScope,
     date: LocalDate,
     events: List<CalendarEventUi>,
-    predefinedEvents: List<PredefinedEventUi>,
+    predefinedSections: List<PredefinedSectionUi>,
     onPickPredefined: (PredefinedEventUi) -> Unit,
+    onEditGroup: (groupId: String, groupName: String) -> Unit,
     onAddCustom: () -> Unit,
     onManageEvent: (CalendarEventUi) -> Unit,
     onClose: () -> Unit,
@@ -134,8 +136,9 @@ fun SharedTransitionScope.DayDetailsSheet(
             Box(Modifier.fadeInContent(animatedVisibilityScope)) {
                 if (adding) {
                     DayDetailAddEvent(
-                        predefinedEvents = predefinedEvents,
+                        sections = predefinedSections,
                         onPickPredefined = onPickPredefined,
+                        onEditGroup = onEditGroup,
                         onAddCustom = onAddCustom,
                     )
                 } else if (events.isEmpty()) {

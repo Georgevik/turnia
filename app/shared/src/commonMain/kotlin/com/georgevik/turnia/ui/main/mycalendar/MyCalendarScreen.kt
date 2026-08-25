@@ -11,12 +11,16 @@ import org.koin.compose.viewmodel.koinViewModel
  * (no time, no time zones); the only clock read is resolving "today".
  */
 @Composable
-fun MyCalendarScreen(viewModel: MyCalendarViewModel = koinViewModel()) {
+fun MyCalendarScreen(
+    onEditGroupTypes: (groupId: String, groupName: String) -> Unit,
+    viewModel: MyCalendarViewModel = koinViewModel(),
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     CalendarViewer(
         eventsByDate = uiState.eventsByDate,
-        predefinedEvents = uiState.predefinedEvents,
+        predefinedSections = uiState.predefinedSections,
         onAddPredefinedEvent = viewModel::addPredefinedEvent,
+        onEditGroup = onEditGroupTypes,
         onAddCustomEvent = viewModel::addCustomEvent,
     )
 }

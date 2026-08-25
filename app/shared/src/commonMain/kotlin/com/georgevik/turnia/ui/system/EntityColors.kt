@@ -8,7 +8,7 @@ import androidx.compose.ui.graphics.Color
  * no muted/pastel colors — and dark enough to carry a white icon or white text.
  * Hues are spread around the wheel so adjacent ids look clearly different.
  */
-private val EntityPalette = listOf(
+val EntityPalette = listOf(
     Color(0xFFE53935), // red
     Color(0xFFF4511E), // deep orange
     Color(0xFFFB8C00), // orange

@@ -18,4 +18,17 @@ sealed interface Route : NavKey {
 
     @Serializable
     data object SpashKey : Route
+
+    @Serializable
+    data class EventMasterKey(val groupId: String, val groupName: String) : Route
+
+    @Serializable
+    data class EventTypeDetailKey(
+        val kind: EventTypeKind,
+        val groupId: String?,
+        val typeId: String?,
+    ) : Route
 }
+
+@Serializable
+enum class EventTypeKind { GROUP, PERSONAL }

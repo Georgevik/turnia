@@ -24,7 +24,7 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun MainNavBarScreen(
-    onBack: () -> Unit,
+    onEditGroupTypes: (groupId: String, groupName: String) -> Unit,
     viewModel: MainViewModel = koinViewModel(),
 ) {
     val featureFlags by viewModel.featureFlags.collectAsStateWithLifecycle()
@@ -36,7 +36,7 @@ fun MainNavBarScreen(
     if (selectedTab !in tabs) selectedTab = MainTab.MY_CALENDAR
 
     Scaffold(
-        contentWindowInsets = WindowInsets(0,0,0,0),
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             NavigationBar {
                 tabs.forEach { tab ->
@@ -63,7 +63,7 @@ fun MainNavBarScreen(
                 .padding(innerPadding)
         ) {
             when (selectedTab) {
-                MainTab.MY_CALENDAR -> MyCalendarScreen()
+                MainTab.MY_CALENDAR -> MyCalendarScreen(onEditGroupTypes = onEditGroupTypes)
                 MainTab.GROUPS -> GroupScreen()
                 MainTab.CHANGES -> ChangesScreen()
                 MainTab.PROFILE -> ProfileScreen()
