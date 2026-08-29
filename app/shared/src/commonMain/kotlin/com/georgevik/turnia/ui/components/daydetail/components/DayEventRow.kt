@@ -1,4 +1,4 @@
-package com.georgevik.turnia.ui.components.calendar.daydetail.components
+package com.georgevik.turnia.ui.components.daydetail.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -22,7 +21,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.SwapHoriz
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -38,13 +36,11 @@ import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.event_assigned_other
-import turnia.app.shared.generated.resources.event_manage
 import turnia.app.shared.generated.resources.event_status_on_swap
 
 @Composable
 fun DayEventRow(
     event: CalendarEventUi,
-    onManage: () -> Unit,
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -89,17 +85,8 @@ fun DayEventRow(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
-                        if (event.isOwner) {
-                            FilledTonalButton(
-                                onClick = onManage,
-                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
-                            ) {
-                                Text(stringResource(Res.string.event_manage))
-                            }
-                        }
                     }
 
-                    // Status chips — only shown when there's a status to show.
                     if (event.onSwap || event.assigneeName != null) {
                         Spacer(Modifier.height(8.dp))
                         Row(
@@ -141,7 +128,6 @@ fun DayEventRow(
                         )
                     }
 
-                    // Traceability trail: owner → … → current holder.
                     if (event.transferChain.size >= 2) {
                         Spacer(Modifier.height(12.dp))
                         TransferTrail(chain = event.transferChain)

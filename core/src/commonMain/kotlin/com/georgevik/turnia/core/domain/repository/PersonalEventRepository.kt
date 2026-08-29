@@ -1,7 +1,9 @@
 package com.georgevik.turnia.core.domain.repository
 
+import com.georgevik.turnia.core.domain.model.PersonalEvent
 import com.georgevik.turnia.core.domain.model.PersonalEventType
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.datetime.LocalDate
 
 /**
  * The current user's personal event templates. Unlike group types these belong to
@@ -10,15 +12,16 @@ import kotlinx.coroutines.flow.StateFlow
  */
 interface PersonalEventRepository {
 
-    /** The user's personal event templates. */
     val personalEventTypes: StateFlow<List<PersonalEventType>>
 
-    /** Adds a new personal event template (its [PersonalEventType.id] must be set). */
-    fun create(type: PersonalEventType)
+    val personalEvents: StateFlow<List<PersonalEvent>>
 
-    /** Replaces the personal event template with the same id. */
-    fun update(type: PersonalEventType)
+    fun update(typeId: String?, type: PersonalEventType)
 
-    /** Convenience lookup by id. */
+    suspend fun refreshPersonalEvents(date: LocalDate): Result<Unit>
+
+
+    suspend fun getEventType(typeId: String): Result<PersonalEventType>
+
     fun byId(id: String): PersonalEventType? = personalEventTypes.value.firstOrNull { it.id == id }
 }

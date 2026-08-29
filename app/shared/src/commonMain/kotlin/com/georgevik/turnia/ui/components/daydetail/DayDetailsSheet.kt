@@ -1,4 +1,4 @@
-package com.georgevik.turnia.ui.components.calendar.daydetail
+package com.georgevik.turnia.ui.components.daydetail
 
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -25,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,24 +35,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.georgevik.turnia.ui.components.calendar.animtransition.CalendarSheetBoundsTransform
 import com.georgevik.turnia.ui.components.calendar.calendarContainerKey
-import com.georgevik.turnia.ui.components.calendar.daydetail.animation.fadeInContent
-import com.georgevik.turnia.ui.components.calendar.daydetail.components.DayDetailAddEvent
-import com.georgevik.turnia.ui.components.calendar.daydetail.components.DayDetailHeader
-import com.georgevik.turnia.ui.components.calendar.daydetail.components.DayEventRow
-import com.georgevik.turnia.ui.components.calendar.daydetail.model.PredefinedEventUi
-import com.georgevik.turnia.ui.components.calendar.daydetail.model.PredefinedSectionUi
+import com.georgevik.turnia.ui.components.daydetail.animation.fadeInContent
+import com.georgevik.turnia.ui.components.daydetail.components.DayDetailAddEvent
+import com.georgevik.turnia.ui.components.daydetail.components.DayDetailHeader
+import com.georgevik.turnia.ui.components.daydetail.components.DayEventRow
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.event_details_empty
 
-/** Top corner radius the tile animates towards as it becomes the sheet. */
 private val SheetCornerRadius = 28.dp
 
-/** Downward drag distance (px) on the handle past which the sheet dismisses. */
 private const val DragDismissThresholdPx = 120f
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -60,14 +60,22 @@ fun SharedTransitionScope.DayDetailsSheet(
     animatedVisibilityScope: AnimatedVisibilityScope,
     date: LocalDate,
     events: List<CalendarEventUi>,
-    predefinedSections: List<PredefinedSectionUi>,
-    onPickPredefined: (PredefinedEventUi) -> Unit,
-    onEditGroup: (groupId: String, groupName: String) -> Unit,
-    onAddCustom: () -> Unit,
-    onManageEvent: (CalendarEventUi) -> Unit,
+    openEditTypeScreen: (groupId: String, groupName: String) -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
+    viewModel: DayDetailsSheetViewModel = koinViewModel(key = date.toString()) {
+        parametersOf(date)
+    },
 ) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(viewModel) {
+        viewModel.uiEvent.collect { event ->
+            when (event) {
+                is DayDetailsSheetUiEvent.EditGroup ->
+                    openEditTypeScreen(event.groupId, event.groupName)
+            }
+        }
+    }
     var adding by remember { mutableStateOf(false) }
     Surface(
         modifier = modifier
@@ -92,8 +100,6 @@ fun SharedTransitionScope.DayDetailsSheet(
                 .windowInsetsPadding(WindowInsets.navigationBars)
                 .padding(bottom = 16.dp),
         ) {
-            // Drag handle — tap or drag it down to dismiss the sheet. The wrapper
-            // enlarges the touch target around the thin visual bar.
             var dragOffset by remember { mutableStateOf(0f) }
             Box(
                 modifier = Modifier
@@ -139,10 +145,18 @@ fun SharedTransitionScope.DayDetailsSheet(
             Box(Modifier.fadeInContent(animatedVisibilityScope)) {
                 if (adding) {
                     DayDetailAddEvent(
-                        sections = predefinedSections,
-                        onPickPredefined = onPickPredefined,
-                        onEditGroup = onEditGroup,
-                        onAddCustom = onAddCustom,
+                        sections = uiState.predefinedSections,
+                        onPickPredefined = { predefined ->
+                            viewModel.addPredefinedEvent(predefined.id)
+                            onClose()
+                        },
+                        onEditGroup = { groupId, groupName ->
+                            viewModel.editGroup(groupId, groupName)
+                        },
+                        onAddCustom = {
+                            viewModel.addCustomEvent()
+                            onClose()
+                        },
                     )
                 } else if (events.isEmpty()) {
                     Text(
@@ -155,7 +169,7 @@ fun SharedTransitionScope.DayDetailsSheet(
                     Column {
                         events.forEachIndexed { index, event ->
                             if (index > 0) Spacer(Modifier.height(12.dp))
-                            DayEventRow(event = event, onManage = { onManageEvent(event) })
+                            DayEventRow(event = event)
                         }
                     }
                 }

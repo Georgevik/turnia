@@ -1,74 +1,82 @@
 package com.georgevik.turnia.core.data.group
 
-import com.georgevik.turnia.core.domain.model.GroupEventType
+import com.georgevik.turnia.core.data.logger.Logger
+import com.georgevik.turnia.core.domain.model.Group
+import com.georgevik.turnia.core.domain.model.GroupEvent
 import com.georgevik.turnia.core.domain.repository.GroupRepository
+import com.georgevik.turnia.core.system.MOCK_TYPES
+import com.georgevik.turnia.core.system.mockColor
+import com.georgevik.turnia.core.system.mockDate
+import com.georgevik.turnia.core.system.mockGroupName
+import com.georgevik.turnia.core.system.mockRealName
+import com.georgevik.turnia.core.system.mockUuid
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.shareIn
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.random.Random
+import kotlin.uuid.Uuid
 
-/**
- * Mock [GroupRepository] used until the Firestore-backed impl exists. It serves a
- * fixed demo set of published event types (same set for any groupId) and keeps the
- * current user's chosen colors in memory. Swap this out without touching callers.
- */
+@OptIn(ExperimentalAtomicApi::class)
 class GroupRepositoryImpl : GroupRepository {
 
-    // Stable ids so the color map keys stay consistent across recompositions/screens.
-    private val demoTypes = listOf(
-        GroupEventType(
-            id = "gt-night",
-            name = "Guardia noche",
-            acronym = "GN",
-            description = "Guardia de 12 horas en turno de noche.",
-            startTime = "20:00",
-            endTime = "08:00",
-            swappable = true,
-        ),
-        GroupEventType(
-            id = "gt-morning",
-            name = "Turno mañana",
-            acronym = "M",
-            description = "Turno de mañana en planta.",
-            startTime = "08:00",
-            endTime = "15:00",
-            swappable = true,
-        ),
-        GroupEventType(
-            id = "gt-afternoon",
-            name = "Turno tarde",
-            acronym = "T",
-            description = "Turno de tarde en planta.",
-            startTime = "15:00",
-            endTime = "22:00",
-            swappable = true,
-        ),
-        GroupEventType(
-            id = "gt-training",
-            name = "Formación",
-            acronym = "F",
-            description = "Sesión de formación interna. No intercambiable.",
-            startTime = "16:00",
-            endTime = "18:00",
-            swappable = false,
-        ),
-    )
+    private val _groups = MutableStateFlow(emptyList<Group>())
+    override val groups: Flow<List<Group>> = _groups
 
-    private val _groupTypeColors = MutableStateFlow<Map<String, String>>(emptyMap())
-    override val groupTypeColors: StateFlow<Map<String, String>> = _groupTypeColors.asStateFlow()
+    override suspend fun fetchGroups() {
+        val groups = (1..3).map {
+            Group(
+                id = mockUuid(),
+                name = mockGroupName(),
+                types = MOCK_TYPES
+            )
+        }
 
-    override fun groupEventTypes(groupId: String): List<GroupEventType> = demoTypes
-
-    override fun colorHexFor(groupId: String, typeId: String): String? =
-        _groupTypeColors.value[colorKey(groupId, typeId)]
-
-    override fun setGroupTypeColor(groupId: String, typeId: String, hex: String) {
-        _groupTypeColors.update { it + (colorKey(groupId, typeId) to hex) }
+        _groups.emit(groups)
     }
 
-    // Mock: the demo type set is shared across all groups, so key colors by typeId
-    // only. This keeps the color a user picks in the edit screen consistent with what
-    // the add-event chips read (which don't carry a specific groupId). The real
-    // Firestore-backed impl will use the composite "{groupId}_{typeId}" default.
-    override fun colorKey(groupId: String, typeId: String): String = typeId
+    override suspend fun getGroup(idGroup: String): Result<Group> {
+        val group = _groups.value.find { it.id == idGroup }
+
+        return if (group != null) Result.success(group)
+        else Result.failure(Exception("Group not found"))
+    }
+
+    override suspend fun updateColor(groupId: String, color: String) {
+        TODO("Not yet implemented")
+    }
+
+    override fun fetchGroupEvents(groupId: String): Flow<List<GroupEvent>> = flow {
+        // TODO Call DataSource
+        val events = (0 until 200).map {
+            val ownerId = mockUuid()
+
+            GroupEvent(
+                id = mockUuid(),
+                groupId = groupId,
+                ownerId = ownerId,
+                assigneeId = if (Random.nextBoolean()) ownerId else mockUuid(),
+                type = MOCK_TYPES.random(),
+                date = mockDate(),
+                onSwap = Random.nextInt(7) == 1,
+                colorHex = mockColor(),
+                history = (0..(0..3).random()).map { mockRealName() })
+        }
+
+        if (events.isEmpty()) {
+            Logger.w(TAG, "Group $groupId not found")
+        } else {
+            emit(events)
+        }
+    }
+
+    override fun fetchCalendarEvents(userId: String): Flow<List<GroupEvent>> {
+        // TODO("Not yet implemented")
+        return MutableStateFlow(emptyList())
+    }
+
+    companion object {
+        private const val TAG = "GroupRepository"
+    }
 }

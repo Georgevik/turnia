@@ -1,4 +1,4 @@
-package com.georgevik.turnia.ui.components.calendar.daydetail.components
+package com.georgevik.turnia.ui.components.daydetail.components
 
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.SharedTransitionScope
@@ -20,7 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.georgevik.turnia.ui.components.calendar.animtransition.CalendarSheetBoundsTransform
 import com.georgevik.turnia.ui.components.calendar.calendarNumberKey
-import com.georgevik.turnia.ui.components.calendar.daydetail.animation.fadeInContent
+import com.georgevik.turnia.ui.components.daydetail.animation.fadeInContent
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource

@@ -8,8 +8,9 @@ import com.georgevik.turnia.navigation.EventTypeKind
 @Immutable
 data class EventTypeMasterRowUi(
     val kind: EventTypeKind,
+    val name: String,
     val groupId: String?,
-    val groupName: String,
+    val groupName: String?,
     val typeId: String,
     val acronym: String?,
     val color: Color,

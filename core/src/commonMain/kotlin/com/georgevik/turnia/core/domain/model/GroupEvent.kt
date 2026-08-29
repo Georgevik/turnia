@@ -10,4 +10,6 @@ data class GroupEvent(
     val type: GroupEventType,
     val date: LocalDate,
     val onSwap: Boolean,
+    val colorHex: String,
+    val history: List<String>,
 )

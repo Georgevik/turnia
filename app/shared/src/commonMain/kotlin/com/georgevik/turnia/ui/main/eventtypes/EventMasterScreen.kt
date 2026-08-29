@@ -115,7 +115,7 @@ fun EventMasterScreen(
 
             uiState.sections.forEach { section ->
                 item(key = "header-${section.kind}") {
-                    SectionHeader(section = section, groupName = uiState.groupName)
+                    SectionHeader(section = section)
                 }
                 items(section.rows, key = { it.typeId }) { row ->
                     EventTypeRow(
@@ -133,7 +133,7 @@ fun EventMasterScreen(
 }
 
 @Composable
-private fun SectionHeader(section: EventTypeMasterHeaderUi, groupName: String) {
+private fun SectionHeader(section: EventTypeMasterHeaderUi) {
     Row(
         modifier = Modifier.padding(top = 12.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -149,7 +149,7 @@ private fun SectionHeader(section: EventTypeMasterHeaderUi, groupName: String) {
         }
         val title = when (section.kind) {
             EventTypeKind.PERSONAL -> stringResource(Res.string.event_types_section_personal)
-            EventTypeKind.GROUP -> groupName
+            EventTypeKind.GROUP -> section.name
         }
         Text(
             text = title,
@@ -163,7 +163,7 @@ private fun SectionHeader(section: EventTypeMasterHeaderUi, groupName: String) {
 @Composable
 private fun EventTypeRow(row: EventTypeMasterRowUi, onClick: () -> Unit) {
     TListItem(
-        title = if (row.acronym != null) "${row.acronym} · ${row.groupName}" else row.groupName,
+        title = if (row.acronym != null) "${row.acronym} · ${row.name}" else row.name,
         onClick = onClick,
         leading = { AcronymBadge(color = row.color, acronym = row.acronym) },
     )

@@ -12,8 +12,8 @@ import androidx.savedstate.serialization.SavedStateConfiguration
 import com.georgevik.turnia.ui.main.MainNavBarScreen
 import com.georgevik.turnia.ui.main.eventtypes.EventMasterScreen
 import com.georgevik.turnia.ui.main.eventtypes.EventMasterViewModel
-import com.georgevik.turnia.ui.main.eventtypes.EventTypeDetailScreen
-import com.georgevik.turnia.ui.main.eventtypes.EventTypeDetailViewModel
+import com.georgevik.turnia.ui.main.eventtypes.detail.EventTypeDetailScreen
+import com.georgevik.turnia.ui.main.eventtypes.detail.EventTypeDetailViewModel
 import com.georgevik.turnia.ui.signin.SignInScreen
 import com.georgevik.turnia.ui.splash.SplashScreen
 import kotlinx.serialization.modules.SerializersModule

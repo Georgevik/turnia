@@ -18,9 +18,6 @@ fun MyCalendarScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     CalendarViewer(
         eventsByDate = uiState.eventsByDate,
-        predefinedSections = uiState.predefinedSections,
-        onAddPredefinedEvent = viewModel::addPredefinedEvent,
         onEditGroup = onEditGroupTypes,
-        onAddCustomEvent = viewModel::addCustomEvent,
     )
 }

@@ -1,4 +1,4 @@
-package com.georgevik.turnia.ui.components.calendar.daydetail.components
+package com.georgevik.turnia.ui.components.daydetail.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,8 +22,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.georgevik.turnia.ui.components.calendar.daydetail.model.PredefinedEventUi
-import com.georgevik.turnia.ui.components.calendar.daydetail.model.PredefinedSectionUi
+import com.georgevik.turnia.ui.components.daydetail.model.PredefinedEventUi
+import com.georgevik.turnia.ui.components.daydetail.model.PredefinedSectionUi
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.event_add_custom

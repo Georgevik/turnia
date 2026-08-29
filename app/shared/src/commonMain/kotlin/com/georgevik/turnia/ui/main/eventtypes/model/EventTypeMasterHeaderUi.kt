@@ -6,5 +6,6 @@ import com.georgevik.turnia.navigation.EventTypeKind
 @Immutable
 data class EventTypeMasterHeaderUi(
     val kind: EventTypeKind,
+    val name: String,
     val rows: List<EventTypeMasterRowUi>,
 )

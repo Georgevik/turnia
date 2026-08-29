@@ -4,25 +4,19 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.georgevik.turnia.core.data.logger.Logger
-import com.georgevik.turnia.core.domain.model.GroupEventType
-import com.georgevik.turnia.core.domain.model.PersonalEventType
+import com.georgevik.turnia.core.domain.model.UserSession
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
-import com.georgevik.turnia.ui.components.calendar.daydetail.model.PredefinedEventUi
-import com.georgevik.turnia.ui.components.calendar.daydetail.model.PredefinedSectionUi
+import com.georgevik.turnia.core.domain.repository.UserRepository
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventType
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
-import com.georgevik.turnia.ui.system.createUuid
-import com.georgevik.turnia.ui.system.entityColor
-import com.georgevik.turnia.ui.system.toComposeColorOr
-import com.georgevik.turnia.ui.system.toComposeColorOrNull
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -33,10 +27,10 @@ import kotlin.time.Clock
 @Immutable
 data class MyCalendarUiState(
     val eventsByDate: Map<LocalDate, List<CalendarEventUi>> = emptyMap(),
-    val predefinedSections: List<PredefinedSectionUi> = emptyList(),
 )
 
 class MyCalendarViewModel(
+    userRepository: UserRepository,
     private val groupRepository: GroupRepository,
     personalRepository: PersonalEventRepository,
 ) : ViewModel() {
@@ -45,76 +39,16 @@ class MyCalendarViewModel(
 
     val uiState: StateFlow<MyCalendarUiState> = combine(
         _eventsByDate,
-        groupRepository.groupTypeColors,
-        personalRepository.personalEventTypes,
-    ) { eventsByDate, _, personalTypes ->
-        MyCalendarUiState(
-            eventsByDate = eventsByDate,
-            predefinedSections = buildSections(personalTypes),
-        )
+        userRepository.userSession.filterIsInstance(UserSession.Authenticated::class)
+            .flatMapLatest { userSession -> groupRepository.fetchCalendarEvents(userSession.user.uid) },
+        personalRepository.personalEvents,
+    ) { eventsByDate, groupEvents, personalEvents ->
+        // groupEvents + personalEvents = eventsByDate
+        MyCalendarUiState(eventsByDate = eventsByDate)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = MyCalendarUiState(eventsByDate = _eventsByDate.value),
-    )
-
-    /** Quick-add: drop a new personal event of the chosen predefined type on [date]. */
-    fun addPredefinedEvent(date: LocalDate, predefinedId: String) {
-        val predefined = uiState.value.predefinedSections
-            .flatMap { it.events }
-            .firstOrNull { it.id == predefinedId }
-            ?: return
-        val event = CalendarEventUi.create(
-            id = createUuid(),
-            type = CalendarEventType.PERSONAL,
-            name = predefined.name,
-            acronym = predefined.acronym,
-            background = predefined.color,
-            subtitle = predefined.name,
-            isOwner = true,
-        )
-        _eventsByDate.update { events ->
-            val forDay = events[date].orEmpty() + event
-            events + (date to forDay)
-        }
-    }
-
-    /** Custom event: will open the "new event" screen. Stubbed until it exists. */
-    fun addCustomEvent(date: LocalDate) {
-        Logger.d(TAG, "TODO: open new event screen for $date")
-    }
-
-    /**
-     * Personal section first (no header), then one section per group with its name.
-     * Empty sections are dropped so the sheet never shows a bare header.
-     */
-    private fun buildSections(personalTypes: List<PersonalEventType>): List<PredefinedSectionUi> {
-        val personal = PredefinedSectionUi(
-            groupId = null,
-            groupName = null,
-            events = personalTypes.map { it.toPredefined() },
-        )
-        val group = PredefinedSectionUi(
-            groupId = DEMO_GROUP_ID,
-            groupName = DEMO_GROUP_NAME,
-            events = groupRepository.groupEventTypes(DEMO_GROUP_ID).map { it.toPredefined() },
-        )
-        return listOf(personal, group).filter { it.events.isNotEmpty() }
-    }
-
-    private fun GroupEventType.toPredefined() = PredefinedEventUi(
-        id = id,
-        name = name,
-        color = groupRepository.colorHexFor(DEMO_GROUP_ID, id)?.toComposeColorOrNull()
-            ?: entityColor(id),
-        acronym = acronym,
-    )
-
-    private fun PersonalEventType.toPredefined() = PredefinedEventUi(
-        id = id,
-        name = name,
-        color = color.toComposeColorOr(entityColor(id)),
-        acronym = acronym,
     )
 
     private fun mockEvents(): Map<LocalDate, List<CalendarEventUi>> {
@@ -227,15 +161,5 @@ class MyCalendarViewModel(
                 personal("p6", "Fiesta", null, teal, "23:00 - 02:00", "Con amigos"),
             ),
         )
-    }
-
-    companion object {
-        private const val TAG = "MyCalendarViewModel"
-
-        // Mock: the personal calendar has no selected group, and the mock repo serves
-        // the same demo type set for any id, so a fixed placeholder id is enough to
-        // surface the group's published types (and their per-user colors) as chips.
-        private const val DEMO_GROUP_ID = "demo-group"
-        private const val DEMO_GROUP_NAME = "UCI Turno Noche"
     }
 }

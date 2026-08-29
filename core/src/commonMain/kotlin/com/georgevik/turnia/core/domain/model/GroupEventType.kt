@@ -8,4 +8,8 @@ data class GroupEventType(
     val startTime: String?,
     val endTime: String?,
     val swappable: Boolean,
-)
+    private val colorHex: String,
+    private val userColor: String?
+) {
+    val color = userColor ?: colorHex
+}

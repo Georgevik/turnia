@@ -1,9 +1,8 @@
-package com.georgevik.turnia.ui.main.eventtypes
+package com.georgevik.turnia.ui.main.eventtypes.detail
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,6 +19,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -33,21 +33,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.georgevik.turnia.navigation.EventTypeKind
 import com.georgevik.turnia.ui.main.eventtypes.components.ColorSwatchPicker
-import com.georgevik.turnia.ui.main.eventtypes.model.EventTypeDetailUi
+import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeDetailUi.EventTypeForm
 import com.georgevik.turnia.ui.system.components.AcronymBadge
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.calendar_back
-import turnia.app.shared.generated.resources.event_type_detail_new_personal
-import turnia.app.shared.generated.resources.event_type_detail_title_group
-import turnia.app.shared.generated.resources.event_type_detail_title_personal
 import turnia.app.shared.generated.resources.event_type_field_acronym
 import turnia.app.shared.generated.resources.event_type_field_color
 import turnia.app.shared.generated.resources.event_type_field_description
@@ -68,16 +66,15 @@ fun EventTypeDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    val title = when {
-        uiState.kind == EventTypeKind.GROUP -> stringResource(Res.string.event_type_detail_title_group)
-        uiState.isCreate -> stringResource(Res.string.event_type_detail_new_personal)
-        else -> stringResource(Res.string.event_type_detail_title_personal)
-    }
-
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(title) },
+                title = {
+                    Text(
+                        text = uiState.eventTypeForm?.name.orEmpty(),
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -89,65 +86,103 @@ fun EventTypeDetailScreen(
             )
         },
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-        ) {
-            if (uiState.fieldsEditable) {
-                PersonalForm(uiState, viewModel)
-            } else {
-                GroupDetail(uiState)
+        if (uiState.loading) {
+            Column(
+                Modifier.fillMaxSize().padding(innerPadding),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                CircularProgressIndicator()
             }
+        }
 
-            FieldLabel(stringResource(Res.string.event_type_field_color))
-            ColorSwatchPicker(
-                selected = uiState.color,
-                onPick = viewModel::onPickColor,
-                modifier = Modifier.fillMaxWidth(),
+        uiState.eventTypeForm?.let { eventTypeForm ->
+            EventTypeForm(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(20.dp),
+                eventTypeForm = eventTypeForm,
+                onSavePersonal = viewModel::onSavePersonal,
+                onBack = onBack,
+                onPickColor = viewModel::onPickColor,
+                onFieldChanged = viewModel::onFieldChanged,
             )
+        }
 
-            if (uiState.fieldsEditable) {
-                Button(
-                    onClick = { if (viewModel.onSave()) onBack() },
-                    enabled = uiState.name.isNotBlank(),
-                    shape = RoundedCornerShape(percent = 50),
-                    contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
-                    modifier = Modifier.fillMaxWidth().height(52.dp),
-                ) {
-                    Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(20.dp))
-                    Text(
-                        text = stringResource(Res.string.event_type_save),
-                        modifier = Modifier.padding(start = 8.dp),
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                }
+    }
+}
+
+@Composable
+private fun EventTypeForm(
+    modifier: Modifier = Modifier,
+    eventTypeForm: EventTypeForm,
+    onSavePersonal: () -> Boolean,
+    onBack: () -> Unit,
+    onPickColor: (color: Color) -> Unit,
+    onFieldChanged: (EventTypeField, String) -> Unit,
+) {
+    Column(
+        modifier = modifier.verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
+    ) {
+        if (eventTypeForm.fieldsEditable) {
+            PersonalForm(eventTypeForm, onFieldChanged)
+        } else {
+            GroupDetail(eventTypeForm)
+        }
+
+        FieldLabel(stringResource(Res.string.event_type_field_color))
+        ColorSwatchPicker(
+            selected = eventTypeForm.color,
+            onPick = onPickColor,
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        if (eventTypeForm.fieldsEditable) {
+            Button(
+                onClick = { if (onSavePersonal()) onBack() },
+                enabled = eventTypeForm.name.isNotBlank(),
+                shape = RoundedCornerShape(percent = 50),
+                contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+            ) {
+                Icon(
+                    Icons.Default.Check,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
+                )
+                Text(
+                    text = stringResource(Res.string.event_type_save),
+                    modifier = Modifier.padding(start = 8.dp),
+                    fontWeight = FontWeight.SemiBold,
+                )
             }
         }
     }
 }
 
 @Composable
-private fun ColumnScope.GroupDetail(uiState: EventTypeDetailUi) {
-    // Identity header: the color badge + name so the chosen color reads at a glance.
+private fun GroupDetail(ui: EventTypeForm) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        AcronymBadge(color = uiState.color, acronym = uiState.acronym.ifBlank { null }, size = 52.dp)
+        AcronymBadge(
+            color = ui.color,
+            acronym = ui.acronym.ifBlank { null },
+            size = 52.dp
+        )
         Column {
             Text(
-                text = uiState.name,
+                text = ui.name,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
             )
-            if (uiState.acronym.isNotBlank()) {
+            if (ui.acronym.isNotBlank()) {
                 Text(
-                    text = uiState.acronym,
+                    text = ui.acronym,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -157,22 +192,22 @@ private fun ColumnScope.GroupDetail(uiState: EventTypeDetailUi) {
 
     ReadOnlyField(
         stringResource(Res.string.event_type_field_description),
-        uiState.description,
+        ui.description,
     )
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         ReadOnlyField(
             stringResource(Res.string.event_type_field_start),
-            uiState.startTime,
+            ui.startTime,
             modifier = Modifier.weight(1f),
         )
         ReadOnlyField(
             stringResource(Res.string.event_type_field_end),
-            uiState.endTime,
+            ui.endTime,
             modifier = Modifier.weight(1f),
         )
     }
 
-    uiState.swappable?.let { SwapBadge(allowed = it) }
+    ui.swappable?.let { SwapBadge(allowed = it) }
 
     // Subtle caption clarifying only the color is the user's to change.
     Row(
@@ -194,45 +229,45 @@ private fun ColumnScope.GroupDetail(uiState: EventTypeDetailUi) {
 }
 
 @Composable
-private fun ColumnScope.PersonalForm(
-    uiState: EventTypeDetailUi,
-    viewModel: EventTypeDetailViewModel,
+private fun PersonalForm(
+    ui: EventTypeForm,
+    onFieldChanged: (EventTypeField, String) -> Unit,
 ) {
     OutlinedTextField(
-        value = uiState.name,
-        onValueChange = viewModel::onNameChange,
+        value = ui.name,
+        onValueChange = { onFieldChanged(EventTypeField.Name, it) },
         label = { Text(stringResource(Res.string.event_type_field_name)) },
         singleLine = true,
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth(),
     )
     OutlinedTextField(
-        value = uiState.acronym,
-        onValueChange = viewModel::onAcronymChange,
+        value = ui.acronym,
+        onValueChange = { onFieldChanged(EventTypeField.Acronym, it) },
         label = { Text(stringResource(Res.string.event_type_field_acronym)) },
         singleLine = true,
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth(),
     )
     OutlinedTextField(
-        value = uiState.description,
-        onValueChange = viewModel::onDescriptionChange,
+        value = ui.description,
+        onValueChange = { onFieldChanged(EventTypeField.Description, it) },
         label = { Text(stringResource(Res.string.event_type_field_description)) },
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth(),
     )
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         OutlinedTextField(
-            value = uiState.startTime,
-            onValueChange = viewModel::onStartTimeChange,
+            value = ui.startTime,
+            onValueChange = { onFieldChanged(EventTypeField.StartTime, it) },
             label = { Text(stringResource(Res.string.event_type_field_start)) },
             singleLine = true,
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.weight(1f),
         )
         OutlinedTextField(
-            value = uiState.endTime,
-            onValueChange = viewModel::onEndTimeChange,
+            value = ui.endTime,
+            onValueChange = { onFieldChanged(EventTypeField.EndTime, it) },
             label = { Text(stringResource(Res.string.event_type_field_end)) },
             singleLine = true,
             shape = RoundedCornerShape(12.dp),

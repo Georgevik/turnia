@@ -51,8 +51,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.georgevik.turnia.ui.components.calendar.animtransition.CALENDAR_TRANSITION_MILLIS
-import com.georgevik.turnia.ui.components.calendar.daydetail.DayDetailsSheet
-import com.georgevik.turnia.ui.components.calendar.daydetail.model.PredefinedSectionUi
+import com.georgevik.turnia.ui.components.daydetail.DayDetailsSheet
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
@@ -88,11 +87,7 @@ fun CalendarViewer(
     theme: CalendarTheme = CalendarThemes.myCalendar(),
     eventsByDate: Map<LocalDate, List<CalendarEventUi>> = emptyMap(),
     titleBar: @Composable () -> Unit = {},
-    predefinedSections: List<PredefinedSectionUi> = emptyList(),
-    onAddPredefinedEvent: (date: LocalDate, predefinedId: String) -> Unit = { _, _ -> },
     onEditGroup: (groupId: String, groupName: String) -> Unit = { _, _ -> },
-    onAddCustomEvent: (date: LocalDate) -> Unit = {},
-    onManageEvent: (CalendarEventUi) -> Unit = {},
 ) {
     val anchorMonth = remember {
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
@@ -193,20 +188,10 @@ fun CalendarViewer(
                         animatedVisibilityScope = this,
                         date = date,
                         events = eventsByDate[date].orEmpty(),
-                        predefinedSections = predefinedSections,
-                        onPickPredefined = { predefined ->
-                            onAddPredefinedEvent(date, predefined.id)
-                            isSheetOpen = false
-                        },
-                        onEditGroup = { groupId, groupName ->
+                        openEditTypeScreen = { groupId, groupName ->
                             onEditGroup(groupId, groupName)
                             isSheetOpen = false
                         },
-                        onAddCustom = {
-                            onAddCustomEvent(date)
-                            isSheetOpen = false
-                        },
-                        onManageEvent = onManageEvent,
                         onClose = { isSheetOpen = false },
                     )
                 }

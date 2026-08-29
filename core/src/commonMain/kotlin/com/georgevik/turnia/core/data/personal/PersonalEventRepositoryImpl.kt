@@ -1,18 +1,17 @@
 package com.georgevik.turnia.core.data.personal
 
+import com.georgevik.turnia.core.domain.model.PersonalEvent
 import com.georgevik.turnia.core.domain.model.PersonalEventType
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.datetime.LocalDate
 
-/**
- * Mock [PersonalEventRepository] holding the user's personal event templates in
- * memory until the Firestore-backed impl exists.
- */
 class PersonalEventRepositoryImpl : PersonalEventRepository {
 
+    private val _personalEvents = MutableStateFlow<List<PersonalEvent>>(emptyList())
     private val _personalEventTypes = MutableStateFlow(
         listOf(
             PersonalEventType(
@@ -38,11 +37,26 @@ class PersonalEventRepositoryImpl : PersonalEventRepository {
     override val personalEventTypes: StateFlow<List<PersonalEventType>> =
         _personalEventTypes.asStateFlow()
 
-    override fun create(type: PersonalEventType) {
-        _personalEventTypes.update { it + type }
+    override val personalEvents: StateFlow<List<PersonalEvent>> = _personalEvents.asStateFlow()
+
+    override fun update(typeId: String?, type: PersonalEventType) {
+        // typeId == null -> create new type and save it locally and network (ignore type.id)
+        // typeId != null -> update type
+        // TODO("Not yet implemented")
     }
 
-    override fun update(type: PersonalEventType) {
-        _personalEventTypes.update { list -> list.map { if (it.id == type.id) type else it } }
+    override suspend fun refreshPersonalEvents(date: LocalDate): Result<Unit> {
+        // TODO Update _personalEvents based on +-1 month from [date]
+
+        return Result.success(Unit)
+    }
+
+    override suspend fun getEventType(typeId: String): Result<PersonalEventType> {
+        // TODO If personal type is empty, then refresh. Otherwise we don't need to refresh
+        val eventType = _personalEventTypes.value.find { it.id == typeId }
+
+
+        return if (eventType != null) Result.success(eventType)
+        else Result.failure(Exception("Type not found"))
     }
 }

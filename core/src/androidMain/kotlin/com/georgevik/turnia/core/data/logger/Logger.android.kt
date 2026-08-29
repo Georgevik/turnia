@@ -18,4 +18,8 @@ actual object Logger {
     actual fun e(tag: String, throwable: Throwable?) {
         Log.e(tag, throwable?.message, throwable)
     }
+
+    actual fun w(tag: String, message: String) {
+        Log.w(tag, message)
+    }
 }

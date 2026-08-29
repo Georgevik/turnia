@@ -1,4 +1,4 @@
-package com.georgevik.turnia.ui.components.calendar.daydetail.animation
+package com.georgevik.turnia.ui.components.daydetail.animation
 
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.fadeIn

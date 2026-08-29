@@ -18,4 +18,8 @@ actual object Logger {
     actual fun e(tag: String, throwable: Throwable?) {
         NSLog("[$tag] ERROR: ${throwable?.message ?: ""}")
     }
+
+    actual fun w(tag: String, message: String) {
+        NSLog("[$tag] WARN: $message")
+    }
 }
