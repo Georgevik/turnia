@@ -28,7 +28,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.georgevik.turnia.navigation.Route
 import com.georgevik.turnia.ui.system.toErrorSnackbar
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -45,14 +44,13 @@ import kotlin.time.Duration.Companion.seconds
 fun SplashScreen(
     vm: SplashViewModel = koinViewModel(),
     snackbar: SnackbarHostState,
-    onNextScreen: (route: Route) -> Unit
+    onMinimumDurationElapsed: () -> Unit = {},
 ) {
     LaunchedEffect(Unit) {
         vm.uiEvent.collect { event ->
             when (event) {
                 is SplashUiEvent.Error -> snackbar.showSnackbar(event.message.toErrorSnackbar())
-                SplashUiEvent.NewUser -> onNextScreen(Route.SignInKey)
-                SplashUiEvent.UserLoaded -> onNextScreen(Route.MainTabKey)
+                SplashUiEvent.Ready -> onMinimumDurationElapsed()
             }
         }
     }

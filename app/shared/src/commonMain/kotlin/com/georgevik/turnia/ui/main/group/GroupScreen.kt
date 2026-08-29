@@ -1,6 +1,5 @@
 package com.georgevik.turnia.ui.main.group
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -33,9 +32,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.georgevik.turnia.core.domain.model.CalendarKind
+import com.georgevik.turnia.navigation.LocalNavigator
+import com.georgevik.turnia.navigation.MainRoute
 import com.georgevik.turnia.ui.main.group.components.ColleagueCard
 import com.georgevik.turnia.ui.main.group.components.GroupCard
-import com.georgevik.turnia.ui.main.group.components.OverlayCalendar
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import turnia.app.shared.generated.resources.Res
@@ -47,71 +47,67 @@ import turnia.app.shared.generated.resources.group_see_all
 @Composable
 fun GroupScreen(viewModel: GroupViewModel = koinViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val navigator = LocalNavigator.current
     var query by rememberSaveable { mutableStateOf("") }
 
-    AnimatedContent(targetState = uiState.openCalendar) { openedCalendar ->
-        if (openedCalendar != null) {
-            OverlayCalendar(openedCalendar, viewModel::closeCalendar)
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top)),
-                contentPadding = PaddingValues(
-                    start = 16.dp,
-                    end = 16.dp,
-                    top = 16.dp,
-                    bottom = 24.dp,
-                ),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                item(key = "search") {
-                    OutlinedTextField(
-                        value = query,
-                        onValueChange = {
-                            query = it
-                            viewModel.searchBy(it)
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        shape = RoundedCornerShape(16.dp),
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                        placeholder = { Text(stringResource(Res.string.group_search_hint)) },
-                    )
-                }
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top)),
+        contentPadding = PaddingValues(
+            start = 16.dp,
+            end = 16.dp,
+            top = 16.dp,
+            bottom = 24.dp,
+        ),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        item(key = "search") {
+            OutlinedTextField(
+                value = query,
+                onValueChange = {
+                    query = it
+                    viewModel.searchBy(it)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                shape = RoundedCornerShape(16.dp),
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                placeholder = { Text(stringResource(Res.string.group_search_hint)) },
+            )
+        }
 
-                if (uiState.colleagues.isNotEmpty()) {
-                    item(key = "colleagues-header") {
-                        SectionHeader(
-                            title = stringResource(Res.string.group_people_header),
-                            action = stringResource(Res.string.group_see_all),
-                            onAction = null,
+        if (uiState.colleagues.isNotEmpty()) {
+            item(key = "colleagues-header") {
+                SectionHeader(
+                    title = stringResource(Res.string.group_people_header),
+                    action = stringResource(Res.string.group_see_all),
+                    onAction = null,
+                )
+            }
+            items(uiState.colleagues, key = { it.id }) { colleague ->
+                ColleagueCard(
+                    colleague = colleague,
+                    onClick = {
+                        navigator.goTo(
+                            MainRoute.GroupCalendarKey(colleague.id, colleague.name, CalendarKind.COLLEAGUE)
                         )
-                    }
-                    items(uiState.colleagues, key = { it.id }) { colleague ->
-                        ColleagueCard(
-                            colleague = colleague,
-                            onClick = {
-                                viewModel.openCalendar(
-                                    colleague.id,
-                                    CalendarKind.COLLEAGUE
-                                )
-                            },
-                        )
-                    }
-                }
+                    },
+                )
+            }
+        }
 
-                if (uiState.groups.isNotEmpty()) {
-                    item(key = "groups-header") {
-                        SectionHeader(title = stringResource(Res.string.group_groups_header))
-                    }
-                    items(uiState.groups, key = { it.id }) { group ->
-                        GroupCard(
-                            group = group,
-                            onClick = { viewModel.openCalendar(group.id, CalendarKind.GROUP) },
-                        )
-                    }
-                }
+        if (uiState.groups.isNotEmpty()) {
+            item(key = "groups-header") {
+                SectionHeader(title = stringResource(Res.string.group_groups_header))
+            }
+            items(uiState.groups, key = { it.id }) { group ->
+                GroupCard(
+                    group = group,
+                    onClick = {
+                        navigator.goTo(MainRoute.GroupCalendarKey(group.id, group.name, CalendarKind.GROUP))
+                    },
+                )
             }
         }
     }

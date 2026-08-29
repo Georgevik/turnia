@@ -9,34 +9,49 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.rememberLifecycleOwner
 import androidx.lifecycle.flowWithLifecycle
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.georgevik.turnia.core.domain.model.UserSession
-import com.georgevik.turnia.navigation.Route
-import com.georgevik.turnia.navigation.TurniaNavDisplay
-import com.georgevik.turnia.navigation.navKeySavedStateConfiguration
+import com.georgevik.turnia.navigation.RootNavDisplay
+import com.georgevik.turnia.navigation.RootRoute
+import com.georgevik.turnia.navigation.rootRouteSavedStateConfiguration
 import com.georgevik.turnia.ui.system.TurniaSnackbarVisual
 import com.georgevik.turnia.ui.system.TurniaTheme
 import org.koin.compose.viewmodel.koinViewModel
 
+/**
+ * The single place that decides Splash -> Main vs. Splash -> SignIn, and also resets back to
+ * SignIn if the user gets signed out while deep in the app. Both are just branches of the same
+ * [UserSession]-driven effect, so there's one decision point instead of one split across this
+ * screen and the splash flow.
+ */
 @Composable
 @Preview
 fun App(vm: RootViewModel = koinViewModel()) {
-    val backStack = rememberNavBackStack(navKeySavedStateConfiguration, Route.SpashKey)
+    val backStack = rememberNavBackStack(rootRouteSavedStateConfiguration, RootRoute.SplashKey)
     val lifecycleOwner = rememberLifecycleOwner()
+    val userSession by vm.userSession.flowWithLifecycle(lifecycleOwner.lifecycle)
+        .collectAsStateWithLifecycle(UserSession.Loading)
+    var splashMinDurationElapsed by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        vm.userSession.flowWithLifecycle(lifecycleOwner.lifecycle).collect { userSession ->
-            when (userSession) {
-                UserSession.Unauthenticated -> {
-                    backStack.clear()
-                    backStack.add(Route.SpashKey)
-                }
-                is UserSession.Authenticated,
-                UserSession.Loading -> Unit
+    LaunchedEffect(userSession, splashMinDurationElapsed) {
+        val onSplash = backStack.lastOrNull() == RootRoute.SplashKey
+        when (userSession) {
+            UserSession.Loading -> Unit
+            is UserSession.Authenticated -> if (!onSplash || splashMinDurationElapsed) {
+                backStack.clear()
+                backStack.add(RootRoute.MainKey)
+            }
+            UserSession.Unauthenticated -> if (!onSplash || splashMinDurationElapsed) {
+                backStack.clear()
+                backStack.add(RootRoute.SignInKey)
             }
         }
     }
@@ -66,7 +81,11 @@ fun App(vm: RootViewModel = koinViewModel()) {
                 }
             }
         ) { innerPadding ->
-            TurniaNavDisplay(snackbarHostState, backStack)
+            RootNavDisplay(
+                snackbarHostState = snackbarHostState,
+                backStack = backStack,
+                onSplashMinimumDurationElapsed = { splashMinDurationElapsed = true },
+            )
         }
     }
 }

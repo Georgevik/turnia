@@ -1,10 +1,12 @@
 package com.georgevik.turnia.di
 
+import com.georgevik.turnia.core.domain.model.CalendarKind
 import com.georgevik.turnia.navigation.EventTypeKind
 import com.georgevik.turnia.ui.components.daydetail.DayDetailsSheetViewModel
 import com.georgevik.turnia.ui.main.MainViewModel
 import com.georgevik.turnia.ui.main.eventtypes.EventMasterViewModel
 import com.georgevik.turnia.ui.main.eventtypes.detail.EventTypeDetailViewModel
+import com.georgevik.turnia.ui.main.group.GroupCalendarViewModel
 import com.georgevik.turnia.ui.main.group.GroupViewModel
 import com.georgevik.turnia.ui.main.mycalendar.MyCalendarViewModel
 import com.georgevik.turnia.ui.root.RootViewModel
@@ -34,5 +36,8 @@ val appModule: Module = module {
     }
     viewModel { (date: LocalDate) ->
         DayDetailsSheetViewModel(date, get(), get())
+    }
+    viewModel { (id: String, name: String, kind: CalendarKind) ->
+        GroupCalendarViewModel(id, name, kind)
     }
 }

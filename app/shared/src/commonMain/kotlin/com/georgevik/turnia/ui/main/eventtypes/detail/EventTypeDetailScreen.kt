@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.georgevik.turnia.navigation.LocalNavigator
 import com.georgevik.turnia.ui.main.eventtypes.components.ColorSwatchPicker
 import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeDetailUi.EventTypeForm
 import com.georgevik.turnia.ui.system.components.AcronymBadge
@@ -60,11 +61,9 @@ import turnia.app.shared.generated.resources.event_type_swap_not_allowed
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EventTypeDetailScreen(
-    viewModel: EventTypeDetailViewModel,
-    onBack: () -> Unit,
-) {
+fun EventTypeDetailScreen(viewModel: EventTypeDetailViewModel) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val navigator = LocalNavigator.current
 
     Scaffold(
         topBar = {
@@ -76,7 +75,7 @@ fun EventTypeDetailScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = navigator::goBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                             contentDescription = stringResource(Res.string.calendar_back),
@@ -104,7 +103,7 @@ fun EventTypeDetailScreen(
                     .padding(20.dp),
                 eventTypeForm = eventTypeForm,
                 onSavePersonal = viewModel::onSavePersonal,
-                onBack = onBack,
+                onBack = navigator::goBack,
                 onPickColor = viewModel::onPickColor,
                 onFieldChanged = viewModel::onFieldChanged,
             )

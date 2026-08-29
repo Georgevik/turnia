@@ -1,11 +1,7 @@
 package com.georgevik.turnia.ui.main.group
 
-import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.georgevik.turnia.core.domain.model.CalendarKind
-import com.georgevik.turnia.ui.components.calendar.model.CalendarEventType
-import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import com.georgevik.turnia.ui.main.group.model.ColleageRowUi
 import com.georgevik.turnia.ui.main.group.model.GroupRowUi
 import com.georgevik.turnia.ui.main.group.model.GroupScreenUi
@@ -17,17 +13,12 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.plus
-import kotlinx.datetime.todayIn
-import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
- * Owns the Groups tab state: the lists of colleagues and groups, plus mock event
- * data for the calendar shown when one is opened. Real Firestore data comes later.
+ * Owns the Groups tab state: the lists of colleagues and groups. Real Firestore data comes
+ * later. Opening a group/colleague's calendar is a real navigation entry
+ * (`MainRoute.GroupCalendarKey`, backed by [GroupCalendarViewModel]), not state on this view model.
  */
 class GroupViewModel : ViewModel() {
 
@@ -40,25 +31,6 @@ class GroupViewModel : ViewModel() {
         viewModelScope.launch {
             _searchFlow.debounce(200.milliseconds).collectLatest { q -> performSearch(q) }
         }
-    }
-
-    fun openCalendar(id: String, kind: CalendarKind) = viewModelScope.launch {
-        _uiState.update { it.copy(showLoading = true) }
-        _uiState.update {
-            it.copy(
-                openCalendar = GroupScreenUi.OpenCalendar(
-                    id, "UCI Turno Noche", kind, mockEvents()
-                )
-            )
-        }
-
-
-        _uiState.update { it.copy(showLoading = false) }
-        mockEvents()
-    }
-
-    fun closeCalendar() {
-        _uiState.update { it.copy(openCalendar = null) }
     }
 
     fun searchBy(q: String) {
@@ -85,44 +57,5 @@ class GroupViewModel : ViewModel() {
             GroupRowUi(createUuid(), "Planta 3", 20),
         ),
         showLoading = false,
-        openCalendar = null
     )
-
-    private fun mockEvents(): Map<LocalDate, List<CalendarEventUi>> {
-        val teal = Color(0xFF006B5F)
-        val slate = Color(0xFF4F6D7A)
-        val sand = Color(0xFFFFDDB8)
-
-        fun group(
-            id: String,
-            name: String,
-            acronym: String?,
-            color: Color,
-            time: String?,
-            subtitle: String,
-        ) = CalendarEventUi.create(
-            id = id,
-            type = CalendarEventType.GROUP,
-            name = name,
-            acronym = acronym,
-            background = color,
-            timeRange = time,
-            subtitle = subtitle,
-        )
-
-        val firstOfMonth = Clock.System.todayIn(TimeZone.currentSystemDefault())
-            .let { LocalDate(it.year, it.month, 1) }
-
-        fun day(offset: Int) = firstOfMonth.plus(offset, DateTimeUnit.DAY)
-
-        return mapOf(
-            day(1) to listOf(group(createUuid(), "Turno mañana", "M", slate, "08:00 - 15:00", "Equipo")),
-            day(6) to listOf(group(createUuid(), "Guardia noche", "GN", teal, "20:00 - 08:00", "Equipo")),
-            day(14) to listOf(
-                group(createUuid(), "Noche", "N", teal, "22:00 - 06:00", "Equipo"),
-                group(createUuid(), "Formación", "F", sand, "16:00 - 18:00", "Sala 3"),
-            ),
-            day(21) to listOf(group(createUuid(), "Cambio", "C", slate, "07:00 - 15:00", "Equipo")),
-        )
-    }
 }

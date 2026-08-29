@@ -31,7 +31,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.georgevik.turnia.navigation.EventTypeKind
-import com.georgevik.turnia.navigation.Route
+import com.georgevik.turnia.navigation.LocalNavigator
+import com.georgevik.turnia.navigation.MainRoute
 import com.georgevik.turnia.ui.main.eventtypes.model.EventTypeMasterHeaderUi
 import com.georgevik.turnia.ui.main.eventtypes.model.EventTypeMasterRowUi
 import com.georgevik.turnia.ui.system.components.AcronymBadge
@@ -47,19 +48,16 @@ import turnia.app.shared.generated.resources.event_types_title
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EventMasterScreen(
-    viewModel: EventMasterViewModel,
-    onOpenDetail: (Route.EventTypeDetailKey) -> Unit,
-    onBack: () -> Unit,
-) {
+fun EventMasterScreen(viewModel: EventMasterViewModel) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val navigator = LocalNavigator.current
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(Res.string.event_types_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = navigator::goBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                             contentDescription = stringResource(Res.string.calendar_back),
@@ -69,8 +67,8 @@ fun EventMasterScreen(
                 actions = {
                     IconButton(
                         onClick = {
-                            onOpenDetail(
-                                Route.EventTypeDetailKey(EventTypeKind.PERSONAL, null, null)
+                            navigator.goTo(
+                                MainRoute.EventTypeDetailKey(EventTypeKind.PERSONAL, null, null)
                             )
                         },
                     ) {
@@ -121,8 +119,8 @@ fun EventMasterScreen(
                     EventTypeRow(
                         row = row,
                         onClick = {
-                            onOpenDetail(
-                                Route.EventTypeDetailKey(row.kind, row.groupId, row.typeId)
+                            navigator.goTo(
+                                MainRoute.EventTypeDetailKey(row.kind, row.groupId, row.typeId)
                             )
                         },
                     )
