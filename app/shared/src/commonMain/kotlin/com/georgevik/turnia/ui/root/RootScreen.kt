@@ -10,9 +10,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.rememberNavBackStack
@@ -25,28 +23,27 @@ import com.georgevik.turnia.ui.system.TurniaTheme
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
- * The single place that decides Splash -> Main vs. Splash -> SignIn, and also resets back to
- * SignIn if the user gets signed out while deep in the app. Both are just branches of the same
- * [UserSession]-driven effect, so there's one decision point instead of one split across this
- * screen and the splash flow.
+ * Hosts the root back stack. The splash owns the initial hand-off (Main vs. SignIn) once its
+ * minimum duration elapses and the session resolves; this effect then keeps the app in sync with
+ * later [UserSession] changes — routing to Main on sign-in and back to SignIn on sign-out — while
+ * leaving the splash alone.
  */
 @Composable
 @Preview
 fun App(vm: RootViewModel = koinViewModel()) {
     val backStack = rememberNavBackStack(rootRouteSavedStateConfiguration, RootRoute.SplashKey)
     val userSession by vm.userSession.collectAsStateWithLifecycle(UserSession.Loading)
-    var splashMinDurationElapsed by remember { mutableStateOf(false) }
 
-    LaunchedEffect(userSession, splashMinDurationElapsed) {
-        val onSplash = backStack.lastOrNull() == RootRoute.SplashKey
+    LaunchedEffect(userSession) {
+        if (backStack.lastOrNull() == RootRoute.SplashKey) return@LaunchedEffect
         when (userSession) {
             UserSession.Loading -> Unit
-            is UserSession.Authenticated -> if (!onSplash || splashMinDurationElapsed) {
+            is UserSession.Authenticated -> if (backStack.lastOrNull() != RootRoute.MainKey) {
                 backStack.clear()
                 backStack.add(RootRoute.MainKey)
             }
 
-            UserSession.Unauthenticated -> if (!onSplash || splashMinDurationElapsed) {
+            UserSession.Unauthenticated -> if (backStack.lastOrNull() != RootRoute.SignInKey) {
                 backStack.clear()
                 backStack.add(RootRoute.SignInKey)
             }
@@ -81,7 +78,6 @@ fun App(vm: RootViewModel = koinViewModel()) {
             RootNavDisplay(
                 snackbarHostState = snackbarHostState,
                 backStack = backStack,
-                onSplashMinimumDurationElapsed = { splashMinDurationElapsed = true },
             )
         }
     }

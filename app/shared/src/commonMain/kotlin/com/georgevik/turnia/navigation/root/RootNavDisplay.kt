@@ -17,7 +17,6 @@ import com.georgevik.turnia.ui.splash.SplashScreen
 fun RootNavDisplay(
     snackbarHostState: SnackbarHostState,
     backStack: NavBackStack<NavKey>,
-    onSplashMinimumDurationElapsed: () -> Unit,
 ) {
     NavDisplay(
         backStack = backStack,
@@ -27,7 +26,7 @@ fun RootNavDisplay(
         ),
         entryProvider = entryProvider {
             entry<RootRoute.SplashKey> {
-                SplashScreen(snackbar = snackbarHostState, onMinimumDurationElapsed = onSplashMinimumDurationElapsed)
+                SplashScreen(backStack = backStack, snackbar = snackbarHostState)
             }
             entry<RootRoute.SignInKey> { SignInScreen() }
             entry<RootRoute.MainKey> { MainScreen() }

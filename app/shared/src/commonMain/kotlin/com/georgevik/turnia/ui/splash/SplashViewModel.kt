@@ -2,21 +2,21 @@ package com.georgevik.turnia.ui.splash
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.georgevik.turnia.core.domain.model.UserSession
 import com.georgevik.turnia.core.domain.repository.AppConfigRepository
+import com.georgevik.turnia.core.domain.repository.UserRepository
+import com.georgevik.turnia.navigation.root.routes.RootRoute
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
-/**
- * Purely cosmetic: runs the minimum splash-duration timer and warms up feature flags.
- * Routing (Main vs. SignIn) is decided centrally in `RootScreen.kt`'s `App()`, driven by
- * [com.georgevik.turnia.core.domain.model.UserSession] — this view model has no opinion on it.
- */
 class SplashViewModel(
     private val appConfigRepository: AppConfigRepository,
+    userRepository: UserRepository,
 ) : ViewModel() {
     private val _uiEvent = Channel<SplashUiEvent>(Channel.BUFFERED)
     val uiEvent = _uiEvent.receiveAsFlow()
@@ -24,8 +24,6 @@ class SplashViewModel(
     private val startMark = TimeSource.Monotonic.markNow()
 
     init {
-        // Download feature flags while the splash is on screen; the result is
-        // cached in the repository and read later (e.g. to gate the Swap tab).
         viewModelScope.launch {
             appConfigRepository.refreshFeatureFlags()
         }
@@ -33,7 +31,16 @@ class SplashViewModel(
         viewModelScope.launch {
             val remaining = MIN_SPLASH_DURATION - startMark.elapsedNow()
             if (remaining.isPositive()) delay(remaining)
-            _uiEvent.send(SplashUiEvent.Ready)
+
+            val session = userRepository.userSession.first { it !is UserSession.Loading }
+            _uiEvent.send(
+                SplashUiEvent.Navigate(
+                    when (session) {
+                        is UserSession.Authenticated -> RootRoute.MainKey
+                        else -> RootRoute.SignInKey
+                    }
+                )
+            )
         }
     }
 
@@ -43,6 +50,6 @@ class SplashViewModel(
 }
 
 sealed interface SplashUiEvent {
-    data object Ready : SplashUiEvent
+    data class Navigate(val destination: RootRoute) : SplashUiEvent
     data class Error(val message: String) : SplashUiEvent
 }
