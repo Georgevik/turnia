@@ -1,4 +1,4 @@
-package com.georgevik.turnia.ui.main.group.model
+package com.georgevik.turnia.ui.main.group.calendarlist.model
 
 /**
  * A colleague row in the Groups tab. [subtitle] is the role/department line

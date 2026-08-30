@@ -22,7 +22,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,13 +48,8 @@ import turnia.app.shared.generated.resources.welcome_headline
 import turnia.app.shared.generated.resources.welcome_signin_hint
 
 @Composable
-fun SignInScreen(viewModel: SignInViewModel = koinViewModel(), onSignedIn: () -> Unit) {
+fun SignInScreen(viewModel: SignInViewModel = koinViewModel()) {
     val googleAuth = rememberGoogleAuthState(onResult = viewModel::onSignInResult)
-
-    // Firebase auth state confirmed the sign-in — enter the app.
-    LaunchedEffect(Unit) {
-        viewModel.signedIn.collect { onSignedIn() }
-    }
 
     Column(
         modifier = Modifier
@@ -109,7 +103,6 @@ fun SignInScreen(viewModel: SignInViewModel = koinViewModel(), onSignedIn: () ->
             )
         }
 
-        // Value props.
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -131,7 +124,6 @@ fun SignInScreen(viewModel: SignInViewModel = koinViewModel(), onSignedIn: () ->
             )
         }
 
-        // Call to action.
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = stringResource(Res.string.welcome_signin_hint),

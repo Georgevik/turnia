@@ -1,0 +1,17 @@
+package com.georgevik.turnia.navigation.root
+
+import androidx.navigation3.runtime.NavKey
+import androidx.savedstate.serialization.SavedStateConfiguration
+import com.georgevik.turnia.navigation.root.routes.RootRoute
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+
+internal val rootRouteSavedStateConfiguration: SavedStateConfiguration = SavedStateConfiguration {
+    serializersModule = SerializersModule {
+        polymorphic(NavKey::class) {
+            subclass(RootRoute.SplashKey::class, RootRoute.SplashKey.serializer())
+            subclass(RootRoute.SignInKey::class, RootRoute.SignInKey.serializer())
+            subclass(RootRoute.MainKey::class, RootRoute.MainKey.serializer())
+        }
+    }
+}

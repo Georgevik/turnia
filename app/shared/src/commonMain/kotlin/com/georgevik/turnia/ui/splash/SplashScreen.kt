@@ -28,7 +28,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.georgevik.turnia.navigation.Route
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
 import com.georgevik.turnia.ui.system.toErrorSnackbar
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -43,16 +44,18 @@ import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun SplashScreen(
-    vm: SplashViewModel = koinViewModel(),
+    backStack: NavBackStack<NavKey>,
     snackbar: SnackbarHostState,
-    onNextScreen: (route: Route) -> Unit
+    vm: SplashViewModel = koinViewModel(),
 ) {
     LaunchedEffect(Unit) {
         vm.uiEvent.collect { event ->
             when (event) {
                 is SplashUiEvent.Error -> snackbar.showSnackbar(event.message.toErrorSnackbar())
-                SplashUiEvent.NewUser -> onNextScreen(Route.SignInKey)
-                SplashUiEvent.UserLoaded -> onNextScreen(Route.MainTabKey)
+                is SplashUiEvent.Navigate -> {
+                    backStack.clear()
+                    backStack.add(event.destination)
+                }
             }
         }
     }

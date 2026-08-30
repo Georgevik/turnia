@@ -9,34 +9,43 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.compose.rememberLifecycleOwner
-import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.georgevik.turnia.core.domain.model.UserSession
-import com.georgevik.turnia.navigation.Route
-import com.georgevik.turnia.navigation.TurniaNavDisplay
-import com.georgevik.turnia.navigation.navKeySavedStateConfiguration
+import com.georgevik.turnia.navigation.root.RootNavDisplay
+import com.georgevik.turnia.navigation.root.rootRouteSavedStateConfiguration
+import com.georgevik.turnia.navigation.root.routes.RootRoute
 import com.georgevik.turnia.ui.system.TurniaSnackbarVisual
 import com.georgevik.turnia.ui.system.TurniaTheme
 import org.koin.compose.viewmodel.koinViewModel
 
+/**
+ * Hosts the root back stack. The splash owns the initial hand-off (Main vs. SignIn) once its
+ * minimum duration elapses and the session resolves; this effect then keeps the app in sync with
+ * later [UserSession] changes — routing to Main on sign-in and back to SignIn on sign-out — while
+ * leaving the splash alone.
+ */
 @Composable
 @Preview
 fun App(vm: RootViewModel = koinViewModel()) {
-    val backStack = rememberNavBackStack(navKeySavedStateConfiguration, Route.SpashKey)
-    val lifecycleOwner = rememberLifecycleOwner()
+    val backStack = rememberNavBackStack(rootRouteSavedStateConfiguration, RootRoute.SplashKey)
+    val userSession by vm.userSession.collectAsStateWithLifecycle(UserSession.Loading)
 
-    LaunchedEffect(Unit) {
-        vm.userSession.flowWithLifecycle(lifecycleOwner.lifecycle).collect { userSession ->
-            when (userSession) {
-                UserSession.Unauthenticated -> {
-                    backStack.clear()
-                    backStack.add(Route.SpashKey)
-                }
-                is UserSession.Authenticated,
-                UserSession.Loading -> Unit
+    LaunchedEffect(userSession) {
+        if (backStack.lastOrNull() == RootRoute.SplashKey) return@LaunchedEffect
+        when (userSession) {
+            UserSession.Loading -> Unit
+            is UserSession.Authenticated -> if (backStack.lastOrNull() != RootRoute.MainKey) {
+                backStack.clear()
+                backStack.add(RootRoute.MainKey)
+            }
+
+            UserSession.Unauthenticated -> if (backStack.lastOrNull() != RootRoute.SignInKey) {
+                backStack.clear()
+                backStack.add(RootRoute.SignInKey)
             }
         }
     }
@@ -45,7 +54,7 @@ fun App(vm: RootViewModel = koinViewModel()) {
         val snackbarHostState = remember { SnackbarHostState() }
 
         Scaffold(
-            contentWindowInsets = WindowInsets(0,0,0,0),
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
             snackbarHost = {
                 SnackbarHost(hostState = snackbarHostState) { data ->
                     val isError = (data.visuals as? TurniaSnackbarVisual)?.isError ?: false
@@ -66,7 +75,10 @@ fun App(vm: RootViewModel = koinViewModel()) {
                 }
             }
         ) { innerPadding ->
-            TurniaNavDisplay(snackbarHostState, backStack)
+            RootNavDisplay(
+                snackbarHostState = snackbarHostState,
+                backStack = backStack,
+            )
         }
     }
 }

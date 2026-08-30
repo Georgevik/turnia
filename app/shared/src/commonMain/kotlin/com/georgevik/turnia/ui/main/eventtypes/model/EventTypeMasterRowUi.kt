@@ -3,7 +3,7 @@ package com.georgevik.turnia.ui.main.eventtypes.model
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
-import com.georgevik.turnia.navigation.EventTypeKind
+import com.georgevik.turnia.navigation.main.routes.EventTypeKind
 
 @Immutable
 data class EventTypeMasterRowUi(

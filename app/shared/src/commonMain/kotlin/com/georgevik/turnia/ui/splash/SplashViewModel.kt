@@ -2,20 +2,21 @@ package com.georgevik.turnia.ui.splash
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.UserSession
 import com.georgevik.turnia.core.domain.repository.AppConfigRepository
 import com.georgevik.turnia.core.domain.repository.UserRepository
+import com.georgevik.turnia.navigation.root.routes.RootRoute
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
 class SplashViewModel(
-    private val userRepository: UserRepository,
     private val appConfigRepository: AppConfigRepository,
+    userRepository: UserRepository,
 ) : ViewModel() {
     private val _uiEvent = Channel<SplashUiEvent>(Channel.BUFFERED)
     val uiEvent = _uiEvent.receiveAsFlow()
@@ -23,39 +24,32 @@ class SplashViewModel(
     private val startMark = TimeSource.Monotonic.markNow()
 
     init {
-        // Download feature flags while the splash is on screen; the result is
-        // cached in the repository and read later (e.g. to gate the Swap tab).
         viewModelScope.launch {
             appConfigRepository.refreshFeatureFlags()
         }
 
         viewModelScope.launch {
-            userRepository.userSession.collect {
-                val event = when (it) {
-                    is UserSession.Authenticated -> SplashUiEvent.UserLoaded
-                    UserSession.Unauthenticated -> SplashUiEvent.NewUser
-                    UserSession.Loading -> null
-                }
+            val remaining = MIN_SPLASH_DURATION - startMark.elapsedNow()
+            if (remaining.isPositive()) delay(remaining)
 
-                Logger.d(TAG, "UserSession: $it")
-
-                event?.let {
-                    val remaining = MIN_SPLASH_DURATION - startMark.elapsedNow()
-                    if (remaining.isPositive()) delay(remaining)
-                    _uiEvent.send(event)
-                }
-            }
+            val session = userRepository.userSession.first { it !is UserSession.Loading }
+            _uiEvent.send(
+                SplashUiEvent.Navigate(
+                    when (session) {
+                        is UserSession.Authenticated -> RootRoute.MainKey
+                        else -> RootRoute.SignInKey
+                    }
+                )
+            )
         }
     }
 
     companion object {
-        private const val TAG = "SplashViewModel"
         private val MIN_SPLASH_DURATION = 1.seconds
     }
 }
 
 sealed interface SplashUiEvent {
-    data object UserLoaded : SplashUiEvent
-    data object NewUser : SplashUiEvent
+    data class Navigate(val destination: RootRoute) : SplashUiEvent
     data class Error(val message: String) : SplashUiEvent
 }

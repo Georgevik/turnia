@@ -6,7 +6,7 @@ import com.georgevik.turnia.core.domain.model.Group
 import com.georgevik.turnia.core.domain.model.PersonalEventType
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
-import com.georgevik.turnia.navigation.EventTypeKind
+import com.georgevik.turnia.navigation.main.routes.EventTypeKind
 import com.georgevik.turnia.ui.main.eventtypes.model.EventTypeMasterHeaderUi
 import com.georgevik.turnia.ui.main.eventtypes.model.EventTypeMasterRowUi
 import com.georgevik.turnia.ui.main.eventtypes.model.EventTypeMasterUi

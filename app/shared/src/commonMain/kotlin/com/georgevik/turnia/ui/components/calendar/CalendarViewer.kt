@@ -51,8 +51,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.georgevik.turnia.ui.components.calendar.animtransition.CALENDAR_TRANSITION_MILLIS
-import com.georgevik.turnia.ui.components.daydetail.DayDetailsSheet
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
+import com.georgevik.turnia.ui.components.daydetail.DayDetailsSheet
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
@@ -176,7 +176,6 @@ fun CalendarViewer(
 
             BottomSheetShadow(visible = isSheetOpen, onClick = { isSheetOpen = false })
 
-            // BottomSheet
             AnimatedVisibility(
                 visible = isSheetOpen,
                 enter = EnterTransition.None,

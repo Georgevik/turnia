@@ -4,20 +4,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.georgevik.turnia.core.data.logger.Logger
-import com.georgevik.turnia.core.domain.model.UserSession
-import com.georgevik.turnia.core.domain.repository.UserRepository
 import com.mmk.kmpauth.core.auth.KMPAuthUser
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.launch
 
 private const val TAG = "GreetingViewModel"
 
-class SignInViewModel(
-    private val userRepository: UserRepository
-) : ViewModel() {
+/**
+ * Post-auth navigation to Main is decided centrally in `RootScreen.kt`'s `App()`, driven by
+ * [com.georgevik.turnia.core.domain.model.UserSession] — this view model only tracks local UI
+ * feedback (the signed-in user / last error), not navigation.
+ */
+class SignInViewModel : ViewModel() {
 
     /** Signed-in Firebase user (KMPAuth already completed the Firebase sign-in). */
     var signedInUser by mutableStateOf<KMPAuthUser?>(null)
@@ -26,17 +23,6 @@ class SignInViewModel(
     /** Last sign-in error message, for the UI; `null` when none. */
     var lastSignInError by mutableStateOf<String?>(null)
         private set
-
-    private val _signedIn = Channel<Unit>(Channel.CONFLATED)
-    val signedIn = _signedIn.receiveAsFlow()
-
-    init {
-        viewModelScope.launch {
-            userRepository.userSession.collect { session ->
-                if (session is UserSession.Authenticated) _signedIn.send(Unit)
-            }
-        }
-    }
 
     fun onSignInResult(result: Result<KMPAuthUser>) {
         result.onSuccess { user ->

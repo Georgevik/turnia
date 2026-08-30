@@ -43,7 +43,6 @@ class MyCalendarViewModel(
             .flatMapLatest { userSession -> groupRepository.fetchCalendarEvents(userSession.user.uid) },
         personalRepository.personalEvents,
     ) { eventsByDate, groupEvents, personalEvents ->
-        // groupEvents + personalEvents = eventsByDate
         MyCalendarUiState(eventsByDate = eventsByDate)
     }.stateIn(
         scope = viewModelScope,

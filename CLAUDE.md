@@ -63,6 +63,10 @@ Firebase must **not** accumulate every past event forever. The backend keeps onl
 - Only the scheduled Cloud Function deletes past events in bulk; clients never mass-delete history.
 - The local cache is normalized (events reference their types/users by id) to avoid duplication and allow rendering colors/types offline.
 
+## Code style
+
+- **Comments** — do **not** add a comment to every file, function or header. Comments belong only on **non-obvious, non-logic** code (a business rule, a workaround, a subtle invariant, a "why"). A comment that restates what the code already says is redundant — omit it.
+
 ## Tech stack
 
 - **Kotlin Multiplatform (KMP)** — shared business logic.
