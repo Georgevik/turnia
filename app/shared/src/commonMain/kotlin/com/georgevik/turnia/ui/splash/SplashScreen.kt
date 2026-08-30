@@ -54,7 +54,7 @@ fun SplashScreen(
                 is SplashUiEvent.Error -> snackbar.showSnackbar(event.message.toErrorSnackbar())
                 is SplashUiEvent.Navigate -> {
                     backStack.clear()
-                    backStack.add(event.destination.toRootRoute())
+                    backStack.add(event.destination)
                 }
             }
         }
