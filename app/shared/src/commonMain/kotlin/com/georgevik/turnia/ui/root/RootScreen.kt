@@ -15,13 +15,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.compose.rememberLifecycleOwner
-import androidx.lifecycle.flowWithLifecycle
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.georgevik.turnia.core.domain.model.UserSession
 import com.georgevik.turnia.navigation.root.RootNavDisplay
-import com.georgevik.turnia.navigation.root.routes.RootRoute
 import com.georgevik.turnia.navigation.root.rootRouteSavedStateConfiguration
+import com.georgevik.turnia.navigation.root.routes.RootRoute
 import com.georgevik.turnia.ui.system.TurniaSnackbarVisual
 import com.georgevik.turnia.ui.system.TurniaTheme
 import org.koin.compose.viewmodel.koinViewModel
@@ -36,9 +34,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Preview
 fun App(vm: RootViewModel = koinViewModel()) {
     val backStack = rememberNavBackStack(rootRouteSavedStateConfiguration, RootRoute.SplashKey)
-    val lifecycleOwner = rememberLifecycleOwner()
-    val userSession by vm.userSession.flowWithLifecycle(lifecycleOwner.lifecycle)
-        .collectAsStateWithLifecycle(UserSession.Loading)
+    val userSession by vm.userSession.collectAsStateWithLifecycle(UserSession.Loading)
     var splashMinDurationElapsed by remember { mutableStateOf(false) }
 
     LaunchedEffect(userSession, splashMinDurationElapsed) {
@@ -49,6 +45,7 @@ fun App(vm: RootViewModel = koinViewModel()) {
                 backStack.clear()
                 backStack.add(RootRoute.MainKey)
             }
+
             UserSession.Unauthenticated -> if (!onSplash || splashMinDurationElapsed) {
                 backStack.clear()
                 backStack.add(RootRoute.SignInKey)
@@ -60,7 +57,7 @@ fun App(vm: RootViewModel = koinViewModel()) {
         val snackbarHostState = remember { SnackbarHostState() }
 
         Scaffold(
-            contentWindowInsets = WindowInsets(0,0,0,0),
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
             snackbarHost = {
                 SnackbarHost(hostState = snackbarHostState) { data ->
                     val isError = (data.visuals as? TurniaSnackbarVisual)?.isError ?: false
