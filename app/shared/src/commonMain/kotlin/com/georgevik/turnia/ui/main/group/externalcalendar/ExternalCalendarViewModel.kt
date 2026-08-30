@@ -1,4 +1,4 @@
-package com.georgevik.turnia.ui.main.group
+package com.georgevik.turnia.ui.main.group.externalcalendar
 
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
@@ -19,7 +19,7 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
 import kotlin.time.Clock
 
-class GroupCalendarViewModel(
+class ExternalCalendarViewModel(
     val id: String,
     val name: String,
     val kind: CalendarKind,

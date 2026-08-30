@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.georgevik.turnia.navigation.LocalNavigator
-import com.georgevik.turnia.navigation.MainRoute
+import com.georgevik.turnia.navigation.main.routes.MainRoute
 import com.georgevik.turnia.ui.components.calendar.CalendarViewer
 import org.koin.compose.viewmodel.koinViewModel
 

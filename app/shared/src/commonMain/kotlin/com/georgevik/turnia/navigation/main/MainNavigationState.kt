@@ -1,4 +1,4 @@
-package com.georgevik.turnia.navigation
+package com.georgevik.turnia.navigation.main
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState

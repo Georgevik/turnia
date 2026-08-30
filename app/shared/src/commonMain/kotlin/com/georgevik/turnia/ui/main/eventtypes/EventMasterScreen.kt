@@ -30,9 +30,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.georgevik.turnia.navigation.EventTypeKind
+import com.georgevik.turnia.navigation.main.routes.EventTypeKind
 import com.georgevik.turnia.navigation.LocalNavigator
-import com.georgevik.turnia.navigation.MainRoute
+import com.georgevik.turnia.navigation.main.routes.MainRoute
 import com.georgevik.turnia.ui.main.eventtypes.model.EventTypeMasterHeaderUi
 import com.georgevik.turnia.ui.main.eventtypes.model.EventTypeMasterRowUi
 import com.georgevik.turnia.ui.system.components.AcronymBadge

@@ -1,4 +1,4 @@
-package com.georgevik.turnia.navigation
+package com.georgevik.turnia.navigation.main.routes
 
 import androidx.navigation3.runtime.NavKey
 import com.georgevik.turnia.core.domain.model.CalendarKind
@@ -29,7 +29,7 @@ sealed interface MainRoute : NavKey {
     ) : MainRoute
 
     @Serializable
-    data class GroupCalendarKey(val id: String, val name: String, val kind: CalendarKind) : MainRoute
+    data class GroupCalendar(val id: String, val name: String, val kind: CalendarKind) : MainRoute
 }
 
 @Serializable

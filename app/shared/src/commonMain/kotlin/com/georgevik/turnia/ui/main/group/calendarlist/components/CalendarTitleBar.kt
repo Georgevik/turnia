@@ -1,4 +1,4 @@
-package com.georgevik.turnia.ui.main.group.components
+package com.georgevik.turnia.ui.main.group.calendarlist.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement

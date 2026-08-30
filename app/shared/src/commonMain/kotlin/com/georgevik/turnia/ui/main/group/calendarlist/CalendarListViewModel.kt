@@ -1,10 +1,10 @@
-package com.georgevik.turnia.ui.main.group
+package com.georgevik.turnia.ui.main.group.calendarlist
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.georgevik.turnia.ui.main.group.model.ColleageRowUi
-import com.georgevik.turnia.ui.main.group.model.GroupRowUi
-import com.georgevik.turnia.ui.main.group.model.GroupScreenUi
+import com.georgevik.turnia.ui.main.group.calendarlist.model.ColleageRowUi
+import com.georgevik.turnia.ui.main.group.calendarlist.model.GroupRowUi
+import com.georgevik.turnia.ui.main.group.calendarlist.model.GroupScreenUi
 import com.georgevik.turnia.ui.system.createUuid
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,12 +15,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
-/**
- * Owns the Groups tab state: the lists of colleagues and groups. Real Firestore data comes
- * later. Opening a group/colleague's calendar is a real navigation entry
- * (`MainRoute.GroupCalendarKey`, backed by [GroupCalendarViewModel]), not state on this view model.
- */
-class GroupViewModel : ViewModel() {
+class CalendarListViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow(mockScreen())
     val uiState: StateFlow<GroupScreenUi> = _uiState.asStateFlow()

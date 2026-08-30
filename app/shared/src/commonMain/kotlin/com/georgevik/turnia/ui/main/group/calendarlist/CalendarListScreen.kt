@@ -1,4 +1,4 @@
-package com.georgevik.turnia.ui.main.group
+package com.georgevik.turnia.ui.main.group.calendarlist
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -33,9 +33,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.georgevik.turnia.core.domain.model.CalendarKind
 import com.georgevik.turnia.navigation.LocalNavigator
-import com.georgevik.turnia.navigation.MainRoute
-import com.georgevik.turnia.ui.main.group.components.ColleagueCard
-import com.georgevik.turnia.ui.main.group.components.GroupCard
+import com.georgevik.turnia.navigation.main.routes.MainRoute
+import com.georgevik.turnia.ui.main.group.externalcalendar.components.ColleagueCard
+import com.georgevik.turnia.ui.main.group.externalcalendar.components.GroupCard
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import turnia.app.shared.generated.resources.Res
@@ -45,7 +45,7 @@ import turnia.app.shared.generated.resources.group_search_hint
 import turnia.app.shared.generated.resources.group_see_all
 
 @Composable
-fun GroupScreen(viewModel: GroupViewModel = koinViewModel()) {
+fun CalendarListScreen(viewModel: CalendarListViewModel = koinViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigator = LocalNavigator.current
     var query by rememberSaveable { mutableStateOf("") }
@@ -90,7 +90,7 @@ fun GroupScreen(viewModel: GroupViewModel = koinViewModel()) {
                     colleague = colleague,
                     onClick = {
                         navigator.goTo(
-                            MainRoute.GroupCalendarKey(colleague.id, colleague.name, CalendarKind.COLLEAGUE)
+                            MainRoute.GroupCalendar(colleague.id, colleague.name, CalendarKind.COLLEAGUE)
                         )
                     },
                 )
@@ -105,7 +105,7 @@ fun GroupScreen(viewModel: GroupViewModel = koinViewModel()) {
                 GroupCard(
                     group = group,
                     onClick = {
-                        navigator.goTo(MainRoute.GroupCalendarKey(group.id, group.name, CalendarKind.GROUP))
+                        navigator.goTo(MainRoute.GroupCalendar(group.id, group.name, CalendarKind.GROUP))
                     },
                 )
             }

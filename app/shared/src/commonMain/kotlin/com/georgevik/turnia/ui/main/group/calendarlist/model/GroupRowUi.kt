@@ -1,4 +1,4 @@
-package com.georgevik.turnia.ui.main.group.model
+package com.georgevik.turnia.ui.main.group.calendarlist.model
 
 data class GroupRowUi(
     val id: String,

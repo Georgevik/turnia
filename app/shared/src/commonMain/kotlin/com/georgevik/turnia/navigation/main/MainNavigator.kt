@@ -1,6 +1,7 @@
-package com.georgevik.turnia.navigation
+package com.georgevik.turnia.navigation.main
 
 import androidx.navigation3.runtime.NavKey
+import com.georgevik.turnia.navigation.Navigator
 
 class MainNavigator(private val state: MainNavigationState) : Navigator {
     override fun goTo(route: NavKey) {

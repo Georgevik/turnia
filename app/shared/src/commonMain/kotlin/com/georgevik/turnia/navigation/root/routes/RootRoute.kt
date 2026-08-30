@@ -1,4 +1,4 @@
-package com.georgevik.turnia.navigation
+package com.georgevik.turnia.navigation.root.routes
 
 import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable

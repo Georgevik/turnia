@@ -1,9 +1,9 @@
-package com.georgevik.turnia.ui.main.group.components
+package com.georgevik.turnia.ui.main.group.externalcalendar.components
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.runtime.Composable
-import com.georgevik.turnia.ui.main.group.model.GroupRowUi
+import com.georgevik.turnia.ui.main.group.calendarlist.model.GroupRowUi
 import com.georgevik.turnia.ui.system.components.Avatar
 import com.georgevik.turnia.ui.system.components.Chevron
 import com.georgevik.turnia.ui.system.components.TListItem

@@ -19,9 +19,9 @@ import androidx.lifecycle.compose.rememberLifecycleOwner
 import androidx.lifecycle.flowWithLifecycle
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.georgevik.turnia.core.domain.model.UserSession
-import com.georgevik.turnia.navigation.RootNavDisplay
-import com.georgevik.turnia.navigation.RootRoute
-import com.georgevik.turnia.navigation.rootRouteSavedStateConfiguration
+import com.georgevik.turnia.navigation.root.RootNavDisplay
+import com.georgevik.turnia.navigation.root.routes.RootRoute
+import com.georgevik.turnia.navigation.root.rootRouteSavedStateConfiguration
 import com.georgevik.turnia.ui.system.TurniaSnackbarVisual
 import com.georgevik.turnia.ui.system.TurniaTheme
 import org.koin.compose.viewmodel.koinViewModel

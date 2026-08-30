@@ -1,21 +1,12 @@
-package com.georgevik.turnia.navigation
+package com.georgevik.turnia.navigation.main
 
 import androidx.navigation3.runtime.NavKey
 import androidx.savedstate.serialization.SavedStateConfiguration
+import com.georgevik.turnia.navigation.main.routes.MainRoute
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 
-val rootRouteSavedStateConfiguration: SavedStateConfiguration = SavedStateConfiguration {
-    serializersModule = SerializersModule {
-        polymorphic(NavKey::class) {
-            subclass(RootRoute.SplashKey::class, RootRoute.SplashKey.serializer())
-            subclass(RootRoute.SignInKey::class, RootRoute.SignInKey.serializer())
-            subclass(RootRoute.MainKey::class, RootRoute.MainKey.serializer())
-        }
-    }
-}
-
-val mainRouteSavedStateConfiguration: SavedStateConfiguration = SavedStateConfiguration {
+internal val mainRouteSavedStateConfiguration: SavedStateConfiguration = SavedStateConfiguration {
     serializersModule = SerializersModule {
         polymorphic(NavKey::class) {
             subclass(MainRoute.CalendarTab::class, MainRoute.CalendarTab.serializer())
@@ -24,7 +15,7 @@ val mainRouteSavedStateConfiguration: SavedStateConfiguration = SavedStateConfig
             subclass(MainRoute.ChangesTab::class, MainRoute.ChangesTab.serializer())
             subclass(MainRoute.EventMasterKey::class, MainRoute.EventMasterKey.serializer())
             subclass(MainRoute.EventTypeDetailKey::class, MainRoute.EventTypeDetailKey.serializer())
-            subclass(MainRoute.GroupCalendarKey::class, MainRoute.GroupCalendarKey.serializer())
+            subclass(MainRoute.GroupCalendar::class, MainRoute.GroupCalendar.serializer())
         }
     }
 }
