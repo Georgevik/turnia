@@ -103,7 +103,6 @@ fun SignInScreen(viewModel: SignInViewModel = koinViewModel()) {
             )
         }
 
-        // Value props.
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -125,7 +124,6 @@ fun SignInScreen(viewModel: SignInViewModel = koinViewModel()) {
             )
         }
 
-        // Call to action.
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = stringResource(Res.string.welcome_signin_hint),

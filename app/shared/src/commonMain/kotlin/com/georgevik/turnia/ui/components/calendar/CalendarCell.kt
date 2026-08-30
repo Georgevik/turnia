@@ -70,7 +70,6 @@ fun CalendarCell(
     onClick: () -> Unit,
     modifier: Modifier = Modifier.Companion,
     events: List<CalendarEventUi> = emptyList(),
-    // Expand animation via SharedTransition
     sharedScope: SharedTransitionScope? = null,
     isExpanded: Boolean = false,
 ) {
@@ -118,7 +117,6 @@ fun CalendarCell(
                 .fillMaxSize()
                 .padding(horizontal = 3.dp, vertical = CellContentPadding),
         ) {
-            // Day number, centered at the top.
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
