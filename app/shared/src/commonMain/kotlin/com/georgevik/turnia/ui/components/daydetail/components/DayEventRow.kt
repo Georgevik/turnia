@@ -20,7 +20,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -35,9 +34,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.georgevik.turnia.ui.components.calendar.diagonalHatch
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
+import com.georgevik.turnia.ui.components.calendar.model.TransferHolderUi
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
-import turnia.app.shared.generated.resources.event_assigned_other
+import turnia.app.shared.generated.resources.event_assigned_to
+import turnia.app.shared.generated.resources.event_holder_me
 import turnia.app.shared.generated.resources.event_remove
 import turnia.app.shared.generated.resources.event_status_on_swap
 
@@ -104,7 +105,28 @@ fun DayEventRow(
                         }
                     }
 
-                    if (event.onSwap || event.assigneeName != null) {
+                    event.groupName?.let { groupName ->
+                        Spacer(Modifier.height(6.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Groups,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Text(
+                                text = groupName,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+
+                    val showAssignee = event.assigneeIsMe || event.assigneeName.isNotBlank()
+                    if (event.onSwap || showAssignee) {
                         Spacer(Modifier.height(8.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -112,7 +134,14 @@ fun DayEventRow(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             if (event.onSwap) SwapChip()
-                            event.assigneeName?.let { AssignedOtherChip(name = it) }
+                            if (showAssignee) {
+                                val assignee = if (event.assigneeIsMe) {
+                                    stringResource(Res.string.event_holder_me)
+                                } else {
+                                    event.assigneeName
+                                }
+                                AssignedToChip(name = assignee)
+                            }
                         }
                     }
 
@@ -122,26 +151,6 @@ fun DayEventRow(
                             text = time,
                             style = MaterialTheme.typography.titleLarge,
                             color = MaterialTheme.colorScheme.onSurface,
-                        )
-                    }
-
-                    Spacer(Modifier.height(8.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = if (event.isOwner && !event.assignedToOther) {
-                                Icons.Default.Person
-                            } else {
-                                Icons.Default.Groups
-                            },
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Spacer(Modifier.width(6.dp))
-                        Text(
-                            text = event.subtitle,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
 
@@ -156,7 +165,7 @@ fun DayEventRow(
 }
 
 @Composable
-private fun TransferTrail(chain: List<String>) {
+private fun TransferTrail(chain: List<TransferHolderUi>) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -164,7 +173,7 @@ private fun TransferTrail(chain: List<String>) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        chain.forEachIndexed { index, userName ->
+        chain.forEachIndexed { index, holder ->
             if (index > 0) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowForward,
@@ -173,7 +182,8 @@ private fun TransferTrail(chain: List<String>) {
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            HolderPill(name = userName, highlighted = index == chain.lastIndex)
+            val name = if (holder.isMe) stringResource(Res.string.event_holder_me) else holder.name
+            HolderPill(name = name, highlighted = index == chain.lastIndex)
         }
     }
 }
@@ -246,7 +256,7 @@ private fun SwapChip() {
 }
 
 @Composable
-private fun AssignedOtherChip(name: String) {
+private fun AssignedToChip(name: String) {
     Surface(
         shape = RoundedCornerShape(8.dp),
         color = MaterialTheme.colorScheme.secondaryContainer,
@@ -257,13 +267,8 @@ private fun AssignedOtherChip(name: String) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Icon(
-                imageVector = Icons.Default.Groups,
-                contentDescription = null,
-                modifier = Modifier.size(14.dp),
-            )
             Text(
-                text = stringResource(Res.string.event_assigned_other, name),
+                text = stringResource(Res.string.event_assigned_to, name),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
             )

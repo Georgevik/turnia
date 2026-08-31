@@ -1,5 +1,6 @@
 package com.georgevik.turnia.core.system
 
+import com.georgevik.turnia.core.domain.model.EventHistoryEntry
 import com.georgevik.turnia.core.domain.model.Group
 import com.georgevik.turnia.core.domain.model.GroupEvent
 import com.georgevik.turnia.core.domain.model.GroupEventType
@@ -15,6 +16,7 @@ import kotlin.uuid.Uuid
 /** Builds a single mock group event type belonging to [groupId]. */
 fun mockGroupType(
     groupId: String,
+    groupName: String,
     name: String,
     acronym: String?,
     description: String?,
@@ -24,6 +26,7 @@ fun mockGroupType(
 ): GroupEventType = GroupEventType(
     id = mockUuid(),
     groupId = groupId,
+    groupName = groupName,
     name = name,
     acronym = acronym,
     description = description,
@@ -63,12 +66,14 @@ private val GROUP_TYPE_SETS: List<List<GroupTypeSpec>> = listOf(
 val MOCK_GROUPS: List<Group> by lazy {
     GROUP_TYPE_SETS.map { specs ->
         val groupId = mockUuid()
+        val groupName = mockGroupName()
         Group(
             id = groupId,
-            name = mockGroupName(),
+            name = groupName,
             types = specs.map { spec ->
                 mockGroupType(
                     groupId = groupId,
+                    groupName = groupName,
                     name = spec.name,
                     acronym = spec.acronym,
                     description = spec.description,
@@ -166,8 +171,22 @@ fun mockGroupName(): String {
 }
 
 
+/** A mock person with a stable id and name. */
+data class MockPerson(val id: String, val name: String)
+
+/**
+ * A fixed pool of 10 people reused across mock events (owners, assignees, transfer
+ * history) so the same id always maps to the same name.
+ *
+ * `lazy` so it initializes on first use, after the name pools ([mockRealName] →
+ * firstNames/lastNames) declared below are set (see MockData init-order note).
+ */
+val MOCK_PEOPLE: List<MockPerson> by lazy {
+    (1..10).map { MockPerson(id = mockUuid(), name = mockRealName()) }
+}
+
 fun mockGroupEvent(
-    ownerId: String = mockUuid(),
+    ownerId: String = MOCK_PEOPLE.random().id,
     fromMonth: LocalDate,
     amount: Int = 15
 ): List<GroupEvent> {
@@ -176,13 +195,22 @@ fun mockGroupEvent(
     return (0 until amount).map {
         val group = MOCK_GROUPS.random()
         val groupType = group.types.random()
-        val history = (0 until Random.nextInt(0, 3)).map { mockRealName() }
+        val history = (0 until Random.nextInt(0, 3)).map {
+            val person = MOCK_PEOPLE.random()
+            EventHistoryEntry(userId = person.id, userName = person.name)
+        }
+        // The current holder is the last one the event passed through, else the owner.
+        val assignee = history.lastOrNull()
 
         GroupEvent(
             id = mockUuid(),
             groupId = group.id,
+            groupName = group.name,
             ownerId = ownerId,
-            assigneeId = if (history.isEmpty()) ownerId else mockUuid(),
+            assigneeId = assignee?.userId ?: ownerId,
+            assigneeName = assignee?.userName
+                ?: MOCK_PEOPLE.firstOrNull { it.id == ownerId }?.name
+                ?: MOCK_PEOPLE.random().name,
             type = groupType,
             date = firstOfMonth.plus(Random.nextInt(0 until 30), DateTimeUnit.DAY),
             onSwap = Random.nextInt(5) == 1,

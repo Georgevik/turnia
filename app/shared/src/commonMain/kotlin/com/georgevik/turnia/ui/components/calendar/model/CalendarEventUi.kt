@@ -8,28 +8,13 @@ import com.georgevik.turnia.core.domain.model.PersonalEvent
 import com.georgevik.turnia.ui.system.toComposeColorOrNull
 import kotlinx.datetime.LocalDate
 
-/** The kind of calendar event, mirroring the domain (group vs. personal). */
 enum class CalendarEventType { GROUP, PERSONAL }
 
-/**
- * A fully-resolved, render-ready calendar event. Everything the UI needs is
- * precomputed here (in the view model, off the Compose thread) so the cell and
- * the details sheet only draw.
- *
- * @param name full event name (e.g. "Guardia noche").
- * @param acronym optional short siglas (e.g. "GN") the user set for the event;
- *   preferred on the tight calendar grid. `null`/blank means fall back to [name].
- * @param background cell chip fill and the sheet card's accent bar color.
- * @param textColor readable on-color for [background] (from its luminance).
- * @param timeRange e.g. "20:00 - 08:00", or `null` for an all-day event.
- * @param subtitle owner/description line shown in the details sheet.
- * @param onSwap group event offered for another member to take it over.
- * @param isOwner the current user created it (can manage it).
- * @param transferChain ordered names of every holder from the owner to the
- *   current performer (owner → … → assignee). Empty (or a single name) when the
- *   event was never handed over; two or more names means it's been ceded, which
- *   drives the "Cedido a X" chip, the diagonal hatch and the history trail.
- */
+data class TransferHolderUi(
+    val name: String,
+    val isMe: Boolean,
+)
+
 @Immutable
 data class CalendarEventUi(
     val id: String,
@@ -43,24 +28,17 @@ data class CalendarEventUi(
     val subtitle: String,
     val onSwap: Boolean,
     val isOwner: Boolean,
-    val transferChain: List<String>,
-    /** Whether the current user may delete this event in the current calendar context. */
+    val assigneeName: String,
+    val assigneeIsMe: Boolean,
+    val groupName: String?,
+    val transferChain: List<TransferHolderUi>,
     val removable: Boolean,
 ) {
-    /** What the calendar grid chip shows: the siglas if set, else the full name. */
     val gridLabel: String get() = acronym?.takeIf { it.isNotBlank() } ?: name
 
-    /** Owned by the current user but performed by someone else — hatch it. */
-    val assignedToOther: Boolean get() = transferChain.size >= 2
-
-    /** Name of the current performer when it differs from the owner, else `null`. */
-    val assigneeName: String? get() = transferChain.takeIf { it.size >= 2 }?.last()
+    val assignedToOther: Boolean get() = assigneeIsMe && transferChain.size >= 2
 
     companion object {
-        /**
-         * Builds an event, choosing a light or dark [textColor] from the
-         * relative luminance of [background] so the label stays legible.
-         */
         fun create(
             id: String,
             type: CalendarEventType,
@@ -72,7 +50,10 @@ data class CalendarEventUi(
             subtitle: String = "",
             onSwap: Boolean = false,
             isOwner: Boolean = false,
-            transferChain: List<String> = emptyList(),
+            assigneeName: String = "",
+            assigneeIsMe: Boolean = false,
+            groupName: String? = null,
+            transferChain: List<TransferHolderUi> = emptyList(),
             removable: Boolean = false,
         ): CalendarEventUi = CalendarEventUi(
             id = id,
@@ -85,6 +66,9 @@ data class CalendarEventUi(
             subtitle = subtitle,
             onSwap = onSwap,
             isOwner = isOwner,
+            assigneeName = assigneeName,
+            assigneeIsMe = assigneeIsMe,
+            groupName = groupName,
             date = date,
             transferChain = transferChain,
             removable = removable,
@@ -93,16 +77,33 @@ data class CalendarEventUi(
 }
 
 
-fun GroupEvent.toUi(removable: Boolean = false) = CalendarEventUi.create(
+fun GroupEvent.toUi(
+    currentUserId: String?,
+    removable: Boolean = false,
+) = CalendarEventUi.create(
     id = id,
     type = CalendarEventType.GROUP,
     name = type.name,
     acronym = type.acronym,
     date = date,
     background = colorHex.toComposeColorOrNull() ?: Color.Unspecified,
+    isOwner = ownerId == currentUserId,
+    assigneeName = assigneeName,
+    assigneeIsMe = assigneeId == currentUserId,
+    groupName = groupName,
     removable = removable,
-    transferChain = history,
+    transferChain = buildTransferChain(currentUserId),
 )
+
+private fun GroupEvent.buildTransferChain(currentUserId: String?): List<TransferHolderUi> =
+    buildList {
+        if (ownerId == currentUserId && history.isNotEmpty()) {
+            add(TransferHolderUi(name = "", isMe = true))
+        }
+        history.forEach { entry ->
+            add(TransferHolderUi(name = entry.userName, isMe = entry.userId == currentUserId))
+        }
+    }
 
 fun PersonalEvent.toUi(removable: Boolean = false) = CalendarEventUi.create(
     id = id,

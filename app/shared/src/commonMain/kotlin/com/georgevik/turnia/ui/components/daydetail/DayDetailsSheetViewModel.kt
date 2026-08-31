@@ -81,8 +81,10 @@ class DayDetailsSheetViewModel(
                 GroupEvent(
                     id = Uuid.random().toString(),
                     groupId = type.groupId,
+                    groupName = type.groupName,
                     ownerId = userId,
                     assigneeId = userId,
+                    assigneeName = "",
                     type = type,
                     date = date,
                     onSwap = false,

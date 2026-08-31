@@ -91,7 +91,9 @@ class MyCalendarViewModel(
         val eventsByDate: Map<LocalDate, MutableList<CalendarEventUi>> = buildMap {
             groupEvents.forEach { ev ->
                 val removable = ev.ownerId == userId && ev.assigneeId == userId
-                getOrPut(ev.date) { mutableListOf() }.add(ev.toUi(removable = removable))
+                getOrPut(ev.date) { mutableListOf() }.add(
+                    ev.toUi(currentUserId = userId, removable = removable)
+                )
             }
             personalEvents.forEach { ev ->
                 getOrPut(ev.date) { mutableListOf() }.add(ev.toUi(removable = true))

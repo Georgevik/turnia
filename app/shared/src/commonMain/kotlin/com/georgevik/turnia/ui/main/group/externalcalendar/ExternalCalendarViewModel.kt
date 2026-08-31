@@ -41,7 +41,12 @@ class ExternalCalendarViewModel(
                         date,
                         monthDelta = 2
                     ).map { list ->
-                        list.map { it.toUi(removable = it.ownerId == uid && it.assigneeId == uid) }
+                        list.map {
+                            it.toUi(
+                                currentUserId = uid,
+                                removable = it.ownerId == uid && it.assigneeId == uid,
+                            )
+                        }
                     }
 
                     is ExternalCalendarData.Personal -> personalRepository.retrievePersonalEvents(
