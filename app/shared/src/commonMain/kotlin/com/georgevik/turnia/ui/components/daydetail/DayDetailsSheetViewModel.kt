@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -47,7 +47,7 @@ class DayDetailsSheetViewModel(
     }
 
     private val _uiEvent = Channel<DayDetailsSheetUiEvent>()
-    val uiEvent: Flow<DayDetailsSheetUiEvent> = _uiEvent.consumeAsFlow()
+    val uiEvent: Flow<DayDetailsSheetUiEvent> = _uiEvent.receiveAsFlow()
 
     fun addPredefinedEvent(predefinedId: String) {
         Logger.d(TAG, "TODO: add predefined $predefinedId on $date")
