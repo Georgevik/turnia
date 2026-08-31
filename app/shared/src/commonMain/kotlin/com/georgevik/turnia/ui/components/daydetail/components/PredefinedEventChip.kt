@@ -32,7 +32,7 @@ fun PredefinedEventChip(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Text(
-                text = predefined.name,
+                text = predefined.title,
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
             )

@@ -40,6 +40,12 @@ class DayDetailsSheetViewModel(
         initialValue = DayDetailsSheetUiState(),
     )
 
+    init {
+        viewModelScope.launch {
+            groupRepository.fetchGroups()
+        }
+    }
+
     private val _uiEvent = Channel<DayDetailsSheetUiEvent>()
     val uiEvent: Flow<DayDetailsSheetUiEvent> = _uiEvent.consumeAsFlow()
 
@@ -72,22 +78,20 @@ class DayDetailsSheetViewModel(
                 groupName = group.name,
                 events = group.types.map { it.toPredefined() },
             )
-        }
+        }.distinctBy { it.groupId }
         return (listOf(personal) + groupSections).filter { it.events.isNotEmpty() }
     }
 
     private fun PersonalEventType.toPredefined() = PredefinedEventUi(
         id = id,
-        name = name,
+        title = acronym ?: name,
         color = color.toComposeColorOr(entityColor(id)),
-        acronym = acronym,
     )
 
     private fun GroupEventType.toPredefined() = PredefinedEventUi(
         id = id,
-        name = name,
+        title = acronym ?: name,
         color = color.toComposeColorOr(entityColor(id)),
-        acronym = acronym,
     )
 
     companion object {

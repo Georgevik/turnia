@@ -38,10 +38,7 @@ fun DayDetailAddEvent(
     onAddCustom: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
+    Column(modifier = modifier.padding(vertical = 8.dp)) {
         if (sections.all { it.events.isEmpty() }) {
             NoPredefinedBanner()
         } else {
@@ -54,7 +51,9 @@ fun DayDetailAddEvent(
                         onEdit = { onEditGroup(section.groupId, section.groupName) },
                     )
                 }
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FlowRow(
+                    modifier = Modifier.padding(top = 4.dp, bottom = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     section.events.forEach { predefined ->
                         PredefinedEventChip(
                             predefined = predefined,

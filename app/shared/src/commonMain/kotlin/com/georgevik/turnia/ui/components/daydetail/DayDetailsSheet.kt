@@ -38,11 +38,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.georgevik.turnia.ui.components.calendar.animtransition.CalendarSheetBoundsTransform
 import com.georgevik.turnia.ui.components.calendar.calendarContainerKey
+import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import com.georgevik.turnia.ui.components.daydetail.animation.fadeInContent
 import com.georgevik.turnia.ui.components.daydetail.components.DayDetailAddEvent
 import com.georgevik.turnia.ui.components.daydetail.components.DayDetailHeader
 import com.georgevik.turnia.ui.components.daydetail.components.DayEventRow
-import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -158,6 +158,7 @@ fun SharedTransitionScope.DayDetailsSheet(
                             onClose()
                         },
                     )
+
                 } else if (events.isEmpty()) {
                     Text(
                         text = stringResource(Res.string.event_details_empty),

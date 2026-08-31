@@ -7,9 +7,8 @@ import androidx.compose.ui.graphics.luminance
 @Immutable
 data class PredefinedEventUi(
     val id: String,
-    val name: String,
-    val color: Color,
-    val acronym: String? = null,
+    val title: String,
+    val color: Color
 ) {
     val textColor: Color = if (color.luminance() > 0.5f) Color.Black else Color.White
 }
