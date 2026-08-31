@@ -47,6 +47,10 @@ class UserRepositoryImpl(
 
     override fun isUserLogged(): Boolean = auth.currentUser != null
 
+    override suspend fun signOut() {
+        auth.signOut()
+    }
+
     companion object {
         private const val TAG = "UserRepositoryImpl"
     }

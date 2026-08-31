@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Person
@@ -27,18 +28,32 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.georgevik.turnia.ui.composables.components.custom.ConfirmationDialog
 import com.georgevik.turnia.ui.system.LocalPaddings
+import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
+import turnia.app.shared.generated.resources.Res
+import turnia.app.shared.generated.resources.dialog_cancel
+import turnia.app.shared.generated.resources.profile_logout
+import turnia.app.shared.generated.resources.profile_logout_dialog_message
+import turnia.app.shared.generated.resources.profile_logout_dialog_title
 
 /**
  * "Perfil" tab — a draft account screen: the signed-in user header plus entry
  * points to groups, shared calendars, subscription and settings.
  */
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(vm: ProfileViewModel = koinViewModel()) {
+    var showLogoutDialog by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -106,15 +121,32 @@ fun ProfileScreen() {
         ProfileRow(Icons.Default.CalendarMonth, "Calendarios compartidos")
         ProfileRow(Icons.Default.WorkspacePremium, "Suscripción")
         ProfileRow(Icons.Default.Settings, "Ajustes")
+        ProfileRow(Icons.AutoMirrored.Filled.Logout, stringResource(Res.string.profile_logout)) {
+            showLogoutDialog = true
+        }
+    }
+
+    if (showLogoutDialog) {
+        ConfirmationDialog(
+            title = stringResource(Res.string.profile_logout_dialog_title),
+            message = stringResource(Res.string.profile_logout_dialog_message),
+            confirmText = stringResource(Res.string.profile_logout),
+            dismissText = stringResource(Res.string.dialog_cancel),
+            onConfirm = {
+                showLogoutDialog = false
+                vm.onLogoutClicked()
+            },
+            onDismissRequest = { showLogoutDialog = false },
+        )
     }
 }
 
 @Composable
-private fun ProfileRow(icon: ImageVector, label: String) {
+private fun ProfileRow(icon: ImageVector, label: String, onClick: () -> Unit = {}) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { /* TODO: navigate */ }
+            .clickable(onClick = onClick)
             .padding(vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically,

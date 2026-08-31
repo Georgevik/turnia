@@ -7,4 +7,5 @@ interface UserRepository {
     val userId: String?
     val userSession: StateFlow<UserSession>
     fun isUserLogged(): Boolean
+    suspend fun signOut()
 }
