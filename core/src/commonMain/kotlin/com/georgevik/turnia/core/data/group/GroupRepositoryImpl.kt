@@ -4,7 +4,7 @@ import com.georgevik.turnia.core.domain.model.Group
 import com.georgevik.turnia.core.domain.model.GroupEvent
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.system.MOCK_GROUPS
-import com.georgevik.turnia.core.system.mockGroupEvent
+import com.georgevik.turnia.core.system.mockGenerateEvents
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.datetime.DateTimeUnit
@@ -22,8 +22,8 @@ class GroupRepositoryImpl : GroupRepository {
     override val groups: Flow<List<Group>> = _groups
 
     override suspend fun addGroupEvent(event: GroupEvent) {
-        val existing = getEventsPerDate(event.assigneeId, event.date)
-        _mockEvents[bucketKey(event.assigneeId, event.date)] = existing + event
+        val existing = getEventsPerDate(event.date)
+        _mockEvents[bucketKey(event.date)] = existing + event
     }
 
     override suspend fun deleteGroupEvent(eventId: String) {
@@ -55,13 +55,13 @@ class GroupRepositoryImpl : GroupRepository {
     ): Result<List<GroupEvent>> {
         // TODO Call DataSource
         val events = buildList {
-            addAll(getEventsPerDate(groupId, date))
+            addAll(getEventsPerDate(date))
 
             (1..monthDelta).forEach { delta ->
-                addAll(getEventsPerDate(groupId, date.plus(delta, DateTimeUnit.MONTH)))
-                addAll(getEventsPerDate(groupId, date.minus(delta, DateTimeUnit.MONTH)))
+                addAll(getEventsPerDate(date.plus(delta, DateTimeUnit.MONTH)))
+                addAll(getEventsPerDate(date.minus(delta, DateTimeUnit.MONTH)))
             }
-        }.distinctBy { it.id }
+        }.distinctBy { it.id }.filter { it.groupId == groupId }
 
         return Result.success(events)
     }
@@ -72,26 +72,26 @@ class GroupRepositoryImpl : GroupRepository {
         monthDelta: Int
     ): Result<List<GroupEvent>> {
         val events = buildList {
-            addAll(getEventsPerDate(userId, date))
+            addAll(getEventsPerDate(date))
 
             (1..monthDelta).forEach { delta ->
-                addAll(getEventsPerDate(userId, date.plus(delta, DateTimeUnit.MONTH)))
-                addAll(getEventsPerDate(userId, date.minus(delta, DateTimeUnit.MONTH)))
+                addAll(getEventsPerDate(date.plus(delta, DateTimeUnit.MONTH)))
+                addAll(getEventsPerDate(date.minus(delta, DateTimeUnit.MONTH)))
             }
-        }.distinctBy { it.id }
+        }.distinctBy { it.id }.filter { it.ownerId == userId || it.assigneeId == userId }
 
         return Result.success(events)
     }
 
 
-    private fun getEventsPerDate(userId: String, date: LocalDate): List<GroupEvent> {
-        return _mockEvents.getOrPut(bucketKey(userId, date)) {
-            mockGroupEvent(userId, date)
+    private fun getEventsPerDate(date: LocalDate): List<GroupEvent> {
+        return _mockEvents.getOrPut("${date.year}_${date.month}") {
+            mockGenerateEvents(date)
         }
     }
 
-    private fun bucketKey(userId: String, date: LocalDate) =
-        "${userId}_${date.year}_${date.month}"
+
+    private fun bucketKey(date: LocalDate) = "${date.year}_${date.month}"
 
     companion object {
         private const val TAG = "GroupRepository"

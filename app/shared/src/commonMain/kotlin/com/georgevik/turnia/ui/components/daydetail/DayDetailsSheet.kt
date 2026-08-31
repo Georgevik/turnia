@@ -46,11 +46,12 @@ import turnia.app.shared.generated.resources.event_remove_confirm_title
 fun DayDetailsSheet(
     date: LocalDate,
     events: List<CalendarEventUi>,
+    addMode: DayAddMode,
     openEditTypeScreen: (groupId: String, groupName: String) -> Unit,
     onClose: (shouldRefresh: Boolean) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: DayDetailsSheetViewModel = koinViewModel(key = date.toString()) {
-        parametersOf(date)
+        parametersOf(date, addMode)
     },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -97,6 +98,7 @@ fun DayDetailsSheet(
             date = date,
             eventCount = events.size,
             adding = adding,
+            showAdd = addMode.canAdd,
             onToggleAdd = { adding = !adding },
         )
 
@@ -108,6 +110,7 @@ fun DayDetailsSheet(
             }) { isAdding ->
                 if (isAdding) {
                     DayDetailAddEvent(
+                        addMode = addMode,
                         sections = uiState.predefinedSections,
                         onPickPredefined = { predefined ->
                             viewModel.addPredefinedEvent(predefined)

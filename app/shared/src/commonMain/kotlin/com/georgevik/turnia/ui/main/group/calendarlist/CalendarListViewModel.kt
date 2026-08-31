@@ -2,6 +2,7 @@ package com.georgevik.turnia.ui.main.group.calendarlist
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.ui.main.group.calendarlist.model.ColleageRowUi
 import com.georgevik.turnia.ui.main.group.calendarlist.model.GroupRowUi
 import com.georgevik.turnia.ui.main.group.calendarlist.model.GroupScreenUi
@@ -15,7 +16,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
-class CalendarListViewModel : ViewModel() {
+class CalendarListViewModel(private val groupRepository: GroupRepository) : ViewModel() {
 
     private val _uiState = MutableStateFlow(mockScreen())
     val uiState: StateFlow<GroupScreenUi> = _uiState.asStateFlow()
@@ -25,6 +26,13 @@ class CalendarListViewModel : ViewModel() {
     init {
         viewModelScope.launch {
             _searchFlow.debounce(200.milliseconds).collectLatest { q -> performSearch(q) }
+        }
+        viewModelScope.launch {
+            groupRepository.fetchGroups()
+            groupRepository.groups.collect { groups ->
+                val groupsRow = groups.map { GroupRowUi(it.id, it.name, 12) }
+                _uiState.update { it.copy(groups = groupsRow) }
+            }
         }
     }
 
@@ -46,11 +54,7 @@ class CalendarListViewModel : ViewModel() {
             ColleageRowUi(createUuid(), "Dr. Chen", "Adjunto, UCI"),
             ColleageRowUi(createUuid(), "Marta L.", "TCAE, Planta 3"),
         ),
-        groups = listOf(
-            GroupRowUi(createUuid(), "UCI Turno Noche", 12),
-            GroupRowUi(createUuid(), "Urgencias", 45),
-            GroupRowUi(createUuid(), "Planta 3", 20),
-        ),
+        groups = emptyList(),
         showLoading = false,
     )
 }

@@ -44,6 +44,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
+import com.georgevik.turnia.ui.components.daydetail.DayAddMode
 import com.georgevik.turnia.ui.components.daydetail.DayDetailsSheet
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
@@ -78,6 +79,7 @@ fun CalendarViewer(
     modifier: Modifier = Modifier,
     theme: CalendarTheme = CalendarThemes.myCalendar(),
     eventsByDate: Map<LocalDate, List<CalendarEventUi>> = emptyMap(),
+    addMode: DayAddMode,
     titleBar: @Composable () -> Unit = {},
     invalidateEvents: () -> Unit,
     onMonthChanged: (LocalDate) -> Unit,
@@ -187,6 +189,7 @@ fun CalendarViewer(
                 DayDetailsSheet(
                     date = date,
                     events = eventsByDate[date].orEmpty(),
+                    addMode = addMode,
                     openEditTypeScreen = { groupId, groupName ->
                         onEditGroup(groupId, groupName)
                         dismissSheet()

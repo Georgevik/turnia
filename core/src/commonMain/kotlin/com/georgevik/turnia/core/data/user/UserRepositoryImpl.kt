@@ -5,6 +5,7 @@ import com.georgevik.turnia.core.domain.model.Membership
 import com.georgevik.turnia.core.domain.model.User
 import com.georgevik.turnia.core.domain.model.UserSession
 import com.georgevik.turnia.core.domain.repository.UserRepository
+import com.georgevik.turnia.core.system.MOCK_MY_ID
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
@@ -16,7 +17,7 @@ class UserRepositoryImpl(
     private val auth: FirebaseAuth,
     private val scope: CoroutineScope
 ) : UserRepository {
-    override val userId: String? = auth.currentUser?.uid
+    override val userId: String? = auth.currentUser?.uid?.let { MOCK_MY_ID } // TODO Remove
 
     override val userSession: StateFlow<UserSession> = auth.authStateChanged
         .map { firebaseUser ->
@@ -28,7 +29,7 @@ class UserRepositoryImpl(
             if (firebaseUser != null) {
                 UserSession.Authenticated(
                     User(
-                        uid = firebaseUser.uid,
+                        uid = MOCK_MY_ID, // TODO firebaseUser.uid,
                         email = firebaseUser.email,
                         displayName = firebaseUser.displayName,
                         membership = Membership.FREE

@@ -1,20 +1,16 @@
 package com.georgevik.turnia.ui.components.daydetail.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -29,6 +25,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -53,7 +53,7 @@ fun DayEventRow(
         color = MaterialTheme.colorScheme.surfaceContainerLowest,
         shadowElevation = 1.dp,
     ) {
-        Box(modifier = Modifier.height(IntrinsicSize.Min)) {
+        Box {
             if (event.assignedToOther) {
                 Box(
                     Modifier
@@ -66,21 +66,25 @@ fun DayEventRow(
                 )
             }
 
-            Row(modifier = Modifier.fillMaxWidth()) {
-                Box(
-                    modifier = Modifier
-                        .width(6.dp)
-                        .fillMaxHeight()
-                        .background(event.background),
+            Row(modifier = Modifier.fillMaxWidth().drawBehind {
+                drawRect(
+                    color = event.background,
+                    size = Size(6.dp.toPx(), size.height)
                 )
-
+            }) {
                 Column(modifier = Modifier.weight(1f).padding(16.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        event.acronym?.takeIf { it.isNotBlank() }?.let { AcronymChip(it) }
+                        event.acronym?.takeIf { it.isNotBlank() }?.let {
+                            AcronymChip(
+                                acronym = it,
+                                background = event.background,
+                                textColor = event.textColor,
+                            )
+                        }
                         Text(
                             text = event.name,
                             modifier = Modifier.weight(1f),
@@ -154,8 +158,8 @@ fun DayEventRow(
                         )
                     }
 
-                    if (event.transferChain.size >= 2) {
-                        Spacer(Modifier.height(12.dp))
+                    if (event.transferChain.isNotEmpty()) {
+                        Spacer(Modifier.height(12.dp).width(13.dp))
                         TransferTrail(chain = event.transferChain)
                     }
                 }
@@ -166,11 +170,9 @@ fun DayEventRow(
 
 @Composable
 private fun TransferTrail(chain: List<TransferHolderUi>) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
-        verticalAlignment = Alignment.CenterVertically,
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         chain.forEachIndexed { index, holder ->
@@ -178,7 +180,7 @@ private fun TransferTrail(chain: List<TransferHolderUi>) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                     contentDescription = null,
-                    modifier = Modifier.size(14.dp),
+                    modifier = Modifier.size(14.dp).align(Alignment.CenterVertically),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -214,17 +216,18 @@ private fun HolderPill(name: String, highlighted: Boolean) {
 }
 
 @Composable
-private fun AcronymChip(acronym: String) {
+private fun AcronymChip(acronym: String, background: Color, textColor: Color) {
+    val hasColor = background.isSpecified
     Surface(
         shape = RoundedCornerShape(8.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        color = if (hasColor) background else MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
         Text(
             text = acronym,
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = if (hasColor) textColor else MaterialTheme.colorScheme.onSurface,
         )
     }
 }

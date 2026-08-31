@@ -31,6 +31,7 @@ fun DayDetailHeader(
     date: LocalDate,
     eventCount: Int,
     adding: Boolean,
+    showAdd: Boolean,
     onToggleAdd: () -> Unit,
 ) {
     val monthNames = stringArrayResource(Res.array.calendar_months)
@@ -64,15 +65,17 @@ fun DayDetailHeader(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        FilledTonalIconButton(
-            onClick = onToggleAdd,
-        ) {
-            Icon(
-                imageVector = if (adding) Icons.Default.Close else Icons.Default.Add,
-                contentDescription = stringResource(
-                    if (adding) Res.string.event_add_close else Res.string.event_add,
-                ),
-            )
+        if (showAdd) {
+            FilledTonalIconButton(
+                onClick = onToggleAdd,
+            ) {
+                Icon(
+                    imageVector = if (adding) Icons.Default.Close else Icons.Default.Add,
+                    contentDescription = stringResource(
+                        if (adding) Res.string.event_add_close else Res.string.event_add,
+                    ),
+                )
+            }
         }
     }
 }

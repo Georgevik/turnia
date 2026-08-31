@@ -32,6 +32,7 @@ import kotlin.uuid.Uuid
 
 class DayDetailsSheetViewModel(
     private val date: LocalDate,
+    private val addMode: DayAddMode,
     private val groupRepository: GroupRepository,
     private val personalRepository: PersonalEventRepository,
     private val userRepository: UserRepository,
@@ -122,19 +123,31 @@ class DayDetailsSheetViewModel(
         personalTypes: List<PersonalEventType>,
         groups: List<Group>,
     ): List<PredefinedSectionUi> {
-        val personal = PredefinedSectionUi(
-            groupId = null,
-            groupName = null,
-            events = personalTypes.map { it.toPredefined() },
-        )
-        val groupSections = groups.map { group ->
+        // On another user's calendar nothing can be added; on a group calendar only
+        // that group's types are offered (no personal types, no other groups).
+        val visibleGroups = when (addMode) {
+            DayAddMode.Disabled -> return emptyList()
+            is DayAddMode.GroupOnly -> groups.filter { it.id == addMode.groupId }
+            DayAddMode.Full -> groups
+        }
+        val personalSection = when (addMode) {
+            DayAddMode.Full -> listOf(
+                PredefinedSectionUi(
+                    groupId = null,
+                    groupName = null,
+                    events = personalTypes.map { it.toPredefined() },
+                )
+            )
+            else -> emptyList()
+        }
+        val groupSections = visibleGroups.map { group ->
             PredefinedSectionUi(
                 groupId = group.id,
                 groupName = group.name,
                 events = group.types.map { it.toPredefined() },
             )
         }.distinctBy { it.groupId }
-        return (listOf(personal) + groupSections).filter { it.events.isNotEmpty() }
+        return (personalSection + groupSections).filter { it.events.isNotEmpty() }
     }
 
     private fun PersonalEventType.toPredefined() = PredefinedEventUi(

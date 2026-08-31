@@ -36,7 +36,7 @@ data class CalendarEventUi(
 ) {
     val gridLabel: String get() = acronym?.takeIf { it.isNotBlank() } ?: name
 
-    val assignedToOther: Boolean get() = assigneeIsMe && transferChain.size >= 2
+    val assignedToOther: Boolean get() = !assigneeIsMe && isOwner
 
     companion object {
         fun create(
@@ -95,15 +95,12 @@ fun GroupEvent.toUi(
     transferChain = buildTransferChain(currentUserId),
 )
 
-private fun GroupEvent.buildTransferChain(currentUserId: String?): List<TransferHolderUi> =
-    buildList {
-        if (ownerId == currentUserId && history.isNotEmpty()) {
-            add(TransferHolderUi(name = "", isMe = true))
-        }
-        history.forEach { entry ->
-            add(TransferHolderUi(name = entry.userName, isMe = entry.userId == currentUserId))
-        }
+private fun GroupEvent.buildTransferChain(currentUserId: String?): List<TransferHolderUi> {
+    if (history.size < 2) return emptyList()
+    return history.map { entry ->
+        TransferHolderUi(name = entry.userName, isMe = entry.userId == currentUserId)
     }
+}
 
 fun PersonalEvent.toUi(removable: Boolean = false) = CalendarEventUi.create(
     id = id,

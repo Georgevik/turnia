@@ -6,6 +6,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.georgevik.turnia.navigation.LocalNavigator
 import com.georgevik.turnia.navigation.main.routes.MainRoute
 import com.georgevik.turnia.ui.components.calendar.CalendarViewer
+import com.georgevik.turnia.ui.components.daydetail.DayAddMode
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
@@ -21,6 +22,7 @@ fun MyCalendarScreen(viewModel: MyCalendarViewModel = koinViewModel()) {
         eventsByDate = uiState.eventsByDate,
         onMonthChanged = viewModel::onMonthChanged,
         invalidateEvents = viewModel::invalidateEvents,
+        addMode = DayAddMode.Full,
         onEditGroup = { groupId, groupName ->
             navigator.goTo(MainRoute.EventMasterKey(groupId, groupName))
         },

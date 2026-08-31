@@ -10,20 +10,27 @@ import com.georgevik.turnia.navigation.LocalNavigator
 import com.georgevik.turnia.navigation.main.routes.ExternalCalendarData
 import com.georgevik.turnia.ui.components.calendar.CalendarThemes
 import com.georgevik.turnia.ui.components.calendar.CalendarViewer
+import com.georgevik.turnia.ui.components.daydetail.DayAddMode
 import com.georgevik.turnia.ui.main.group.calendarlist.components.CalendarTitleBar
 
 @Composable
 fun ExternalCalendar(viewModel: ExternalCalendarViewModel) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigator = LocalNavigator.current
-    val isGroup = viewModel.data is ExternalCalendarData.Group
+    val data = viewModel.data
+    val isGroup = data is ExternalCalendarData.Group
     val theme = if (isGroup) CalendarThemes.group() else CalendarThemes.colleague()
+    val addMode = when (data) {
+        is ExternalCalendarData.Group -> DayAddMode.GroupOnly(data.id)
+        is ExternalCalendarData.Personal -> DayAddMode.Disabled
+    }
 
     CalendarViewer(
         theme = theme,
+        addMode = addMode,
         titleBar = {
             CalendarTitleBar(
-                title = viewModel.data.name,
+                title = data.name,
                 icon = if (isGroup) Icons.Default.Groups else Icons.Default.Person,
                 theme = theme,
                 onBack = navigator::goBack,

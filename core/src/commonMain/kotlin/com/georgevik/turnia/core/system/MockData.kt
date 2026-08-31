@@ -13,6 +13,9 @@ import kotlin.random.Random
 import kotlin.random.nextInt
 import kotlin.uuid.Uuid
 
+
+val MOCK_MY_ID = mockUuid()
+
 /** Builds a single mock group event type belonging to [groupId]. */
 fun mockGroupType(
     groupId: String,
@@ -48,19 +51,50 @@ private class GroupTypeSpec(
 
 private val GROUP_TYPE_SETS: List<List<GroupTypeSpec>> = listOf(
     listOf(
-        GroupTypeSpec("Guardia noche", "GN", "Guardia de 12 horas en turno de noche.", "20:00", "08:00"),
+        GroupTypeSpec(
+            "Guardia noche",
+            "GN",
+            "Guardia de 12 horas en turno de noche.",
+            "20:00",
+            "08:00"
+        ),
         GroupTypeSpec("Turno mañana", "M", "Turno de mañana en planta.", "08:00", "15:00"),
         GroupTypeSpec("Turno tarde", "T", "Turno de tarde en planta.", "15:00", "22:00"),
     ),
     listOf(
-        GroupTypeSpec("Cirugía programada", "CP", "Sesión de cirugía programada.", "08:00", "14:00"),
+        GroupTypeSpec(
+            "Cirugía programada",
+            "CP",
+            "Sesión de cirugía programada.",
+            "08:00",
+            "14:00"
+        ),
         GroupTypeSpec("Guardia localizada", "GL", "Disponibilidad bajo llamada.", null, null),
-        GroupTypeSpec("Consulta preoperatoria", "PRE", "Valoración previa a la intervención.", "09:00", "13:00"),
+        GroupTypeSpec(
+            "Consulta preoperatoria",
+            "PRE",
+            "Valoración previa a la intervención.",
+            "09:00",
+            "13:00"
+        ),
     ),
     listOf(
-        GroupTypeSpec("Ronda matinal", "RM", "Ronda de pacientes a primera hora.", "07:00", "09:00"),
+        GroupTypeSpec(
+            "Ronda matinal",
+            "RM",
+            "Ronda de pacientes a primera hora.",
+            "07:00",
+            "09:00"
+        ),
         GroupTypeSpec("Turno partido", "TP", "Jornada partida en planta.", "10:00", "18:00"),
-        GroupTypeSpec("Refuerzo festivo", "RF", "Refuerzo en día festivo. No intercambiable.", "09:00", "21:00", swappable = false),
+        GroupTypeSpec(
+            "Refuerzo festivo",
+            "RF",
+            "Refuerzo en día festivo. No intercambiable.",
+            "09:00",
+            "21:00",
+            swappable = false
+        ),
     ),
 )
 val MOCK_GROUPS: List<Group> by lazy {
@@ -182,35 +216,41 @@ data class MockPerson(val id: String, val name: String)
  * firstNames/lastNames) declared below are set (see MockData init-order note).
  */
 val MOCK_PEOPLE: List<MockPerson> by lazy {
-    (1..10).map { MockPerson(id = mockUuid(), name = mockRealName()) }
+    (1..4).map { MockPerson(id = mockUuid(), name = mockRealName()) } + MockPerson(MOCK_MY_ID, "")
 }
 
-fun mockGroupEvent(
-    ownerId: String = MOCK_PEOPLE.random().id,
+fun mockGenerateEvents(
     fromMonth: LocalDate,
-    amount: Int = 15
+    amount: Int = 30
 ): List<GroupEvent> {
     val firstOfMonth = LocalDate(fromMonth.year, fromMonth.month, 1)
 
     return (0 until amount).map {
         val group = MOCK_GROUPS.random()
         val groupType = group.types.random()
-        val history = (0 until Random.nextInt(0, 3)).map {
-            val person = MOCK_PEOPLE.random()
-            EventHistoryEntry(userId = person.id, userName = person.name)
+        val owner = MOCK_PEOPLE.random()
+
+        val history = buildList {
+            add(EventHistoryEntry(owner.id, owner.name))
+            var remainPeople = MOCK_PEOPLE - owner
+
+            (0 until Random.nextInt(0, 6)).forEach {
+                val person = remainPeople.random()
+                remainPeople = MOCK_PEOPLE - person
+                add(EventHistoryEntry(userId = person.id, userName = person.name))
+            }
         }
+
         // The current holder is the last one the event passed through, else the owner.
-        val assignee = history.lastOrNull()
+        val assignee = history.last()
 
         GroupEvent(
             id = mockUuid(),
             groupId = group.id,
             groupName = group.name,
-            ownerId = ownerId,
-            assigneeId = assignee?.userId ?: ownerId,
-            assigneeName = assignee?.userName
-                ?: MOCK_PEOPLE.firstOrNull { it.id == ownerId }?.name
-                ?: MOCK_PEOPLE.random().name,
+            ownerId = owner.id,
+            assigneeId = assignee.userId,
+            assigneeName = assignee.userName,
             type = groupType,
             date = firstOfMonth.plus(Random.nextInt(0 until 30), DateTimeUnit.DAY),
             onSwap = Random.nextInt(5) == 1,
