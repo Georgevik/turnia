@@ -1,7 +1,5 @@
 package com.georgevik.turnia.ui.components.daydetail.components
 
-import androidx.compose.animation.AnimatedVisibilityScope
-import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,9 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.georgevik.turnia.ui.components.calendar.animtransition.CalendarSheetBoundsTransform
-import com.georgevik.turnia.ui.components.calendar.calendarNumberKey
-import com.georgevik.turnia.ui.components.daydetail.animation.fadeInContent
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
@@ -32,8 +27,7 @@ import turnia.app.shared.generated.resources.event_add_close
 import turnia.app.shared.generated.resources.event_details_count
 
 @Composable
-fun SharedTransitionScope.DayDetailHeader(
-    animatedVisibilityScope: AnimatedVisibilityScope,
+fun DayDetailHeader(
     date: LocalDate,
     eventCount: Int,
     adding: Boolean,
@@ -47,21 +41,12 @@ fun SharedTransitionScope.DayDetailHeader(
     ) {
         Text(
             text = date.day.toString(),
-            modifier = Modifier
-                .sharedElement(
-                    sharedContentState = rememberSharedContentState(calendarNumberKey(date)),
-                    animatedVisibilityScope = animatedVisibilityScope,
-                    boundsTransform = CalendarSheetBoundsTransform,
-                )
-                .skipToLookaheadSize(),
             style = MaterialTheme.typography.displaySmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
         )
         Column(
-            modifier = Modifier
-                .weight(1f)
-                .fadeInContent(animatedVisibilityScope),
+            modifier = Modifier.weight(1f),
         ) {
             Text(
                 text = stringResource(
@@ -81,7 +66,6 @@ fun SharedTransitionScope.DayDetailHeader(
         }
         FilledTonalIconButton(
             onClick = onToggleAdd,
-            modifier = Modifier.fadeInContent(animatedVisibilityScope),
         ) {
             Icon(
                 imageVector = if (adding) Icons.Default.Close else Icons.Default.Add,

@@ -1,28 +1,20 @@
 package com.georgevik.turnia.ui.components.daydetail
 
-import androidx.compose.animation.AnimatedVisibilityScope
-import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -30,16 +22,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.georgevik.turnia.ui.components.calendar.animtransition.CalendarSheetBoundsTransform
-import com.georgevik.turnia.ui.components.calendar.calendarContainerKey
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
-import com.georgevik.turnia.ui.components.daydetail.animation.fadeInContent
 import com.georgevik.turnia.ui.components.daydetail.components.DayDetailAddEvent
 import com.georgevik.turnia.ui.components.daydetail.components.DayDetailHeader
 import com.georgevik.turnia.ui.components.daydetail.components.DayEventRow
@@ -50,14 +36,8 @@ import org.koin.core.parameter.parametersOf
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.event_details_empty
 
-private val SheetCornerRadius = 28.dp
-
-private const val DragDismissThresholdPx = 120f
-
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun SharedTransitionScope.DayDetailsSheet(
-    animatedVisibilityScope: AnimatedVisibilityScope,
+fun DayDetailsSheet(
     date: LocalDate,
     events: List<CalendarEventUi>,
     openEditTypeScreen: (groupId: String, groupName: String) -> Unit,
@@ -77,73 +57,28 @@ fun SharedTransitionScope.DayDetailsSheet(
         }
     }
     var adding by remember { mutableStateOf(false) }
-    Surface(
+    Column(
         modifier = modifier
             .fillMaxWidth()
-            .sharedBounds(
-                sharedContentState = rememberSharedContentState(calendarContainerKey(date)),
-                animatedVisibilityScope = animatedVisibilityScope,
-                boundsTransform = CalendarSheetBoundsTransform,
-                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-            ),
-        shape = RoundedCornerShape(topStart = SheetCornerRadius, topEnd = SheetCornerRadius),
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        tonalElevation = 1.dp,
+            .heightIn(max = 560.dp)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp)
+            .padding(bottom = 16.dp),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(max = 560.dp)
-                .verticalScroll(rememberScrollState())
-                .padding(top = 12.dp)
-                .padding(horizontal = 20.dp)
-                .windowInsetsPadding(WindowInsets.navigationBars)
-                .padding(bottom = 16.dp),
-        ) {
-            var dragOffset by remember { mutableStateOf(0f) }
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .clip(RoundedCornerShape(12.dp))
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = onClose,
-                    )
-                    .pointerInput(Unit) {
-                        detectVerticalDragGestures(
-                            onDragEnd = {
-                                if (dragOffset > DragDismissThresholdPx) onClose()
-                                dragOffset = 0f
-                            },
-                            onDragCancel = { dragOffset = 0f },
-                            onVerticalDrag = { _, delta -> dragOffset += delta },
-                        )
-                    }
-                    .padding(vertical = 10.dp, horizontal = 24.dp)
-                    .fadeInContent(animatedVisibilityScope),
-                contentAlignment = Alignment.Center,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(width = 32.dp, height = 4.dp)
-                        .clip(RoundedCornerShape(2.dp))
-                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)),
-                )
-            }
+        DayDetailHeader(
+            date = date,
+            eventCount = events.size,
+            adding = adding,
+            onToggleAdd = { adding = !adding },
+        )
 
-            DayDetailHeader(
-                animatedVisibilityScope = animatedVisibilityScope,
-                date = date,
-                eventCount = events.size,
-                adding = adding,
-                onToggleAdd = { adding = !adding },
-            )
+        Spacer(Modifier.height(16.dp))
 
-            Spacer(Modifier.height(16.dp))
-
-            Box(Modifier.fadeInContent(animatedVisibilityScope)) {
-                if (adding) {
+        Box {
+            AnimatedContent(adding, transitionSpec = {
+                fadeIn() togetherWith fadeOut(animationSpec = tween(90))
+            }) { isAdding ->
+                if (isAdding) {
                     DayDetailAddEvent(
                         sections = uiState.predefinedSections,
                         onPickPredefined = { predefined ->
@@ -175,6 +110,8 @@ fun SharedTransitionScope.DayDetailsSheet(
                     }
                 }
             }
+
+
         }
     }
 }

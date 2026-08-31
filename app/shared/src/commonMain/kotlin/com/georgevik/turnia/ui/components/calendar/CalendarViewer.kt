@@ -1,17 +1,6 @@
 package com.georgevik.turnia.ui.components.calendar
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionLayout
-import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,10 +20,13 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -43,17 +35,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.georgevik.turnia.core.data.logger.Logger
-import com.georgevik.turnia.ui.components.calendar.animtransition.CALENDAR_TRANSITION_MILLIS
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import com.georgevik.turnia.ui.components.daydetail.DayDetailsSheet
 import kotlinx.coroutines.launch
@@ -83,7 +72,7 @@ private const val WEEKS = 6
 private const val MONTH_PAGE_COUNT = 12 * 400
 private const val MONTH_PAGE_ANCHOR = MONTH_PAGE_COUNT / 2
 
-@OptIn(ExperimentalSharedTransitionApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalendarViewer(
     modifier: Modifier = Modifier,
@@ -117,13 +106,19 @@ fun CalendarViewer(
     fun pageForMonth(target: LocalDate): Int =
         MONTH_PAGE_ANCHOR + anchorMonth.monthsUntil(target)
 
-    // Whether the sheet is open — drives visibility; flips to false at once on close.
-    var isSheetOpen by remember { mutableStateOf(false) }
-    // The day the sheet renders and the tile shares bounds with. Retained through the
-    // close animation so the morph keeps its content and a source to collapse back into.
+    // The day whose details sheet is shown; non-null means the sheet is open.
     var sheetDate by remember { mutableStateOf<LocalDate?>(null) }
+    val sheetState = rememberModalBottomSheetState()
 
-    SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
+    // Animate the sheet out, then clear the date. Used by the programmatic close
+    // paths (add event, edit group) that don't go through onDismissRequest.
+    fun dismissSheet() {
+        scope.launch { sheetState.hide() }.invokeOnCompletion {
+            if (!sheetState.isVisible) sheetDate = null
+        }
+    }
+
+    Box(modifier = modifier.fillMaxSize()) {
 
         Box(
             modifier = Modifier
@@ -163,18 +158,10 @@ fun CalendarViewer(
                         CalendarGrid(
                             month = monthForPage(page),
                             calendarTheme = theme,
-                            // "Selected" = the retained day, but only while open.
-                            selectedDate = sheetDate.takeIf { isSheetOpen },
-                            sharedDate = sheetDate,
+                            // Highlight the open day's tile while its sheet is up.
+                            selectedDate = sheetDate,
                             eventsByDate = eventsByDate,
-                            sharedScope = this@SharedTransitionLayout,
-                            onDateSelected = { date ->
-                                sheetDate = date
-                                scope.launch {
-                                    withFrameNanos { }
-                                    isSheetOpen = true
-                                }
-                            },
+                            onDateSelected = { date -> sheetDate = date },
                             onMonthChanged = { newMonth ->
                                 scope.launch {
                                     pagerState.animateScrollToPage(
@@ -189,29 +176,24 @@ fun CalendarViewer(
                 }
             }
 
-            BottomSheetShadow(visible = isSheetOpen, onClick = { isSheetOpen = false })
-
-            AnimatedVisibility(
-                visible = isSheetOpen,
-                enter = EnterTransition.None,
-                exit = ExitTransition.None,
-                modifier = Modifier.align(Alignment.BottomCenter),
-            ) {
-                sheetDate?.let { date ->
-                    DayDetailsSheet(
-                        animatedVisibilityScope = this,
-                        date = date,
-                        events = eventsByDate[date].orEmpty(),
-                        openEditTypeScreen = { groupId, groupName ->
-                            onEditGroup(groupId, groupName)
-                            isSheetOpen = false
-                        },
-                        onClose = { isSheetOpen = false },
-                    )
-                }
-            }
         }
 
+        sheetDate?.let { date ->
+            ModalBottomSheet(
+                onDismissRequest = { sheetDate = null },
+                sheetState = sheetState,
+            ) {
+                DayDetailsSheet(
+                    date = date,
+                    events = eventsByDate[date].orEmpty(),
+                    openEditTypeScreen = { groupId, groupName ->
+                        onEditGroup(groupId, groupName)
+                        dismissSheet()
+                    },
+                    onClose = { dismissSheet() },
+                )
+            }
+        }
     }
 }
 
@@ -302,9 +284,7 @@ private fun CalendarGrid(
     month: LocalDate,
     calendarTheme: CalendarTheme,
     selectedDate: LocalDate?,
-    sharedDate: LocalDate?,
     eventsByDate: Map<LocalDate, List<CalendarEventUi>>,
-    sharedScope: SharedTransitionScope,
     onDateSelected: (LocalDate) -> Unit,
     onMonthChanged: (LocalDate) -> Unit,
 ) {
@@ -332,10 +312,6 @@ private fun CalendarGrid(
                         isSelected = date == selectedDate,
                         theme = calendarTheme,
                         events = eventsByDate[date].orEmpty(),
-                        // Only the retained sheet date's in-month tile is a shared
-                        // element (kept registered through the close animation).
-                        sharedScope = if (dateInMonth && date == sharedDate) sharedScope else null,
-                        isExpanded = date == selectedDate,
                         onClick = {
                             if (!dateInMonth) {
                                 onMonthChanged(LocalDate(date.year, date.month, 1))
@@ -346,26 +322,5 @@ private fun CalendarGrid(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun BottomSheetShadow(visible: Boolean, onClick: () -> Unit) {
-    AnimatedVisibility(
-        visible = visible,
-        enter = fadeIn(tween(CALENDAR_TRANSITION_MILLIS)),
-        exit = fadeOut(tween(CALENDAR_TRANSITION_MILLIS)),
-        modifier = Modifier.fillMaxSize(),
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.4f))
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = onClick,
-                ),
-        )
     }
 }
