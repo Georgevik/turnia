@@ -1,7 +1,6 @@
 package com.georgevik.turnia.ui.main.mycalendar.navigation
 
 import androidx.navigation3.runtime.EntryProviderScope
-import androidx.navigation3.runtime.NavKey
 import com.georgevik.turnia.navigation.main.routes.MainRoute
 import com.georgevik.turnia.ui.main.eventtypes.EventMasterScreen
 import com.georgevik.turnia.ui.main.eventtypes.EventMasterViewModel
@@ -11,7 +10,7 @@ import com.georgevik.turnia.ui.main.mycalendar.MyCalendarScreen
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
-fun EntryProviderScope<NavKey>.calendarNavigation() {
+fun EntryProviderScope<MainRoute>.calendarNavigation() {
     entry<MainRoute.CalendarTab> { MyCalendarScreen() }
 
     entry<MainRoute.EventMasterKey> { key ->
