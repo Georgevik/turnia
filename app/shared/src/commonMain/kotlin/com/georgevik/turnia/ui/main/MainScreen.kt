@@ -21,8 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.entryProvider
-import androidx.navigation3.ui.NavDisplay
 import com.georgevik.turnia.navigation.LocalNavigator
+import com.georgevik.turnia.navigation.TurniaNavDisplay
 import com.georgevik.turnia.navigation.main.MainNavigator
 import com.georgevik.turnia.navigation.main.routes.MainRoute
 import com.georgevik.turnia.navigation.main.rememberMainNavigationState
@@ -50,7 +50,7 @@ private val MAIN_TABS = listOf(
  * Main: Calendar/Groups/Changes/Profile as independent back stacks (Changes is feature-flag
  * gated). See `MainNavigationState`/`MainNavigator` for how tab switching and back navigation
  * work — this screen just wires the bottom bar to them and hosts the single flattened
- * [NavDisplay].
+ * [TurniaNavDisplay].
  */
 @Composable
 fun MainScreen(viewModel: MainViewModel = koinViewModel()) {
@@ -87,7 +87,7 @@ fun MainScreen(viewModel: MainViewModel = koinViewModel()) {
                 }
             }
         ) { innerPadding ->
-            NavDisplay(
+            TurniaNavDisplay(
                 entries = state.toDecoratedEntries(
                     entryProvider {
                         calendarNavigation()
