@@ -31,8 +31,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.georgevik.turnia.core.domain.model.CalendarKind
 import com.georgevik.turnia.navigation.LocalNavigator
+import com.georgevik.turnia.navigation.main.routes.ExternalCalendarData
 import com.georgevik.turnia.navigation.main.routes.MainRoute
 import com.georgevik.turnia.ui.main.group.externalcalendar.components.ColleagueCard
 import com.georgevik.turnia.ui.main.group.externalcalendar.components.GroupCard
@@ -51,8 +51,7 @@ fun CalendarListScreen(viewModel: CalendarListViewModel = koinViewModel()) {
     var query by rememberSaveable { mutableStateOf("") }
 
     LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = Modifier.fillMaxSize()
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top)),
         contentPadding = PaddingValues(
             start = 16.dp,
@@ -89,9 +88,10 @@ fun CalendarListScreen(viewModel: CalendarListViewModel = koinViewModel()) {
                 ColleagueCard(
                     colleague = colleague,
                     onClick = {
-                        navigator.goTo(
-                            MainRoute.GroupCalendar(colleague.id, colleague.name, CalendarKind.COLLEAGUE)
+                        val route = MainRoute.ExternalCalendar(
+                            ExternalCalendarData.Personal(colleague.id, colleague.name)
                         )
+                        navigator.goTo(route)
                     },
                 )
             }
@@ -105,7 +105,10 @@ fun CalendarListScreen(viewModel: CalendarListViewModel = koinViewModel()) {
                 GroupCard(
                     group = group,
                     onClick = {
-                        navigator.goTo(MainRoute.GroupCalendar(group.id, group.name, CalendarKind.GROUP))
+                        val route = MainRoute.ExternalCalendar(
+                            ExternalCalendarData.Group(group.id, group.name)
+                        )
+                        navigator.goTo(route)
                     },
                 )
             }

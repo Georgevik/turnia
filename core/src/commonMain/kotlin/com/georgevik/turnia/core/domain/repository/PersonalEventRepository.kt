@@ -14,14 +14,14 @@ interface PersonalEventRepository {
 
     val personalEventTypes: StateFlow<List<PersonalEventType>>
 
-    val personalEvents: StateFlow<List<PersonalEvent>>
-
     fun update(typeId: String?, type: PersonalEventType)
 
-    suspend fun refreshPersonalEvents(date: LocalDate): Result<Unit>
+    suspend fun retrievePersonalEvents(
+        userId: String,
+        date: LocalDate,
+        monthDelta: Int = 1
+    ): Result<List<PersonalEvent>>
 
 
     suspend fun getEventType(typeId: String): Result<PersonalEventType>
-
-    fun byId(id: String): PersonalEventType? = personalEventTypes.value.firstOrNull { it.id == id }
 }

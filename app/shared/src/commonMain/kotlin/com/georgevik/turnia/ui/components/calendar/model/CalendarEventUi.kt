@@ -3,6 +3,10 @@ package com.georgevik.turnia.ui.components.calendar.model
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import com.georgevik.turnia.core.domain.model.GroupEvent
+import com.georgevik.turnia.core.domain.model.PersonalEvent
+import com.georgevik.turnia.ui.system.toComposeColorOrNull
+import kotlinx.datetime.LocalDate
 
 /** The kind of calendar event, mirroring the domain (group vs. personal). */
 enum class CalendarEventType { GROUP, PERSONAL }
@@ -33,6 +37,7 @@ data class CalendarEventUi(
     val name: String,
     val acronym: String?,
     val background: Color,
+    val date: LocalDate,
     val textColor: Color,
     val timeRange: String?,
     val subtitle: String,
@@ -59,6 +64,7 @@ data class CalendarEventUi(
             type: CalendarEventType,
             name: String,
             background: Color,
+            date: LocalDate,
             acronym: String? = null,
             timeRange: String? = null,
             subtitle: String = "",
@@ -76,7 +82,27 @@ data class CalendarEventUi(
             subtitle = subtitle,
             onSwap = onSwap,
             isOwner = isOwner,
+            date = date,
             transferChain = transferChain,
         )
     }
 }
+
+
+fun GroupEvent.toUi() = CalendarEventUi.create(
+    id = id,
+    type = CalendarEventType.GROUP,
+    name = type.name,
+    acronym = type.acronym,
+    date = date,
+    background = colorHex.toComposeColorOrNull() ?: Color.Unspecified,
+)
+
+fun PersonalEvent.toUi() = CalendarEventUi.create(
+    id = id,
+    type = CalendarEventType.GROUP,
+    name = type.name,
+    acronym = type.acronym,
+    date = date,
+    background = type.color.toComposeColorOrNull() ?: Color.Unspecified,
+)

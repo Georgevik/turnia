@@ -12,10 +12,9 @@ import org.koin.core.parameter.parametersOf
 fun EntryProviderScope<MainRoute>.groupsNavigation() {
     entry<MainRoute.GroupsTab> { CalendarListScreen() }
 
-    entry<MainRoute.GroupCalendar> { key ->
+    entry<MainRoute.ExternalCalendar> { key ->
         ExternalCalendar(
-            viewModel = koinViewModel<ExternalCalendarViewModel> {
-                parametersOf(key.id, key.name, key.kind)
-            })
+            viewModel = koinViewModel<ExternalCalendarViewModel> { parametersOf(key.data) },
+        )
     }
 }

@@ -11,7 +11,6 @@ import kotlinx.datetime.LocalDate
  */
 data class PersonalEvent(
     val id: String,
-    val ownerId: String,
     val type: PersonalEventType,
     val date: LocalDate,
     val notes: String?,

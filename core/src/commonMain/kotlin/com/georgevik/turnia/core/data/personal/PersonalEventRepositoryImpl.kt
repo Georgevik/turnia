@@ -3,15 +3,19 @@ package com.georgevik.turnia.core.data.personal
 import com.georgevik.turnia.core.domain.model.PersonalEvent
 import com.georgevik.turnia.core.domain.model.PersonalEventType
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
+import com.georgevik.turnia.core.system.mockPersonalEvent
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.minus
+import kotlinx.datetime.plus
 
 class PersonalEventRepositoryImpl : PersonalEventRepository {
 
-    private val _personalEvents = MutableStateFlow<List<PersonalEvent>>(emptyList())
+    private val mockedMonths = mutableMapOf<String, List<PersonalEvent>>()
+
     private val _personalEventTypes = MutableStateFlow(
         listOf(
             PersonalEventType(
@@ -37,18 +41,33 @@ class PersonalEventRepositoryImpl : PersonalEventRepository {
     override val personalEventTypes: StateFlow<List<PersonalEventType>> =
         _personalEventTypes.asStateFlow()
 
-    override val personalEvents: StateFlow<List<PersonalEvent>> = _personalEvents.asStateFlow()
-
     override fun update(typeId: String?, type: PersonalEventType) {
         // typeId == null -> create new type and save it locally and network (ignore type.id)
         // typeId != null -> update type
         // TODO("Not yet implemented")
     }
 
-    override suspend fun refreshPersonalEvents(date: LocalDate): Result<Unit> {
-        // TODO Update _personalEvents based on +-1 month from [date]
+    override suspend fun retrievePersonalEvents(
+        userId: String,
+        date: LocalDate,
+        monthDelta: Int
+    ): Result<List<PersonalEvent>> {
+        val events = buildList {
+            addAll(getEventsPerDate(date))
 
-        return Result.success(Unit)
+            (1..monthDelta).forEach { delta ->
+                addAll(getEventsPerDate(date.plus(delta, DateTimeUnit.MONTH)))
+                addAll(getEventsPerDate(date.minus(delta, DateTimeUnit.MONTH)))
+            }
+        }.distinctBy { it.id }
+
+        return Result.success(events)
+    }
+
+    private fun getEventsPerDate(date: LocalDate): List<PersonalEvent> {
+        return mockedMonths.getOrPut("${date.year}_${date.month}") {
+            mockPersonalEvent(fromMonth = date)
+        }
     }
 
     override suspend fun getEventType(typeId: String): Result<PersonalEventType> {
