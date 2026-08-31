@@ -11,6 +11,8 @@ interface GroupRepository {
 
     suspend fun addGroupEvent(event: GroupEvent)
 
+    suspend fun deleteGroupEvent(eventId: String)
+
     suspend fun retrieveGroupEvents(
         groupId: String, date: LocalDate,
         monthDelta: Int = 1

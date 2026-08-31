@@ -44,6 +44,8 @@ data class CalendarEventUi(
     val onSwap: Boolean,
     val isOwner: Boolean,
     val transferChain: List<String>,
+    /** Whether the current user may delete this event in the current calendar context. */
+    val removable: Boolean,
 ) {
     /** What the calendar grid chip shows: the siglas if set, else the full name. */
     val gridLabel: String get() = acronym?.takeIf { it.isNotBlank() } ?: name
@@ -71,6 +73,7 @@ data class CalendarEventUi(
             onSwap: Boolean = false,
             isOwner: Boolean = false,
             transferChain: List<String> = emptyList(),
+            removable: Boolean = false,
         ): CalendarEventUi = CalendarEventUi(
             id = id,
             type = type,
@@ -84,25 +87,29 @@ data class CalendarEventUi(
             isOwner = isOwner,
             date = date,
             transferChain = transferChain,
+            removable = removable,
         )
     }
 }
 
 
-fun GroupEvent.toUi() = CalendarEventUi.create(
+fun GroupEvent.toUi(removable: Boolean = false) = CalendarEventUi.create(
     id = id,
     type = CalendarEventType.GROUP,
     name = type.name,
     acronym = type.acronym,
     date = date,
     background = colorHex.toComposeColorOrNull() ?: Color.Unspecified,
+    removable = removable,
+    transferChain = history,
 )
 
-fun PersonalEvent.toUi() = CalendarEventUi.create(
+fun PersonalEvent.toUi(removable: Boolean = false) = CalendarEventUi.create(
     id = id,
-    type = CalendarEventType.GROUP,
+    type = CalendarEventType.PERSONAL,
     name = type.name,
     acronym = type.acronym,
     date = date,
     background = type.color.toComposeColorOrNull() ?: Color.Unspecified,
+    removable = removable,
 )

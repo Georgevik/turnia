@@ -78,20 +78,23 @@ class MyCalendarViewModel(
         }
 
         return mapToUiState(
+            userId,
             groupResult.getOrNull().orEmpty(),
             personalResult.getOrNull().orEmpty()
         )
     }
 
     private fun mapToUiState(
+        userId: String,
         groupEvents: List<GroupEvent>, personalEvents: List<PersonalEvent>
     ): Map<LocalDate, List<CalendarEventUi>> {
         val eventsByDate: Map<LocalDate, MutableList<CalendarEventUi>> = buildMap {
             groupEvents.forEach { ev ->
-                getOrPut(ev.date) { mutableListOf() }.add(ev.toUi())
+                val removable = ev.ownerId == userId && ev.assigneeId == userId
+                getOrPut(ev.date) { mutableListOf() }.add(ev.toUi(removable = removable))
             }
             personalEvents.forEach { ev ->
-                getOrPut(ev.date) { mutableListOf() }.add(ev.toUi())
+                getOrPut(ev.date) { mutableListOf() }.add(ev.toUi(removable = true))
             }
         }
 

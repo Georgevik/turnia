@@ -14,8 +14,10 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -35,6 +37,10 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.event_details_empty
+import turnia.app.shared.generated.resources.event_remove_cancel
+import turnia.app.shared.generated.resources.event_remove_confirm
+import turnia.app.shared.generated.resources.event_remove_confirm_body
+import turnia.app.shared.generated.resources.event_remove_confirm_title
 
 @Composable
 fun DayDetailsSheet(
@@ -57,6 +63,28 @@ fun DayDetailsSheet(
         }
     }
     var adding by remember { mutableStateOf(false) }
+    var pendingDelete by remember { mutableStateOf<CalendarEventUi?>(null) }
+
+    pendingDelete?.let { event ->
+        AlertDialog(
+            onDismissRequest = { pendingDelete = null },
+            title = { Text(stringResource(Res.string.event_remove_confirm_title)) },
+            text = { Text(stringResource(Res.string.event_remove_confirm_body)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.removeEvent(event)
+                    pendingDelete = null
+                    onClose(true)
+                }) { Text(stringResource(Res.string.event_remove_confirm)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingDelete = null }) {
+                    Text(stringResource(Res.string.event_remove_cancel))
+                }
+            },
+        )
+    }
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -105,7 +133,14 @@ fun DayDetailsSheet(
                     Column {
                         events.forEachIndexed { index, event ->
                             if (index > 0) Spacer(Modifier.height(12.dp))
-                            DayEventRow(event = event)
+                            DayEventRow(
+                                event = event,
+                                onRemove = if (event.removable) {
+                                    { pendingDelete = event }
+                                } else {
+                                    null
+                                },
+                            )
                         }
                     }
                 }

@@ -26,6 +26,13 @@ class GroupRepositoryImpl : GroupRepository {
         _mockEvents[bucketKey(event.assigneeId, event.date)] = existing + event
     }
 
+    override suspend fun deleteGroupEvent(eventId: String) {
+        // TODO use data source
+        _mockEvents.keys.toList().forEach { key ->
+            _mockEvents[key] = _mockEvents.getValue(key).filterNot { it.id == eventId }
+        }
+    }
+
     override suspend fun fetchGroups() {
         _groups.emit(MOCK_GROUPS)
     }

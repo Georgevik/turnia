@@ -37,6 +37,6 @@ val appModule: Module = module {
         DayDetailsSheetViewModel(date, get(), get(), get())
     }
     viewModel { (data: ExternalCalendarData) ->
-        ExternalCalendarViewModel(data, get(), get())
+        ExternalCalendarViewModel(data, get(), get(), get())
     }
 }

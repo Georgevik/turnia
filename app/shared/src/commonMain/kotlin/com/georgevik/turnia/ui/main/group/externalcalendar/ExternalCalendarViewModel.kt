@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
+import com.georgevik.turnia.core.domain.repository.UserRepository
 import com.georgevik.turnia.navigation.main.routes.ExternalCalendarData
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import com.georgevik.turnia.ui.components.calendar.model.toUi
@@ -21,7 +22,8 @@ import kotlin.time.Clock
 class ExternalCalendarViewModel(
     val data: ExternalCalendarData,
     groupRepository: GroupRepository,
-    personalRepository: PersonalEventRepository
+    personalRepository: PersonalEventRepository,
+    private val userRepository: UserRepository,
 ) : ViewModel() {
     private val monthDate = MutableStateFlow(Clock.System.todayIn(TimeZone.currentSystemDefault()))
     private val invalidateData = MutableStateFlow(1)
@@ -32,18 +34,21 @@ class ExternalCalendarViewModel(
     init {
         viewModelScope.launch {
             combine(monthDate, invalidateData) { date, _ -> date }.collect { date ->
+                val uid = userRepository.userId
                 val calendarUiEvents = when (data) {
                     is ExternalCalendarData.Group -> groupRepository.retrieveGroupEvents(
                         data.id,
                         date,
                         monthDelta = 2
-                    ).map { list -> list.map { it.toUi() } }
+                    ).map { list ->
+                        list.map { it.toUi(removable = it.ownerId == uid && it.assigneeId == uid) }
+                    }
 
                     is ExternalCalendarData.Personal -> personalRepository.retrievePersonalEvents(
                         data.id,
                         date,
                         monthDelta = 2
-                    ).map { list -> list.map { it.toUi() } }
+                    ).map { list -> list.map { it.toUi(removable = false) } }
                 }
                 if (calendarUiEvents.isFailure) {
                     // TODO Emit error

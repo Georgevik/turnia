@@ -11,6 +11,8 @@ import com.georgevik.turnia.core.domain.model.PersonalEventType
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
 import com.georgevik.turnia.core.domain.repository.UserRepository
+import com.georgevik.turnia.ui.components.calendar.model.CalendarEventType
+import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import com.georgevik.turnia.ui.components.daydetail.model.DayDetailsSheetUiState
 import com.georgevik.turnia.ui.components.daydetail.model.PredefinedEventUi
 import com.georgevik.turnia.ui.components.daydetail.model.PredefinedSectionUi
@@ -54,6 +56,15 @@ class DayDetailsSheetViewModel(
 
     private val _uiEvent = Channel<DayDetailsSheetUiEvent>()
     val uiEvent: Flow<DayDetailsSheetUiEvent> = _uiEvent.receiveAsFlow()
+
+    fun removeEvent(event: CalendarEventUi) {
+        viewModelScope.launch {
+            when (event.type) {
+                CalendarEventType.GROUP -> groupRepository.deleteGroupEvent(event.id)
+                CalendarEventType.PERSONAL -> personalRepository.deletePersonalEvent(event.id)
+            }
+        }
+    }
 
     fun addPredefinedEvent(predefinedEventUi: PredefinedEventUi) {
         when (val domainObject = predefinedEventUi.domainObject) {

@@ -18,10 +18,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -36,11 +38,13 @@ import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.event_assigned_other
+import turnia.app.shared.generated.resources.event_remove
 import turnia.app.shared.generated.resources.event_status_on_swap
 
 @Composable
 fun DayEventRow(
     event: CalendarEventUi,
+    onRemove: (() -> Unit)? = null,
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -85,6 +89,19 @@ fun DayEventRow(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
+                        if (onRemove != null) {
+                            IconButton(
+                                onClick = onRemove,
+                                modifier = Modifier.size(28.dp),
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = stringResource(Res.string.event_remove),
+                                    modifier = Modifier.size(18.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
                     }
 
                     if (event.onSwap || event.assigneeName != null) {
@@ -147,7 +164,7 @@ private fun TransferTrail(chain: List<String>) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        chain.forEachIndexed { index, holder ->
+        chain.forEachIndexed { index, userName ->
             if (index > 0) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowForward,
@@ -156,7 +173,7 @@ private fun TransferTrail(chain: List<String>) {
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            HolderPill(name = holder, highlighted = index == chain.lastIndex)
+            HolderPill(name = userName, highlighted = index == chain.lastIndex)
         }
     }
 }

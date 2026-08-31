@@ -3,6 +3,7 @@ package com.georgevik.turnia.core.data.personal
 import com.georgevik.turnia.core.domain.model.PersonalEvent
 import com.georgevik.turnia.core.domain.model.PersonalEventType
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
+import com.georgevik.turnia.core.system.MOCK_PERSONAL_TYPES
 import com.georgevik.turnia.core.system.mockPersonalEvent
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,34 +17,20 @@ class PersonalEventRepositoryImpl : PersonalEventRepository {
 
     private val mockedMonths = mutableMapOf<String, List<PersonalEvent>>()
 
-    private val _personalEventTypes = MutableStateFlow(
-        listOf(
-            PersonalEventType(
-                id = "pt-gym",
-                name = "Gimnasio",
-                color = "#FFDDB8",
-                acronym = "GYM",
-                description = "Rutina semanal.",
-                startTime = "18:00",
-                endTime = "19:00",
-            ),
-            PersonalEventType(
-                id = "pt-doctor",
-                name = "Cita médica",
-                color = "#4F6D7A",
-                acronym = null,
-                description = "Revisión anual.",
-                startTime = null,
-                endTime = null,
-            ),
-        )
-    )
+    private val _personalEventTypes = MutableStateFlow(MOCK_PERSONAL_TYPES)
+
     override val personalEventTypes: StateFlow<List<PersonalEventType>> =
         _personalEventTypes.asStateFlow()
 
     override suspend fun addPersonalEvent(event: PersonalEvent) {
         val existing = getEventsPerDate(event.date)
         mockedMonths[bucketKey(event.date)] = existing + event
+    }
+
+    override suspend fun deletePersonalEvent(eventId: String) {
+        mockedMonths.keys.toList().forEach { key ->
+            mockedMonths[key] = mockedMonths.getValue(key).filterNot { it.id == eventId }
+        }
     }
 
     override fun update(typeId: String?, type: PersonalEventType) {
