@@ -4,6 +4,7 @@ import com.georgevik.turnia.core.data.config.AppConfigRepositoryImpl
 import com.georgevik.turnia.core.data.group.GroupRepositoryImpl
 import com.georgevik.turnia.core.data.network.FirebaseDataSource
 import com.georgevik.turnia.core.data.personal.PersonalEventRepositoryImpl
+import com.georgevik.turnia.core.data.user.UserRepositoryImpl
 import com.georgevik.turnia.core.domain.repository.AppConfigRepository
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
@@ -19,7 +20,7 @@ import org.koin.dsl.module
  */
 val coreModule: Module = module {
     single { FirebaseDataSource(Firebase.auth) }
-    single { UserRepository(Firebase.auth, GlobalScope) }
+    single<UserRepository> { UserRepositoryImpl(Firebase.auth, GlobalScope) }
     single<AppConfigRepository> { AppConfigRepositoryImpl() }
     single<GroupRepository> { GroupRepositoryImpl() }
     single<PersonalEventRepository> { PersonalEventRepositoryImpl() }
