@@ -30,6 +30,7 @@ fun ExternalCalendar(viewModel: ExternalCalendarViewModel) {
             )
         },
         onMonthChanged = viewModel::onMonthChanged,
+        invalidateEvents = viewModel::invalidateData,
         eventsByDate = uiState.events,
     )
 }

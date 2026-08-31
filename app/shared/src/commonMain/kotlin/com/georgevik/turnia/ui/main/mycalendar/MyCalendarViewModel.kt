@@ -14,7 +14,6 @@ import com.georgevik.turnia.ui.components.calendar.model.toUi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.update
@@ -36,6 +35,7 @@ class MyCalendarViewModel(
     private val personalRepository: PersonalEventRepository,
 ) : ViewModel() {
 
+    private val invalidateData = MutableStateFlow(1)
     private val targetDay = MutableStateFlow(Clock.System.todayIn(TimeZone.currentSystemDefault()))
     private val _uiState = MutableStateFlow(MyCalendarUiState())
     val uiState: StateFlow<MyCalendarUiState> = _uiState.asStateFlow()
@@ -43,15 +43,20 @@ class MyCalendarViewModel(
     init {
         viewModelScope.launch {
             combine(
+                invalidateData,
                 userRepository.userSession.filterIsInstance(UserSession.Authenticated::class),
                 targetDay
-            ) { userSession, date ->
+            ) { _, userSession, date ->
                 _uiState.update { it.copy(isLoading = true) }
                 fetchEvents(userSession.user.uid, date)
-            }.collectLatest { eventsByDate ->
+            }.collect { eventsByDate ->
                 _uiState.update { it.copy(isLoading = false, eventsByDate = eventsByDate) }
             }
         }
+    }
+
+    fun invalidateEvents() {
+        invalidateData.update { it + 1 }
     }
 
     fun onMonthChanged(date: LocalDate) {

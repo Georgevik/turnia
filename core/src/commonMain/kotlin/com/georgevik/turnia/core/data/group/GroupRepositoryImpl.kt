@@ -3,10 +3,8 @@ package com.georgevik.turnia.core.data.group
 import com.georgevik.turnia.core.domain.model.Group
 import com.georgevik.turnia.core.domain.model.GroupEvent
 import com.georgevik.turnia.core.domain.repository.GroupRepository
-import com.georgevik.turnia.core.system.MOCK_GROUP_TYPES
+import com.georgevik.turnia.core.system.MOCK_GROUPS
 import com.georgevik.turnia.core.system.mockGroupEvent
-import com.georgevik.turnia.core.system.mockGroupName
-import com.georgevik.turnia.core.system.mockUuid
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.datetime.DateTimeUnit
@@ -23,16 +21,13 @@ class GroupRepositoryImpl : GroupRepository {
     private val _groups = MutableStateFlow(emptyList<Group>())
     override val groups: Flow<List<Group>> = _groups
 
-    override suspend fun fetchGroups() {
-        val groups = (1..3).map {
-            Group(
-                id = mockUuid(),
-                name = mockGroupName(),
-                types = MOCK_GROUP_TYPES
-            )
-        }
+    override suspend fun addGroupEvent(event: GroupEvent) {
+        val existing = getEventsPerDate(event.assigneeId, event.date)
+        _mockEvents[bucketKey(event.assigneeId, event.date)] = existing + event
+    }
 
-        _groups.emit(groups)
+    override suspend fun fetchGroups() {
+        _groups.emit(MOCK_GROUPS)
     }
 
     override suspend fun getGroup(idGroup: String): Result<Group> {
@@ -83,10 +78,13 @@ class GroupRepositoryImpl : GroupRepository {
 
 
     private fun getEventsPerDate(userId: String, date: LocalDate): List<GroupEvent> {
-        return _mockEvents.getOrPut("${userId}_${date.year}_${date.month}") {
+        return _mockEvents.getOrPut(bucketKey(userId, date)) {
             mockGroupEvent(userId, date)
         }
     }
+
+    private fun bucketKey(userId: String, date: LocalDate) =
+        "${userId}_${date.year}_${date.month}"
 
     companion object {
         private const val TAG = "GroupRepository"

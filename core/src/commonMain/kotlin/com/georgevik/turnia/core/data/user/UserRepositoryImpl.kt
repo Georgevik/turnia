@@ -16,6 +16,8 @@ class UserRepositoryImpl(
     private val auth: FirebaseAuth,
     private val scope: CoroutineScope
 ) : UserRepository {
+    override val userId: String? = auth.currentUser?.uid
+
     override val userSession: StateFlow<UserSession> = auth.authStateChanged
         .map { firebaseUser ->
             Logger.d(

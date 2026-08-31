@@ -8,6 +8,9 @@ import kotlinx.datetime.LocalDate
 interface GroupRepository {
 
     val groups: Flow<List<Group>>
+
+    suspend fun addGroupEvent(event: GroupEvent)
+
     suspend fun retrieveGroupEvents(
         groupId: String, date: LocalDate,
         monthDelta: Int = 1

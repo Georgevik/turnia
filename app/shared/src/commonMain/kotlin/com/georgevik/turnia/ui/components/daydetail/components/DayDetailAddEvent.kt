@@ -33,7 +33,7 @@ import turnia.app.shared.generated.resources.event_no_predefined_title
 @Composable
 fun DayDetailAddEvent(
     sections: List<PredefinedSectionUi>,
-    onPickPredefined: (PredefinedEventUi) -> Unit,
+    onPickPredefined: (predefined: PredefinedEventUi) -> Unit,
     onEditGroup: (groupId: String, groupName: String) -> Unit,
     onAddCustom: () -> Unit,
     modifier: Modifier = Modifier

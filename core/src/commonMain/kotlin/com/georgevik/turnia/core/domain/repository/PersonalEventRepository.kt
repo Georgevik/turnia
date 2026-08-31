@@ -14,6 +14,8 @@ interface PersonalEventRepository {
 
     val personalEventTypes: StateFlow<List<PersonalEventType>>
 
+    suspend fun addPersonalEvent(event: PersonalEvent)
+
     fun update(typeId: String?, type: PersonalEventType)
 
     suspend fun retrievePersonalEvents(

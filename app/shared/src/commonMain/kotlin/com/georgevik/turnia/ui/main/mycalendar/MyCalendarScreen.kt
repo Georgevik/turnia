@@ -16,10 +16,11 @@ import org.koin.compose.viewmodel.koinViewModel
 fun MyCalendarScreen(viewModel: MyCalendarViewModel = koinViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigator = LocalNavigator.current
-    
+
     CalendarViewer(
         eventsByDate = uiState.eventsByDate,
         onMonthChanged = viewModel::onMonthChanged,
+        invalidateEvents = viewModel::invalidateEvents,
         onEditGroup = { groupId, groupName ->
             navigator.goTo(MainRoute.EventMasterKey(groupId, groupName))
         },

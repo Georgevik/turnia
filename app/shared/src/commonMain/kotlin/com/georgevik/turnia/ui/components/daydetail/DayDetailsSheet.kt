@@ -41,7 +41,7 @@ fun DayDetailsSheet(
     date: LocalDate,
     events: List<CalendarEventUi>,
     openEditTypeScreen: (groupId: String, groupName: String) -> Unit,
-    onClose: () -> Unit,
+    onClose: (shouldRefresh: Boolean) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: DayDetailsSheetViewModel = koinViewModel(key = date.toString()) {
         parametersOf(date)
@@ -82,15 +82,15 @@ fun DayDetailsSheet(
                     DayDetailAddEvent(
                         sections = uiState.predefinedSections,
                         onPickPredefined = { predefined ->
-                            viewModel.addPredefinedEvent(predefined.id)
-                            onClose()
+                            viewModel.addPredefinedEvent(predefined)
+                            onClose(true)
                         },
                         onEditGroup = { groupId, groupName ->
                             viewModel.editGroup(groupId, groupName)
                         },
                         onAddCustom = {
                             viewModel.addCustomEvent()
-                            onClose()
+                            onClose(true)
                         },
                     )
 

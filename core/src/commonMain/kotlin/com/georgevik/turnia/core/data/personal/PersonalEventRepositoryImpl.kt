@@ -41,6 +41,11 @@ class PersonalEventRepositoryImpl : PersonalEventRepository {
     override val personalEventTypes: StateFlow<List<PersonalEventType>> =
         _personalEventTypes.asStateFlow()
 
+    override suspend fun addPersonalEvent(event: PersonalEvent) {
+        val existing = getEventsPerDate(event.date)
+        mockedMonths[bucketKey(event.date)] = existing + event
+    }
+
     override fun update(typeId: String?, type: PersonalEventType) {
         // typeId == null -> create new type and save it locally and network (ignore type.id)
         // typeId != null -> update type
@@ -65,10 +70,12 @@ class PersonalEventRepositoryImpl : PersonalEventRepository {
     }
 
     private fun getEventsPerDate(date: LocalDate): List<PersonalEvent> {
-        return mockedMonths.getOrPut("${date.year}_${date.month}") {
+        return mockedMonths.getOrPut(bucketKey(date)) {
             mockPersonalEvent(fromMonth = date)
         }
     }
+
+    private fun bucketKey(date: LocalDate) = "${date.year}_${date.month}"
 
     override suspend fun getEventType(typeId: String): Result<PersonalEventType> {
         // TODO If personal type is empty, then refresh. Otherwise we don't need to refresh

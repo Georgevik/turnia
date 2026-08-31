@@ -34,7 +34,7 @@ val appModule: Module = module {
         EventTypeDetailViewModel(typeId, groupId, get(), get())
     }
     viewModel { (date: LocalDate) ->
-        DayDetailsSheetViewModel(date, get(), get())
+        DayDetailsSheetViewModel(date, get(), get(), get())
     }
     viewModel { (data: ExternalCalendarData) ->
         ExternalCalendarViewModel(data, get(), get())

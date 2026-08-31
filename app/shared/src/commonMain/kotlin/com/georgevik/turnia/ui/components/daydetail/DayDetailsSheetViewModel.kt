@@ -4,15 +4,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.Group
+import com.georgevik.turnia.core.domain.model.GroupEvent
 import com.georgevik.turnia.core.domain.model.GroupEventType
+import com.georgevik.turnia.core.domain.model.PersonalEvent
 import com.georgevik.turnia.core.domain.model.PersonalEventType
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
+import com.georgevik.turnia.core.domain.repository.UserRepository
 import com.georgevik.turnia.ui.components.daydetail.model.DayDetailsSheetUiState
 import com.georgevik.turnia.ui.components.daydetail.model.PredefinedEventUi
 import com.georgevik.turnia.ui.components.daydetail.model.PredefinedSectionUi
 import com.georgevik.turnia.ui.system.entityColor
 import com.georgevik.turnia.ui.system.toComposeColorOr
+import com.georgevik.turnia.ui.system.toHex
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -22,11 +26,13 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+import kotlin.uuid.Uuid
 
 class DayDetailsSheetViewModel(
     private val date: LocalDate,
-    groupRepository: GroupRepository,
-    personalRepository: PersonalEventRepository,
+    private val groupRepository: GroupRepository,
+    private val personalRepository: PersonalEventRepository,
+    private val userRepository: UserRepository,
 ) : ViewModel() {
 
     val uiState: StateFlow<DayDetailsSheetUiState> = combine(
@@ -49,8 +55,44 @@ class DayDetailsSheetViewModel(
     private val _uiEvent = Channel<DayDetailsSheetUiEvent>()
     val uiEvent: Flow<DayDetailsSheetUiEvent> = _uiEvent.receiveAsFlow()
 
-    fun addPredefinedEvent(predefinedId: String) {
-        Logger.d(TAG, "TODO: add predefined $predefinedId on $date")
+    fun addPredefinedEvent(predefinedEventUi: PredefinedEventUi) {
+        when (val domainObject = predefinedEventUi.domainObject) {
+            is GroupEventType -> addNewEvent(domainObject, predefinedEventUi)
+            is PersonalEventType -> addNewEvent(domainObject)
+            else -> throw IllegalArgumentException("Unknown domain object $domainObject")
+        }
+    }
+
+    private fun addNewEvent(type: GroupEventType, predefinedEventUi: PredefinedEventUi) {
+        viewModelScope.launch {
+            val userId = userRepository.userId ?: return@launch // TODO Emit error
+            groupRepository.addGroupEvent(
+                GroupEvent(
+                    id = Uuid.random().toString(),
+                    groupId = type.groupId,
+                    ownerId = userId,
+                    assigneeId = userId,
+                    type = type,
+                    date = date,
+                    onSwap = false,
+                    colorHex = predefinedEventUi.color.toHex(),
+                    history = emptyList(),
+                )
+            )
+        }
+    }
+
+    private fun addNewEvent(type: PersonalEventType) {
+        viewModelScope.launch {
+            personalRepository.addPersonalEvent(
+                PersonalEvent(
+                    id = Uuid.random().toString(),
+                    type = type,
+                    date = date,
+                    notes = null,
+                )
+            )
+        }
     }
 
     fun addCustomEvent() {
@@ -86,12 +128,14 @@ class DayDetailsSheetViewModel(
         id = id,
         title = acronym ?: name,
         color = color.toComposeColorOr(entityColor(id)),
+        domainObject = this,
     )
 
     private fun GroupEventType.toPredefined() = PredefinedEventUi(
         id = id,
         title = acronym ?: name,
         color = color.toComposeColorOr(entityColor(id)),
+        domainObject = this
     )
 
     companion object {

@@ -2,6 +2,7 @@ package com.georgevik.turnia.core.domain.model
 
 data class GroupEventType(
     val id: String,
+    val groupId: String,
     val name: String,
     val acronym: String?,
     val description: String?,

@@ -1,5 +1,6 @@
 package com.georgevik.turnia.core.system
 
+import com.georgevik.turnia.core.domain.model.Group
 import com.georgevik.turnia.core.domain.model.GroupEvent
 import com.georgevik.turnia.core.domain.model.GroupEventType
 import com.georgevik.turnia.core.domain.model.PersonalEvent
@@ -11,52 +12,74 @@ import kotlin.random.Random
 import kotlin.random.nextInt
 import kotlin.uuid.Uuid
 
-val MOCK_GROUP_TYPES = listOf(
-    GroupEventType(
-        id = mockUuid(),
-        name = "Guardia noche",
-        acronym = "GN",
-        description = "Guardia de 12 horas en turno de noche.",
-        startTime = "20:00",
-        endTime = "08:00",
-        swappable = true,
-        colorHex = mockColor(),
-        userColor = if (Random.nextBoolean()) mockColor() else null,
+/** Builds a single mock group event type belonging to [groupId]. */
+fun mockGroupType(
+    groupId: String,
+    name: String,
+    acronym: String?,
+    description: String?,
+    startTime: String?,
+    endTime: String?,
+    swappable: Boolean = true,
+): GroupEventType = GroupEventType(
+    id = mockUuid(),
+    groupId = groupId,
+    name = name,
+    acronym = acronym,
+    description = description,
+    startTime = startTime,
+    endTime = endTime,
+    swappable = swappable,
+    colorHex = mockColor(),
+    userColor = if (Random.nextBoolean()) mockColor() else null,
+)
+
+private class GroupTypeSpec(
+    val name: String,
+    val acronym: String?,
+    val description: String?,
+    val startTime: String?,
+    val endTime: String?,
+    val swappable: Boolean = true,
+)
+
+private val GROUP_TYPE_SETS: List<List<GroupTypeSpec>> = listOf(
+    listOf(
+        GroupTypeSpec("Guardia noche", "GN", "Guardia de 12 horas en turno de noche.", "20:00", "08:00"),
+        GroupTypeSpec("Turno mañana", "M", "Turno de mañana en planta.", "08:00", "15:00"),
+        GroupTypeSpec("Turno tarde", "T", "Turno de tarde en planta.", "15:00", "22:00"),
     ),
-    GroupEventType(
-        id = mockUuid(),
-        name = "Turno mañana",
-        acronym = "M",
-        description = "Turno de mañana en planta.",
-        startTime = "08:00",
-        endTime = "15:00",
-        swappable = true,
-        colorHex = mockColor(),
-        userColor = if (Random.nextBoolean()) mockColor() else null,
+    listOf(
+        GroupTypeSpec("Cirugía programada", "CP", "Sesión de cirugía programada.", "08:00", "14:00"),
+        GroupTypeSpec("Guardia localizada", "GL", "Disponibilidad bajo llamada.", null, null),
+        GroupTypeSpec("Consulta preoperatoria", "PRE", "Valoración previa a la intervención.", "09:00", "13:00"),
     ),
-    GroupEventType(
-        id = mockUuid(),
-        name = "Turno tarde",
-        acronym = "T",
-        description = "Turno de tarde en planta.",
-        startTime = "15:00",
-        endTime = "22:00",
-        swappable = true,
-        colorHex = mockColor(),
-        userColor = if (Random.nextBoolean()) mockColor() else null,
-    ),
-    GroupEventType(
-        id = mockUuid(),
-        name = "Formación",
-        acronym = "F",
-        description = "Sesión de formación interna. No intercambiable.",
-        startTime = "16:00",
-        endTime = "18:00",
-        swappable = false,
-        colorHex = mockColor(),
-        userColor = if (Random.nextBoolean()) mockColor() else null,
+    listOf(
+        GroupTypeSpec("Ronda matinal", "RM", "Ronda de pacientes a primera hora.", "07:00", "09:00"),
+        GroupTypeSpec("Turno partido", "TP", "Jornada partida en planta.", "10:00", "18:00"),
+        GroupTypeSpec("Refuerzo festivo", "RF", "Refuerzo en día festivo. No intercambiable.", "09:00", "21:00", swappable = false),
     ),
 )
+val MOCK_GROUPS: List<Group> by lazy {
+    GROUP_TYPE_SETS.map { specs ->
+        val groupId = mockUuid()
+        Group(
+            id = groupId,
+            name = mockGroupName(),
+            types = specs.map { spec ->
+                mockGroupType(
+                    groupId = groupId,
+                    name = spec.name,
+                    acronym = spec.acronym,
+                    description = spec.description,
+                    startTime = spec.startTime,
+                    endTime = spec.endTime,
+                    swappable = spec.swappable,
+                )
+            },
+        )
+    }
+}
 
 val MOCK_PERSONAL_TYPES = listOf(
     PersonalEventType(
@@ -151,12 +174,13 @@ fun mockGroupEvent(
     val firstOfMonth = LocalDate(fromMonth.year, fromMonth.month, 1)
 
     return (0 until amount).map {
-        val groupType = MOCK_GROUP_TYPES.random()
+        val group = MOCK_GROUPS.random()
+        val groupType = group.types.random()
         val history = (0 until Random.nextInt(0, 3)).map { mockRealName() }
 
         GroupEvent(
             id = mockUuid(),
-            groupId = mockUuid(),
+            groupId = group.id,
             ownerId = ownerId,
             assigneeId = if (history.isEmpty()) ownerId else mockUuid(),
             type = groupType,

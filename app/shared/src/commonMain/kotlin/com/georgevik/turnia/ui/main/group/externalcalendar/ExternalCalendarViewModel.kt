@@ -10,6 +10,7 @@ import com.georgevik.turnia.ui.components.calendar.model.toUi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -23,14 +24,14 @@ class ExternalCalendarViewModel(
     personalRepository: PersonalEventRepository
 ) : ViewModel() {
     private val monthDate = MutableStateFlow(Clock.System.todayIn(TimeZone.currentSystemDefault()))
+    private val invalidateData = MutableStateFlow(1)
+
     private val _uiState = MutableStateFlow(GroupCalendarUi())
     val uiState: StateFlow<GroupCalendarUi> = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {
-
-
-            monthDate.collect { date ->
+            combine(monthDate, invalidateData) { date, _ -> date }.collect { date ->
                 val calendarUiEvents = when (data) {
                     is ExternalCalendarData.Group -> groupRepository.retrieveGroupEvents(
                         data.id,
@@ -54,6 +55,10 @@ class ExternalCalendarViewModel(
             }
 
         }
+    }
+
+    fun invalidateData() {
+        invalidateData.update { it + 1 }
     }
 
     fun onMonthChanged(date: LocalDate) {

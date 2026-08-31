@@ -79,6 +79,7 @@ fun CalendarViewer(
     theme: CalendarTheme = CalendarThemes.myCalendar(),
     eventsByDate: Map<LocalDate, List<CalendarEventUi>> = emptyMap(),
     titleBar: @Composable () -> Unit = {},
+    invalidateEvents: () -> Unit,
     onMonthChanged: (LocalDate) -> Unit,
     onEditGroup: (groupId: String, groupName: String) -> Unit = { _, _ -> },
 ) {
@@ -190,7 +191,10 @@ fun CalendarViewer(
                         onEditGroup(groupId, groupName)
                         dismissSheet()
                     },
-                    onClose = { dismissSheet() },
+                    onClose = {
+                        invalidateEvents()
+                        dismissSheet()
+                    },
                 )
             }
         }
