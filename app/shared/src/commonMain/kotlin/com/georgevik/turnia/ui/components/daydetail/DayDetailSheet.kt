@@ -35,9 +35,9 @@ import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import com.georgevik.turnia.ui.components.daydetail.components.DayDetailAddEvent
 import com.georgevik.turnia.ui.components.daydetail.components.DayDetailHeader
 import com.georgevik.turnia.ui.components.daydetail.components.DayEventRow
-import com.georgevik.turnia.ui.components.daydetail.model.DayDetailsSheetError
+import com.georgevik.turnia.ui.components.daydetail.model.AddEventTypesError
 import com.georgevik.turnia.ui.system.components.TurniaErrorContent
-import com.georgevik.turnia.ui.components.daydetail.model.DayDetailsSheetUi
+import com.georgevik.turnia.ui.components.daydetail.model.AddEventTypesUi
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -52,14 +52,14 @@ import turnia.app.shared.generated.resources.event_remove_confirm_body
 import turnia.app.shared.generated.resources.event_remove_confirm_title
 
 @Composable
-fun DayDetailsSheet(
+fun DayDetailSheet(
     date: LocalDate,
     events: List<CalendarEventUi>,
     addMode: DayAddMode,
     openEditTypeScreen: (groupId: String, groupName: String) -> Unit,
     onClose: (shouldRefresh: Boolean) -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: DayDetailsSheetViewModel = koinViewModel(key = date.toString()) {
+    viewModel: DayDetailSheetViewModel = koinViewModel(key = date.toString()) {
         parametersOf(date, addMode)
     },
 ) {
@@ -113,17 +113,17 @@ fun DayDetailsSheet(
                         // Only the add pane needs the loaded types; the day's events arrive as a
                         // parameter, so they must stay on screen while these load or fail.
                         when (val state = uiState) {
-                            DayDetailsSheetUi.Loading -> AddPaneLoading()
+                            AddEventTypesUi.Loading -> AddPaneLoading()
 
-                            is DayDetailsSheetUi.Error -> TurniaErrorContent(
+                            is AddEventTypesUi.Error -> TurniaErrorContent(
                                 message = state.error.message(),
                                 modifier = Modifier.fillMaxWidth(),
                                 onRetry = viewModel::retry,
                             )
 
-                            is DayDetailsSheetUi.Success -> DayDetailAddEvent(
+                            is AddEventTypesUi.Success -> DayDetailAddEvent(
                                 addMode = addMode,
-                                sections = state.predefinedSections,
+                                sections = state.sections,
                                 onPickPredefined = { predefined ->
                                     viewModel.addPredefinedEvent(predefined)
                                     onClose(true)
@@ -173,8 +173,8 @@ private fun AddPaneLoading() {
 }
 
 @Composable
-private fun DayDetailsSheetError.message(): String = stringResource(
+private fun AddEventTypesError.message(): String = stringResource(
     when (this) {
-        DayDetailsSheetError.LoadFailed -> Res.string.day_detail_load_error
+        AddEventTypesError.LoadFailed -> Res.string.day_detail_load_error
     }
 )

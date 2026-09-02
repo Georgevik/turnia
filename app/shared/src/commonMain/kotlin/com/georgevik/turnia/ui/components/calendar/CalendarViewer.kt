@@ -45,7 +45,7 @@ import androidx.compose.ui.unit.dp
 import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import com.georgevik.turnia.ui.components.daydetail.DayAddMode
-import com.georgevik.turnia.ui.components.daydetail.DayDetailsSheet
+import com.georgevik.turnia.ui.components.daydetail.DayDetailSheet
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
@@ -186,7 +186,7 @@ fun CalendarViewer(
                 onDismissRequest = { sheetDate = null },
                 sheetState = sheetState,
             ) {
-                DayDetailsSheet(
+                DayDetailSheet(
                     date = date,
                     events = eventsByDate[date].orEmpty(),
                     addMode = addMode,

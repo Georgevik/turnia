@@ -15,8 +15,8 @@ import com.georgevik.turnia.ui.components.calendar.model.CalendarEventType
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import com.georgevik.turnia.core.system.fold
 import com.georgevik.turnia.core.system.outcomeCatching
-import com.georgevik.turnia.ui.components.daydetail.model.DayDetailsSheetError
-import com.georgevik.turnia.ui.components.daydetail.model.DayDetailsSheetUi
+import com.georgevik.turnia.ui.components.daydetail.model.AddEventTypesError
+import com.georgevik.turnia.ui.components.daydetail.model.AddEventTypesUi
 import com.georgevik.turnia.ui.components.daydetail.model.EventTypeSectionUi
 import com.georgevik.turnia.ui.components.daydetail.model.PredefinedEventUi
 import com.georgevik.turnia.ui.system.entityColor
@@ -31,7 +31,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlin.uuid.Uuid
 
-class DayDetailsSheetViewModel(
+class DayDetailSheetViewModel(
     private val date: LocalDate,
     private val addMode: DayAddMode,
     private val groupRepository: GroupRepository,
@@ -39,7 +39,7 @@ class DayDetailsSheetViewModel(
     private val userRepository: UserRepository,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<DayDetailsSheetUi>(DayDetailsSheetUi.Loading)
+    private val _uiState = MutableStateFlow<AddEventTypesUi>(AddEventTypesUi.Loading)
     val uiState = _uiState.asStateFlow()
 
     init {
@@ -50,9 +50,9 @@ class DayDetailsSheetViewModel(
 
     private fun loadEventTypes() {
         viewModelScope.launch {
-            _uiState.update { DayDetailsSheetUi.Loading }
+            _uiState.update { AddEventTypesUi.Loading }
 
-            val outcome = outcomeCatching({ DayDetailsSheetError.LoadFailed }) {
+            val outcome = outcomeCatching({ AddEventTypesError.LoadFailed }) {
                 coroutineScope {
                     val groups = async { groupRepository.getGroups() }
                     val personalTypes = async { personalRepository.getPersonalEventTypes() }
@@ -62,8 +62,8 @@ class DayDetailsSheetViewModel(
 
             _uiState.update {
                 outcome.fold(
-                    onSuccess = { sections -> DayDetailsSheetUi.Success(sections) },
-                    onFailure = { error -> DayDetailsSheetUi.Error(error) },
+                    onSuccess = { sections -> AddEventTypesUi.Success(sections) },
+                    onFailure = { error -> AddEventTypesUi.Error(error) },
                 )
             }
         }
@@ -168,6 +168,6 @@ class DayDetailsSheetViewModel(
     )
 
     companion object {
-        private const val TAG = "DayDetailsSheetViewModel"
+        private const val TAG = "DayDetailSheetViewModel"
     }
 }
