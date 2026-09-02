@@ -108,15 +108,9 @@
     <string name="group_detail_error_load">No hemos podido cargar el grupo.</string>
     <string name="group_detail_error_save">No se ha podido guardar el grupo. Inténtalo de nuevo.</string>
 
-    <!-- Event types: master + detail (edit color / manage) -->
+    <!-- Event types: detail (edit color / manage) -->
     <string name="event_types_edit">Editar eventos</string>
-    <string name="event_types_title">Tipos de turnos</string>
-    <string name="event_types_search_hint">Buscar eventos o grupo...</string>
-    <string name="event_types_section_personal">PERSONALES</string>
     <string name="event_types_section_group">GRUPO</string>
-    <string name="event_types_create_personal">Crear evento personal</string>
-    <string name="event_types_load_error">No hemos podido cargar los tipos de evento.</string>
-    <string name="event_types_empty">No hay eventos que mostrar.</string>
     <string name="event_type_detail_title_group">Evento de grupo</string>
     <string name="event_type_detail_title_personal">Evento personal</string>
     <string name="event_type_detail_new_personal">Nuevo evento personal</string>
