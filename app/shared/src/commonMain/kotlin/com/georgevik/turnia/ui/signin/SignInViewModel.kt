@@ -1,37 +1,33 @@
 package com.georgevik.turnia.ui.signin
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.georgevik.turnia.core.data.logger.Logger
+import com.georgevik.turnia.ui.signin.model.SignInError
+import com.georgevik.turnia.ui.signin.model.SignInUi
 import com.mmk.kmpauth.core.auth.KMPAuthUser
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
-private const val TAG = "GreetingViewModel"
+private const val TAG = "SignInViewModel"
 
-/**
- * Post-auth navigation to Main is decided centrally in `RootScreen.kt`'s `App()`, driven by
- * [com.georgevik.turnia.core.domain.model.UserSession] — this view model only tracks local UI
- * feedback (the signed-in user / last error), not navigation.
- */
 class SignInViewModel : ViewModel() {
 
-    /** Signed-in Firebase user (KMPAuth already completed the Firebase sign-in). */
-    var signedInUser by mutableStateOf<KMPAuthUser?>(null)
-        private set
+    private val _uiState = MutableStateFlow(SignInUi())
+    val uiState: StateFlow<SignInUi> = _uiState.asStateFlow()
 
-    /** Last sign-in error message, for the UI; `null` when none. */
-    var lastSignInError by mutableStateOf<String?>(null)
-        private set
+    fun onSignInStarted() = _uiState.update { it.copy(signingIn = true, userMessage = null) }
 
     fun onSignInResult(result: Result<KMPAuthUser>) {
-        result.onSuccess { user ->
-            signedInUser = user
-            lastSignInError = null
-            Logger.i(TAG, "Signed in: ${user.uid}")
-        }.onFailure { error ->
-            lastSignInError = error.message ?: "Unknown error"
-            Logger.e(TAG, "Google sign-in failed", error)
-        }
+        result.fold(
+            onSuccess = { },
+            onFailure = { error ->
+                Logger.e(TAG, "Google sign-in failed", error)
+                _uiState.update { it.copy(signingIn = false, userMessage = SignInError.Failed) }
+            },
+        )
     }
+
+    fun userMessageShown() = _uiState.update { it.copy(userMessage = null) }
 }

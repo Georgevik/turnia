@@ -81,6 +81,7 @@
     <string name="welcome_feature_notify_title">Te avisamos cuando importa</string>
     <string name="welcome_feature_notify_body">Una notificación en cuanto algo afecta a tu horario.</string>
     <string name="welcome_signin_hint">Inicia sesión para empezar</string>
+    <string name="signin_error_failed">No hemos podido iniciar sesión. Inténtalo de nuevo.</string>
 
     <!-- Groups tab -->
     <string name="group_search_hint">Buscar personas o grupos...</string>
