@@ -60,7 +60,6 @@ import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.calendar_back
 import turnia.app.shared.generated.resources.event_details_new_title
 import turnia.app.shared.generated.resources.event_type_error_group_not_found
-import turnia.app.shared.generated.resources.event_type_error_name_empty
 import turnia.app.shared.generated.resources.event_type_error_not_implemented
 import turnia.app.shared.generated.resources.event_type_error_pick_color
 import turnia.app.shared.generated.resources.event_type_error_save_personal
@@ -124,16 +123,16 @@ fun EventTypeDetailScreen(viewModel: EventTypeDetailViewModel) {
                         viewModel.hideMessageError()
                     }
                 }
+                LaunchedEffect(state.isSaved) {
+                    if (state.isSaved) navigator.goBack()
+                }
                 EventTypeFormContent(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)
                         .padding(20.dp),
                     state = state,
-                    onSavePersonal = {
-                        viewModel.onSavePersonal()
-                        navigator.goBack()
-                    },
+                    onSavePersonal = viewModel::onSavePersonal,
                     onPickColor = viewModel::onPickColor,
                     onFieldChanged = viewModel::onFieldChanged
                 )
@@ -415,7 +414,6 @@ private fun EventTypeToastError.message(): String = stringResource(
     when (this) {
         EventTypeToastError.PickColor -> Res.string.event_type_error_pick_color
         EventTypeToastError.SavePersonal -> Res.string.event_type_error_save_personal
-        EventTypeToastError.NameIsEmpty -> Res.string.event_type_error_name_empty
         EventTypeToastError.NotImplemented -> Res.string.event_type_error_not_implemented
     }
 )

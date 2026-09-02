@@ -99,6 +99,7 @@
     <string name="event_types_section_personal">PERSONALES</string>
     <string name="event_types_section_group">GRUPO</string>
     <string name="event_types_create_personal">Crear evento personal</string>
+    <string name="event_types_load_error">No hemos podido cargar los tipos de evento.</string>
     <string name="event_types_empty">No hay eventos que mostrar.</string>
     <string name="event_type_detail_title_group">Evento de grupo</string>
     <string name="event_type_detail_title_personal">Evento personal</string>
@@ -120,7 +121,6 @@
     <string name="event_type_error_type_not_found">No hemos encontrado este tipo de evento. Puede que se haya eliminado.</string>
     <string name="event_type_error_pick_color">No se ha podido guardar el color. Inténtalo de nuevo.</string>
     <string name="event_type_error_save_personal">No se ha podido guardar el evento. Inténtalo de nuevo.</string>
-    <string name="event_type_error_name_empty">El nombre no puede estar vacío.</string>
     <string name="event_type_error_not_implemented">Esta función todavía no está disponible.</string>
 
     <!-- Dialogs -->
@@ -137,5 +137,6 @@
     <string name="day_detail_private_events">EVENTOS PRIVADOS</string>
     <string name="day_detail_group_events">EVENTOS DE GRUPO</string>
     <string name="day_detail_add_event">Añadir</string>
+    <string name="day_detail_load_error">No hemos podido cargar tus tipos de evento.</string>
 
 </resources>

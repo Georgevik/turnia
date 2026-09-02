@@ -3,9 +3,9 @@ package com.georgevik.turnia.core.data.personal
 import com.georgevik.turnia.core.domain.model.PersonalEvent
 import com.georgevik.turnia.core.domain.model.PersonalEventType
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
+import com.georgevik.turnia.core.system.mockDelay
 import com.georgevik.turnia.core.system.MOCK_PERSONAL_TYPES
 import com.georgevik.turnia.core.system.mockPersonalEvent
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,17 +18,19 @@ class PersonalEventRepositoryImpl : PersonalEventRepository {
 
     private val mockedMonths = mutableMapOf<String, List<PersonalEvent>>()
 
-    private val _personalEventTypes = MutableStateFlow(MOCK_PERSONAL_TYPES)
-
-    override val personalEventTypes: StateFlow<List<PersonalEventType>> =
-        _personalEventTypes.asStateFlow()
+    override suspend fun getPersonalEventTypes(): List<PersonalEventType> {
+        mockDelay()
+        return MOCK_PERSONAL_TYPES
+    }
 
     override suspend fun addPersonalEvent(event: PersonalEvent) {
+        mockDelay()
         val existing = getEventsPerDate(event.date)
         mockedMonths[bucketKey(event.date)] = existing + event
     }
 
     override suspend fun deletePersonalEvent(eventId: String) {
+        mockDelay()
         mockedMonths.keys.toList().forEach { key ->
             mockedMonths[key] = mockedMonths.getValue(key).filterNot { it.id == eventId }
         }
@@ -37,9 +39,7 @@ class PersonalEventRepositoryImpl : PersonalEventRepository {
     override suspend fun update(typeId: String?, type: PersonalEventType) : Result<Unit>{
         // typeId == null -> create new type and save it locally and network (ignore type.id)
         // typeId != null -> update type
-
-        delay(1000)
-
+        mockDelay()
         return Result.success(Unit)
     }
 
@@ -48,6 +48,7 @@ class PersonalEventRepositoryImpl : PersonalEventRepository {
         date: LocalDate,
         monthDelta: Int
     ): Result<List<PersonalEvent>> {
+        mockDelay()
         val events = buildList {
             addAll(getEventsPerDate(date))
 
@@ -70,7 +71,7 @@ class PersonalEventRepositoryImpl : PersonalEventRepository {
 
     override suspend fun getEventType(typeId: String): Result<PersonalEventType> {
         // TODO If personal type is empty, then refresh. Otherwise we don't need to refresh
-        val eventType = _personalEventTypes.value.find { it.id == typeId }
+        val eventType = getPersonalEventTypes().find { it.id == typeId }
 
 
         return if (eventType != null) Result.success(eventType)

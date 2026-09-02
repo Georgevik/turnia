@@ -1,9 +1,13 @@
 package com.georgevik.turnia.ui.main.eventtypes.model
 
-import androidx.compose.runtime.Immutable
+sealed interface EventTypeMasterUi {
+    data object Loading : EventTypeMasterUi
+    data class Success(
+        val query: String = "",
+        val sections: List<EventTypeMasterHeaderUi> = emptyList(),
+    ) : EventTypeMasterUi
 
-@Immutable
-data class EventTypeMasterUi(
-    val query: String = "",
-    val sections: List<EventTypeMasterHeaderUi> = emptyList(),
-)
+    data class Error(val error: EventTypeMasterError) : EventTypeMasterUi
+}
+
+enum class EventTypeMasterError { LoadFailed }

@@ -6,43 +6,71 @@ import com.georgevik.turnia.core.domain.model.Group
 import com.georgevik.turnia.core.domain.model.PersonalEventType
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
+import com.georgevik.turnia.core.system.fold
+import com.georgevik.turnia.core.system.outcomeCatching
 import com.georgevik.turnia.navigation.main.routes.EventTypeKind
+import com.georgevik.turnia.ui.main.eventtypes.model.EventTypeMasterError
 import com.georgevik.turnia.ui.main.eventtypes.model.EventTypeMasterHeaderUi
 import com.georgevik.turnia.ui.main.eventtypes.model.EventTypeMasterRowUi
 import com.georgevik.turnia.ui.main.eventtypes.model.EventTypeMasterUi
 import com.georgevik.turnia.ui.system.entityColor
 import com.georgevik.turnia.ui.system.toComposeColorOr
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 class EventMasterViewModel(
     groupId: String?,
     groupName: String?,
-    groupRepository: GroupRepository,
-    personalRepository: PersonalEventRepository,
+    private val groupRepository: GroupRepository,
+    private val personalRepository: PersonalEventRepository,
 ) : ViewModel() {
 
     private val _query = MutableStateFlow(groupName)
     private val _groupId = MutableStateFlow(groupId)
 
-    val uiState: StateFlow<EventTypeMasterUi> = combine(
-        _query,
-        _groupId,
-        groupRepository.groups.toUiRow(),
-        personalRepository.personalEventTypes.map { types -> types.map { it.toUiRow() } },
-    ) { query, groupIdQuery, groupTypeRows, personalTypeRows ->
-        buildState(query.orEmpty().trim(), groupIdQuery, groupTypeRows, personalTypeRows)
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = EventTypeMasterUi(query = groupName.orEmpty()),
-    )
+    private val _uiState = MutableStateFlow<EventTypeMasterUi>(EventTypeMasterUi.Loading)
+    val uiState = _uiState.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            combine(_query, _groupId) { query, groupIdQuery ->
+                query.orEmpty().trim() to groupIdQuery
+            }.collectLatest { (query, groupId) -> loadEvents(query, groupId) }
+        }
+    }
+
+    fun retry() {
+        viewModelScope.launch { loadEvents(_query.value.orEmpty().trim(), _groupId.value) }
+    }
+
+    private suspend fun loadEvents(query: String, groupId: String?) {
+        _uiState.update { EventTypeMasterUi.Loading }
+
+        val outcome = outcomeCatching({ EventTypeMasterError.LoadFailed }) {
+            coroutineScope {
+                val groups = async { groupRepository.getGroups().toUiRows() }
+                val personalEvents = async {
+                    personalRepository.getPersonalEventTypes().map { it.toUiRow() }
+                }
+                buildState(query, groupId, groups.await(), personalEvents.await())
+            }
+        }
+
+        _uiState.update {
+            outcome.fold(
+                onSuccess = { success -> success },
+                onFailure = { error -> EventTypeMasterUi.Error(error) },
+            )
+        }
+    }
+
 
     fun onQueryChange(query: String) {
         _groupId.update { null }
@@ -54,7 +82,7 @@ class EventMasterViewModel(
         groupIdQuery: String?,
         groupTypeRows: List<EventTypeMasterRowUi>,
         allPersonalTypeRows: List<EventTypeMasterRowUi>
-    ): EventTypeMasterUi {
+    ): EventTypeMasterUi.Success {
         val groupRows: List<EventTypeMasterRowUi>
         val personalTypeRows: List<EventTypeMasterRowUi>
 
@@ -85,7 +113,7 @@ class EventMasterViewModel(
             }.filter { it.rows.isNotEmpty() }.sortedBy { it.name })
         }
 
-        return EventTypeMasterUi(
+        return EventTypeMasterUi.Success(
             query = query,
             sections = sections,
         )
@@ -95,8 +123,8 @@ class EventMasterViewModel(
         name.contains(q, ignoreCase = true) || groupName.orEmpty()
             .contains(q, ignoreCase = true) || acronym?.contains(q, ignoreCase = true) == true
 
-    fun Flow<List<Group>>.toUiRow(): Flow<List<EventTypeMasterRowUi>> = this.map { groups ->
-        groups.flatMap { group ->
+    fun List<Group>.toUiRows(): List<EventTypeMasterRowUi> =
+        this.flatMap { group ->
             group.types.map { type ->
                 EventTypeMasterRowUi(
                     kind = EventTypeKind.GROUP,
@@ -109,7 +137,6 @@ class EventMasterViewModel(
                 )
             }
         }
-    }
 
     private fun PersonalEventType.toUiRow() = EventTypeMasterRowUi(
         kind = EventTypeKind.PERSONAL,

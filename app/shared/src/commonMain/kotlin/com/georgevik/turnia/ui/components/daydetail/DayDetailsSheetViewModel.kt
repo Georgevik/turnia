@@ -13,19 +13,20 @@ import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
 import com.georgevik.turnia.core.domain.repository.UserRepository
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventType
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
-import com.georgevik.turnia.ui.components.daydetail.model.DayDetailsSheetUiState
+import com.georgevik.turnia.core.system.fold
+import com.georgevik.turnia.core.system.outcomeCatching
+import com.georgevik.turnia.ui.components.daydetail.model.DayDetailsSheetError
+import com.georgevik.turnia.ui.components.daydetail.model.DayDetailsSheetUi
 import com.georgevik.turnia.ui.components.daydetail.model.EventTypeSectionUi
 import com.georgevik.turnia.ui.components.daydetail.model.PredefinedEventUi
 import com.georgevik.turnia.ui.system.entityColor
 import com.georgevik.turnia.ui.system.toComposeColorOr
 import com.georgevik.turnia.ui.system.toHex
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlin.uuid.Uuid
@@ -38,25 +39,35 @@ class DayDetailsSheetViewModel(
     private val userRepository: UserRepository,
 ) : ViewModel() {
 
-    val uiState: StateFlow<DayDetailsSheetUiState> = combine(
-        personalRepository.personalEventTypes,
-        groupRepository.groups,
-    ) { personalTypes, groups ->
-        DayDetailsSheetUiState(predefinedSections = buildSections(personalTypes, groups))
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = DayDetailsSheetUiState(),
-    )
+    private val _uiState = MutableStateFlow<DayDetailsSheetUi>(DayDetailsSheetUi.Loading)
+    val uiState = _uiState.asStateFlow()
 
     init {
-        viewModelScope.launch {
-            groupRepository.fetchGroups()
-        }
+        loadEventTypes()
     }
 
-    private val _uiEvent = Channel<DayDetailsSheetUiEvent>()
-    val uiEvent: Flow<DayDetailsSheetUiEvent> = _uiEvent.receiveAsFlow()
+    fun retry() = loadEventTypes()
+
+    private fun loadEventTypes() {
+        viewModelScope.launch {
+            _uiState.update { DayDetailsSheetUi.Loading }
+
+            val outcome = outcomeCatching({ DayDetailsSheetError.LoadFailed }) {
+                coroutineScope {
+                    val groups = async { groupRepository.getGroups() }
+                    val personalTypes = async { personalRepository.getPersonalEventTypes() }
+                    buildSections(personalTypes.await(), groups.await())
+                }
+            }
+
+            _uiState.update {
+                outcome.fold(
+                    onSuccess = { sections -> DayDetailsSheetUi.Success(sections) },
+                    onFailure = { error -> DayDetailsSheetUi.Error(error) },
+                )
+            }
+        }
+    }
 
     fun removeEvent(event: CalendarEventUi) {
         viewModelScope.launch {
@@ -113,12 +124,6 @@ class DayDetailsSheetViewModel(
         Logger.d(TAG, "TODO: open new event screen for $date")
     }
 
-    fun editGroup(groupId: String, groupName: String) {
-        viewModelScope.launch {
-            _uiEvent.send(DayDetailsSheetUiEvent.EditGroup(groupId, groupName))
-        }
-    }
-
     private fun buildSections(
         personalTypes: List<PersonalEventType>,
         groups: List<Group>,
@@ -165,8 +170,4 @@ class DayDetailsSheetViewModel(
     companion object {
         private const val TAG = "DayDetailsSheetViewModel"
     }
-}
-
-sealed interface DayDetailsSheetUiEvent {
-    data class EditGroup(val groupId: String, val groupName: String) : DayDetailsSheetUiEvent
 }

@@ -133,9 +133,6 @@ class EventTypeDetailViewModel(
         }
 
         val form = state.form
-        if (form.name.isBlank()) {
-            return updateSuccess { it.copy(toastError = EventTypeToastError.NameIsEmpty) }
-        }
         val type = PersonalEventType(
             id = typeId,
             name = form.name.trim(),
@@ -150,7 +147,7 @@ class EventTypeDetailViewModel(
             updateSuccess { it.copy(saveButtonLoading = true) }
 
             personalRepository.update(typeId, type).fold(
-                onSuccess = { updateSuccess { it.copy(saveButtonLoading = false) } },
+                onSuccess = { updateSuccess { it.copy(saveButtonLoading = false, isSaved = true) } },
                 onFailure = {
                     updateSuccess {
                         it.copy(

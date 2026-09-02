@@ -3,6 +3,7 @@ package com.georgevik.turnia.ui.main.eventtypes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -16,6 +17,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +38,9 @@ import com.georgevik.turnia.navigation.main.routes.EventTypeKind
 import com.georgevik.turnia.navigation.main.routes.MainRoute
 import com.georgevik.turnia.ui.main.eventtypes.model.EventTypeMasterHeaderUi
 import com.georgevik.turnia.ui.main.eventtypes.model.EventTypeMasterRowUi
+import com.georgevik.turnia.ui.main.eventtypes.model.EventTypeMasterError
+import com.georgevik.turnia.ui.system.components.TurniaErrorContent
+import com.georgevik.turnia.ui.main.eventtypes.model.EventTypeMasterUi
 import com.georgevik.turnia.ui.system.components.AcronymBadge
 import com.georgevik.turnia.ui.system.components.TListItem
 import org.jetbrains.compose.resources.stringResource
@@ -45,6 +50,7 @@ import turnia.app.shared.generated.resources.event_types_create_personal
 import turnia.app.shared.generated.resources.event_types_empty
 import turnia.app.shared.generated.resources.event_types_search_hint
 import turnia.app.shared.generated.resources.event_types_section_personal
+import turnia.app.shared.generated.resources.event_types_load_error
 import turnia.app.shared.generated.resources.event_types_title
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -80,61 +86,98 @@ fun EventMasterScreen(viewModel: EventMasterViewModel) {
             )
         },
     ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            item(key = "search") {
-                OutlinedTextField(
-                    value = uiState.query,
-                    onValueChange = viewModel::onQueryChange,
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    shape = RoundedCornerShape(16.dp),
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                    placeholder = { Text(stringResource(Res.string.event_types_search_hint)) },
+        val contentModifier = Modifier.fillMaxSize().padding(innerPadding)
+
+        when (val state = uiState) {
+            EventTypeMasterUi.Loading -> Box(contentModifier, Alignment.Center) {
+                CircularProgressIndicator()
+            }
+
+            is EventTypeMasterUi.Error -> TurniaErrorContent(
+                message = state.error.message(),
+                modifier = contentModifier,
+                onRetry = viewModel::retry,
+            )
+
+            is EventTypeMasterUi.Success -> EventMasterSuccessContent(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                state = state,
+                viewModel = viewModel,
+            )
+        }
+    }
+}
+
+@Composable
+private fun EventTypeMasterError.message(): String = stringResource(
+    when (this) {
+        EventTypeMasterError.LoadFailed -> Res.string.event_types_load_error
+    }
+)
+
+@Composable
+private fun EventMasterSuccessContent(
+    modifier: Modifier = Modifier,
+    state: EventTypeMasterUi.Success,
+    viewModel: EventMasterViewModel,
+) {
+    val navigator = LocalNavigator.current
+
+    LazyColumn(
+        modifier = modifier,
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        item(key = "search") {
+            OutlinedTextField(
+                value = state.query,
+                onValueChange = viewModel::onQueryChange,
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                shape = RoundedCornerShape(16.dp),
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                placeholder = { Text(stringResource(Res.string.event_types_search_hint)) },
+            )
+        }
+
+        if (state.sections.isEmpty()) {
+            item(key = "empty") {
+                Text(
+                    text = stringResource(Res.string.event_types_empty),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 16.dp),
                 )
             }
+        }
 
-            if (uiState.sections.isEmpty()) {
-                item(key = "empty") {
-                    Text(
-                        text = stringResource(Res.string.event_types_empty),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 16.dp),
-                    )
-                }
+        state.sections.forEach { section ->
+            // Group sections share the same kind, so key on the unique groupId.
+            item(key = "header-${section.rows.firstOrNull()?.groupId ?: section.kind}") {
+                SectionHeader(section = section)
             }
-
-            uiState.sections.forEach { section ->
-                // Group sections share the same kind, so key on the unique groupId.
-                item(key = "header-${section.rows.firstOrNull()?.groupId ?: section.kind}") {
-                    SectionHeader(section = section)
-                }
-                items(section.rows, key = { it.typeId }) { row ->
-                    EventTypeRow(
-                        row = row,
-                        onClick = {
-                            val data = if (row.groupId != null) {
-                                EventTypeDetailData.EditGroup(
-                                    groupId = row.groupId,
-                                    typeId = row.typeId
-                                )
-                            } else {
-                                EventTypeDetailData.EditPersonal(typeId = row.typeId)
-                            }
-                            navigator.goTo(MainRoute.EventTypeDetailKey(data))
-                        },
-                    )
-                }
+            items(section.rows, key = { it.typeId }) { row ->
+                EventTypeRow(
+                    row = row,
+                    onClick = {
+                        val data = if (row.groupId != null) {
+                            EventTypeDetailData.EditGroup(
+                                groupId = row.groupId,
+                                typeId = row.typeId
+                            )
+                        } else {
+                            EventTypeDetailData.EditPersonal(typeId = row.typeId)
+                        }
+                        navigator.goTo(MainRoute.EventTypeDetailKey(data))
+                    },
+                )
             }
         }
     }
 }
+
 
 @Composable
 private fun SectionHeader(section: EventTypeMasterHeaderUi) {

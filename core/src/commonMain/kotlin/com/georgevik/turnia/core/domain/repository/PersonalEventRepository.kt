@@ -12,7 +12,7 @@ import kotlinx.datetime.LocalDate
  */
 interface PersonalEventRepository {
 
-    val personalEventTypes: StateFlow<List<PersonalEventType>>
+    suspend fun getPersonalEventTypes(): List<PersonalEventType>
 
     suspend fun addPersonalEvent(event: PersonalEvent)
 

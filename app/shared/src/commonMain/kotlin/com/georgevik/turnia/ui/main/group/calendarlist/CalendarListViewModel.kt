@@ -28,11 +28,9 @@ class CalendarListViewModel(private val groupRepository: GroupRepository) : View
             _searchFlow.debounce(200.milliseconds).collectLatest { q -> performSearch(q) }
         }
         viewModelScope.launch {
-            groupRepository.fetchGroups()
-            groupRepository.groups.collect { groups ->
-                val groupsRow = groups.map { GroupRowUi(it.id, it.name, 12) }
-                _uiState.update { it.copy(groups = groupsRow) }
-            }
+            val groups = groupRepository.getGroups()
+            val groupsRow = groups.map { GroupRowUi(it.id, it.name, 12) }
+            _uiState.update { it.copy(groups = groupsRow) }
         }
     }
 

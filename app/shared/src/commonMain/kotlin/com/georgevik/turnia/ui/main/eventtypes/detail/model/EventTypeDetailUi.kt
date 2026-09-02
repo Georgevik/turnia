@@ -8,7 +8,8 @@ sealed interface EventTypeDetailUi {
         val form: EventTypeForm,
         val colors: List<Color>,
         val toastError: EventTypeToastError? = null,
-        val saveButtonLoading: Boolean = false
+        val saveButtonLoading: Boolean = false,
+        val isSaved: Boolean = false,
     ) : EventTypeDetailUi
 
     data class Error(val error: EventTypeScreenError) : EventTypeDetailUi
@@ -38,5 +39,5 @@ sealed interface EventTypeTitle{
 }
 
 enum class EventTypeToastError {
-    PickColor, NotImplemented, SavePersonal, NameIsEmpty
+    PickColor, NotImplemented, SavePersonal
 }

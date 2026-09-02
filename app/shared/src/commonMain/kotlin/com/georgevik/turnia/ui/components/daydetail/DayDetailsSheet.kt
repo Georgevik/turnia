@@ -5,6 +5,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -15,27 +16,35 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import com.georgevik.turnia.ui.components.daydetail.components.DayDetailAddEvent
 import com.georgevik.turnia.ui.components.daydetail.components.DayDetailHeader
 import com.georgevik.turnia.ui.components.daydetail.components.DayEventRow
+import com.georgevik.turnia.ui.components.daydetail.model.DayDetailsSheetError
+import com.georgevik.turnia.ui.system.components.TurniaErrorContent
+import com.georgevik.turnia.ui.components.daydetail.model.DayDetailsSheetUi
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import turnia.app.shared.generated.resources.Res
+import turnia.app.shared.generated.resources.day_detail_load_error
+import turnia.app.shared.generated.resources.dialog_error_retry
 import turnia.app.shared.generated.resources.event_details_empty
 import turnia.app.shared.generated.resources.event_remove_cancel
 import turnia.app.shared.generated.resources.event_remove_confirm
@@ -55,15 +64,7 @@ fun DayDetailsSheet(
     },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    LaunchedEffect(viewModel) {
-        viewModel.uiEvent.collect { event ->
-            when (event) {
-                is DayDetailsSheetUiEvent.EditGroup ->
-                    openEditTypeScreen(event.groupId, event.groupName)
-            }
-        }
-    }
-    var adding by remember { mutableStateOf(false) }
+    var adding by rememberSaveable { mutableStateOf(false) }
     var pendingDelete by remember { mutableStateOf<CalendarEventUi?>(null) }
 
     pendingDelete?.let { event ->
@@ -105,51 +106,75 @@ fun DayDetailsSheet(
         Spacer(Modifier.height(16.dp))
 
         Box {
-            AnimatedContent(adding, transitionSpec = {
-                fadeIn() togetherWith fadeOut(animationSpec = tween(90))
-            }) { isAdding ->
-                if (isAdding) {
-                    DayDetailAddEvent(
-                        addMode = addMode,
-                        sections = uiState.predefinedSections,
-                        onPickPredefined = { predefined ->
-                            viewModel.addPredefinedEvent(predefined)
-                            onClose(true)
-                        },
-                        onEditGroup = { groupId, groupName ->
-                            viewModel.editGroup(groupId, groupName)
-                        },
-                        onAddCustom = {
-                            viewModel.addCustomEvent()
-                            onClose(true)
-                        },
-                    )
+                AnimatedContent(adding, transitionSpec = {
+                    fadeIn() togetherWith fadeOut(animationSpec = tween(90))
+                }) { isAdding ->
+                    if (isAdding) {
+                        // Only the add pane needs the loaded types; the day's events arrive as a
+                        // parameter, so they must stay on screen while these load or fail.
+                        when (val state = uiState) {
+                            DayDetailsSheetUi.Loading -> AddPaneLoading()
 
-                } else if (events.isEmpty()) {
-                    Text(
-                        text = stringResource(Res.string.event_details_empty),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(vertical = 24.dp),
-                    )
-                } else {
-                    Column {
-                        events.forEachIndexed { index, event ->
-                            if (index > 0) Spacer(Modifier.height(12.dp))
-                            DayEventRow(
-                                event = event,
-                                onRemove = if (event.removable) {
-                                    { pendingDelete = event }
-                                } else {
-                                    null
+                            is DayDetailsSheetUi.Error -> TurniaErrorContent(
+                                message = state.error.message(),
+                                modifier = Modifier.fillMaxWidth(),
+                                onRetry = viewModel::retry,
+                            )
+
+                            is DayDetailsSheetUi.Success -> DayDetailAddEvent(
+                                addMode = addMode,
+                                sections = state.predefinedSections,
+                                onPickPredefined = { predefined ->
+                                    viewModel.addPredefinedEvent(predefined)
+                                    onClose(true)
+                                },
+                                onEditGroup = openEditTypeScreen,
+                                onAddCustom = {
+                                    viewModel.addCustomEvent()
+                                    onClose(true)
                                 },
                             )
                         }
+                    } else if (events.isEmpty()) {
+                        Text(
+                            text = stringResource(Res.string.event_details_empty),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(vertical = 24.dp),
+                        )
+                    } else {
+                        Column {
+                            events.forEachIndexed { index, event ->
+                                if (index > 0) Spacer(Modifier.height(12.dp))
+                                DayEventRow(
+                                    event = event,
+                                    onRemove = if (event.removable) {
+                                        { pendingDelete = event }
+                                    } else {
+                                        null
+                                    },
+                                )
+                            }
+                        }
                     }
                 }
-            }
-
-
         }
     }
 }
+
+@Composable
+private fun AddPaneLoading() {
+    Box(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        CircularProgressIndicator()
+    }
+}
+
+@Composable
+private fun DayDetailsSheetError.message(): String = stringResource(
+    when (this) {
+        DayDetailsSheetError.LoadFailed -> Res.string.day_detail_load_error
+    }
+)

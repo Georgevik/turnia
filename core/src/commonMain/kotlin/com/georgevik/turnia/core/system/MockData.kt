@@ -6,10 +6,12 @@ import com.georgevik.turnia.core.domain.model.GroupEvent
 import com.georgevik.turnia.core.domain.model.GroupEventType
 import com.georgevik.turnia.core.domain.model.PersonalEvent
 import com.georgevik.turnia.core.domain.model.PersonalEventType
+import kotlinx.coroutines.delay
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
 import kotlin.random.Random
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.random.nextInt
 import kotlin.uuid.Uuid
 
@@ -269,3 +271,6 @@ fun mockPersonalEvent(amount: Int = 15, fromMonth: LocalDate): List<PersonalEven
         )
     }
 }
+
+/** Stands in for network latency while the repositories are backed by mock data. */
+suspend fun mockDelay() = delay(Random.nextLong(300, 1000).milliseconds)

@@ -3,9 +3,9 @@ package com.georgevik.turnia.core.data.group
 import com.georgevik.turnia.core.domain.model.Group
 import com.georgevik.turnia.core.domain.model.GroupEvent
 import com.georgevik.turnia.core.domain.repository.GroupRepository
+import com.georgevik.turnia.core.system.mockDelay
 import com.georgevik.turnia.core.system.MOCK_GROUPS
 import com.georgevik.turnia.core.system.mockGenerateEvents
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.datetime.DateTimeUnit
@@ -14,15 +14,11 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.random.Random
-import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalAtomicApi::class)
 class GroupRepositoryImpl : GroupRepository {
 
     private val _mockEvents = mutableMapOf<String, List<GroupEvent>>()
-
-    private val _groups = MutableStateFlow(emptyList<Group>())
-    override val groups: Flow<List<Group>> = _groups
 
     override suspend fun addGroupEvent(event: GroupEvent) {
         mockDelay()
@@ -38,14 +34,14 @@ class GroupRepositoryImpl : GroupRepository {
         }
     }
 
-    override suspend fun fetchGroups() {
+    override suspend fun getGroups(): List<Group> {
         mockDelay()
-        _groups.emit(MOCK_GROUPS)
+        return MOCK_GROUPS
     }
 
     override suspend fun getGroup(idGroup: String): Result<Group> {
         mockDelay()
-        val group = _groups.value.find { it.id == idGroup }
+        val group = getGroups().find { it.id == idGroup }
 
         return if (group != null) Result.success(group)
         else Result.failure(Exception("Group not found"))
@@ -58,10 +54,6 @@ class GroupRepositoryImpl : GroupRepository {
         } else {
             Result.failure(Throwable())
         }
-    }
-
-    private suspend fun mockDelay() {
-        delay(Random.nextLong(300, 1000).milliseconds)
     }
 
     override suspend fun retrieveGroupEvents(
