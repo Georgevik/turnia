@@ -1,11 +1,12 @@
 package com.georgevik.turnia.core.data.user
 
+import com.georgevik.turnia.core.data.datasource.firestore.UserPathFirestore
+import com.georgevik.turnia.core.data.datasource.firestore.doc.SubscriptionDocument
+import com.georgevik.turnia.core.data.datasource.firestore.doc.Tier
+import com.georgevik.turnia.core.data.datasource.firestore.doc.UserDocument
+import com.georgevik.turnia.core.data.datasource.firestore.errors.UserProfileError
+import com.georgevik.turnia.core.data.datasource.firestore.mappers.UserDocumentMapper
 import com.georgevik.turnia.core.data.logger.Logger
-import com.georgevik.turnia.core.data.user.datasource.SubscriptionDocument
-import com.georgevik.turnia.core.data.user.datasource.Tier
-import com.georgevik.turnia.core.data.user.datasource.UserDocument
-import com.georgevik.turnia.core.data.user.datasource.UserPathFirestore
-import com.georgevik.turnia.core.data.user.datasource.UserProfileError
 import com.georgevik.turnia.core.domain.model.User
 import com.georgevik.turnia.core.domain.model.UserSession
 import com.georgevik.turnia.core.domain.repository.UserRepository

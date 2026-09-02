@@ -1,8 +1,7 @@
 package com.georgevik.turnia.core.data.user
 
+import com.georgevik.turnia.core.data.datasource.firestore.UserPathFirestore
 import com.georgevik.turnia.core.data.logger.Logger
-import com.georgevik.turnia.core.data.user.datasource.PersonalTypeFirestoreError
-import com.georgevik.turnia.core.data.user.datasource.UserPathFirestore
 import com.georgevik.turnia.core.domain.model.PersonalEvent
 import com.georgevik.turnia.core.domain.model.PersonalEventType
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
@@ -32,13 +31,7 @@ class PersonalEventRepositoryImpl(
         val typeResult = userPathFirestore.personalTypes(userId)
 
         typeResult.errorOrNull()?.let { error ->
-            when (error) {
-                is PersonalTypeFirestoreError.LoadFailed -> Logger.e(
-                    TAG,
-                    "Error fetching personal event types",
-                    error.error
-                )
-            }
+            Logger.e(TAG, "Error fetching personal event types", error.error)
         }
 
         return typeResult.valueOrNull().orEmpty()

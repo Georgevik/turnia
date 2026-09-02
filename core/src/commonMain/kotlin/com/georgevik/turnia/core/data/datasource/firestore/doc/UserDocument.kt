@@ -1,4 +1,4 @@
-package com.georgevik.turnia.core.data.user.datasource
+package com.georgevik.turnia.core.data.datasource.firestore.doc
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

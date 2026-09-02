@@ -1,5 +1,6 @@
-package com.georgevik.turnia.core.data.user.datasource
+package com.georgevik.turnia.core.data.datasource.firestore.mappers
 
+import com.georgevik.turnia.core.data.datasource.firestore.doc.PersonalEventTypeDocument
 import com.georgevik.turnia.core.domain.model.PersonalEventType
 import dev.gitlive.firebase.firestore.DocumentSnapshot
 

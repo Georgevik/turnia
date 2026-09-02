@@ -1,23 +1,16 @@
-package com.georgevik.turnia.core.data.user.datasource
+package com.georgevik.turnia.core.data.datasource.firestore
 
+import com.georgevik.turnia.core.data.datasource.firestore.doc.UserDocument
+import com.georgevik.turnia.core.data.datasource.firestore.errors.GenericFirestoreError
+import com.georgevik.turnia.core.data.datasource.firestore.errors.UserProfileError
+import com.georgevik.turnia.core.data.datasource.firestore.mappers.PersonalEventTypeDocMapper
+import com.georgevik.turnia.core.data.datasource.firestore.mappers.UserDocumentMapper
 import com.georgevik.turnia.core.data.logger.Logger
-import com.georgevik.turnia.core.data.user.UserDocumentMapper
 import com.georgevik.turnia.core.domain.model.PersonalEventType
 import com.georgevik.turnia.core.domain.model.UserProfile
 import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.outcomeCatching
 import dev.gitlive.firebase.firestore.FirebaseFirestore
-
-sealed class UserProfileError {
-    data object NotFound : UserProfileError()
-    data class LoadFailed(val error: Throwable) : UserProfileError()
-}
-
-sealed class PersonalTypeFirestoreError {
-    data class LoadFailed(val error: Throwable) : PersonalTypeFirestoreError()
-}
-
-data class GenericFirestoreError(val error: Throwable)
 
 /**
  * Interacts with Firestore: `users/{uid}`
@@ -44,8 +37,8 @@ class UserPathFirestore(
             firestore.collection(PATH_USER).document(uid).set(userPatched)
         }
 
-    suspend fun personalTypes(uid: String): Outcome<List<PersonalEventType>, PersonalTypeFirestoreError> =
-        outcomeCatching({ PersonalTypeFirestoreError.LoadFailed(it) }) {
+    suspend fun personalTypes(uid: String): Outcome<List<PersonalEventType>, GenericFirestoreError> =
+        outcomeCatching({ GenericFirestoreError(it) }) {
             val snapshot = firestore.collection("${PATH_USER}/${uid}/personalEventTypes").get()
             Logger.i(
                 TAG,

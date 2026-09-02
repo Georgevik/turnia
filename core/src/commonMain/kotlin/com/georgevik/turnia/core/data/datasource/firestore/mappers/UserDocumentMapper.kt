@@ -1,7 +1,7 @@
-package com.georgevik.turnia.core.data.user
+package com.georgevik.turnia.core.data.datasource.firestore.mappers
 
-import com.georgevik.turnia.core.data.user.datasource.Tier
-import com.georgevik.turnia.core.data.user.datasource.UserDocument
+import com.georgevik.turnia.core.data.datasource.firestore.doc.Tier
+import com.georgevik.turnia.core.data.datasource.firestore.doc.UserDocument
 import com.georgevik.turnia.core.domain.model.Membership
 import com.georgevik.turnia.core.domain.model.User
 import com.georgevik.turnia.core.domain.model.UserProfile

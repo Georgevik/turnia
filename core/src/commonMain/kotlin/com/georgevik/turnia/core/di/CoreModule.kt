@@ -1,13 +1,12 @@
 package com.georgevik.turnia.core.di
 
 import com.georgevik.turnia.core.data.config.AppConfigRepositoryImpl
+import com.georgevik.turnia.core.data.datasource.firestore.UserPathFirestore
+import com.georgevik.turnia.core.data.datasource.firestore.mappers.PersonalEventTypeDocMapper
+import com.georgevik.turnia.core.data.datasource.firestore.mappers.UserDocumentMapper
 import com.georgevik.turnia.core.data.group.GroupRepositoryImpl
-import com.georgevik.turnia.core.data.network.FirebaseDataSource
 import com.georgevik.turnia.core.data.user.PersonalEventRepositoryImpl
-import com.georgevik.turnia.core.data.user.UserDocumentMapper
 import com.georgevik.turnia.core.data.user.UserRepositoryImpl
-import com.georgevik.turnia.core.data.user.datasource.PersonalEventTypeDocMapper
-import com.georgevik.turnia.core.data.user.datasource.UserPathFirestore
 import com.georgevik.turnia.core.domain.repository.AppConfigRepository
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
@@ -23,7 +22,6 @@ import org.koin.dsl.module
  * Domain/data layer dependencies. It will grow as the Turnia domain does.
  */
 val coreModule: Module = module {
-    single { FirebaseDataSource(Firebase.auth) }
     single { Firebase.firestore }
     single { UserPathFirestore(get(), get(), get()) }
     factory { UserDocumentMapper() }
