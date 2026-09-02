@@ -16,7 +16,7 @@ kotlin {
        minSdk = libs.versions.android.minSdk.get().toInt()
     
        compilerOptions {
-           jvmTarget = JvmTarget.JVM_11
+           jvmTarget = JvmTarget.JVM_17
        }
        androidResources {
            enable = true
@@ -36,9 +36,13 @@ kotlin {
             api(libs.koin.core)
             api(libs.kotlinx.datetime)
             api(libs.kotlinx.serialization.core)
+            implementation(libs.kotlinx.serialization.json)
+            implementation(libs.androidx.datastore.preferences.core)
         }
         androidMain.dependencies {
             api(project.dependencies.platform(libs.firebase.bom))
+            // Only for androidContext() when resolving the DataStore file path.
+            implementation(libs.koin.android)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
