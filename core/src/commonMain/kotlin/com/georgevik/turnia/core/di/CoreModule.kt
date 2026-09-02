@@ -3,10 +3,10 @@ package com.georgevik.turnia.core.di
 import com.georgevik.turnia.core.data.config.AppConfigRepositoryImpl
 import com.georgevik.turnia.core.data.group.GroupRepositoryImpl
 import com.georgevik.turnia.core.data.network.FirebaseDataSource
-import com.georgevik.turnia.core.data.personal.PersonalEventRepositoryImpl
-import com.georgevik.turnia.core.data.user.UserFactory
+import com.georgevik.turnia.core.data.user.PersonalEventRepositoryImpl
+import com.georgevik.turnia.core.data.user.UserDocumentMapper
 import com.georgevik.turnia.core.data.user.UserRepositoryImpl
-import com.georgevik.turnia.core.data.user.datasource.UserProfileFirestore
+import com.georgevik.turnia.core.data.user.datasource.UserPathFirestore
 import com.georgevik.turnia.core.domain.repository.AppConfigRepository
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
@@ -24,10 +24,10 @@ import org.koin.dsl.module
 val coreModule: Module = module {
     single { FirebaseDataSource(Firebase.auth) }
     single { Firebase.firestore }
-    single { UserProfileFirestore(get(), get()) }
-    factory { UserFactory() }
+    single { UserPathFirestore(get(), get()) }
+    factory { UserDocumentMapper() }
     single<UserRepository> { UserRepositoryImpl(Firebase.auth, get(), get(), GlobalScope) }
     single<AppConfigRepository> { AppConfigRepositoryImpl() }
     single<GroupRepository> { GroupRepositoryImpl() }
-    single<PersonalEventRepository> { PersonalEventRepositoryImpl() }
+    single<PersonalEventRepository> { PersonalEventRepositoryImpl(get(), get()) }
 }

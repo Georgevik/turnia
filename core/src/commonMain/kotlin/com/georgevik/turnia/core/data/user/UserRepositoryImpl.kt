@@ -4,8 +4,8 @@ import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.data.user.datasource.SubscriptionDocument
 import com.georgevik.turnia.core.data.user.datasource.Tier
 import com.georgevik.turnia.core.data.user.datasource.UserDocument
+import com.georgevik.turnia.core.data.user.datasource.UserPathFirestore
 import com.georgevik.turnia.core.data.user.datasource.UserProfileError
-import com.georgevik.turnia.core.data.user.datasource.UserProfileFirestore
 import com.georgevik.turnia.core.domain.model.User
 import com.georgevik.turnia.core.domain.model.UserSession
 import com.georgevik.turnia.core.domain.repository.UserRepository
@@ -29,13 +29,13 @@ import kotlinx.coroutines.flow.stateIn
 @OptIn(ExperimentalCoroutinesApi::class)
 class UserRepositoryImpl(
     private val auth: FirebaseAuth,
-    private val remoteProfiles: UserProfileFirestore,
-    private val userFactory: UserFactory,
+    private val remoteProfiles: UserPathFirestore,
+    private val userFactory: UserDocumentMapper,
     private val scope: CoroutineScope
 ) : UserRepository {
 
     private var _user: User? = null
-    override val user: User? get() = _user
+    override val loggedUser: User? get() = _user
 
     override val userSession: StateFlow<UserSession> = auth.authStateChanged
         // authStateChanged also fires on token refresh; only a different account is a new session.
@@ -52,14 +52,14 @@ class UserRepositoryImpl(
 
     private fun gatherUserInfo(firebaseUser: FirebaseUser): Flow<UserSession.Authenticated> = flow {
         // Emit what auth already knows so the UI is never blocked on the profile read.
-        emit(UserSession.Authenticated(userFactory.create(firebaseUser)))
+        emit(UserSession.Authenticated(userFactory.map(firebaseUser)))
 
         // Firestore's own offline persistence serves this from disk when there is no network.
         val remoteUserResult = remoteProfiles.fetch(firebaseUser.uid)
         remoteUserResult.valueOrNull()?.let { fetchedUser ->
             Logger.i(TAG, "Success user info for users/${firebaseUser.uid}")
             // Emit session with updated userinfo
-            emit(UserSession.Authenticated(userFactory.create(firebaseUser, fetchedUser)))
+            emit(UserSession.Authenticated(userFactory.map(firebaseUser, fetchedUser)))
             return@flow
         }
 

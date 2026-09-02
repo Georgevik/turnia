@@ -1,26 +1,39 @@
-package com.georgevik.turnia.core.data.personal
+package com.georgevik.turnia.core.data.user
 
+import com.georgevik.turnia.core.data.logger.Logger
+import com.georgevik.turnia.core.data.user.datasource.PersonalTypeFirestoreError
+import com.georgevik.turnia.core.data.user.datasource.UserPathFirestore
 import com.georgevik.turnia.core.domain.model.PersonalEvent
 import com.georgevik.turnia.core.domain.model.PersonalEventType
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
+import com.georgevik.turnia.core.domain.repository.UserRepository
+import com.georgevik.turnia.core.system.errorOrNull
 import com.georgevik.turnia.core.system.mockDelay
-import com.georgevik.turnia.core.system.MOCK_PERSONAL_TYPES
 import com.georgevik.turnia.core.system.mockPersonalEvent
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import com.georgevik.turnia.core.system.valueOrNull
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 
-class PersonalEventRepositoryImpl : PersonalEventRepository {
+class PersonalEventRepositoryImpl(
+    private val userRepository: UserRepository,
+    private val userPathFirestore: UserPathFirestore
+) : PersonalEventRepository {
 
     private val mockedMonths = mutableMapOf<String, List<PersonalEvent>>()
 
     override suspend fun getPersonalEventTypes(): List<PersonalEventType> {
-        mockDelay()
-        return MOCK_PERSONAL_TYPES
+        val userId = userRepository.loggedUser?.firebaseUid ?: return emptyList()
+        val typeResult = userPathFirestore.personalTypes(userId)
+
+        typeResult.errorOrNull()?.let { error ->
+            when(error) {
+                is PersonalTypeFirestoreError.LoadFailed -> Logger.e(TAG, "Error fetching personal event types", error.error)
+            }
+        }
+
+        return typeResult.valueOrNull().orEmpty()
     }
 
     override suspend fun addPersonalEvent(event: PersonalEvent) {
@@ -36,7 +49,7 @@ class PersonalEventRepositoryImpl : PersonalEventRepository {
         }
     }
 
-    override suspend fun update(typeId: String?, type: PersonalEventType) : Result<Unit>{
+    override suspend fun update(typeId: String?, type: PersonalEventType): Result<Unit> {
         // typeId == null -> create new type and save it locally and network (ignore type.id)
         // typeId != null -> update type
         mockDelay()
@@ -76,5 +89,9 @@ class PersonalEventRepositoryImpl : PersonalEventRepository {
 
         return if (eventType != null) Result.success(eventType)
         else Result.failure(Exception("Type not found"))
+    }
+
+    companion object {
+        private const val TAG = "PersonalEventRepository"
     }
 }

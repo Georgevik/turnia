@@ -88,7 +88,7 @@ class DayDetailSheetViewModel(
 
     private fun addNewEvent(type: GroupEventType, predefinedEventUi: PredefinedEventUi) {
         viewModelScope.launch {
-            val userId = userRepository.user?.uid  ?: return@launch // TODO Emit error
+            val userId = userRepository.loggedUser?.uid  ?: return@launch // TODO Emit error
             groupRepository.addGroupEvent(
                 GroupEvent(
                     id = Uuid.random().toString(),

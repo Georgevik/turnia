@@ -1,7 +1,8 @@
 package com.georgevik.turnia.core.data.user.datasource
 
 import com.georgevik.turnia.core.data.logger.Logger
-import com.georgevik.turnia.core.data.user.UserFactory
+import com.georgevik.turnia.core.data.user.UserDocumentMapper
+import com.georgevik.turnia.core.domain.model.PersonalEventType
 import com.georgevik.turnia.core.domain.model.UserProfile
 import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.outcomeCatching
@@ -12,12 +13,16 @@ sealed class UserProfileError {
     data class LoadFailed(val error: Throwable) : UserProfileError()
 }
 
+sealed class PersonalTypeFirestoreError {
+    data class LoadFailed(val error: Throwable) : PersonalTypeFirestoreError()
+}
+
 /**
  * Interacts with Firestore: `users/{uid}`
  */
-class UserProfileFirestore(
+class UserPathFirestore(
     private val firestore: FirebaseFirestore,
-    private val userFactory: UserFactory
+    private val mapper: UserDocumentMapper
 ) {
 
     suspend fun fetch(uid: String): Outcome<UserProfile, UserProfileError> =
@@ -27,12 +32,24 @@ class UserProfileFirestore(
 
             if (!snapshot.exists) return Outcome.Failure(UserProfileError.NotFound)
             val userDocument = snapshot.data(UserDocument.serializer())
-            userFactory.create(uid, userDocument)
+            mapper.map(uid, userDocument)
         }
 
     suspend fun update(uid: String, userPatched: UserDocument): Outcome<Unit, UserProfileError> =
         outcomeCatching({ UserProfileError.LoadFailed(it) }) {
+            Logger.i(TAG, "Update user document")
             firestore.collection(PATH_USER).document(uid).set(userPatched)
+        }
+
+    suspend fun personalTypes(uid: String): Outcome<List<PersonalEventType>, PersonalTypeFirestoreError> =
+        outcomeCatching({ PersonalTypeFirestoreError.LoadFailed(it) }) {
+            val snapshot = firestore.collection("${PATH_USER}/${uid}/personalEventTypes").get()
+            Logger.i(
+                TAG,
+                "Personal types from cache: ${snapshot.metadata.isFromCache}. Amount: ${snapshot.documents.size}. Changes: ${snapshot.documentChanges.size}"
+            )
+
+            snapshot.documents.map { mapper.mapToPersonalEventType(it) }
         }
 
     companion object {

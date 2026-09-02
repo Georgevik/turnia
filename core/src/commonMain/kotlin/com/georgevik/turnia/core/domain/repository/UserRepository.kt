@@ -5,7 +5,7 @@ import com.georgevik.turnia.core.domain.model.UserSession
 import kotlinx.coroutines.flow.StateFlow
 
 interface UserRepository {
-    val user: User?
+    val loggedUser: User?
     val userSession: StateFlow<UserSession>
     suspend fun signOut()
 }
