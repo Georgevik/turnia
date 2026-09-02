@@ -49,6 +49,9 @@
     <string name="event_add">Añadir evento</string>
     <string name="event_add_close">Cerrar</string>
     <string name="event_add_custom">Evento personalizado</string>
+    <string name="event_add_custom_chip">Añadir</string>
+    <string name="event_section_mine">Mis eventos</string>
+    <string name="event_section_groups">Eventos de grupo</string>
     <string name="event_no_predefined_title">No tienes eventos predefinidos</string>
     <string name="event_no_predefined_body">Crea uno personalizado para empezar.</string>
     <string name="event_group_only_banner">Solo puedes añadir eventos definidos para este grupo.</string>

@@ -4,17 +4,17 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,10 +27,12 @@ import com.georgevik.turnia.ui.components.daydetail.model.PredefinedEventUi
 import com.georgevik.turnia.ui.components.daydetail.model.PredefinedSectionUi
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
-import turnia.app.shared.generated.resources.event_add_custom
+import turnia.app.shared.generated.resources.event_add_custom_chip
 import turnia.app.shared.generated.resources.event_group_only_banner
 import turnia.app.shared.generated.resources.event_no_predefined_body
 import turnia.app.shared.generated.resources.event_no_predefined_title
+import turnia.app.shared.generated.resources.event_section_groups
+import turnia.app.shared.generated.resources.event_section_mine
 
 @Composable
 fun DayDetailAddEvent(
@@ -42,30 +44,23 @@ fun DayDetailAddEvent(
     modifier: Modifier = Modifier
 ) {
     val groupOnly = addMode is DayAddMode.GroupOnly
-    Column(modifier = modifier.padding(vertical = 8.dp)) {
+    // A custom event is a personal event, so it only belongs on my own calendar.
+    val canAddCustom = addMode is DayAddMode.Full
+
+    val personalEvents = sections.firstOrNull { it.groupId == null }?.events.orEmpty()
+    val groupSections = sections.filter {
+        it.groupId != null && it.groupName != null && it.events.isNotEmpty()
+    }
+
+    Column(
+        modifier = modifier.padding(vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
         if (groupOnly) {
             InfoBanner(text = stringResource(Res.string.event_group_only_banner))
-            Spacer(Modifier.size(12.dp))
-        }
-
-        if (sections.all { it.events.isEmpty() }) {
-            // The group-only banner already explains the empty state for a group;
-            // only the personal-calendar case needs the "create one" prompt.
-            if (!groupOnly) NoPredefinedBanner()
-        } else {
-            sections.forEach { section ->
-                if (section.events.isEmpty()) return@forEach
-
-                // The group name is redundant when the whole sheet is that one group.
-                if (!groupOnly && section.groupId != null && section.groupName != null) {
-                    DaySectionHeader(
-                        title = section.groupName,
-                        onEdit = { onEditGroup(section.groupId, section.groupName) },
-                    )
-                }
-                FlowRow(
-                    modifier = Modifier.padding(top = 4.dp, bottom = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // On a group-only sheet the group name is redundant, so drop the card header.
+            groupSections.forEach { section ->
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     section.events.forEach { predefined ->
                         PredefinedEventChip(
                             predefined = predefined,
@@ -73,18 +68,109 @@ fun DayDetailAddEvent(
                     }
                 }
             }
+            return@Column
         }
 
-        // A custom event is a personal event, so it only belongs on my own calendar.
-        if (addMode is DayAddMode.Full) {
-            OutlinedButton(
-                onClick = onAddCustom,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.size(8.dp))
-                Text(stringResource(Res.string.event_add_custom))
+        if (canAddCustom) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                SectionTitle(stringResource(Res.string.event_section_mine))
+                if (personalEvents.isEmpty() && groupSections.isEmpty()) {
+                    NoPredefinedBanner()
+                }
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    personalEvents.forEach { predefined ->
+                        PredefinedEventChip(
+                            predefined = predefined,
+                            onClick = { onPickPredefined(predefined) })
+                    }
+                    AddCustomChip(onClick = onAddCustom)
+                }
             }
+        }
+
+        if (canAddCustom && groupSections.isNotEmpty()) {
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        }
+
+        if (groupSections.isNotEmpty()) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                SectionTitle(stringResource(Res.string.event_section_groups))
+                groupSections.forEach { section ->
+                    GroupEventCard(
+                        groupName = section.groupName!!,
+                        events = section.events,
+                        onEdit = { onEditGroup(section.groupId!!, section.groupName) },
+                        onPickPredefined = onPickPredefined,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SectionTitle(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleSmall,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onSurface,
+    )
+}
+
+@Composable
+private fun GroupEventCard(
+    groupName: String,
+    events: List<PredefinedEventUi>,
+    onEdit: () -> Unit,
+    onPickPredefined: (predefined: PredefinedEventUi) -> Unit,
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            DaySectionHeader(title = groupName, onEdit = onEdit)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                events.forEach { predefined ->
+                    PredefinedEventChip(
+                        predefined = predefined,
+                        onClick = { onPickPredefined(predefined) })
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AddCustomChip(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier,
+        shape = RoundedCornerShape(percent = 50),
+        color = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Icon(
+                Icons.Default.Add,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+            )
+            Text(
+                text = stringResource(Res.string.event_add_custom_chip),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+            )
         }
     }
 }
