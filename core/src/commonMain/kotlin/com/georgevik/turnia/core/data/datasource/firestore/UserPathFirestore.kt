@@ -50,13 +50,12 @@ class UserPathFirestore(
 
     suspend fun setPersonalType(
         uid: String,
-        typeId: String,
         personalType: PersonalEventType
     ): Outcome<Unit, GenericFirestoreError> =
         outcomeCatching({ GenericFirestoreError(it) }) {
             val doc = personalEventTypeDocMapper.map(personalType)
             Logger.i(TAG, "Set personal type document")
-            firestore.collection("${PATH_USER}/${uid}/personalEventTypes").document(typeId)
+            firestore.collection("${PATH_USER}/${uid}/personalEventTypes").document(personalType.id)
                 .set(doc)
         }
 

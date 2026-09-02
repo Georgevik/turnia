@@ -10,7 +10,6 @@ import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.errorOrNull
 import com.georgevik.turnia.core.system.mockDelay
 import com.georgevik.turnia.core.system.mockPersonalEvent
-import com.georgevik.turnia.core.system.mockUuid
 import com.georgevik.turnia.core.system.toFailure
 import com.georgevik.turnia.core.system.toSuccess
 import com.georgevik.turnia.core.system.valueOrNull
@@ -25,8 +24,14 @@ class PersonalEventRepositoryImpl(
 ) : PersonalEventRepository {
 
     private val mockedMonths = mutableMapOf<String, List<PersonalEvent>>()
+    private var myPersonalEvents = mutableMapOf<String, PersonalEventType>()
 
     override suspend fun getPersonalEventTypes(): List<PersonalEventType> {
+        if (myPersonalEvents.isNotEmpty()) {
+            Logger.i(TAG, "Returning memory cached personal event types")
+            return myPersonalEvents.values.toList()
+        }
+
         val userId = userRepository.loggedUser?.firebaseUid ?: return emptyList()
         val typeResult = userPathFirestore.personalTypes(userId)
 
@@ -34,7 +39,10 @@ class PersonalEventRepositoryImpl(
             Logger.e(TAG, "Error fetching personal event types", error.error)
         }
 
-        return typeResult.valueOrNull().orEmpty()
+        val newPersonalTypeEvent = typeResult.valueOrNull().orEmpty()
+        myPersonalEvents.clear()
+        myPersonalEvents.putAll(newPersonalTypeEvent.associateBy { it.id })
+        return newPersonalTypeEvent
     }
 
     override suspend fun addPersonalEvent(event: PersonalEvent) {
@@ -50,11 +58,10 @@ class PersonalEventRepositoryImpl(
         }
     }
 
-    override suspend fun update(typeId: String?, type: PersonalEventType): Outcome<Unit, Unit> {
+    override suspend fun update(type: PersonalEventType): Outcome<Unit, Unit> {
         val userId = userRepository.loggedUser?.firebaseUid ?: return Unit.toFailure()
-        val typeId = typeId ?: mockUuid()
-        userPathFirestore.setPersonalType(userId, typeId, type)
-
+        userPathFirestore.setPersonalType(userId, type)
+        myPersonalEvents[type.id] = type
         return Unit.toSuccess()
     }
 

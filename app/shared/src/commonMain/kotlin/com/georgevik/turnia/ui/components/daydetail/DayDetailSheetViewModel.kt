@@ -2,7 +2,6 @@ package com.georgevik.turnia.ui.components.daydetail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.Group
 import com.georgevik.turnia.core.domain.model.GroupEvent
 import com.georgevik.turnia.core.domain.model.GroupEventType
@@ -120,10 +119,6 @@ class DayDetailSheetViewModel(
         }
     }
 
-    fun addCustomEvent() {
-        Logger.d(TAG, "TODO: open new event screen for $date")
-    }
-
     private fun buildSections(
         personalTypes: List<PersonalEventType>,
         groups: List<Group>,
@@ -166,8 +161,4 @@ class DayDetailSheetViewModel(
         color = color.toComposeColorOr(entityColor(id)),
         domainObject = this
     )
-
-    companion object {
-        private const val TAG = "DayDetailSheetViewModel"
-    }
 }

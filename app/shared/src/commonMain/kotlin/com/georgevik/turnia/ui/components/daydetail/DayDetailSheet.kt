@@ -5,7 +5,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -28,7 +27,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
@@ -36,15 +34,14 @@ import com.georgevik.turnia.ui.components.daydetail.components.DayDetailAddEvent
 import com.georgevik.turnia.ui.components.daydetail.components.DayDetailHeader
 import com.georgevik.turnia.ui.components.daydetail.components.DayEventRow
 import com.georgevik.turnia.ui.components.daydetail.model.AddEventTypesError
-import com.georgevik.turnia.ui.system.components.TurniaErrorContent
 import com.georgevik.turnia.ui.components.daydetail.model.AddEventTypesUi
+import com.georgevik.turnia.ui.system.components.TurniaErrorContent
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.day_detail_load_error
-import turnia.app.shared.generated.resources.dialog_error_retry
 import turnia.app.shared.generated.resources.event_details_empty
 import turnia.app.shared.generated.resources.event_remove_cancel
 import turnia.app.shared.generated.resources.event_remove_confirm
@@ -57,6 +54,7 @@ fun DayDetailSheet(
     events: List<CalendarEventUi>,
     addMode: DayAddMode,
     openEditTypeScreen: (groupId: String, groupName: String) -> Unit,
+    openNewPersonalTypeScreen: () -> Unit,
     onClose: (shouldRefresh: Boolean) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: DayDetailSheetViewModel = koinViewModel(key = date.toString()) {
@@ -129,10 +127,7 @@ fun DayDetailSheet(
                                     onClose(true)
                                 },
                                 onEditGroup = openEditTypeScreen,
-                                onAddCustom = {
-                                    viewModel.addCustomEvent()
-                                    onClose(true)
-                                },
+                                onAddCustom = openNewPersonalTypeScreen,
                             )
                         }
                     } else if (events.isEmpty()) {
