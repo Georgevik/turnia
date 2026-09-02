@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -86,10 +87,12 @@ fun AcronymBadge(
         Box(contentAlignment = Alignment.Center) {
             if (!acronym.isNullOrBlank()) {
                 Text(
-                    text = acronym.take(3),
+                    text = acronym,
+                    overflow = TextOverflow.Clip,
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
                     color = textColor,
+                    maxLines = 1
                 )
             }
         }
