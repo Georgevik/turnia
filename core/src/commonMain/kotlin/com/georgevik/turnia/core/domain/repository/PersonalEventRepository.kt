@@ -2,7 +2,7 @@ package com.georgevik.turnia.core.domain.repository
 
 import com.georgevik.turnia.core.domain.model.PersonalEvent
 import com.georgevik.turnia.core.domain.model.PersonalEventType
-import kotlinx.coroutines.flow.StateFlow
+import com.georgevik.turnia.core.system.Outcome
 import kotlinx.datetime.LocalDate
 
 /**
@@ -18,7 +18,7 @@ interface PersonalEventRepository {
 
     suspend fun deletePersonalEvent(eventId: String)
 
-    suspend fun update(typeId: String?, type: PersonalEventType): Result<Unit>
+    suspend fun update(typeId: String?, type: PersonalEventType): Outcome<Unit, Unit>
 
     suspend fun retrievePersonalEvents(
         userId: String,

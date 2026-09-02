@@ -7,9 +7,13 @@ import com.georgevik.turnia.core.domain.model.PersonalEvent
 import com.georgevik.turnia.core.domain.model.PersonalEventType
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
 import com.georgevik.turnia.core.domain.repository.UserRepository
+import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.errorOrNull
 import com.georgevik.turnia.core.system.mockDelay
 import com.georgevik.turnia.core.system.mockPersonalEvent
+import com.georgevik.turnia.core.system.mockUuid
+import com.georgevik.turnia.core.system.toFailure
+import com.georgevik.turnia.core.system.toSuccess
 import com.georgevik.turnia.core.system.valueOrNull
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
@@ -28,8 +32,12 @@ class PersonalEventRepositoryImpl(
         val typeResult = userPathFirestore.personalTypes(userId)
 
         typeResult.errorOrNull()?.let { error ->
-            when(error) {
-                is PersonalTypeFirestoreError.LoadFailed -> Logger.e(TAG, "Error fetching personal event types", error.error)
+            when (error) {
+                is PersonalTypeFirestoreError.LoadFailed -> Logger.e(
+                    TAG,
+                    "Error fetching personal event types",
+                    error.error
+                )
             }
         }
 
@@ -49,11 +57,12 @@ class PersonalEventRepositoryImpl(
         }
     }
 
-    override suspend fun update(typeId: String?, type: PersonalEventType): Result<Unit> {
-        // typeId == null -> create new type and save it locally and network (ignore type.id)
-        // typeId != null -> update type
-        mockDelay()
-        return Result.success(Unit)
+    override suspend fun update(typeId: String?, type: PersonalEventType): Outcome<Unit, Unit> {
+        val userId = userRepository.loggedUser?.firebaseUid ?: return Unit.toFailure()
+        val typeId = typeId ?: mockUuid()
+        userPathFirestore.setPersonalType(userId, typeId, type)
+
+        return Unit.toSuccess()
     }
 
     override suspend fun retrievePersonalEvents(

@@ -17,12 +17,15 @@ sealed class PersonalTypeFirestoreError {
     data class LoadFailed(val error: Throwable) : PersonalTypeFirestoreError()
 }
 
+data class GenericFirestoreError(val error: Throwable)
+
 /**
  * Interacts with Firestore: `users/{uid}`
  */
 class UserPathFirestore(
     private val firestore: FirebaseFirestore,
-    private val mapper: UserDocumentMapper
+    private val mapper: UserDocumentMapper,
+    private val personalEventTypeDocMapper: PersonalEventTypeDocMapper
 ) {
 
     suspend fun fetch(uid: String): Outcome<UserProfile, UserProfileError> =
@@ -49,7 +52,19 @@ class UserPathFirestore(
                 "Personal types from cache: ${snapshot.metadata.isFromCache}. Amount: ${snapshot.documents.size}. Changes: ${snapshot.documentChanges.size}"
             )
 
-            snapshot.documents.map { mapper.mapToPersonalEventType(it) }
+            snapshot.documents.map { personalEventTypeDocMapper.map(it) }
+        }
+
+    suspend fun setPersonalType(
+        uid: String,
+        typeId: String,
+        personalType: PersonalEventType
+    ): Outcome<Unit, GenericFirestoreError> =
+        outcomeCatching({ GenericFirestoreError(it) }) {
+            val doc = personalEventTypeDocMapper.map(personalType)
+            Logger.i(TAG, "Set personal type document")
+            firestore.collection("${PATH_USER}/${uid}/personalEventTypes").document(typeId)
+                .set(doc)
         }
 
     companion object {

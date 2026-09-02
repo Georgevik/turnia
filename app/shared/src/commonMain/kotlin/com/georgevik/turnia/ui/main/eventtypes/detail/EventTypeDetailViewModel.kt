@@ -138,7 +138,7 @@ class EventTypeDetailViewModel(
             id = typeId,
             name = form.name.trim(),
             color = form.color.toHex(),
-            acronym = form.acronym.trim().ifBlank { null },
+            acronym = form.acronym.trim(),
             description = form.description.trim().ifBlank { null },
             startTime = form.startTime.trim().ifBlank { null },
             endTime = form.endTime.trim().ifBlank { null },
