@@ -3,8 +3,8 @@ package com.georgevik.turnia.ui.main.mycalendar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.georgevik.turnia.navigation.LocalNavigator
-import com.georgevik.turnia.navigation.main.routes.MainRoute
+import com.georgevik.turnia.navigation.LocalRootNavigator
+import com.georgevik.turnia.navigation.root.routes.RootRoute
 import com.georgevik.turnia.ui.components.calendar.CalendarViewer
 import com.georgevik.turnia.ui.components.daydetail.DayAddMode
 import org.koin.compose.viewmodel.koinViewModel
@@ -16,15 +16,16 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun MyCalendarScreen(viewModel: MyCalendarViewModel = koinViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val navigator = LocalNavigator.current
+    // Group detail covers the whole screen, so it goes on the root stack, not this tab's.
+    val rootNavigator = LocalRootNavigator.current
 
     CalendarViewer(
         eventsByDate = uiState.eventsByDate,
         onMonthChanged = viewModel::onMonthChanged,
         invalidateEvents = viewModel::invalidateEvents,
         addMode = DayAddMode.Full,
-        onEditGroup = { groupId, groupName ->
-            navigator.goTo(MainRoute.EventMasterKey(groupId, groupName))
+        onEditGroup = { groupId, _ ->
+            rootNavigator.goTo(RootRoute.GroupDetailKey(groupId))
         },
     )
 }

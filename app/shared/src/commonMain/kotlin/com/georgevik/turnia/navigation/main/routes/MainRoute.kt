@@ -19,9 +19,6 @@ sealed interface MainRoute : NavKey {
     data object ChangesTab : MainRoute
 
     @Serializable
-    data class EventMasterKey(val groupId: String, val groupName: String) : MainRoute
-
-    @Serializable
     data class EventTypeDetailKey(val data: EventTypeDetailData) : MainRoute
 
     @Serializable
@@ -39,7 +36,3 @@ sealed class ExternalCalendarData {
     @Serializable
     data class Personal(override val id: String, override val name: String) : ExternalCalendarData()
 }
-
-
-@Serializable
-enum class EventTypeKind { GROUP, PERSONAL }

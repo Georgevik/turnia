@@ -5,10 +5,9 @@ import com.georgevik.turnia.navigation.root.routes.RootRoute
 import com.georgevik.turnia.navigation.routes.EventTypeDetailData
 import com.georgevik.turnia.ui.components.daydetail.DayAddMode
 import com.georgevik.turnia.ui.components.daydetail.DayDetailSheetViewModel
-import com.georgevik.turnia.ui.main.MainViewModel
-import com.georgevik.turnia.ui.main.eventtypes.EventMasterViewModel
-import com.georgevik.turnia.ui.main.eventtypes.detail.EventTypeDetailViewModel
 import com.georgevik.turnia.ui.group.detail.GroupDetailViewModel
+import com.georgevik.turnia.ui.main.MainViewModel
+import com.georgevik.turnia.ui.main.eventtypes.detail.EventTypeDetailViewModel
 import com.georgevik.turnia.ui.main.group.calendarlist.CalendarListViewModel
 import com.georgevik.turnia.ui.main.group.externalcalendar.ExternalCalendarViewModel
 import com.georgevik.turnia.ui.main.mycalendar.MyCalendarViewModel
@@ -33,9 +32,6 @@ val appModule: Module = module {
     viewModelOf(::CalendarListViewModel)
     viewModelOf(::MainViewModel)
     viewModelOf(::ProfileViewModel)
-    viewModel { (groupId: String, groupName: String) ->
-        EventMasterViewModel(groupId, groupName, get(), get())
-    }
     viewModel { (data: EventTypeDetailData) ->
         EventTypeDetailViewModel(data, get(), get())
     }
