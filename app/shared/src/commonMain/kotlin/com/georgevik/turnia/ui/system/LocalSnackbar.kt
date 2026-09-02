@@ -5,5 +5,5 @@ import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.staticCompositionLocalOf
 
 val LocalSnackbar: ProvidableCompositionLocal<SnackbarHostState> = staticCompositionLocalOf {
-    error("LocalSnackbar not provided — this content must be hosted under MainScreen's Scaffold")
+    error("LocalSnackbar not provided — this content must be hosted under a Turnia Scaffold")
 }

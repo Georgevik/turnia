@@ -92,6 +92,22 @@
         <item quantity="other">%1$d miembros</item>
     </plurals>
 
+    <!-- Group detail: view / edit / create a group -->
+    <string name="group_detail_title_new">Nuevo grupo</string>
+    <string name="group_detail_create">Crear grupo</string>
+    <string name="group_detail_open">Ver el grupo</string>
+    <string name="group_detail_field_name">Nombre del grupo</string>
+    <string name="group_detail_field_members">Miembros</string>
+    <string name="group_detail_field_invitation">Código de invitación</string>
+    <string name="group_detail_section_types">Tipos de evento</string>
+    <string name="group_detail_types_empty">Este grupo todavía no tiene tipos de evento.</string>
+    <string name="group_detail_types_new_hint">Podrás añadir tipos de evento cuando guardes el grupo.</string>
+    <string name="group_detail_readonly">Solo un administrador puede editar los datos del grupo.</string>
+    <string name="group_detail_save">Guardar</string>
+    <string name="group_detail_error_not_found">No hemos encontrado el grupo. Puede que ya no exista o que hayas salido de él.</string>
+    <string name="group_detail_error_load">No hemos podido cargar el grupo.</string>
+    <string name="group_detail_error_save">No se ha podido guardar el grupo. Inténtalo de nuevo.</string>
+
     <!-- Event types: master + detail (edit color / manage) -->
     <string name="event_types_edit">Editar eventos</string>
     <string name="event_types_title">Tipos de turnos</string>

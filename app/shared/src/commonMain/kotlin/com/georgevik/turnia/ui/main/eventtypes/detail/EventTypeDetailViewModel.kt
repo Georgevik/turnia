@@ -11,7 +11,8 @@ import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.fold
 import com.georgevik.turnia.core.system.toFailure
 import com.georgevik.turnia.core.system.toSuccess
-import com.georgevik.turnia.navigation.main.routes.EventTypeDetailData
+import com.georgevik.turnia.core.system.valueOrNull
+import com.georgevik.turnia.navigation.routes.EventTypeDetailData
 import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeDetailUi
 import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeDetailUi.EventTypeForm
 import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeScreenError
@@ -73,7 +74,7 @@ class EventTypeDetailViewModel(
         typeId: String
     ): Outcome<EventTypeForm, EventTypeScreenError> {
         val group =
-            groupRepository.getGroup(groupId).getOrNull()
+            groupRepository.getGroup(groupId).valueOrNull()
                 ?: return EventTypeScreenError.GroupNotFound.toFailure()
 
         return group.types.find { it.id == typeId }?.toUi()?.toSuccess()

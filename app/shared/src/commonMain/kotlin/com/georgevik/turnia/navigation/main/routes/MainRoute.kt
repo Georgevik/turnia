@@ -1,6 +1,7 @@
 package com.georgevik.turnia.navigation.main.routes
 
 import androidx.navigation3.runtime.NavKey
+import com.georgevik.turnia.navigation.routes.EventTypeDetailData
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -25,21 +26,6 @@ sealed interface MainRoute : NavKey {
 
     @Serializable
     data class ExternalCalendar(val data: ExternalCalendarData) : MainRoute
-}
-
-@Serializable
-sealed interface EventTypeDetailData {
-    @Serializable
-    data class EditPersonal(val typeId: String) : EventTypeDetailData
-
-    @Serializable
-    data object NewPersonal : EventTypeDetailData
-
-    @Serializable
-    data class EditGroup(val typeId: String, val groupId: String) : EventTypeDetailData
-
-    @Serializable
-    data object NewGroup : EventTypeDetailData
 }
 
 @Serializable

@@ -4,4 +4,7 @@ data class Group(
     val id: String,
     val name: String,
     val types: List<GroupEventType>,
+    val memberCount: Int,
+    val invitationCode: String?,
+    val isAdmin: Boolean,
 )

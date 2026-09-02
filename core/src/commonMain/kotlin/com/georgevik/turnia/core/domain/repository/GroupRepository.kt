@@ -2,6 +2,8 @@ package com.georgevik.turnia.core.domain.repository
 
 import com.georgevik.turnia.core.domain.model.Group
 import com.georgevik.turnia.core.domain.model.GroupEvent
+import com.georgevik.turnia.core.domain.model.GroupError
+import com.georgevik.turnia.core.system.Outcome
 import kotlinx.datetime.LocalDate
 
 interface GroupRepository {
@@ -23,7 +25,10 @@ interface GroupRepository {
         monthDelta: Int = 1
     ): Result<List<GroupEvent>>
 
-    suspend fun getGroup(idGroup: String): Result<Group>
+    suspend fun getGroup(idGroup: String): Outcome<Group, GroupError>
+
+    /** Creates the group when [group] has a blank id, updates it otherwise. */
+    suspend fun saveGroup(group: Group): Outcome<Group, GroupError>
 
     suspend fun updateColor(typeId: String, groupId: String, color: String) : Result<Unit>
 }
