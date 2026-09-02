@@ -11,6 +11,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
@@ -32,7 +33,8 @@ class SplashViewModel(
             val remaining = MIN_SPLASH_DURATION - startMark.elapsedNow()
             if (remaining.isPositive()) delay(remaining)
 
-            val session = userRepository.userSession.first { it !is UserSession.Loading }
+            val session =
+                withTimeoutOrNull(TIMEOUT_SESSION) { userRepository.userSession.first { it !is UserSession.Loading } }
             _uiEvent.send(
                 SplashUiEvent.Navigate(
                     when (session) {
@@ -46,6 +48,7 @@ class SplashViewModel(
 
     companion object {
         private val MIN_SPLASH_DURATION = 1.seconds
+        private val TIMEOUT_SESSION = 10.seconds
     }
 }
 

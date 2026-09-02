@@ -11,10 +11,10 @@ import com.georgevik.turnia.core.domain.model.PersonalEventType
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
 import com.georgevik.turnia.core.domain.repository.UserRepository
-import com.georgevik.turnia.ui.components.calendar.model.CalendarEventType
-import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import com.georgevik.turnia.core.system.fold
 import com.georgevik.turnia.core.system.outcomeCatching
+import com.georgevik.turnia.ui.components.calendar.model.CalendarEventType
+import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import com.georgevik.turnia.ui.components.daydetail.model.AddEventTypesError
 import com.georgevik.turnia.ui.components.daydetail.model.AddEventTypesUi
 import com.georgevik.turnia.ui.components.daydetail.model.EventTypeSectionUi
@@ -88,7 +88,7 @@ class DayDetailSheetViewModel(
 
     private fun addNewEvent(type: GroupEventType, predefinedEventUi: PredefinedEventUi) {
         viewModelScope.launch {
-            val userId = userRepository.userId ?: return@launch // TODO Emit error
+            val userId = userRepository.user?.uid  ?: return@launch // TODO Emit error
             groupRepository.addGroupEvent(
                 GroupEvent(
                     id = Uuid.random().toString(),

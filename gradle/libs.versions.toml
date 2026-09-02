@@ -23,7 +23,6 @@ googleServices = "4.5.0"
 firebaseBom = "34.17.0"
 kmpauth = "3.0.4"
 kotlinxDatetime = "0.7.1"
-datastore = "1.1.7"
 
 
 [libraries]
@@ -63,7 +62,6 @@ firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "fir
 kmpauth-google = { module = "io.github.mirzemehdi:kmpauth-google", version.ref = "kmpauth" }
 kmpauth-firebase = { module = "io.github.mirzemehdi:kmpauth-firebase", version.ref = "kmpauth" }
 kmpauth-uihelper = { module = "io.github.mirzemehdi:kmpauth-uihelper", version.ref = "kmpauth" }
-androidx-datastore-preferences-core = { module = "androidx.datastore:datastore-preferences-core", version.ref = "datastore" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
 
 [plugins]

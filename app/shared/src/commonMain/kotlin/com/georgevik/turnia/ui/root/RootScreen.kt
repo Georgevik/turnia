@@ -49,6 +49,7 @@ fun App(vm: RootViewModel = koinViewModel()) {
                 backStack.clear()
                 backStack.add(RootRoute.SignInKey)
             }
+
         }
     }
 

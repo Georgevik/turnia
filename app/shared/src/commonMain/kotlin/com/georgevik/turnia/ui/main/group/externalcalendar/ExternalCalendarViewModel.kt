@@ -34,7 +34,8 @@ class ExternalCalendarViewModel(
     init {
         viewModelScope.launch {
             combine(monthDate, invalidateData) { date, _ -> date }.collect { date ->
-                val uid = userRepository.userId
+                val uid = userRepository.user?.uid ?: return@collect
+
                 val calendarUiEvents = when (data) {
                     is ExternalCalendarData.Group -> groupRepository.retrieveGroupEvents(
                         data.id,

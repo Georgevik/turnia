@@ -37,12 +37,9 @@ kotlin {
             api(libs.kotlinx.datetime)
             api(libs.kotlinx.serialization.core)
             implementation(libs.kotlinx.serialization.json)
-            implementation(libs.androidx.datastore.preferences.core)
         }
         androidMain.dependencies {
             api(project.dependencies.platform(libs.firebase.bom))
-            // Only for androidContext() when resolving the DataStore file path.
-            implementation(libs.koin.android)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
