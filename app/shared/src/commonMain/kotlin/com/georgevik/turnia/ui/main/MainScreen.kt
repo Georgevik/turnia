@@ -11,6 +11,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -24,12 +25,14 @@ import androidx.navigation3.runtime.entryProvider
 import com.georgevik.turnia.navigation.LocalNavigator
 import com.georgevik.turnia.navigation.TurniaNavDisplay
 import com.georgevik.turnia.navigation.main.MainNavigator
-import com.georgevik.turnia.navigation.main.routes.MainRoute
 import com.georgevik.turnia.navigation.main.rememberMainNavigationState
+import com.georgevik.turnia.navigation.main.routes.MainRoute
 import com.georgevik.turnia.ui.main.changes.navigation.changesNavigation
 import com.georgevik.turnia.ui.main.group.navigation.groupsNavigation
 import com.georgevik.turnia.ui.main.mycalendar.navigation.calendarNavigation
 import com.georgevik.turnia.ui.main.profile.navigation.profileNavigation
+import com.georgevik.turnia.ui.system.LocalSnackbar
+import com.georgevik.turnia.ui.system.TurniaSnackbarHost
 import org.koin.compose.viewmodel.koinViewModel
 
 private data class MainTabBarItem(
@@ -62,6 +65,7 @@ fun MainScreen(viewModel: MainViewModel = koinViewModel()) {
         topLevelRoutes = remember { MAIN_TABS.map { it.route }.toSet() },
     )
     val navigator = remember(state) { MainNavigator(state) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(state.topLevelRoute, featureFlags.showSwapTab) {
         if (state.topLevelRoute == MainRoute.ChangesTab && !featureFlags.showSwapTab) {
@@ -69,8 +73,12 @@ fun MainScreen(viewModel: MainViewModel = koinViewModel()) {
         }
     }
 
-    CompositionLocalProvider(LocalNavigator provides navigator) {
+    CompositionLocalProvider(
+        LocalNavigator provides navigator,
+        LocalSnackbar provides snackbarHostState,
+    ) {
         Scaffold(
+            snackbarHost = { TurniaSnackbarHost(snackbarHostState) },
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
             bottomBar = {
                 NavigationBar {

@@ -1,6 +1,7 @@
 package com.georgevik.turnia.ui.system
 
 import androidx.compose.ui.graphics.Color
+import com.georgevik.turnia.core.system.ALL_COLORS
 
 /**
  * A fixed, hand-picked palette used to color group/colleague accents. These are
@@ -8,22 +9,7 @@ import androidx.compose.ui.graphics.Color
  * no muted/pastel colors — and dark enough to carry a white icon or white text.
  * Hues are spread around the wheel so adjacent ids look clearly different.
  */
-val EntityPalette = listOf(
-    Color(0xFFE53935), // red
-    Color(0xFFF4511E), // deep orange
-    Color(0xFFFB8C00), // orange
-    Color(0xFFF9A825), // gold
-    Color(0xFF7CB342), // lime
-    Color(0xFF43A047), // green
-    Color(0xFF00897B), // teal
-    Color(0xFF00ACC1), // cyan
-    Color(0xFF039BE5), // light blue
-    Color(0xFF1E88E5), // blue
-    Color(0xFF3949AB), // indigo
-    Color(0xFF5E35B1), // deep purple
-    Color(0xFF8E24AA), // violet
-    Color(0xFFD81B60), // pink
-)
+val EntityPalette = ALL_COLORS.mapNotNull { it.toComposeColorOrNull() }
 
 /**
  * Deterministic accent color for an entity from its [id] — the same id always

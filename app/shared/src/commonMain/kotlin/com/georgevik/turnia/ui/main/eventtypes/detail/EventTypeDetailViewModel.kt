@@ -7,18 +7,24 @@ import com.georgevik.turnia.core.domain.model.GroupEventType
 import com.georgevik.turnia.core.domain.model.PersonalEventType
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
+import com.georgevik.turnia.core.system.Outcome
+import com.georgevik.turnia.core.system.fold
+import com.georgevik.turnia.core.system.toFailure
+import com.georgevik.turnia.core.system.toSuccess
 import com.georgevik.turnia.navigation.main.routes.EventTypeDetailData
 import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeDetailUi
+import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeDetailUi.EventTypeForm
+import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeScreenError
+import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeTitle
+import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeToastError
+import com.georgevik.turnia.ui.system.EntityPalette
 import com.georgevik.turnia.ui.system.createUuid
 import com.georgevik.turnia.ui.system.entityColor
 import com.georgevik.turnia.ui.system.toComposeColorOr
 import com.georgevik.turnia.ui.system.toHex
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -28,54 +34,60 @@ class EventTypeDetailViewModel(
     private val personalRepository: PersonalEventRepository,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(EventTypeDetailUi(eventTypeForm = null, loading = true))
+    private val _uiState = MutableStateFlow<EventTypeDetailUi>(EventTypeDetailUi.Loading)
     val uiState: StateFlow<EventTypeDetailUi> = _uiState.asStateFlow()
 
-    private val _uiEvent = Channel<EventTypeUiEvent>()
-    val uiEvent: Flow<EventTypeUiEvent> = _uiEvent.consumeAsFlow()
-
     init {
+        loadForm()
+    }
+
+    private fun loadForm() {
         viewModelScope.launch {
             when (key) {
                 is EventTypeDetailData.EditGroup -> loadGroupType(key.groupId, key.typeId)
                 is EventTypeDetailData.EditPersonal -> loadPersonalType(key.typeId)
-                EventTypeDetailData.NewPersonal -> newForm()
-                EventTypeDetailData.NewtGroup -> newForm()
-            }
+                EventTypeDetailData.NewPersonal,
+                EventTypeDetailData.NewGroup -> newForm().toSuccess()
+
+            }.fold(
+                onSuccess = { form ->
+                    _uiState.update {
+                        val title = if (form.name.isEmpty()) EventTypeTitle.New
+                        else EventTypeTitle.Title(form.name)
+
+                        EventTypeDetailUi.Success(
+                            title = title,
+                            form = form,
+                            colors = EntityPalette
+                        )
+                    }
+                },
+                onFailure = { error -> _uiState.update { EventTypeDetailUi.Error(error) } }
+            )
         }
     }
 
-    private suspend fun loadGroupType(groupId: String, typeId: String) {
-        val group = groupRepository.getGroup(groupId).getOrNull()
 
-        if (group == null) {
-            _uiEvent.send(EventTypeUiEvent.GroupNotFound)
-            return
-        }
-        val eventType = group.types.find { it.id == typeId }
-        if (eventType == null) {
-            _uiEvent.send(EventTypeUiEvent.GroupEventNotFound)
-            return
-        }
+    private suspend fun loadGroupType(
+        groupId: String,
+        typeId: String
+    ): Outcome<EventTypeForm, EventTypeScreenError> {
+        val group =
+            groupRepository.getGroup(groupId).getOrNull()
+                ?: return EventTypeScreenError.GroupNotFound.toFailure()
 
-        val form = eventType.toUi()
-        _uiState.update { it.copy(eventTypeForm = form, loading = false) }
+        return group.types.find { it.id == typeId }?.toUi()?.toSuccess()
+            ?: EventTypeScreenError.GroupEventNotFound.toFailure()
     }
 
-    private suspend fun loadPersonalType(typeId: String) {
+    private suspend fun loadPersonalType(typeId: String): Outcome<EventTypeForm, EventTypeScreenError> {
         val eventType = personalRepository.getEventType(typeId).getOrNull()
-        if (eventType == null) {
-            _uiEvent.send(EventTypeUiEvent.GroupEventNotFound)
-            return
-        }
+            ?: return EventTypeScreenError.GroupEventNotFound.toFailure()
 
-        val form = eventType.toUi()
-        _uiState.update { it.copy(eventTypeForm = form, loading = false) }
+        return eventType.toUi().toSuccess()
     }
 
     fun onPickColor(color: Color) {
-        val form = _uiState.value.eventTypeForm?.copy(color = color)
-
         viewModelScope.launch {
             when (key) {
                 is EventTypeDetailData.EditGroup -> groupRepository.updateColor(
@@ -86,16 +98,18 @@ class EventTypeDetailViewModel(
 
                 is EventTypeDetailData.EditPersonal,
                 EventTypeDetailData.NewPersonal,
-                EventTypeDetailData.NewtGroup -> Unit
-            }
+                EventTypeDetailData.NewGroup -> Result.success(Unit)
+            }.fold(
+                onSuccess = { updateSuccess { it.copy(form = it.form.copy(color = color)) } },
+                onFailure = { updateSuccess { it.copy(toastError = EventTypeToastError.PickColor) } }
+            )
         }
-
-        _uiState.update { it.copy(eventTypeForm = form) }
     }
 
-    fun onFieldChanged(field: EventTypeField, newValue: String) {
-        val form = uiState.value.eventTypeForm ?: return
-        val newForm = with(form) {
+    fun hideMessageError() = updateSuccess { it.copy(toastError = null) }
+
+    fun onFieldChanged(field: EventTypeField, newValue: String) = updateSuccess { state ->
+        val newForm = with(state.form) {
             when (field) {
                 EventTypeField.Name -> copy(name = newValue)
                 EventTypeField.Acronym -> copy(acronym = newValue)
@@ -105,19 +119,23 @@ class EventTypeDetailViewModel(
             }
         }
 
-        _uiState.update { it.copy(eventTypeForm = newForm) }
+        state.copy(form = newForm)
     }
 
-    fun onSavePersonal(): Boolean {
+    fun onSavePersonal() {
+        val state = uiState.value as? EventTypeDetailUi.Success ?: return
         val typeId = when (key) {
             is EventTypeDetailData.EditPersonal -> key.typeId
             EventTypeDetailData.NewPersonal -> ""
             is EventTypeDetailData.EditGroup,
-            EventTypeDetailData.NewtGroup -> return false
+            EventTypeDetailData.NewGroup ->
+                return updateSuccess { it.copy(toastError = EventTypeToastError.NotImplemented) }
         }
 
-        val form = _uiState.value.eventTypeForm ?: return false
-        if (form.name.isBlank()) return false
+        val form = state.form
+        if (form.name.isBlank()) {
+            return updateSuccess { it.copy(toastError = EventTypeToastError.NameIsEmpty) }
+        }
         val type = PersonalEventType(
             id = typeId,
             name = form.name.trim(),
@@ -127,11 +145,25 @@ class EventTypeDetailViewModel(
             startTime = form.startTime.trim().ifBlank { null },
             endTime = form.endTime.trim().ifBlank { null },
         )
-        personalRepository.update(typeId, type)
-        return true
+
+        viewModelScope.launch {
+            updateSuccess { it.copy(saveButtonLoading = true) }
+
+            personalRepository.update(typeId, type).fold(
+                onSuccess = { updateSuccess { it.copy(saveButtonLoading = false) } },
+                onFailure = {
+                    updateSuccess {
+                        it.copy(
+                            toastError = EventTypeToastError.SavePersonal,
+                            saveButtonLoading = false
+                        )
+                    }
+                }
+            )
+        }
     }
 
-    private fun PersonalEventType.toUi() = EventTypeDetailUi.EventTypeForm(
+    private fun PersonalEventType.toUi() = EventTypeForm(
         typeId = id,
         fieldsEditable = true,
         name = name,
@@ -143,7 +175,7 @@ class EventTypeDetailViewModel(
         swappable = false,
     )
 
-    private fun GroupEventType.toUi() = EventTypeDetailUi.EventTypeForm(
+    private fun GroupEventType.toUi() = EventTypeForm(
         typeId = id,
         fieldsEditable = false,
         name = name,
@@ -155,19 +187,24 @@ class EventTypeDetailViewModel(
         swappable = false,
     )
 
-    private fun newForm() = EventTypeDetailUi.EventTypeForm(
-        typeId = "",
-        fieldsEditable = true,
-        name = "",
-        acronym = "",
-        description = "",
-        startTime = "",
-        endTime = "",
-        color = entityColor(createUuid()),
-        swappable = false,
-    )
+
+    private fun updateSuccess(block: (EventTypeDetailUi.Success) -> EventTypeDetailUi.Success) =
+        _uiState.update { if (it is EventTypeDetailUi.Success) block(it) else it }
+
+    companion object {
+        private fun newForm() = EventTypeForm(
+            typeId = "",
+            fieldsEditable = true,
+            name = "",
+            acronym = "",
+            description = "",
+            startTime = "",
+            endTime = "",
+            color = entityColor(createUuid()),
+            swappable = false,
+        )
+    }
 
 }
 
 enum class EventTypeField { Name, Acronym, Description, StartTime, EndTime }
-enum class EventTypeUiEvent { GroupNotFound, GroupEventNotFound }

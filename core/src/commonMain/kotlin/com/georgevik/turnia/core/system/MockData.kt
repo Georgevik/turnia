@@ -161,10 +161,7 @@ val MOCK_PERSONAL_TYPES = listOf(
 
 fun mockUuid() = Uuid.random().toString()
 
-fun mockColor(): String {
-    val randomInt = Random.nextInt(0x1000000)
-    return "#" + randomInt.toString(radix = 16).padStart(length = 6, padChar = '0').uppercase()
-}
+fun mockColor(): String = ALL_COLORS.random()
 
 fun mockRealName(): String {
     val first = firstNames.random()

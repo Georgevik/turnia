@@ -5,6 +5,7 @@ import com.georgevik.turnia.core.domain.model.PersonalEventType
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
 import com.georgevik.turnia.core.system.MOCK_PERSONAL_TYPES
 import com.georgevik.turnia.core.system.mockPersonalEvent
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,10 +34,13 @@ class PersonalEventRepositoryImpl : PersonalEventRepository {
         }
     }
 
-    override fun update(typeId: String?, type: PersonalEventType) {
+    override suspend fun update(typeId: String?, type: PersonalEventType) : Result<Unit>{
         // typeId == null -> create new type and save it locally and network (ignore type.id)
         // typeId != null -> update type
-        // TODO("Not yet implemented")
+
+        delay(1000)
+
+        return Result.success(Unit)
     }
 
     override suspend fun retrievePersonalEvents(

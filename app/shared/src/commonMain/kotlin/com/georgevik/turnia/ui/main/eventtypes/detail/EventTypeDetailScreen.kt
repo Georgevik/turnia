@@ -2,6 +2,7 @@ package com.georgevik.turnia.ui.main.eventtypes.detail
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -30,23 +32,39 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.georgevik.turnia.navigation.LocalNavigator
 import com.georgevik.turnia.ui.main.eventtypes.components.ColorSwatchPicker
+import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeDetailUi
 import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeDetailUi.EventTypeForm
+import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeScreenError
+import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeTitle
+import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeToastError
+import com.georgevik.turnia.ui.system.LocalSnackbar
 import com.georgevik.turnia.ui.system.components.AcronymBadge
+import com.georgevik.turnia.ui.system.components.TurniaDialogError
+import com.georgevik.turnia.ui.system.toErrorSnackbar
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.calendar_back
+import turnia.app.shared.generated.resources.event_details_new_title
+import turnia.app.shared.generated.resources.event_type_error_group_not_found
+import turnia.app.shared.generated.resources.event_type_error_name_empty
+import turnia.app.shared.generated.resources.event_type_error_not_implemented
+import turnia.app.shared.generated.resources.event_type_error_pick_color
+import turnia.app.shared.generated.resources.event_type_error_save_personal
+import turnia.app.shared.generated.resources.event_type_error_type_not_found
 import turnia.app.shared.generated.resources.event_type_field_acronym
 import turnia.app.shared.generated.resources.event_type_field_color
 import turnia.app.shared.generated.resources.event_type_field_description
@@ -64,15 +82,23 @@ import turnia.app.shared.generated.resources.event_type_swap_not_allowed
 fun EventTypeDetailScreen(viewModel: EventTypeDetailViewModel) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigator = LocalNavigator.current
+    val snackbar = LocalSnackbar.current
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        text = uiState.eventTypeForm?.name.orEmpty(),
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    when (val state = uiState) {
+                        EventTypeDetailUi.Loading,
+                        is EventTypeDetailUi.Error -> Unit
+                        is EventTypeDetailUi.Success -> Text(
+                            text = when(state.title) {
+                                is EventTypeTitle.Title -> state.title.title
+                                is EventTypeTitle.New -> stringResource(Res.string.event_details_new_title)
+                            },
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 },
                 navigationIcon = {
                     IconButton(onClick = navigator::goBack) {
@@ -85,42 +111,63 @@ fun EventTypeDetailScreen(viewModel: EventTypeDetailViewModel) {
             )
         },
     ) { innerPadding ->
-        if (uiState.loading) {
-            Column(
-                Modifier.fillMaxSize().padding(innerPadding),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        }
+        when (val state = uiState) {
+            EventTypeDetailUi.Loading -> LoadingContent(
+                Modifier.fillMaxSize().padding(innerPadding)
+            )
 
-        uiState.eventTypeForm?.let { eventTypeForm ->
-            EventTypeForm(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(20.dp),
-                eventTypeForm = eventTypeForm,
-                onSavePersonal = viewModel::onSavePersonal,
-                onBack = navigator::goBack,
-                onPickColor = viewModel::onPickColor,
-                onFieldChanged = viewModel::onFieldChanged,
+            is EventTypeDetailUi.Success -> {
+                if (state.toastError != null) {
+                    val message = state.toastError.message()
+                    LaunchedEffect(message) {
+                        snackbar.showSnackbar(message.toErrorSnackbar())
+                        viewModel.hideMessageError()
+                    }
+                }
+                EventTypeFormContent(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .padding(20.dp),
+                    state = state,
+                    onSavePersonal = {
+                        viewModel.onSavePersonal()
+                        navigator.goBack()
+                    },
+                    onPickColor = viewModel::onPickColor,
+                    onFieldChanged = viewModel::onFieldChanged
+                )
+            }
+
+            is EventTypeDetailUi.Error -> TurniaDialogError(
+                message = state.error.message(),
+                onDismiss = navigator::goBack,
             )
         }
-
     }
 }
 
 @Composable
-private fun EventTypeForm(
+private fun LoadingContent(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        CircularProgressIndicator()
+    }
+}
+
+
+@Composable
+private fun EventTypeFormContent(
     modifier: Modifier = Modifier,
-    eventTypeForm: EventTypeForm,
-    onSavePersonal: () -> Boolean,
-    onBack: () -> Unit,
+    state: EventTypeDetailUi.Success,
+    onSavePersonal: () -> Unit,
     onPickColor: (color: Color) -> Unit,
     onFieldChanged: (EventTypeField, String) -> Unit,
 ) {
+    val eventTypeForm = state.form
     Column(
         modifier = modifier.verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(20.dp),
@@ -133,6 +180,7 @@ private fun EventTypeForm(
 
         FieldLabel(stringResource(Res.string.event_type_field_color))
         ColorSwatchPicker(
+            colors = state.colors,
             selected = eventTypeForm.color,
             onPick = onPickColor,
             modifier = Modifier.fillMaxWidth(),
@@ -140,22 +188,27 @@ private fun EventTypeForm(
 
         if (eventTypeForm.fieldsEditable) {
             Button(
-                onClick = { if (onSavePersonal()) onBack() },
+                onClick = onSavePersonal,
                 enabled = eventTypeForm.name.isNotBlank(),
                 shape = RoundedCornerShape(percent = 50),
                 contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
                 modifier = Modifier.fillMaxWidth().height(52.dp),
             ) {
-                Icon(
-                    Icons.Default.Check,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-                Text(
-                    text = stringResource(Res.string.event_type_save),
-                    modifier = Modifier.padding(start = 8.dp),
-                    fontWeight = FontWeight.SemiBold,
-                )
+
+                if (state.saveButtonLoading) {
+                    CircularProgressIndicator()
+                } else {
+                    Icon(
+                        Icons.Default.Check,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = stringResource(Res.string.event_type_save),
+                        modifier = Modifier.padding(start = 8.dp),
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
             }
         }
     }
@@ -232,6 +285,13 @@ private fun PersonalForm(
     ui: EventTypeForm,
     onFieldChanged: (EventTypeField, String) -> Unit,
 ) {
+    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        AcronymBadge(
+            color = ui.color,
+            acronym = ui.acronym.ifBlank { null },
+            size = 64.dp,
+        )
+    }
     OutlinedTextField(
         value = ui.name,
         onValueChange = { onFieldChanged(EventTypeField.Name, it) },
@@ -242,9 +302,10 @@ private fun PersonalForm(
     )
     OutlinedTextField(
         value = ui.acronym,
-        onValueChange = { onFieldChanged(EventTypeField.Acronym, it) },
+        onValueChange = { onFieldChanged(EventTypeField.Acronym, it.uppercase().take(4)) },
         label = { Text(stringResource(Res.string.event_type_field_acronym)) },
         singleLine = true,
+        keyboardOptions = KeyboardOptions.Default.copy(capitalization = KeyboardCapitalization.Characters),
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth(),
     )
@@ -340,3 +401,21 @@ private fun SwapBadge(allowed: Boolean) {
         }
     }
 }
+
+@Composable
+private fun EventTypeScreenError.message(): String = stringResource(
+    when (this) {
+        EventTypeScreenError.GroupNotFound -> Res.string.event_type_error_group_not_found
+        EventTypeScreenError.GroupEventNotFound -> Res.string.event_type_error_type_not_found
+    }
+)
+
+@Composable
+private fun EventTypeToastError.message(): String = stringResource(
+    when (this) {
+        EventTypeToastError.PickColor -> Res.string.event_type_error_pick_color
+        EventTypeToastError.SavePersonal -> Res.string.event_type_error_save_personal
+        EventTypeToastError.NameIsEmpty -> Res.string.event_type_error_name_empty
+        EventTypeToastError.NotImplemented -> Res.string.event_type_error_not_implemented
+    }
+)

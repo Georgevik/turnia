@@ -111,7 +111,8 @@ fun EventMasterScreen(viewModel: EventMasterViewModel) {
             }
 
             uiState.sections.forEach { section ->
-                item(key = "header-${section.kind}") {
+                // Group sections share the same kind, so key on the unique groupId.
+                item(key = "header-${section.rows.firstOrNull()?.groupId ?: section.kind}") {
                     SectionHeader(section = section)
                 }
                 items(section.rows, key = { it.typeId }) { row ->

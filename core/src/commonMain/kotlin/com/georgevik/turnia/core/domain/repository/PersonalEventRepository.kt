@@ -18,7 +18,7 @@ interface PersonalEventRepository {
 
     suspend fun deletePersonalEvent(eventId: String)
 
-    fun update(typeId: String?, type: PersonalEventType)
+    suspend fun update(typeId: String?, type: PersonalEventType): Result<Unit>
 
     suspend fun retrievePersonalEvents(
         userId: String,

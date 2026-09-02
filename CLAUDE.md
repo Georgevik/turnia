@@ -67,6 +67,73 @@ Firebase must **not** accumulate every past event forever. The backend keeps onl
 
 - **Comments** — do **not** add a comment to every file, function or header. Comments belong only on **non-obvious, non-logic** code (a business rule, a workaround, a subtle invariant, a "why"). A comment that restates what the code already says is redundant — omit it.
 
+## Error handling & UI state
+
+These follow the [official Android architecture guidance](https://developer.android.com/topic/architecture/recommendations), with one deliberate deviation (`Outcome`, below).
+
+### Errors are state, never one-off events
+
+**Do not send events from the ViewModel to the UI** (official strength: *Strongly recommended*). Never surface an error through a `Channel`, `SharedFlow` or any other one-shot stream: when the producer (the ViewModel) outlives the consumer (the Compose UI), delivery is not guaranteed and the user can silently miss the message.
+
+Every failure the user must see becomes a **field on the UiState**, and the UI notifies the ViewModel once it has been shown:
+
+```kotlin
+data class Success(
+    val form: EventTypeForm,
+    val userMessage: StringResource? = null,
+) : EventTypeDetailUi
+```
+
+```kotlin
+fun userMessageShown() = _uiState.update { /* … */ copy(userMessage = null) }
+```
+
+```kotlin
+state.userMessage?.let { message ->
+    val text = stringResource(message)
+    LaunchedEffect(message) {
+        snackbarHostState.showSnackbar(text)
+        viewModel.userMessageShown()
+    }
+}
+```
+
+The governing principle: *UI state is a faithful representation of what is displayed on screen at every point in time* — either the message is displayed or it isn't.
+
+### The ViewModel never builds display text
+
+A UiState carries a **`StringResource`**, or a semantic error type the UI maps to one — never a resolved `String`.
+
+- `stringResource()` is `@Composable` and cannot be called from a ViewModel.
+- A ViewModel survives configuration changes **including locale changes**. Text resolved inside it freezes at the language in effect when it was produced; a `StringResource` re-resolves on recomposition.
+- It keeps ViewModels unit-testable with no resource context.
+
+`core` must never depend on Compose resources: repositories return **semantic error types**, and the UI layer maps those to a `StringResource`.
+
+### Terminal vs. transient failures
+
+| Kind | Where it goes |
+|------|---------------|
+| The screen cannot render at all (group not found) | Its own UiState variant, e.g. `Error(val error: …)` |
+| An action failed but the screen is still usable (colour didn't save) | A `userMessage` field on the existing `Success` state |
+
+### `Outcome<T, E>` instead of `Result<T>`
+
+Use [`Outcome`](core/src/commonMain/kotlin/com/georgevik/turnia/core/system/Outcome.kt) for anything that can fail with a **known** domain error.
+
+`kotlin.Result` constrains failures to `Throwable`: it forces domain errors to be modelled as exceptions, allocates stack traces nothing reads, and lets `getOrNull()` collapse the reason for a failure into `null`. `Outcome` keeps the error as a sealed type or enum, so a `when` over it is checked by the compiler.
+
+```kotlin
+suspend fun getGroup(idGroup: String): Outcome<Group, GroupError>
+```
+
+Build one with `value.toSuccess()` / `error.toFailure()` — both work on any receiver, and `Outcome` is covariant in `T` and `E`, so the narrow type they infer widens to the declared return type on its own.
+
+- **Exceptions stop at the data layer.** Firebase/GitLive genuinely throw — wrap those calls in `outcomeCatching { }` (or bridge with `Result.toOutcome { }`) inside the repository and map to a domain error there.
+- A `Throwable` must never reach a ViewModel or a UiState.
+
+> This deviates from the official guidance, which makes exceptions the primary mechanism and presents `Result` only as an alternative. We prefer typed errors because the UI layer has to map every failure to a message exhaustively, and an open `Throwable` hierarchy gives the compiler nothing to check.
+
 ## Tech stack
 
 - **Kotlin Multiplatform (KMP)** — shared business logic.

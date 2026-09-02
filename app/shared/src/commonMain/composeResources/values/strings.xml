@@ -57,6 +57,7 @@
     <string name="event_remove_confirm_body">Esta acción no se puede deshacer.</string>
     <string name="event_remove_confirm">Eliminar</string>
     <string name="event_remove_cancel">Cancelar</string>
+    <string name="event_details_new_title">Nuevo tipo de evento</string>
 
     <string-array name="calendar_months">
         <item>Enero</item>
@@ -118,9 +119,18 @@
     <string name="event_type_color_selected">Color seleccionado</string>
     <string name="event_type_save">Guardar</string>
     <string name="event_type_not_set">—</string>
+    <string name="event_type_error_group_not_found">No hemos encontrado el grupo. Puede que ya no exista o que hayas salido de él.</string>
+    <string name="event_type_error_type_not_found">No hemos encontrado este tipo de evento. Puede que se haya eliminado.</string>
+    <string name="event_type_error_pick_color">No se ha podido guardar el color. Inténtalo de nuevo.</string>
+    <string name="event_type_error_save_personal">No se ha podido guardar el evento. Inténtalo de nuevo.</string>
+    <string name="event_type_error_name_empty">El nombre no puede estar vacío.</string>
+    <string name="event_type_error_not_implemented">Esta función todavía no está disponible.</string>
 
     <!-- Dialogs -->
     <string name="dialog_cancel">Cancelar</string>
+    <string name="dialog_error_title">Algo ha ido mal</string>
+    <string name="dialog_error_close">Cerrar</string>
+    <string name="dialog_error_retry">Reintentar</string>
 
     <!-- Profile -->
     <string name="profile_logout">Cerrar sesión</string>

@@ -28,5 +28,5 @@ interface GroupRepository {
 
     suspend fun getGroup(idGroup: String): Result<Group>
 
-    suspend fun updateColor(typeId: String, groupId: String, color: String)
+    suspend fun updateColor(typeId: String, groupId: String, color: String) : Result<Unit>
 }

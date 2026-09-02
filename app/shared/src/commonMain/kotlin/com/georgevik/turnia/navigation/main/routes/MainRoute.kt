@@ -39,7 +39,7 @@ sealed interface EventTypeDetailData {
     data class EditGroup(val typeId: String, val groupId: String) : EventTypeDetailData
 
     @Serializable
-    data object NewtGroup : EventTypeDetailData
+    data object NewGroup : EventTypeDetailData
 }
 
 @Serializable

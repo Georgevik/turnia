@@ -5,6 +5,7 @@ import com.georgevik.turnia.core.domain.model.GroupEvent
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.system.MOCK_GROUPS
 import com.georgevik.turnia.core.system.mockGenerateEvents
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.datetime.DateTimeUnit
@@ -12,6 +13,8 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.random.Random
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalAtomicApi::class)
 class GroupRepositoryImpl : GroupRepository {
@@ -22,30 +25,43 @@ class GroupRepositoryImpl : GroupRepository {
     override val groups: Flow<List<Group>> = _groups
 
     override suspend fun addGroupEvent(event: GroupEvent) {
+        mockDelay()
         val existing = getEventsPerDate(event.date)
         _mockEvents[bucketKey(event.date)] = existing + event
     }
 
     override suspend fun deleteGroupEvent(eventId: String) {
         // TODO use data source
+        mockDelay()
         _mockEvents.keys.toList().forEach { key ->
             _mockEvents[key] = _mockEvents.getValue(key).filterNot { it.id == eventId }
         }
     }
 
     override suspend fun fetchGroups() {
+        mockDelay()
         _groups.emit(MOCK_GROUPS)
     }
 
     override suspend fun getGroup(idGroup: String): Result<Group> {
+        mockDelay()
         val group = _groups.value.find { it.id == idGroup }
 
         return if (group != null) Result.success(group)
         else Result.failure(Exception("Group not found"))
     }
 
-    override suspend fun updateColor(typeId: String, groupId: String, color: String) {
-        TODO("Not yet implemented")
+    override suspend fun updateColor(typeId: String, groupId: String, color: String): Result<Unit> {
+        mockDelay()
+        return if (Random.nextBoolean()) {
+            Result.success(Unit)
+        } else {
+            Result.failure(Throwable())
+        }
+    }
+
+    private suspend fun mockDelay() {
+        delay(Random.nextLong(300, 1000).milliseconds)
     }
 
     override suspend fun retrieveGroupEvents(
@@ -53,6 +69,7 @@ class GroupRepositoryImpl : GroupRepository {
         date: LocalDate,
         monthDelta: Int
     ): Result<List<GroupEvent>> {
+        mockDelay()
         // TODO Call DataSource
         val events = buildList {
             addAll(getEventsPerDate(date))
