@@ -7,9 +7,15 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import com.georgevik.turnia.navigation.TurniaNavDisplay
 import com.georgevik.turnia.navigation.root.routes.RootRoute
+import com.georgevik.turnia.ui.group.detail.GroupDetailScreen
+import com.georgevik.turnia.ui.group.detail.GroupDetailViewModel
 import com.georgevik.turnia.ui.main.MainScreen
+import com.georgevik.turnia.ui.main.eventtypes.detail.EventTypeDetailScreen
+import com.georgevik.turnia.ui.main.eventtypes.detail.EventTypeDetailViewModel
 import com.georgevik.turnia.ui.signin.SignInScreen
 import com.georgevik.turnia.ui.splash.SplashScreen
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 @Composable
 fun RootNavDisplay(
@@ -24,6 +30,18 @@ fun RootNavDisplay(
             }
             entry<RootRoute.SignInKey> { SignInScreen() }
             entry<RootRoute.MainKey> { MainScreen() }
+
+            entry<RootRoute.GroupDetailKey> { key ->
+                GroupDetailScreen(
+                    viewModel = koinViewModel<GroupDetailViewModel> { parametersOf(key) },
+                )
+            }
+
+            entry<RootRoute.EventTypeDetailKey> { key ->
+                EventTypeDetailScreen(
+                    viewModel = koinViewModel<EventTypeDetailViewModel> { parametersOf(key.data) },
+                )
+            }
         },
     )
 }

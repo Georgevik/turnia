@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -11,9 +12,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.georgevik.turnia.core.domain.model.UserSession
+import com.georgevik.turnia.navigation.LocalNavigator
+import com.georgevik.turnia.navigation.LocalRootNavigator
 import com.georgevik.turnia.navigation.root.RootNavDisplay
+import com.georgevik.turnia.navigation.root.RootNavigator
 import com.georgevik.turnia.navigation.root.rootRouteSavedStateConfiguration
 import com.georgevik.turnia.navigation.root.routes.RootRoute
+import com.georgevik.turnia.ui.system.LocalSnackbar
 import com.georgevik.turnia.ui.system.TurniaSnackbarHost
 import com.georgevik.turnia.ui.system.TurniaTheme
 import org.koin.compose.viewmodel.koinViewModel
@@ -34,7 +39,8 @@ fun App(vm: RootViewModel = koinViewModel()) {
         if (backStack.lastOrNull() == RootRoute.SplashKey) return@LaunchedEffect
         when (userSession) {
             UserSession.Loading -> Unit
-            is UserSession.Authenticated -> if (backStack.lastOrNull() != RootRoute.MainKey) {
+            // Main may be covered by a full-screen destination, so look for it in the whole stack.
+            is UserSession.Authenticated -> if (RootRoute.MainKey !in backStack) {
                 backStack.clear()
                 backStack.add(RootRoute.MainKey)
             }
@@ -48,15 +54,22 @@ fun App(vm: RootViewModel = koinViewModel()) {
 
     TurniaTheme {
         val snackbarHostState = remember { SnackbarHostState() }
+        val navigator = remember(backStack) { RootNavigator(backStack) }
 
-        Scaffold(
-            contentWindowInsets = WindowInsets(0, 0, 0, 0),
-            snackbarHost = { TurniaSnackbarHost(snackbarHostState) }
-        ) { innerPadding ->
-            RootNavDisplay(
-                snackbarHostState = snackbarHostState,
-                backStack = backStack,
-            )
+        CompositionLocalProvider(
+            LocalRootNavigator provides navigator,
+            LocalNavigator provides navigator,
+            LocalSnackbar provides snackbarHostState,
+        ) {
+            Scaffold(
+                contentWindowInsets = WindowInsets(0, 0, 0, 0),
+                snackbarHost = { TurniaSnackbarHost(snackbarHostState) }
+            ) {
+                RootNavDisplay(
+                    snackbarHostState = snackbarHostState,
+                    backStack = backStack,
+                )
+            }
         }
     }
 }

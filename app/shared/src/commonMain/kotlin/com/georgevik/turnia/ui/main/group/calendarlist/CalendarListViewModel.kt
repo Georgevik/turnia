@@ -27,10 +27,16 @@ class CalendarListViewModel(private val groupRepository: GroupRepository) : View
         viewModelScope.launch {
             _searchFlow.debounce(200.milliseconds).collectLatest { q -> performSearch(q) }
         }
+        refresh()
+    }
+
+    /** Re-reads the groups; a group created on the detail screen only shows up after this. */
+    fun refresh() {
         viewModelScope.launch {
             val groups = groupRepository.getGroups()
-            val groupsRow = groups.map { GroupRowUi(it.id, it.name, 12) }
+            val groupsRow = groups.map { GroupRowUi(it.id, it.name, it.memberCount) }
             _uiState.update { it.copy(groups = groupsRow) }
+            performSearch(_searchFlow.value)
         }
     }
 

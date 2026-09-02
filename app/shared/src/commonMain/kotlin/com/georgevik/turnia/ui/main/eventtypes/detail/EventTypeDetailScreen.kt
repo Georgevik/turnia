@@ -1,6 +1,5 @@
 package com.georgevik.turnia.ui.main.eventtypes.detail
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,12 +36,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.georgevik.turnia.navigation.LocalNavigator
 import com.georgevik.turnia.ui.main.eventtypes.components.ColorSwatchPicker
@@ -53,6 +50,8 @@ import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeTitle
 import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeToastError
 import com.georgevik.turnia.ui.system.LocalSnackbar
 import com.georgevik.turnia.ui.system.components.AcronymBadge
+import com.georgevik.turnia.ui.system.components.TFieldLabel
+import com.georgevik.turnia.ui.system.components.TReadOnlyField
 import com.georgevik.turnia.ui.system.components.TurniaDialogError
 import com.georgevik.turnia.ui.system.toErrorSnackbar
 import org.jetbrains.compose.resources.stringResource
@@ -71,7 +70,6 @@ import turnia.app.shared.generated.resources.event_type_field_end
 import turnia.app.shared.generated.resources.event_type_field_name
 import turnia.app.shared.generated.resources.event_type_field_start
 import turnia.app.shared.generated.resources.event_type_group_readonly
-import turnia.app.shared.generated.resources.event_type_not_set
 import turnia.app.shared.generated.resources.event_type_save
 import turnia.app.shared.generated.resources.event_type_swap_allowed
 import turnia.app.shared.generated.resources.event_type_swap_not_allowed
@@ -177,7 +175,7 @@ private fun EventTypeFormContent(
             GroupDetail(eventTypeForm)
         }
 
-        FieldLabel(stringResource(Res.string.event_type_field_color))
+        TFieldLabel(stringResource(Res.string.event_type_field_color))
         ColorSwatchPicker(
             colors = state.colors,
             selected = eventTypeForm.color,
@@ -241,17 +239,17 @@ private fun GroupDetail(ui: EventTypeForm) {
         }
     }
 
-    ReadOnlyField(
+    TReadOnlyField(
         stringResource(Res.string.event_type_field_description),
         ui.description,
     )
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        ReadOnlyField(
+        TReadOnlyField(
             stringResource(Res.string.event_type_field_start),
             ui.startTime,
             modifier = Modifier.weight(1f),
         )
-        ReadOnlyField(
+        TReadOnlyField(
             stringResource(Res.string.event_type_field_end),
             ui.endTime,
             modifier = Modifier.weight(1f),
@@ -332,40 +330,6 @@ private fun PersonalForm(
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.weight(1f),
         )
-    }
-}
-
-/** Uppercase, letter-spaced monospace section label — the image's field-label style. */
-@Composable
-private fun FieldLabel(text: String) {
-    Text(
-        text = text.uppercase(),
-        style = MaterialTheme.typography.labelMedium,
-        fontFamily = FontFamily.Monospace,
-        fontWeight = FontWeight.Medium,
-        letterSpacing = 1.sp,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-}
-
-/** Read-only value rendered like a disabled form field: label above, boxed value. */
-@Composable
-private fun ReadOnlyField(label: String, value: String, modifier: Modifier = Modifier) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        FieldLabel(label)
-        Surface(
-            shape = RoundedCornerShape(12.dp),
-            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(
-                text = value.ifBlank { stringResource(Res.string.event_type_not_set) },
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
-            )
-        }
     }
 }
 

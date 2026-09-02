@@ -30,15 +30,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.georgevik.turnia.navigation.LocalNavigator
+import com.georgevik.turnia.navigation.LocalRootNavigator
 import com.georgevik.turnia.navigation.main.routes.ExternalCalendarData
 import com.georgevik.turnia.navigation.main.routes.MainRoute
+import com.georgevik.turnia.navigation.root.routes.RootRoute
 import com.georgevik.turnia.ui.main.group.externalcalendar.components.ColleagueCard
 import com.georgevik.turnia.ui.main.group.externalcalendar.components.GroupCard
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import turnia.app.shared.generated.resources.Res
+import turnia.app.shared.generated.resources.group_detail_create
 import turnia.app.shared.generated.resources.group_groups_header
 import turnia.app.shared.generated.resources.group_people_header
 import turnia.app.shared.generated.resources.group_search_hint
@@ -48,7 +52,14 @@ import turnia.app.shared.generated.resources.group_see_all
 fun CalendarListScreen(viewModel: CalendarListViewModel = koinViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigator = LocalNavigator.current
+    // Group detail covers the whole screen, so it goes on the root stack, not this tab's.
+    val rootNavigator = LocalRootNavigator.current
     var query by rememberSaveable { mutableStateOf("") }
+
+    LifecycleResumeEffect(Unit) {
+        viewModel.refresh()
+        onPauseOrDispose { }
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize()
@@ -99,7 +110,11 @@ fun CalendarListScreen(viewModel: CalendarListViewModel = koinViewModel()) {
 
         if (uiState.groups.isNotEmpty()) {
             item(key = "groups-header") {
-                SectionHeader(title = stringResource(Res.string.group_groups_header))
+                SectionHeader(
+                    title = stringResource(Res.string.group_groups_header),
+                    action = stringResource(Res.string.group_detail_create),
+                    onAction = { rootNavigator.goTo(RootRoute.GroupDetailKey(groupId = "")) },
+                )
             }
             items(uiState.groups, key = { it.id }) { group ->
                 GroupCard(
@@ -110,6 +125,7 @@ fun CalendarListScreen(viewModel: CalendarListViewModel = koinViewModel()) {
                         )
                         navigator.goTo(route)
                     },
+                    onDetails = { rootNavigator.goTo(RootRoute.GroupDetailKey(group.id)) },
                 )
             }
         }

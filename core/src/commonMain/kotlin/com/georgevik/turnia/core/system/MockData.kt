@@ -100,12 +100,17 @@ private val GROUP_TYPE_SETS: List<List<GroupTypeSpec>> = listOf(
     ),
 )
 val MOCK_GROUPS: List<Group> by lazy {
-    GROUP_TYPE_SETS.map { specs ->
+    GROUP_TYPE_SETS.mapIndexed { index, specs ->
         val groupId = mockUuid()
         val groupName = mockGroupName()
         Group(
             id = groupId,
             name = groupName,
+            memberCount = Random.nextInt(4, 24),
+            invitationCode = mockUuid().take(6).uppercase(),
+            // The signed-in user only administers some of their groups, so the detail screen has
+            // both an editable and a read-only case to render.
+            isAdmin = index == 0,
             types = specs.map { spec ->
                 mockGroupType(
                     groupId = groupId,
