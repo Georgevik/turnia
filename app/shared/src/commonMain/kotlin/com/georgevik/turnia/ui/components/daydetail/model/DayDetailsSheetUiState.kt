@@ -4,5 +4,5 @@ import androidx.compose.runtime.Immutable
 
 @Immutable
 data class DayDetailsSheetUiState(
-    val predefinedSections: List<PredefinedSectionUi> = emptyList(),
+    val predefinedSections: List<EventTypeSectionUi> = emptyList(),
 )

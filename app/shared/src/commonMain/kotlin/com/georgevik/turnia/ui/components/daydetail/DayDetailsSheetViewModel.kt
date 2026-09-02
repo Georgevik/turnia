@@ -14,8 +14,8 @@ import com.georgevik.turnia.core.domain.repository.UserRepository
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventType
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import com.georgevik.turnia.ui.components.daydetail.model.DayDetailsSheetUiState
+import com.georgevik.turnia.ui.components.daydetail.model.EventTypeSectionUi
 import com.georgevik.turnia.ui.components.daydetail.model.PredefinedEventUi
-import com.georgevik.turnia.ui.components.daydetail.model.PredefinedSectionUi
 import com.georgevik.turnia.ui.system.entityColor
 import com.georgevik.turnia.ui.system.toComposeColorOr
 import com.georgevik.turnia.ui.system.toHex
@@ -122,9 +122,7 @@ class DayDetailsSheetViewModel(
     private fun buildSections(
         personalTypes: List<PersonalEventType>,
         groups: List<Group>,
-    ): List<PredefinedSectionUi> {
-        // On another user's calendar nothing can be added; on a group calendar only
-        // that group's types are offered (no personal types, no other groups).
+    ): List<EventTypeSectionUi> {
         val visibleGroups = when (addMode) {
             DayAddMode.Disabled -> return emptyList()
             is DayAddMode.GroupOnly -> groups.filter { it.id == addMode.groupId }
@@ -132,21 +130,21 @@ class DayDetailsSheetViewModel(
         }
         val personalSection = when (addMode) {
             DayAddMode.Full -> listOf(
-                PredefinedSectionUi(
-                    groupId = null,
-                    groupName = null,
+                EventTypeSectionUi(
+                    type = EventTypeSectionUi.Type.Personal,
                     events = personalTypes.map { it.toPredefined() },
                 )
             )
+
             else -> emptyList()
         }
         val groupSections = visibleGroups.map { group ->
-            PredefinedSectionUi(
-                groupId = group.id,
-                groupName = group.name,
+            EventTypeSectionUi(
+                type = EventTypeSectionUi.Type.Group(group.id, group.name),
                 events = group.types.map { it.toPredefined() },
             )
-        }.distinctBy { it.groupId }
+        }
+
         return (personalSection + groupSections).filter { it.events.isNotEmpty() }
     }
 

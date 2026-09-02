@@ -48,9 +48,6 @@
     <string name="event_manage">Gestionar</string>
     <string name="event_add">Añadir evento</string>
     <string name="event_add_close">Cerrar</string>
-    <string name="event_add_custom">Evento personalizado</string>
-    <string name="event_no_predefined_title">No tienes eventos predefinidos</string>
-    <string name="event_no_predefined_body">Crea uno personalizado para empezar.</string>
     <string name="event_group_only_banner">Solo puedes añadir eventos definidos para este grupo.</string>
     <string name="event_remove">Eliminar evento</string>
     <string name="event_remove_confirm_title">¿Eliminar evento?</string>
@@ -136,4 +133,9 @@
     <string name="profile_logout">Cerrar sesión</string>
     <string name="profile_logout_dialog_title">¿Cerrar sesión?</string>
     <string name="profile_logout_dialog_message">Tendrás que iniciar sesión de nuevo para acceder a tus turnos.</string>
+    <!-- Day detail sheet -->
+    <string name="day_detail_private_events">EVENTOS PRIVADOS</string>
+    <string name="day_detail_group_events">EVENTOS DE GRUPO</string>
+    <string name="day_detail_add_event">Añadir</string>
+
 </resources>

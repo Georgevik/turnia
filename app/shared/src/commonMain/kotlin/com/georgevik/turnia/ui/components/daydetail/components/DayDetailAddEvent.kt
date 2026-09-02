@@ -4,118 +4,120 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.georgevik.turnia.ui.components.daydetail.DayAddMode
+import com.georgevik.turnia.ui.components.daydetail.model.EventTypeSectionUi
 import com.georgevik.turnia.ui.components.daydetail.model.PredefinedEventUi
-import com.georgevik.turnia.ui.components.daydetail.model.PredefinedSectionUi
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
-import turnia.app.shared.generated.resources.event_add_custom
+import turnia.app.shared.generated.resources.day_detail_group_events
+import turnia.app.shared.generated.resources.day_detail_private_events
 import turnia.app.shared.generated.resources.event_group_only_banner
-import turnia.app.shared.generated.resources.event_no_predefined_body
-import turnia.app.shared.generated.resources.event_no_predefined_title
 
 @Composable
 fun DayDetailAddEvent(
     addMode: DayAddMode,
-    sections: List<PredefinedSectionUi>,
+    sections: List<EventTypeSectionUi>,
     onPickPredefined: (predefined: PredefinedEventUi) -> Unit,
     onEditGroup: (groupId: String, groupName: String) -> Unit,
     onAddCustom: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val groupOnly = addMode is DayAddMode.GroupOnly
-    Column(modifier = modifier.padding(vertical = 8.dp)) {
-        if (groupOnly) {
-            InfoBanner(text = stringResource(Res.string.event_group_only_banner))
-            Spacer(Modifier.size(12.dp))
+    val filled = sections.filter { it.events.isNotEmpty() }
+    val privateSection = filled.firstOrNull { it.type is EventTypeSectionUi.Type.Personal }
+    val groupSections = filled.filter { it.type is EventTypeSectionUi.Type.Group }
+
+    Column(
+        modifier = modifier.padding(vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        when (addMode) {
+            DayAddMode.Disabled -> Unit
+            DayAddMode.Full -> CategoryArea(label = stringResource(Res.string.day_detail_private_events)) {
+                EventTypeChip(
+                    events = privateSection?.events.orEmpty(),
+                    onPick = onPickPredefined,
+                    trailing = { AddEventChip(onClick = onAddCustom) },
+                )
+            }
+            is DayAddMode.GroupOnly -> InfoBanner(text = stringResource(Res.string.event_group_only_banner))
         }
 
-        if (sections.all { it.events.isEmpty() }) {
-            // The group-only banner already explains the empty state for a group;
-            // only the personal-calendar case needs the "create one" prompt.
-            if (!groupOnly) NoPredefinedBanner()
-        } else {
-            sections.forEach { section ->
-                if (section.events.isEmpty()) return@forEach
-
-                // The group name is redundant when the whole sheet is that one group.
-                if (!groupOnly && section.groupId != null && section.groupName != null) {
-                    DaySectionHeader(
-                        title = section.groupName,
-                        onEdit = { onEditGroup(section.groupId, section.groupName) },
-                    )
-                }
-                FlowRow(
-                    modifier = Modifier.padding(top = 4.dp, bottom = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    section.events.forEach { predefined ->
-                        PredefinedEventChip(
-                            predefined = predefined,
-                            onClick = { onPickPredefined(predefined) })
+        if (groupSections.isNotEmpty()) {
+            CategoryArea(label = stringResource(Res.string.day_detail_group_events)) {
+                groupSections.forEach { section ->
+                    val type = section.type as? EventTypeSectionUi.Type.Group ?: return@forEach
+                    GroupArea(
+                        title = type.groupName,
+                        onEdit = { onEditGroup(type.groupId, type.groupName) },
+                    ) {
+                        EventTypeChip(section.events, onPickPredefined)
                     }
                 }
-            }
-        }
-
-        // A custom event is a personal event, so it only belongs on my own calendar.
-        if (addMode is DayAddMode.Full) {
-            OutlinedButton(
-                onClick = onAddCustom,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.size(8.dp))
-                Text(stringResource(Res.string.event_add_custom))
             }
         }
     }
 }
 
+@Composable
+private fun CategoryArea(
+    label: String?,
+    content: @Composable () -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (label != null) DayCategoryLabel(label)
+        content()
+    }
+}
 
 @Composable
-private fun NoPredefinedBanner() {
+private fun GroupArea(
+    title: String,
+    onEdit: () -> Unit,
+    content: @Composable () -> Unit,
+) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.secondaryContainer,
-        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Icon(Icons.Default.Info, contentDescription = null)
-            Column {
-                Text(
-                    text = stringResource(Res.string.event_no_predefined_title),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = stringResource(Res.string.event_no_predefined_body),
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
+            DaySectionHeader(title = title, onEdit = onEdit)
+            content()
         }
+    }
+}
+
+@Composable
+private fun EventTypeChip(
+    events: List<PredefinedEventUi>,
+    onPick: (PredefinedEventUi) -> Unit,
+    trailing: @Composable (() -> Unit)? = null,
+) {
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        events.forEach { predefined ->
+            PredefinedEventChip(predefined = predefined, onClick = { onPick(predefined) })
+        }
+        trailing?.invoke()
     }
 }
 

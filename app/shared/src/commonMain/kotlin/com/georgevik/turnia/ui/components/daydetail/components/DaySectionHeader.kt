@@ -28,9 +28,9 @@ fun DaySectionHeader(title: String, onEdit: () -> Unit) {
     ) {
         Text(
             text = title,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
         )
         IconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) {
             Icon(
