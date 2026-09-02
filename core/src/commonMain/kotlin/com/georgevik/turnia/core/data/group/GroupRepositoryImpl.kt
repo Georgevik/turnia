@@ -44,7 +44,7 @@ class GroupRepositoryImpl : GroupRepository {
         else Result.failure(Exception("Group not found"))
     }
 
-    override suspend fun updateColor(groupId: String, color: String) {
+    override suspend fun updateColor(typeId: String, groupId: String, color: String) {
         TODO("Not yet implemented")
     }
 

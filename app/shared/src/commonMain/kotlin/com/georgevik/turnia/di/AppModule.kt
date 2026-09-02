@@ -1,6 +1,7 @@
 package com.georgevik.turnia.di
 
 import com.georgevik.turnia.navigation.main.routes.ExternalCalendarData
+import com.georgevik.turnia.navigation.main.routes.MainRoute
 import com.georgevik.turnia.ui.components.daydetail.DayAddMode
 import com.georgevik.turnia.ui.components.daydetail.DayDetailsSheetViewModel
 import com.georgevik.turnia.ui.main.MainViewModel
@@ -33,8 +34,8 @@ val appModule: Module = module {
     viewModel { (groupId: String, groupName: String) ->
         EventMasterViewModel(groupId, groupName, get(), get())
     }
-    viewModel { (typeId: String?, groupId: String?) ->
-        EventTypeDetailViewModel(typeId, groupId, get(), get())
+    viewModel { (key: MainRoute.EventTypeDetailKey) ->
+        EventTypeDetailViewModel(key.data, get(), get())
     }
     viewModel { (date: LocalDate, addMode: DayAddMode) ->
         DayDetailsSheetViewModel(date, addMode, get(), get(), get())

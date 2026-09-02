@@ -7,6 +7,7 @@ import com.georgevik.turnia.core.domain.model.GroupEventType
 import com.georgevik.turnia.core.domain.model.PersonalEventType
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
+import com.georgevik.turnia.navigation.main.routes.EventTypeDetailData
 import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeDetailUi
 import com.georgevik.turnia.ui.system.createUuid
 import com.georgevik.turnia.ui.system.entityColor
@@ -20,11 +21,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.String
 
 class EventTypeDetailViewModel(
-    private val typeId: String?,
-    val groupId: String?,
+    private val key: EventTypeDetailData,
     private val groupRepository: GroupRepository,
     private val personalRepository: PersonalEventRepository,
 ) : ViewModel() {
@@ -37,12 +36,11 @@ class EventTypeDetailViewModel(
 
     init {
         viewModelScope.launch {
-            if (groupId != null && typeId != null) {
-                loadGroupType(groupId, typeId)
-            } else if (typeId != null) {
-                loadPersonalType(typeId)
-            } else {
-                newForm()
+            when (key) {
+                is EventTypeDetailData.EditGroup -> loadGroupType(key.groupId, key.typeId)
+                is EventTypeDetailData.EditPersonal -> loadPersonalType(key.typeId)
+                EventTypeDetailData.NewPersonal -> newForm()
+                EventTypeDetailData.NewtGroup -> newForm()
             }
         }
     }
@@ -78,15 +76,21 @@ class EventTypeDetailViewModel(
     fun onPickColor(color: Color) {
         val form = _uiState.value.eventTypeForm?.copy(color = color)
 
-        groupId?.let {
-            viewModelScope.launch {
-                groupRepository.updateColor(groupId, color.toHex())
+        viewModelScope.launch {
+            when (key) {
+                is EventTypeDetailData.EditGroup -> groupRepository.updateColor(
+                    typeId = key.typeId,
+                    groupId = key.groupId,
+                    color = color.toHex()
+                )
+
+                is EventTypeDetailData.EditPersonal,
+                EventTypeDetailData.NewPersonal,
+                EventTypeDetailData.NewtGroup -> Unit
             }
         }
 
-        _uiState.update {
-            it.copy(eventTypeForm = form)
-        }
+        _uiState.update { it.copy(eventTypeForm = form) }
     }
 
     fun onFieldChanged(field: EventTypeField, newValue: String) {
@@ -105,10 +109,17 @@ class EventTypeDetailViewModel(
     }
 
     fun onSavePersonal(): Boolean {
+        val typeId = when (key) {
+            is EventTypeDetailData.EditPersonal -> key.typeId
+            EventTypeDetailData.NewPersonal -> ""
+            is EventTypeDetailData.EditGroup,
+            EventTypeDetailData.NewtGroup -> return false
+        }
+
         val form = _uiState.value.eventTypeForm ?: return false
         if (form.name.isBlank()) return false
         val type = PersonalEventType(
-            id = typeId ?: "",
+            id = typeId,
             name = form.name.trim(),
             color = form.color.toHex(),
             acronym = form.acronym.trim().ifBlank { null },

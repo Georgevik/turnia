@@ -22,7 +22,7 @@ fun EntryProviderScope<MainRoute>.calendarNavigation() {
 
     entry<MainRoute.EventTypeDetailKey> { key ->
         val viewModel = koinViewModel<EventTypeDetailViewModel> {
-            parametersOf(key.kind, key.groupId, key.typeId)
+            parametersOf(key)
         }
         EventTypeDetailScreen(viewModel = viewModel)
     }

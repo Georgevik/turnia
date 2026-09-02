@@ -30,8 +30,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.georgevik.turnia.navigation.main.routes.EventTypeKind
 import com.georgevik.turnia.navigation.LocalNavigator
+import com.georgevik.turnia.navigation.main.routes.EventTypeDetailData
+import com.georgevik.turnia.navigation.main.routes.EventTypeKind
 import com.georgevik.turnia.navigation.main.routes.MainRoute
 import com.georgevik.turnia.ui.main.eventtypes.model.EventTypeMasterHeaderUi
 import com.georgevik.turnia.ui.main.eventtypes.model.EventTypeMasterRowUi
@@ -67,9 +68,7 @@ fun EventMasterScreen(viewModel: EventMasterViewModel) {
                 actions = {
                     IconButton(
                         onClick = {
-                            navigator.goTo(
-                                MainRoute.EventTypeDetailKey(EventTypeKind.PERSONAL, null, null)
-                            )
+                            navigator.goTo(MainRoute.EventTypeDetailKey(EventTypeDetailData.NewPersonal))
                         },
                     ) {
                         Icon(
@@ -119,9 +118,15 @@ fun EventMasterScreen(viewModel: EventMasterViewModel) {
                     EventTypeRow(
                         row = row,
                         onClick = {
-                            navigator.goTo(
-                                MainRoute.EventTypeDetailKey(row.kind, row.groupId, row.typeId)
-                            )
+                            val data = if (row.groupId != null) {
+                                EventTypeDetailData.EditGroup(
+                                    groupId = row.groupId,
+                                    typeId = row.typeId
+                                )
+                            } else {
+                                EventTypeDetailData.EditPersonal(typeId = row.typeId)
+                            }
+                            navigator.goTo(MainRoute.EventTypeDetailKey(data))
                         },
                     )
                 }

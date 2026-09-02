@@ -21,14 +21,25 @@ sealed interface MainRoute : NavKey {
     data class EventMasterKey(val groupId: String, val groupName: String) : MainRoute
 
     @Serializable
-    data class EventTypeDetailKey(
-        val kind: EventTypeKind,
-        val groupId: String?,
-        val typeId: String?,
-    ) : MainRoute
+    data class EventTypeDetailKey(val data: EventTypeDetailData) : MainRoute
 
     @Serializable
     data class ExternalCalendar(val data: ExternalCalendarData) : MainRoute
+}
+
+@Serializable
+sealed interface EventTypeDetailData {
+    @Serializable
+    data class EditPersonal(val typeId: String) : EventTypeDetailData
+
+    @Serializable
+    data object NewPersonal : EventTypeDetailData
+
+    @Serializable
+    data class EditGroup(val typeId: String, val groupId: String) : EventTypeDetailData
+
+    @Serializable
+    data object NewtGroup : EventTypeDetailData
 }
 
 @Serializable
