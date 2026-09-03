@@ -8,6 +8,7 @@ import com.georgevik.turnia.ui.components.daydetail.DayDetailSheetViewModel
 import com.georgevik.turnia.ui.group.detail.GroupDetailViewModel
 import com.georgevik.turnia.ui.main.MainViewModel
 import com.georgevik.turnia.ui.main.eventtypes.detail.EventTypeDetailViewModel
+import com.georgevik.turnia.ui.main.eventtypes.personal.PersonalEventTypesViewModel
 import com.georgevik.turnia.ui.main.group.calendarlist.CalendarListViewModel
 import com.georgevik.turnia.ui.main.group.externalcalendar.ExternalCalendarViewModel
 import com.georgevik.turnia.ui.main.mycalendar.MyCalendarViewModel
@@ -32,6 +33,7 @@ val appModule: Module = module {
     viewModelOf(::CalendarListViewModel)
     viewModelOf(::MainViewModel)
     viewModelOf(::ProfileViewModel)
+    viewModelOf(::PersonalEventTypesViewModel)
     viewModel { (data: EventTypeDetailData) ->
         EventTypeDetailViewModel(data, get(), get())
     }

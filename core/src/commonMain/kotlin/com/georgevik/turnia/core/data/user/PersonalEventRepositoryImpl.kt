@@ -65,6 +65,18 @@ class PersonalEventRepositoryImpl(
         return Unit.toSuccess()
     }
 
+    override suspend fun deleteEventType(typeId: String): Outcome<Unit, Unit> {
+        val userId = userRepository.loggedUser?.firebaseUid ?: return Unit.toFailure()
+
+        userPathFirestore.deletePersonalEventType(userId, typeId).errorOrNull()?.let { error ->
+            Logger.e(TAG, "Error deleting personal event type", error.error)
+            return Unit.toFailure()
+        }
+
+        eventTypesCache.remove(typeId)
+        return Unit.toSuccess()
+    }
+
     override suspend fun getEvents(
         userId: String,
         date: LocalDate,

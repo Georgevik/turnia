@@ -20,6 +20,8 @@ interface PersonalEventRepository {
 
     suspend fun saveEventType(type: PersonalEventType): Outcome<Unit, Unit>
 
+    suspend fun deleteEventType(typeId: String): Outcome<Unit, Unit>
+
     suspend fun getEvents(
         userId: String,
         date: LocalDate,

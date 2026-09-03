@@ -87,7 +87,7 @@ fun EventTypeDetailScreen(viewModel: EventTypeDetailViewModel) {
                         EventTypeDetailUi.Loading,
                         is EventTypeDetailUi.Error -> Unit
                         is EventTypeDetailUi.Success -> Text(
-                            text = when(state.title) {
+                            text = when (state.title) {
                                 is EventTypeTitle.Title -> state.title.title
                                 is EventTypeTitle.New -> stringResource(Res.string.event_details_new_title)
                             },
@@ -291,6 +291,7 @@ private fun PersonalForm(
         value = ui.name,
         onValueChange = { onFieldChanged(EventTypeField.Name, it) },
         label = { Text(stringResource(Res.string.event_type_field_name)) },
+        keyboardOptions = KeyboardOptions.Default.copy(capitalization = KeyboardCapitalization.Words),
         singleLine = true,
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth(),
@@ -307,6 +308,7 @@ private fun PersonalForm(
     OutlinedTextField(
         value = ui.description,
         onValueChange = { onFieldChanged(EventTypeField.Description, it) },
+        keyboardOptions = KeyboardOptions.Default.copy(capitalization = KeyboardCapitalization.Sentences),
         label = { Text(stringResource(Res.string.event_type_field_description)) },
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth(),

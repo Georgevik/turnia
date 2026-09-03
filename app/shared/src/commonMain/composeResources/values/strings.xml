@@ -134,6 +134,15 @@
     <string name="event_type_error_save_personal">No se ha podido guardar el evento. Inténtalo de nuevo.</string>
     <string name="event_type_error_not_implemented">Esta función todavía no está disponible.</string>
 
+    <!-- Personal event types: "Mis eventos" -->
+    <string name="personal_event_types_title">Mis eventos</string>
+    <string name="personal_event_types_add">Nuevo evento</string>
+    <string name="personal_event_types_empty">Todavía no has creado ningún evento personal.</string>
+    <string name="personal_event_types_delete">Eliminar</string>
+    <string name="personal_event_types_delete_dialog_title">¿Eliminar el evento?</string>
+    <string name="personal_event_types_delete_dialog_message">Se eliminará «%1$s» de tus eventos personales.</string>
+    <string name="personal_event_types_error_delete">No se ha podido eliminar el evento. Inténtalo de nuevo.</string>
+
     <!-- Dialogs -->
     <string name="dialog_cancel">Cancelar</string>
     <string name="dialog_error_title">Algo ha ido mal</string>
@@ -141,6 +150,7 @@
     <string name="dialog_error_retry">Reintentar</string>
 
     <!-- Profile -->
+    <string name="profile_my_events">Mis eventos</string>
     <string name="profile_logout">Cerrar sesión</string>
     <string name="profile_logout_dialog_title">¿Cerrar sesión?</string>
     <string name="profile_logout_dialog_message">Tendrás que iniciar sesión de nuevo para acceder a tus turnos.</string>

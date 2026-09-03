@@ -21,4 +21,8 @@ sealed interface RootRoute : NavKey {
 
     @Serializable
     data class EventTypeDetailKey(val data: EventTypeDetailData) : RootRoute
+
+    /** The user's own event types, full screen over Main. */
+    @Serializable
+    data object PersonalEventTypesKey : RootRoute
 }

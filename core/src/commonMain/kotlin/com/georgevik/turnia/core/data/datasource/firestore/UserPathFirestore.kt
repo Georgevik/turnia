@@ -55,12 +55,22 @@ class UserPathFirestore(
         outcomeCatching({ GenericFirestoreError(it) }) {
             val doc = personalEventTypeDocMapper.map(personalType)
             Logger.i(TAG, "Set personal type document")
-            firestore.collection("${PATH_USER}/${uid}/personalEventTypes").document(personalType.id)
+            firestore.collection(PATH_PERSONAL_TYPES(uid)).document(personalType.id)
                 .set(doc)
+        }
+
+    suspend fun deletePersonalEventType(
+        uid: String,
+        typeId: String
+    ): Outcome<Unit, GenericFirestoreError> =
+        outcomeCatching({ GenericFirestoreError(it) }) {
+            Logger.i(TAG, "Delete personal type document")
+            firestore.collection(PATH_PERSONAL_TYPES(uid)).document(typeId).delete()
         }
 
     companion object {
         private const val TAG = "UserProfileFirestore"
         private const val PATH_USER = "users"
+        private fun PATH_PERSONAL_TYPES(uid: String) = "${PATH_USER}/${uid}/personalEventTypes"
     }
 }

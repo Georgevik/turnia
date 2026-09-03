@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
@@ -36,6 +37,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.georgevik.turnia.navigation.LocalRootNavigator
+import com.georgevik.turnia.navigation.root.routes.RootRoute
 import com.georgevik.turnia.ui.system.LocalPaddings
 import com.georgevik.turnia.ui.system.components.ConfirmationDialog
 import org.jetbrains.compose.resources.stringResource
@@ -45,6 +48,7 @@ import turnia.app.shared.generated.resources.dialog_cancel
 import turnia.app.shared.generated.resources.profile_logout
 import turnia.app.shared.generated.resources.profile_logout_dialog_message
 import turnia.app.shared.generated.resources.profile_logout_dialog_title
+import turnia.app.shared.generated.resources.profile_my_events
 
 /**
  * "Perfil" tab — a draft account screen: the signed-in user header plus entry
@@ -53,6 +57,7 @@ import turnia.app.shared.generated.resources.profile_logout_dialog_title
 @Composable
 fun ProfileScreen(vm: ProfileViewModel = koinViewModel()) {
     var showLogoutDialog by remember { mutableStateOf(false) }
+    val rootNavigator = LocalRootNavigator.current
 
     Column(
         modifier = Modifier
@@ -117,6 +122,9 @@ fun ProfileScreen(vm: ProfileViewModel = koinViewModel()) {
             }
         }
 
+        ProfileRow(Icons.Default.Event, stringResource(Res.string.profile_my_events)) {
+            rootNavigator.goTo(RootRoute.PersonalEventTypesKey)
+        }
         ProfileRow(Icons.Default.Group, "Grupos")
         ProfileRow(Icons.Default.CalendarMonth, "Calendarios compartidos")
         ProfileRow(Icons.Default.WorkspacePremium, "Suscripción")
