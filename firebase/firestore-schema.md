@@ -90,6 +90,23 @@ An instance of a personal event type on a date. Notes live **on the event**, not
 
 **Access**: written by the owner; read by the owner and by UIDs in `calendarSharedWith`.
 
+### `users/{uid}/sync/updates`
+
+A single document (`updates`) holding **when each part of the user's calendar last changed**. A reader —
+the owner, or a user the calendar is shared with — reads this one small document and compares it against
+what it already cached to decide whether it has to query the server at all.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `personalEventsUpdatedAt` | timestamp \| null | Last write to `personalEvents` (server timestamp). |
+| `personalEventTypesUpdatedAt` | timestamp \| null | Last write to `personalEventTypes` (server timestamp). |
+
+Every timestamp is written with a **server timestamp**, so readers on other devices compare against the same
+clock. A missing document (or field) means that part has never been written. Each writer merges **only its
+own field**, so the two timestamps never overwrite each other.
+
+**Access**: written by the owner; read by the owner and by UIDs in `calendarSharedWith`.
+
 ---
 
 ## `groups/{groupId}`
@@ -242,6 +259,8 @@ Firestore keeps only a **recent window** of events; older events are purged and 
 - **Cross-group shared calendars** are served on demand by the `getSharedCalendar` Cloud Function
   (collection-group on `event` filtered by `assigneeId` + date range); nothing is mirrored.
 - **Calendar sharing needs both sides**: `B ∈ users/A.calendarsSharedWithMe` and `A ∈ users/B.calendarSharedWith`.
+- **Sync timestamps are bumped on every personal write**: a write to `personalEvents` / `personalEventTypes` must also
+  merge the matching field of `users/{uid}/sync/updates`, or readers keep serving a stale cache.
 - **`subscription` is server-only**: only the subscription-verification Cloud Function writes `users/{uid}.subscription`; the client can never set itself premium.
 - **Firestore holds only recent events**: events with `date` older than 1 month are purged by the scheduled cleanup function; older events live only in the client's local NoSQL cache. History is append-only *within the retention window*, not forever in Firebase.
 

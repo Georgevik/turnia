@@ -102,7 +102,7 @@ class PersonalEventRepositoryImpl(
         }
 
         val userId = userRepository.loggedUser?.firebaseUid ?: return emptyList()
-        val typeResult = personalEventTypesFirestore.get(userId)
+        val typeResult = personalEventTypesFirestore.get(userId, isHostUser = true)
 
         typeResult.errorOrNull()?.let { error ->
             Logger.e(TAG, "Error fetching personal event types", error.error)

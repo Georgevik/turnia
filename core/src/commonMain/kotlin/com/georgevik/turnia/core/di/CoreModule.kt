@@ -4,6 +4,7 @@ import com.georgevik.turnia.core.data.config.AppConfigRepositoryImpl
 import com.georgevik.turnia.core.data.datasource.firestore.PersonalEventFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.PersonalEventTypesFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.UserPathFirestore
+import com.georgevik.turnia.core.data.datasource.firestore.UserSyncFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.mappers.PersonalEventMapper
 import com.georgevik.turnia.core.data.datasource.firestore.mappers.PersonalEventTypeDocMapper
 import com.georgevik.turnia.core.data.datasource.firestore.mappers.UserDocumentMapper
@@ -27,8 +28,9 @@ import org.koin.dsl.module
 val coreModule: Module = module {
     single { Firebase.firestore }
     single { UserPathFirestore(get(), get()) }
-    single { PersonalEventFirestore(get(), get()) }
-    single { PersonalEventTypesFirestore(get(), get()) }
+    single { UserSyncFirestore(get()) }
+    single { PersonalEventFirestore(get(), get(), get()) }
+    single { PersonalEventTypesFirestore(get(), get(), get()) }
     factory { UserDocumentMapper() }
     factory { PersonalEventMapper() }
     factory { PersonalEventTypeDocMapper() }

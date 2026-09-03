@@ -7,6 +7,7 @@ import com.georgevik.turnia.core.data.datasource.firestore.mappers.PersonalEvent
 import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.PersonalEvent
 import com.georgevik.turnia.core.system.Outcome
+import com.georgevik.turnia.core.system.errorOrNull
 import com.georgevik.turnia.core.system.outcomeCatching
 import com.georgevik.turnia.core.system.toYearMonth
 import dev.gitlive.firebase.firestore.FirebaseFirestore
@@ -20,9 +21,9 @@ import kotlin.time.Instant
  */
 class PersonalEventFirestore(
     private val firestore: FirebaseFirestore,
-    private val personalEventMapper: PersonalEventMapper
+    private val personalEventMapper: PersonalEventMapper,
+    private val userSyncFirestore: UserSyncFirestore
 ) {
-    private val queriedYearMonth = mutableSetOf<Pair<String, YearMonth>>()
 
     suspend fun get(
         uid: String,
@@ -31,58 +32,61 @@ class PersonalEventFirestore(
     ): Outcome<List<DocHolder<PersonalEventDocument>>, GenericFirestoreError> =
         outcomeCatching({ GenericFirestoreError(it) }) {
             val monthRange = YearMonthRange(from.toYearMonth(), until.toYearMonth())
-            val serverMonths = monthRange.filterNot { queriedYearMonth.contains(uid to it) }
 
-            downloadPersonalEvents(uid, serverMonths)
-            serverMonths.forEach { queriedYearMonth.add(uid to it) }
-            getPersonalEventsFromCache(uid, monthRange)
+            val cachedEvents = queryEvents(uid, monthRange.toList(), Source.CACHE)
+            val monthsWithEvents =
+                cachedEvents.distinctBy { it.doc.yearMonth }.map { it.doc.yearMonth }.toSet()
+            val monthMissingEvents = monthRange.filterNot { monthsWithEvents.contains(it.toString()) }
+
+            if (monthMissingEvents.isNotEmpty()) {
+                // Ask for those months that doesn't have events
+                queryEvents(uid, monthMissingEvents, Source.SERVER)
+            }
+
+            queryEvents(uid, monthRange.toList(), Source.CACHE)
         }
-
-    private suspend fun getPersonalEventsFromCache(
-        uid: String,
-        range: YearMonthRange
-    ): List<DocHolder<PersonalEventDocument>> {
-        val cacheSnapshot = firestore.collection(PATH_EVENTS(uid)).where {
-            PersonalEventDocument.FIELD_YEAR_MONTH inArray range.map { it.toString() }
-        }.get(Source.CACHE)
-        Logger.d(
-            TAG,
-            "Personal events. Cached: ${cacheSnapshot.metadata.isFromCache}. " +
-                    "Amount: ${cacheSnapshot.documents.size}. " +
-                    "Changes: ${cacheSnapshot.documentChanges.size}"
-        )
-        return cacheSnapshot.documents.map { personalEventMapper.map(it) }
-    }
-
-    private suspend fun downloadPersonalEvents(uid: String, months: List<YearMonth>) {
-        if (months.isEmpty()) return
-
-        val snapshot = firestore.collection(PATH_EVENTS(uid)).where {
-            PersonalEventDocument.FIELD_YEAR_MONTH inArray months.map { it.toString() }
-        }.get()
-        Logger.d(
-            TAG,
-            "Downloaded Personal events. Cache: ${snapshot.metadata.isFromCache}. " +
-                    "Amount: ${snapshot.documents.size}. " +
-                    "Changes: ${snapshot.documentChanges.size}"
-        )
-    }
 
     suspend fun set(uid: String, event: PersonalEvent): Outcome<Unit, GenericFirestoreError> =
         outcomeCatching({ GenericFirestoreError(it) }) {
             val doc = personalEventMapper.map(event)
             Logger.d(TAG, "Set personal event document")
             firestore.collection(PATH_EVENTS(uid)).document(event.id).set(doc)
+            markEventsUpdated(uid)
         }
 
     suspend fun delete(uid: String, eventId: String): Outcome<Unit, GenericFirestoreError> =
         outcomeCatching({ GenericFirestoreError(it) }) {
             Logger.d(TAG, "Delete personal event document")
             firestore.collection(PATH_EVENTS(uid)).document(eventId).delete()
+            markEventsUpdated(uid)
         }
 
+    private suspend fun markEventsUpdated(uid: String) {
+        userSyncFirestore.updatePersonalEvents(uid).errorOrNull()?.let { error ->
+            Logger.e(TAG, "Error updating personal events sync", error.error)
+        }
+    }
+
+    private suspend fun queryEvents(
+        uid: String,
+        months: List<YearMonth>,
+        source: Source
+    ): List<DocHolder<PersonalEventDocument>> {
+        val snapshot = firestore.collection(PATH_EVENTS(uid)).where {
+            PersonalEventDocument.FIELD_YEAR_MONTH inArray months.map { it.toString() }
+        }.get(source)
+
+        Logger.d(
+            TAG,
+            "Personal events for (${months.joinToString()}). Source: ${source}. " +
+                    "Amount: ${snapshot.documents.size}. " +
+                    "Changes: ${snapshot.documentChanges.size}"
+        )
+        return snapshot.documents.map { personalEventMapper.map(it) }
+    }
+
     companion object {
-        private const val TAG = "PersonalEventTypesFirestore"
+        private const val TAG = "PersonalEventFirestore"
         private fun PATH_EVENTS(uid: String) = "users/${uid}/personalEvents"
     }
 }

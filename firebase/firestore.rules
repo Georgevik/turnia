@@ -45,6 +45,11 @@ service cloud.firestore {
         allow read: if ownerOrShared(uid);
         allow write: if isSignedIn() && request.auth.uid == uid;
       }
+      // Sync timestamps the owner bumps on every write; readers use them to check their cache.
+      match /sync/{docId} {
+        allow read: if ownerOrShared(uid);
+        allow write: if isSignedIn() && request.auth.uid == uid;
+      }
 
     }
 
