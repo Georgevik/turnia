@@ -158,6 +158,19 @@
     <string name="profile_logout">Cerrar sesión</string>
     <string name="profile_logout_dialog_title">¿Cerrar sesión?</string>
     <string name="profile_logout_dialog_message">Tendrás que iniciar sesión de nuevo para acceder a tus turnos.</string>
+    <!-- My profile -->
+    <string name="profile_title">Mi perfil</string>
+    <string name="settings_my_profile">Mi perfil</string>
+    <string name="profile_field_name">Nombre</string>
+    <string name="profile_field_username">Nombre de usuario</string>
+    <string name="profile_field_email">Correo</string>
+    <string name="profile_email_readonly">El correo viene de tu cuenta y no se puede cambiar.</string>
+    <string name="profile_save">Guardar</string>
+    <string name="profile_error_name_required">Escribe tu nombre.</string>
+    <string name="profile_error_username_invalid">Entre 3 y 20 caracteres: letras, números, guion bajo o punto.</string>
+    <string name="profile_error_username_taken">Ese nombre de usuario ya está en uso.</string>
+    <string name="profile_error_save">No hemos podido guardar los cambios.</string>
+
     <!-- Day detail sheet -->
     <string name="day_detail_personal_events">EVENTOS PERSONALES</string>
     <string name="day_detail_group_events">EVENTOS DE GRUPO</string>

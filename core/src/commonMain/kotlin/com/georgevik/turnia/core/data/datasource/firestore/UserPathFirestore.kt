@@ -36,6 +36,19 @@ class UserPathFirestore(
             snapshot.documents.map { mapper.map(it) }
         }
 
+    suspend fun updateProfile(
+        uid: String,
+        name: String,
+        username: String
+    ): Outcome<Unit, UserProfileError> =
+        outcomeCatching({ UserProfileError.LoadFailed(it) }) {
+            Logger.i(TAG, "Update public profile")
+            firestore.collection(PATH_USER).document(uid).updateFields {
+                UserDocument.FIELD_NAME to name
+                UserDocument.FIELD_USERNAME to username
+            }
+        }
+
     suspend fun updateUsername(uid: String, username: String): Outcome<Unit, UserProfileError> =
         outcomeCatching({ UserProfileError.LoadFailed(it) }) {
             Logger.i(TAG, "Update username")

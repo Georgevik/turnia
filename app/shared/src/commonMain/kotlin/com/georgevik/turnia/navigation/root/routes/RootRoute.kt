@@ -15,14 +15,15 @@ sealed interface RootRoute : NavKey {
     @Serializable
     data object MainKey : RootRoute
 
-    /** Group detail/edit, full screen over Main. A blank [groupId] creates a new group. */
     @Serializable
     data class GroupDetailKey(val groupId: String) : RootRoute
 
     @Serializable
     data class EventTypeDetailKey(val data: EventTypeDetailData) : RootRoute
 
-    /** The user's own event types, full screen over Main. */
     @Serializable
     data object PersonalEventTypesKey : RootRoute
+
+    @Serializable
+    data object MyProfileKey : RootRoute
 }

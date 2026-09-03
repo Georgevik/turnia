@@ -22,14 +22,14 @@ import dev.gitlive.firebase.auth.FirebaseUser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class UserRepositoryImpl(
@@ -42,21 +42,26 @@ class UserRepositoryImpl(
     private val scope: CoroutineScope
 ) : UserRepository {
 
-    private var _user: User? = null
-    override val loggedUser: User? get() = _user
+    private val _userSession = MutableStateFlow<UserSession>(UserSession.Loading)
 
-    override val userSession: StateFlow<UserSession> = auth.authStateChanged
-        // authStateChanged also fires on token refresh; only a different account is a new session.
-        .distinctUntilChangedBy { it?.uid }
-        .flatMapLatest { firebaseUser ->
-            if (firebaseUser == null) flowOf(UserSession.Unauthenticated)
-            else gatherUserInfo(firebaseUser).onEach { _user = it.user }
+    // Held rather than derived straight from auth, so that saving the profile can publish the new
+    // user without waiting for a sign-in to happen again.
+    override val userSession: StateFlow<UserSession> = _userSession.asStateFlow()
+
+    override val loggedUser: User? get() = (_userSession.value as? UserSession.Authenticated)?.user
+
+    init {
+        scope.launch {
+            auth.authStateChanged
+                // authStateChanged also fires on token refresh; only a different account is a new session.
+                .distinctUntilChangedBy { it?.uid }
+                .flatMapLatest { firebaseUser ->
+                    if (firebaseUser == null) flowOf(UserSession.Unauthenticated)
+                    else gatherUserInfo(firebaseUser)
+                }
+                .collect { session -> _userSession.value = session }
         }
-        .stateIn(
-            scope = scope,
-            started = SharingStarted.Eagerly,
-            initialValue = UserSession.Loading
-        )
+    }
 
     private fun gatherUserInfo(firebaseUser: FirebaseUser): Flow<UserSession.Authenticated> = flow {
         // Emit what auth already knows so the UI is never blocked on the profile read.
@@ -94,30 +99,39 @@ class UserRepositoryImpl(
     }
 
     override suspend fun getCalendarsSharedWithMe(): Outcome<List<UserProfile>, Unit> {
-        val uid = _user?.firebaseUid ?: return Unit.toFailure()
+        val uid = loggedUser?.firebaseUid ?: return Unit.toFailure()
 
         return remoteProfiles.fetchCalendarsSharedWithMe(uid)
             .mapError { error -> Logger.e(TAG, "Failed load shared calendars: $error") }
     }
 
-    override suspend fun updateUsername(username: String): Outcome<Unit, UsernameError> {
+    override suspend fun updateProfile(
+        name: String,
+        username: String
+    ): Outcome<Unit, UsernameError> {
         if (!provisioner.isValidUsername(username)) return UsernameError.Invalid.toFailure()
 
-        val user = _user ?: return UsernameError.SaveFailed.toFailure()
+        val user = loggedUser ?: return UsernameError.SaveFailed.toFailure()
         val previous = user.username
 
-        // Reserve before publishing: a taken username must fail without touching the profile.
-        remoteUsernames.claim(username, user.firebaseUid, user.displayName.orEmpty())
+        // Reserve before publishing: a username taken meanwhile must fail without touching the
+        // profile. Claiming the one already ours is an allowed update, and refreshes the name the
+        // reservation carries for search results.
+        remoteUsernames.claim(username, user.firebaseUid, name)
             .errorOrNull()?.let { return it.toFailure() }
 
-        remoteProfiles.updateUsername(user.firebaseUid, username).errorOrNull()?.let { error ->
-            Logger.e(TAG, "Failed to update username: $error")
-            remoteUsernames.release(username)
+        remoteProfiles.updateProfile(user.firebaseUid, name, username).errorOrNull()?.let { error ->
+            Logger.e(TAG, "Failed to update profile: $error")
+            if (previous != username) remoteUsernames.release(username)
             return UsernameError.SaveFailed.toFailure()
         }
 
-        if (previous.isNotBlank() && previous != username) remoteUsernames.release(previous)
-        _user = user.copy(username = username)
+        if (previous.isNotBlank() && previous != username)
+            remoteUsernames.release(previous)
+        
+        _userSession.value = UserSession.Authenticated(
+            user.copy(displayName = name, username = username)
+        )
         return Unit.toSuccess()
     }
 

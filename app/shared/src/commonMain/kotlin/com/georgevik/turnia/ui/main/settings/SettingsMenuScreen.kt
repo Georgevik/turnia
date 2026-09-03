@@ -1,4 +1,4 @@
-package com.georgevik.turnia.ui.main.profile
+package com.georgevik.turnia.ui.main.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -50,13 +50,14 @@ import turnia.app.shared.generated.resources.profile_logout
 import turnia.app.shared.generated.resources.profile_logout_dialog_message
 import turnia.app.shared.generated.resources.profile_logout_dialog_title
 import turnia.app.shared.generated.resources.profile_my_events
+import turnia.app.shared.generated.resources.settings_my_profile
 
 /**
  * "Perfil" tab — a draft account screen: the signed-in user header plus entry
  * points to groups, shared calendars, subscription and settings.
  */
 @Composable
-fun ProfileScreen(vm: ProfileViewModel = koinViewModel()) {
+fun SettingsMenuScreen(vm: SettingsMenuViewModel = koinViewModel()) {
     val uiState by vm.uiState.collectAsStateWithLifecycle()
     var showLogoutDialog by remember { mutableStateOf(false) }
     val rootNavigator = LocalRootNavigator.current
@@ -71,7 +72,9 @@ fun ProfileScreen(vm: ProfileViewModel = koinViewModel()) {
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { rootNavigator.goTo(RootRoute.MyProfileKey) },
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -140,6 +143,9 @@ fun ProfileScreen(vm: ProfileViewModel = koinViewModel()) {
             }
         }
 
+        ProfileRow(Icons.Default.Person, stringResource(Res.string.settings_my_profile)) {
+            rootNavigator.goTo(RootRoute.MyProfileKey)
+        }
         ProfileRow(Icons.Default.Event, stringResource(Res.string.profile_my_events)) {
             rootNavigator.goTo(RootRoute.PersonalEventTypesKey)
         }

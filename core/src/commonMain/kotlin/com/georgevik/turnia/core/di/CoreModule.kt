@@ -4,16 +4,15 @@ import com.georgevik.turnia.core.data.config.AppConfigRepositoryImpl
 import com.georgevik.turnia.core.data.datasource.firestore.PersonalEventFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.PersonalEventTypesFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.UserPathFirestore
-import com.georgevik.turnia.core.data.datasource.firestore.UsernameFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.UserPrivateFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.UserSyncFirestore
+import com.georgevik.turnia.core.data.datasource.firestore.UsernameFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.mappers.PersonalEventMapper
 import com.georgevik.turnia.core.data.datasource.firestore.mappers.PersonalEventTypeDocMapper
 import com.georgevik.turnia.core.data.datasource.firestore.mappers.UserDocumentMapper
 import com.georgevik.turnia.core.data.group.GroupRepositoryImpl
 import com.georgevik.turnia.core.data.user.PersonalEventRepositoryImpl
 import com.georgevik.turnia.core.data.user.UserProvisioner
-import com.georgevik.turnia.core.data.user.UserProvisionerImpl
 import com.georgevik.turnia.core.data.user.UserRepositoryImpl
 import com.georgevik.turnia.core.domain.repository.AppConfigRepository
 import com.georgevik.turnia.core.domain.repository.GroupRepository
@@ -42,8 +41,8 @@ val coreModule: Module = module {
     factory { UsernameFactory() }
     factory { PersonalEventMapper() }
     factory { PersonalEventTypeDocMapper() }
-    single<UserProvisioner> { UserProvisionerImpl(get(), get(), get(), get()) }
-    single<UserRepository> { UserRepositoryImpl(Firebase.auth, get(), get(), get(), get(), get(), get(), GlobalScope) }
+    single { UserProvisioner(get(), get(), get(), get()) }
+    single<UserRepository> { UserRepositoryImpl(Firebase.auth, get(), get(), get(), get(), get(), GlobalScope) }
     single<AppConfigRepository> { AppConfigRepositoryImpl() }
     single<GroupRepository> { GroupRepositoryImpl() }
     single<PersonalEventRepository> { PersonalEventRepositoryImpl(get(), get(), get(),get()) }

@@ -14,8 +14,11 @@ interface UserRepository {
 
     suspend fun getCalendarsSharedWithMe(): Outcome<List<UserProfile>, Unit>
 
-    /** Replaces the auto-generated username with one the user chose. */
-    suspend fun updateUsername(username: String): Outcome<Unit, UsernameError>
+    /**
+     * Saves the two things a user may change about their public profile. [username] is re-checked
+     * and re-reserved here: the screen validated it, but someone may have taken it meanwhile.
+     */
+    suspend fun updateProfile(name: String, username: String): Outcome<Unit, UsernameError>
 
     /** Users whose username starts with [prefix]. Empty for a prefix that is too short. */
     suspend fun searchUsers(prefix: String): Outcome<List<UserProfile>, Unit>

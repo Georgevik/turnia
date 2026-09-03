@@ -29,22 +29,16 @@ class UsernameFirestore(
                 .set(UsernameDocument(username = username, uid = uid, name = name))
         }
 
-    private fun Throwable.toClaimError(username: String): UsernameError =
-        if (this is FirebaseFirestoreException && code == FirestoreExceptionCode.PERMISSION_DENIED) {
-            Logger.i(TAG, "Username '$username' already taken")
-            UsernameError.Taken
-        } else {
-            Logger.e(TAG, "Could not claim username '$username'", this)
-            UsernameError.SaveFailed
-        }
-
     suspend fun release(username: String): Outcome<Unit, UsernameError> =
         outcomeCatching({ UsernameError.SaveFailed }) {
             Logger.i(TAG, "Release username")
             firestore.collection(PATH_USERNAMES).document(username).delete()
         }
 
-    suspend fun search(prefix: String, limit: Int = SEARCH_LIMIT): Outcome<List<UserProfile>, UsernameError> =
+    suspend fun search(
+        prefix: String,
+        limit: Int = SEARCH_LIMIT
+    ): Outcome<List<UserProfile>, UsernameError> =
         outcomeCatching({ UsernameError.SaveFailed }) {
             if (prefix.length < MIN_SEARCH_LENGTH) return@outcomeCatching emptyList()
 
@@ -60,7 +54,20 @@ class UsernameFirestore(
             snapshot.documents.map { it.data(UsernameDocument.serializer()).toProfile() }
         }
 
-    private fun UsernameDocument.toProfile() = UserProfile(id = uid, name = name, username = username)
+    /**
+     * UsernameDocument contains the minimum info for unknown external users
+     */
+    private fun UsernameDocument.toProfile() =
+        UserProfile(id = uid, name = name, username = username)
+
+    private fun Throwable.toClaimError(username: String): UsernameError =
+        if (this is FirebaseFirestoreException && code == FirestoreExceptionCode.PERMISSION_DENIED) {
+            Logger.i(TAG, "Username '$username' already taken")
+            UsernameError.Taken
+        } else {
+            Logger.e(TAG, "Could not claim username '$username'", this)
+            UsernameError.SaveFailed
+        }
 
     companion object {
         private const val TAG = "UsernameFirestore"

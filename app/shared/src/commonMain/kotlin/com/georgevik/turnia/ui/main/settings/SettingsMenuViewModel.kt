@@ -1,4 +1,4 @@
-package com.georgevik.turnia.ui.main.profile
+package com.georgevik.turnia.ui.main.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,10 +12,10 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class ProfileViewModel(private val userRepository: UserRepository) : ViewModel() {
+class SettingsMenuViewModel(private val userRepository: UserRepository) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(ProfileScreenUi())
-    val uiState: StateFlow<ProfileScreenUi> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(SettingsMenuUi())
+    val uiState: StateFlow<SettingsMenuUi> = _uiState.asStateFlow()
 
     init {
         loadUser()
@@ -27,7 +27,7 @@ class ProfileViewModel(private val userRepository: UserRepository) : ViewModel()
                 .collect { session ->
                     _uiState.update {
                         it.copy(
-                            userDetails = ProfileScreenUi.UserDetails(
+                            userDetails = SettingsMenuUi.UserDetails(
                                 displayName = session.user.displayName.orEmpty(),
                                 username = session.user.username,
                                 email = session.user.email.orEmpty(),

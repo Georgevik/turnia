@@ -10,11 +10,12 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class UserDocument(
-    @SerialName("name") val name: String,
+    @SerialName(FIELD_NAME) val name: String,
     @SerialName(FIELD_USERNAME) val username: String = "",
     @SerialName(FIELD_CALENDAR_SHARED_WITH) val calendarSharedWith: List<String> = emptyList(),
 ) {
     companion object {
+        const val FIELD_NAME = "name"
         const val FIELD_USERNAME = "username"
         const val FIELD_CALENDAR_SHARED_WITH = "calendarSharedWith"
     }

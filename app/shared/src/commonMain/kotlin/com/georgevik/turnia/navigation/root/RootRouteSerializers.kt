@@ -21,6 +21,7 @@ internal val rootRouteSavedStateConfiguration: SavedStateConfiguration = SavedSt
                 RootRoute.PersonalEventTypesKey::class,
                 RootRoute.PersonalEventTypesKey.serializer(),
             )
+            subclass(RootRoute.MyProfileKey::class, RootRoute.MyProfileKey.serializer())
         }
     }
 }

@@ -30,7 +30,7 @@ import com.georgevik.turnia.navigation.main.routes.MainRoute
 import com.georgevik.turnia.ui.main.changes.navigation.changesNavigation
 import com.georgevik.turnia.ui.main.group.navigation.groupsNavigation
 import com.georgevik.turnia.ui.main.mycalendar.navigation.calendarNavigation
-import com.georgevik.turnia.ui.main.profile.navigation.profileNavigation
+import com.georgevik.turnia.ui.main.settings.navigation.settingsNavigation
 import com.georgevik.turnia.ui.system.LocalSnackbar
 import com.georgevik.turnia.ui.system.TurniaSnackbarHost
 import org.koin.compose.viewmodel.koinViewModel
@@ -100,7 +100,7 @@ fun MainScreen(viewModel: MainViewModel = koinViewModel()) {
                     entryProvider {
                         calendarNavigation()
                         groupsNavigation()
-                        profileNavigation()
+                        settingsNavigation()
                         changesNavigation()
                     }
                 ),

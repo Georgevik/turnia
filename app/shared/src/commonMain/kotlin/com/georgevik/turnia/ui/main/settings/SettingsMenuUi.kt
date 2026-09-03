@@ -1,6 +1,6 @@
-package com.georgevik.turnia.ui.main.profile
+package com.georgevik.turnia.ui.main.settings
 
-data class ProfileScreenUi(
+data class SettingsMenuUi(
     val userDetails: UserDetails? = null
 ) {
     data class UserDetails(
