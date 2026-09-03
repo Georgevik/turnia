@@ -21,7 +21,6 @@ import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -74,7 +73,6 @@ import turnia.app.shared.generated.resources.event_type_save
 import turnia.app.shared.generated.resources.event_type_swap_allowed
 import turnia.app.shared.generated.resources.event_type_swap_not_allowed
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EventTypeDetailScreen(viewModel: EventTypeDetailViewModel) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()

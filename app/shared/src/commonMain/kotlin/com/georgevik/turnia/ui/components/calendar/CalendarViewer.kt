@@ -33,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -111,7 +112,7 @@ fun CalendarViewer(
         MONTH_PAGE_ANCHOR + anchorMonth.monthsUntil(target)
 
     // The day whose details sheet is shown; non-null means the sheet is open.
-    var sheetDate by remember { mutableStateOf<LocalDate?>(null) }
+    var sheetDate by rememberSaveable { mutableStateOf<LocalDate?>(null) }
     val sheetState = rememberModalBottomSheetState()
 
     // Animate the sheet out, then clear the date. Used by the programmatic close
@@ -195,10 +196,7 @@ fun CalendarViewer(
                         onEditGroup(groupId, groupName)
                         dismissSheet()
                     },
-                    openNewPersonalTypeScreen = {
-                        onAddPersonalType()
-                        dismissSheet()
-                    },
+                    openNewPersonalTypeScreen = { onAddPersonalType() },
                     onClose = {
                         invalidateEvents()
                         dismissSheet()
