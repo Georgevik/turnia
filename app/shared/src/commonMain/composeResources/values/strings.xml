@@ -173,7 +173,10 @@
 
     <!-- Share calendar -->
     <string name="share_calendar_title">Compartir calendario</string>
+    <string name="share_calendar_action">Compartir</string>
     <string name="share_calendar_empty">Todavía no compartes tu calendario con nadie.</string>
+    <string name="share_calendar_unknown_user">Usuario sin perfil</string>
+    <string name="share_calendar_load_error">No hemos podido cargar con quién compartes tu calendario.</string>
     <string name="calendar_more_options">Más opciones</string>
 
     <!-- Day detail sheet -->

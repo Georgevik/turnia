@@ -45,6 +45,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
+import com.georgevik.turnia.ui.components.calendar.model.ThreeDotsOption
 import com.georgevik.turnia.ui.components.daydetail.DayAddMode
 import com.georgevik.turnia.ui.components.daydetail.DayDetailSheet
 import kotlinx.coroutines.launch
@@ -82,6 +83,7 @@ fun CalendarViewer(
     eventsByDate: Map<LocalDate, List<CalendarEventUi>> = emptyMap(),
     addMode: DayAddMode,
     titleBar: @Composable () -> Unit = {},
+    contextualOptions: List<ThreeDotsOption> = emptyList(),
     onMonthChanged: (LocalDate) -> Unit,
     onEditGroup: (groupId: String, groupName: String) -> Unit = { _, _ -> },
     onAddPersonalType: () -> Unit = {},
@@ -147,6 +149,7 @@ fun CalendarViewer(
                     onNext = {
                         scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) }
                     },
+                    contextualOptions = contextualOptions
                 )
 
                 CalendarWeekTitles()
@@ -206,6 +209,7 @@ fun CalendarViewer(
 @Composable
 private fun CalendarMonthHeader(
     pagerState: PagerState,
+    contextualOptions: List<ThreeDotsOption>,
     monthForPage: (Int) -> LocalDate,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
@@ -262,6 +266,10 @@ private fun CalendarMonthHeader(
                     imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                     contentDescription = stringResource(Res.string.calendar_next_month),
                 )
+            }
+
+            if (contextualOptions.isNotEmpty()) {
+                ThreeDotsContextMenu(contextualOptions)
             }
         }
     }
