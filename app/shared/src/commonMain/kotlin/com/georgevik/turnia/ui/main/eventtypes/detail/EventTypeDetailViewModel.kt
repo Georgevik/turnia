@@ -16,6 +16,7 @@ import com.georgevik.turnia.core.system.valueOrNull
 import com.georgevik.turnia.navigation.routes.EventTypeDetailData
 import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeDetailUi
 import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeDetailUi.EventTypeForm
+import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeFieldError
 import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeScreenError
 import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeTitle
 import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeToastError
@@ -116,12 +117,19 @@ class EventTypeDetailViewModel(
                 EventTypeField.Name -> copy(name = newValue)
                 EventTypeField.Acronym -> copy(acronym = newValue)
                 EventTypeField.Description -> copy(description = newValue)
-                EventTypeField.StartTime -> copy(startTime = newValue)
-                EventTypeField.EndTime -> copy(endTime = newValue)
+                EventTypeField.StartTime -> copy(startTime = formatTimeInput(newValue))
+                EventTypeField.EndTime -> copy(endTime = formatTimeInput(newValue))
             }
         }
 
-        state.copy(form = newForm)
+        val errors = state.formErrors
+        state.copy(
+            form = newForm,
+            formErrors = errors.copy(
+                nameError = if (field == EventTypeField.Name) null else errors.nameError,
+                acronymError = if (field == EventTypeField.Acronym) null else errors.acronymError,
+            )
+        )
     }
 
     fun onSavePersonal() {
@@ -135,21 +143,41 @@ class EventTypeDetailViewModel(
         }
 
         val form = state.form
+        val nameError = EventTypeFieldError.Required.takeIf { form.name.isBlank() }
+        val acronymError = EventTypeFieldError.Required.takeIf { form.acronym.isBlank() }
+        if (nameError != null || acronymError != null) {
+            return updateSuccess {
+                it.copy(
+                    formErrors = it.formErrors.copy(
+                        nameError = nameError,
+                        acronymError = acronymError
+                    )
+                )
+            }
+        }
+
         val type = PersonalEventType(
             id = typeId,
             name = form.name.trim(),
             color = form.color.toHex(),
             acronym = form.acronym.trim(),
             description = form.description.trim().ifBlank { null },
-            startTime = form.startTime.trim().ifBlank { null },
-            endTime = form.endTime.trim().ifBlank { null },
+            startTime = form.startTime.toTimeOrNull(),
+            endTime = form.endTime.toTimeOrNull(),
         )
 
         viewModelScope.launch {
             updateSuccess { it.copy(saveButtonLoading = true) }
 
             personalRepository.saveEventType(type).fold(
-                onSuccess = { updateSuccess { it.copy(saveButtonLoading = false, isSaved = true) } },
+                onSuccess = {
+                    updateSuccess {
+                        it.copy(
+                            saveButtonLoading = false,
+                            isSaved = true
+                        )
+                    }
+                },
                 onFailure = {
                     updateSuccess {
                         it.copy(
@@ -168,8 +196,8 @@ class EventTypeDetailViewModel(
         name = name,
         acronym = acronym.orEmpty(),
         description = description.orEmpty(),
-        startTime = startTime.orEmpty(),
-        endTime = endTime.orEmpty(),
+        startTime = formatTimeInput(startTime.orEmpty()),
+        endTime = formatTimeInput(endTime.orEmpty()),
         color = color.toComposeColorOr(entityColor(id)),
         swappable = false,
     )
@@ -191,6 +219,37 @@ class EventTypeDetailViewModel(
         _uiState.update { if (it is EventTypeDetailUi.Success) block(it) else it }
 
     companion object {
+        /**
+         * The time fields take digits only — the user types `0830` and reads `08:30`. Each position
+         * is clamped to what a valid `HH:mm` allows and a leading digit above `2` is read as an
+         * hour with an implicit zero (`9` -> `09`), so a complete entry is always a real time.
+         */
+        private fun formatTimeInput(input: String): String {
+            val typed = input.filter { it.isDigit() }
+            val digits = if (typed.firstOrNull()?.let { it > '2' } == true) "0$typed" else typed
+
+            val time = buildString {
+                digits.take(4).forEachIndexed { index, digit ->
+                    val max = when (index) {
+                        0 -> '2'
+                        1 -> if (first() == '2') '3' else '9'
+                        2 -> '5'
+                        else -> '9'
+                    }
+                    if (digit > max) return@buildString
+                    append(digit)
+                }
+            }
+
+            return if (time.length > 2) "${time.take(2)}:${time.drop(2)}" else time
+        }
+
+        /** Completes a partially typed field — `08` is 08:00 — or `null` when nothing was typed. */
+        private fun String.toTimeOrNull(): String? {
+            val digits = filter { it.isDigit() }.ifEmpty { return null }.padEnd(4, '0')
+            return "${digits.take(2)}:${digits.drop(2)}"
+        }
+
         private fun newForm() = EventTypeForm(
             typeId = "",
             fieldsEditable = true,

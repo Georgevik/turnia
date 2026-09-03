@@ -15,6 +15,7 @@ import com.georgevik.turnia.core.system.fold
 import com.georgevik.turnia.core.system.outcomeCatching
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import com.georgevik.turnia.ui.components.calendar.model.EventSource
+import com.georgevik.turnia.ui.components.daydetail.components.EventTypeChipUi
 import com.georgevik.turnia.ui.components.daydetail.model.AddEventTypesError
 import com.georgevik.turnia.ui.components.daydetail.model.AddEventTypesUi
 import com.georgevik.turnia.ui.components.daydetail.model.EventTypeSectionUi
@@ -87,7 +88,7 @@ class DayDetailSheetViewModel(
 
     private fun addNewEvent(type: GroupEventType, eventTypeUi: EventTypeUi) {
         viewModelScope.launch {
-            val userId = userRepository.loggedUser?.uid  ?: return@launch // TODO Emit error
+            val userId = userRepository.loggedUser?.uid ?: return@launch // TODO Emit error
             groupRepository.addEvent(
                 GroupEvent(
                     id = Uuid.random().toString(),
@@ -99,7 +100,7 @@ class DayDetailSheetViewModel(
                     type = type,
                     date = date,
                     onSwap = false,
-                    colorHex = eventTypeUi.color.toHex(),
+                    colorHex = eventTypeUi.chipUi.color.toHex(),
                     history = emptyList(),
                 )
             )
@@ -149,9 +150,10 @@ class DayDetailSheetViewModel(
     }
 
     private fun EventType.toUi() = EventTypeUi(
-        id = id,
-        title = acronym ?: name,
-        color = color.toComposeColorOr(entityColor(id)),
+        chipUi = EventTypeChipUi(
+            title = acronym ?: name,
+            color = color.toComposeColorOr(entityColor(id))
+        ),
         eventType = this,
     )
 }

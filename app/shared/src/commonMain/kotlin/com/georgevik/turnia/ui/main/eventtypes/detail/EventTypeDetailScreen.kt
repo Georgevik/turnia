@@ -41,9 +41,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.georgevik.turnia.navigation.LocalNavigator
+import com.georgevik.turnia.ui.components.daydetail.components.EventTypeChip
 import com.georgevik.turnia.ui.main.eventtypes.components.ColorSwatchPicker
 import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeDetailUi
 import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeDetailUi.EventTypeForm
+import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeDetailUi.FormErrors
+import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeFieldError
 import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeScreenError
 import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeTitle
 import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeToastError
@@ -51,6 +54,7 @@ import com.georgevik.turnia.ui.system.LocalSnackbar
 import com.georgevik.turnia.ui.system.components.AcronymBadge
 import com.georgevik.turnia.ui.system.components.TFieldLabel
 import com.georgevik.turnia.ui.system.components.TReadOnlyField
+import com.georgevik.turnia.ui.system.components.TTimeField
 import com.georgevik.turnia.ui.system.components.TurniaDialogError
 import com.georgevik.turnia.ui.system.toErrorSnackbar
 import org.jetbrains.compose.resources.stringResource
@@ -60,6 +64,7 @@ import turnia.app.shared.generated.resources.event_details_new_title
 import turnia.app.shared.generated.resources.event_type_error_group_not_found
 import turnia.app.shared.generated.resources.event_type_error_not_implemented
 import turnia.app.shared.generated.resources.event_type_error_pick_color
+import turnia.app.shared.generated.resources.event_type_error_required
 import turnia.app.shared.generated.resources.event_type_error_save_personal
 import turnia.app.shared.generated.resources.event_type_error_type_not_found
 import turnia.app.shared.generated.resources.event_type_field_acronym
@@ -86,6 +91,7 @@ fun EventTypeDetailScreen(viewModel: EventTypeDetailViewModel) {
                     when (val state = uiState) {
                         EventTypeDetailUi.Loading,
                         is EventTypeDetailUi.Error -> Unit
+
                         is EventTypeDetailUi.Success -> Text(
                             text = when (state.title) {
                                 is EventTypeTitle.Title -> state.title.title
@@ -168,7 +174,7 @@ private fun EventTypeFormContent(
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         if (eventTypeForm.fieldsEditable) {
-            PersonalForm(eventTypeForm, onFieldChanged)
+            PersonalForm(eventTypeForm, state.formErrors, onFieldChanged)
         } else {
             GroupDetail(eventTypeForm)
         }
@@ -184,7 +190,7 @@ private fun EventTypeFormContent(
         if (eventTypeForm.fieldsEditable) {
             Button(
                 onClick = onSavePersonal,
-                enabled = eventTypeForm.name.isNotBlank(),
+                enabled = !state.saveButtonLoading,
                 shape = RoundedCornerShape(percent = 50),
                 contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
                 modifier = Modifier.fillMaxWidth().height(52.dp),
@@ -278,14 +284,11 @@ private fun GroupDetail(ui: EventTypeForm) {
 @Composable
 private fun PersonalForm(
     ui: EventTypeForm,
+    errors: FormErrors,
     onFieldChanged: (EventTypeField, String) -> Unit,
 ) {
     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-        AcronymBadge(
-            color = ui.color,
-            acronym = ui.acronym.ifBlank { null },
-            size = 64.dp,
-        )
+        EventTypeChip(chipUi = ui.chipUi)
     }
     OutlinedTextField(
         value = ui.name,
@@ -293,6 +296,8 @@ private fun PersonalForm(
         label = { Text(stringResource(Res.string.event_type_field_name)) },
         keyboardOptions = KeyboardOptions.Default.copy(capitalization = KeyboardCapitalization.Words),
         singleLine = true,
+        isError = errors.nameError != null,
+        supportingText = errors.nameError?.let { { Text(it.message()) } },
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth(),
     )
@@ -301,6 +306,8 @@ private fun PersonalForm(
         onValueChange = { onFieldChanged(EventTypeField.Acronym, it.uppercase().take(4)) },
         label = { Text(stringResource(Res.string.event_type_field_acronym)) },
         singleLine = true,
+        isError = errors.acronymError != null,
+        supportingText = errors.acronymError?.let { { Text(it.message()) } },
         keyboardOptions = KeyboardOptions.Default.copy(capitalization = KeyboardCapitalization.Characters),
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth(),
@@ -314,20 +321,16 @@ private fun PersonalForm(
         modifier = Modifier.fillMaxWidth(),
     )
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        OutlinedTextField(
+        TTimeField(
             value = ui.startTime,
             onValueChange = { onFieldChanged(EventTypeField.StartTime, it) },
-            label = { Text(stringResource(Res.string.event_type_field_start)) },
-            singleLine = true,
-            shape = RoundedCornerShape(12.dp),
+            label = stringResource(Res.string.event_type_field_start),
             modifier = Modifier.weight(1f),
         )
-        OutlinedTextField(
+        TTimeField(
             value = ui.endTime,
             onValueChange = { onFieldChanged(EventTypeField.EndTime, it) },
-            label = { Text(stringResource(Res.string.event_type_field_end)) },
-            singleLine = true,
-            shape = RoundedCornerShape(12.dp),
+            label = stringResource(Res.string.event_type_field_end),
             modifier = Modifier.weight(1f),
         )
     }
@@ -370,6 +373,13 @@ private fun EventTypeScreenError.message(): String = stringResource(
     when (this) {
         EventTypeScreenError.GroupNotFound -> Res.string.event_type_error_group_not_found
         EventTypeScreenError.GroupEventNotFound -> Res.string.event_type_error_type_not_found
+    }
+)
+
+@Composable
+private fun EventTypeFieldError.message(): String = stringResource(
+    when (this) {
+        EventTypeFieldError.Required -> Res.string.event_type_error_required
     }
 )
 

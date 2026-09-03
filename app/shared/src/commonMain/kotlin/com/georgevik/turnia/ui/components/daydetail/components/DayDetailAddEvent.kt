@@ -115,7 +115,7 @@ private fun EventTypeChipRow(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         events.forEach { eventType ->
-            EventTypeChip(eventType = eventType, onClick = { onPick(eventType) })
+            EventTypeChip(chipUi = eventType.chipUi, onClick = { onPick(eventType) })
         }
         trailing?.invoke()
     }

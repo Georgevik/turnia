@@ -128,6 +128,7 @@
     <string name="event_type_color_selected">Color seleccionado</string>
     <string name="event_type_save">Guardar</string>
     <string name="event_type_not_set">—</string>
+    <string name="event_type_error_required">Este campo es obligatorio.</string>
     <string name="event_type_error_group_not_found">No hemos encontrado el grupo. Puede que ya no exista o que hayas salido de él.</string>
     <string name="event_type_error_type_not_found">No hemos encontrado este tipo de evento. Puede que se haya eliminado.</string>
     <string name="event_type_error_pick_color">No se ha podido guardar el color. Inténtalo de nuevo.</string>
@@ -142,6 +143,9 @@
     <string name="personal_event_types_delete_dialog_title">¿Eliminar el evento?</string>
     <string name="personal_event_types_delete_dialog_message">Se eliminará «%1$s» de tus eventos personales.</string>
     <string name="personal_event_types_error_delete">No se ha podido eliminar el evento. Inténtalo de nuevo.</string>
+
+    <!-- Components -->
+    <string name="time_field_hint">HH:mm</string>
 
     <!-- Dialogs -->
     <string name="dialog_cancel">Cancelar</string>

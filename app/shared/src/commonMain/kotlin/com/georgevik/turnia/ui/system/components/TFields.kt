@@ -26,7 +26,6 @@ fun TFieldLabel(text: String, modifier: Modifier = Modifier) {
         text = text.uppercase(),
         modifier = modifier,
         style = MaterialTheme.typography.labelMedium,
-        fontFamily = FontFamily.Monospace,
         fontWeight = FontWeight.Medium,
         letterSpacing = 1.sp,
         color = MaterialTheme.colorScheme.onSurfaceVariant,

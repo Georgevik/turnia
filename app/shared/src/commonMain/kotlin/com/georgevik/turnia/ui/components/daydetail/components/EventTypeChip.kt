@@ -10,21 +10,24 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.georgevik.turnia.ui.components.daydetail.model.EventTypeUi
 
 @Composable
 fun EventTypeChip(
-    eventType: EventTypeUi,
-    onClick: () -> Unit,
+    chipUi: EventTypeChipUi,
+    onClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Surface(
-        onClick = onClick,
+        modifier = modifier,
+        enabled = onClick != null,
+        onClick = { onClick?.invoke() },
         shape = RoundedCornerShape(percent = 50),
-        color = eventType.color,
-        contentColor = eventType.textColor,
+        color = chipUi.color,
+        contentColor = chipUi.textColor,
     ) {
         Row(
             modifier = modifier.padding(horizontal = 14.dp, vertical = 8.dp),
@@ -32,10 +35,17 @@ fun EventTypeChip(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Text(
-                text = eventType.title,
+                text = chipUi.title,
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
             )
         }
     }
+}
+
+data class EventTypeChipUi(
+    val title: String,
+    val color: Color,
+) {
+    val textColor: Color = if (color.luminance() > 0.5f) Color.Black else Color.White
 }
