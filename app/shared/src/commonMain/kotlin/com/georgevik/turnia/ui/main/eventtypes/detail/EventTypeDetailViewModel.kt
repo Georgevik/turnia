@@ -21,6 +21,8 @@ import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeScreenError
 import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeTitle
 import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeToastError
 import com.georgevik.turnia.ui.system.EntityPalette
+import com.georgevik.turnia.ui.system.components.time.toTimeInput
+import com.georgevik.turnia.ui.system.components.time.toTimeOrNull
 import com.georgevik.turnia.ui.system.createUuid
 import com.georgevik.turnia.ui.system.entityColor
 import com.georgevik.turnia.ui.system.toComposeColorOr
@@ -117,8 +119,8 @@ class EventTypeDetailViewModel(
                 EventTypeField.Name -> copy(name = newValue)
                 EventTypeField.Acronym -> copy(acronym = newValue)
                 EventTypeField.Description -> copy(description = newValue)
-                EventTypeField.StartTime -> copy(startTime = formatTimeInput(newValue))
-                EventTypeField.EndTime -> copy(endTime = formatTimeInput(newValue))
+                EventTypeField.StartTime -> copy(startTime = newValue)
+                EventTypeField.EndTime -> copy(endTime = newValue)
             }
         }
 
@@ -194,10 +196,10 @@ class EventTypeDetailViewModel(
         typeId = id,
         fieldsEditable = true,
         name = name,
-        acronym = acronym.orEmpty(),
+        acronym = acronym,
         description = description.orEmpty(),
-        startTime = formatTimeInput(startTime.orEmpty()),
-        endTime = formatTimeInput(endTime.orEmpty()),
+        startTime = startTime.orEmpty().toTimeInput(),
+        endTime = endTime.orEmpty().toTimeInput(),
         color = color.toComposeColorOr(entityColor(id)),
         swappable = false,
     )
@@ -219,37 +221,6 @@ class EventTypeDetailViewModel(
         _uiState.update { if (it is EventTypeDetailUi.Success) block(it) else it }
 
     companion object {
-        /**
-         * The time fields take digits only — the user types `0830` and reads `08:30`. Each position
-         * is clamped to what a valid `HH:mm` allows and a leading digit above `2` is read as an
-         * hour with an implicit zero (`9` -> `09`), so a complete entry is always a real time.
-         */
-        private fun formatTimeInput(input: String): String {
-            val typed = input.filter { it.isDigit() }
-            val digits = if (typed.firstOrNull()?.let { it > '2' } == true) "0$typed" else typed
-
-            val time = buildString {
-                digits.take(4).forEachIndexed { index, digit ->
-                    val max = when (index) {
-                        0 -> '2'
-                        1 -> if (first() == '2') '3' else '9'
-                        2 -> '5'
-                        else -> '9'
-                    }
-                    if (digit > max) return@buildString
-                    append(digit)
-                }
-            }
-
-            return if (time.length > 2) "${time.take(2)}:${time.drop(2)}" else time
-        }
-
-        /** Completes a partially typed field — `08` is 08:00 — or `null` when nothing was typed. */
-        private fun String.toTimeOrNull(): String? {
-            val digits = filter { it.isDigit() }.ifEmpty { return null }.padEnd(4, '0')
-            return "${digits.take(2)}:${digits.drop(2)}"
-        }
-
         private fun newForm() = EventTypeForm(
             typeId = "",
             fieldsEditable = true,
