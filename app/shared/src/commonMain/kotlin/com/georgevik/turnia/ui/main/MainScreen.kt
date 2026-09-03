@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -46,7 +46,7 @@ private val MAIN_TABS = listOf(
     MainTabBarItem(MainRoute.CalendarTab, "Calendario", Icons.Default.CalendarMonth),
     MainTabBarItem(MainRoute.GroupsTab, "Grupos", Icons.Default.Groups),
     MainTabBarItem(MainRoute.ChangesTab, "Cambios", Icons.Default.SwapHoriz, requiresSwapFlag = true),
-    MainTabBarItem(MainRoute.ProfileTab, "Perfil", Icons.Default.Person),
+    MainTabBarItem(MainRoute.SettingsMenuTab, "Ajustes", Icons.Default.Settings),
 )
 
 /**

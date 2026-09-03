@@ -17,11 +17,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -150,9 +148,6 @@ fun SettingsMenuScreen(vm: SettingsMenuViewModel = koinViewModel()) {
             rootNavigator.goTo(RootRoute.PersonalEventTypesKey)
         }
         ProfileRow(Icons.Default.Group, "Grupos")
-        ProfileRow(Icons.Default.CalendarMonth, "Calendarios compartidos")
-        ProfileRow(Icons.Default.WorkspacePremium, "Suscripción")
-        ProfileRow(Icons.Default.Settings, "Ajustes")
         ProfileRow(Icons.AutoMirrored.Filled.Logout, stringResource(Res.string.profile_logout)) {
             showLogoutDialog = true
         }

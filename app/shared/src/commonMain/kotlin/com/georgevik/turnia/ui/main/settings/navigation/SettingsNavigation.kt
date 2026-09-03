@@ -5,5 +5,5 @@ import com.georgevik.turnia.navigation.main.routes.MainRoute
 import com.georgevik.turnia.ui.main.settings.SettingsMenuScreen
 
 fun EntryProviderScope<MainRoute>.settingsNavigation() {
-    entry<MainRoute.ProfileTab> { SettingsMenuScreen() }
+    entry<MainRoute.SettingsMenuTab> { SettingsMenuScreen() }
 }

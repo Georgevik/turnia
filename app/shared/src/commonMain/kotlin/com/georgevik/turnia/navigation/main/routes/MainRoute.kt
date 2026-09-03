@@ -12,7 +12,7 @@ sealed interface MainRoute : NavKey {
     data object GroupsTab : MainRoute
 
     @Serializable
-    data object ProfileTab : MainRoute
+    data object SettingsMenuTab : MainRoute
 
     @Serializable
     data object ChangesTab : MainRoute
