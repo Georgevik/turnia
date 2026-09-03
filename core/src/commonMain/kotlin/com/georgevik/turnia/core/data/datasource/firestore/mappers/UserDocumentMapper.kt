@@ -17,6 +17,7 @@ class UserDocumentMapper {
         firebaseUid = firebaseUser.uid,
         email = firebaseUser.email.orEmpty(),
         displayName = firebaseUser.displayName.orEmpty(),
+        username = "",
         membership = Membership.FREE,
     )
 
@@ -30,6 +31,7 @@ class UserDocumentMapper {
         // Auth already knows the email; the profile document no longer carries it.
         email = firebaseUser.email.orEmpty(),
         displayName = profile?.name ?: firebaseUser.displayName.orEmpty(),
+        username = profile?.username.orEmpty(),
         membership = subscription.toMembership(),
     )
 
@@ -39,6 +41,7 @@ class UserDocumentMapper {
     fun map(uid: String, document: UserDocument) = UserProfile(
         id = uid,
         name = document.name,
+        username = document.username,
     )
 
     /** No subscription document means the user has never bought anything: free tier. */

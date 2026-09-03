@@ -2,6 +2,7 @@ package com.georgevik.turnia.ui.main.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.georgevik.turnia.core.domain.model.Membership
 import com.georgevik.turnia.core.domain.model.UserSession
 import com.georgevik.turnia.core.domain.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,9 +29,10 @@ class ProfileViewModel(private val userRepository: UserRepository) : ViewModel()
                         it.copy(
                             userDetails = ProfileScreenUi.UserDetails(
                                 displayName = session.user.displayName.orEmpty(),
-                                email = session.user.email.orEmpty()
+                                username = session.user.username,
+                                email = session.user.email.orEmpty(),
+                                isPremium = session.user.membership == Membership.PREMIUM,
                             )
-
                         )
                     }
                 }

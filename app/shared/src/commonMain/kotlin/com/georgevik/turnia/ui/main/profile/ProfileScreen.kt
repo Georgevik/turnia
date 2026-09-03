@@ -37,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.georgevik.turnia.navigation.LocalRootNavigator
 import com.georgevik.turnia.navigation.root.routes.RootRoute
 import com.georgevik.turnia.ui.system.LocalPaddings
@@ -56,8 +57,10 @@ import turnia.app.shared.generated.resources.profile_my_events
  */
 @Composable
 fun ProfileScreen(vm: ProfileViewModel = koinViewModel()) {
+    val uiState by vm.uiState.collectAsStateWithLifecycle()
     var showLogoutDialog by remember { mutableStateOf(false) }
     val rootNavigator = LocalRootNavigator.current
+    val details = uiState.userDetails
 
     Column(
         modifier = Modifier
@@ -87,12 +90,19 @@ fun ProfileScreen(vm: ProfileViewModel = koinViewModel()) {
             }
             Column {
                 Text(
-                    text = "Jorge Vik",
+                    text = details?.displayName.orEmpty(),
                     style = MaterialTheme.typography.headlineSmall,
                     color = MaterialTheme.colorScheme.onBackground,
                 )
+                details?.username?.takeIf { it.isNotBlank() }?.let { username ->
+                    Text(
+                        text = "@$username",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
                 Text(
-                    text = "jorgevik@gmail.com",
+                    text = details?.email.orEmpty(),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -113,11 +123,19 @@ fun ProfileScreen(vm: ProfileViewModel = koinViewModel()) {
             ) {
                 Icon(imageVector = Icons.Default.WorkspacePremium, contentDescription = null)
                 Column {
-                    Text("Plan gratuito", style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        "Hazte Premium para quitar los anuncios.",
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
+                    if (details?.isPremium == true) {
+                        Text("Plan Premium", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            "Sin anuncios. Gracias por apoyar Turnia.",
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    } else {
+                        Text("Plan gratuito", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            "Hazte Premium para quitar los anuncios.",
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
                 }
             }
         }

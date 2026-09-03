@@ -59,6 +59,22 @@ service cloud.firestore {
 
     }
 
+    // Username reservations. Readable by any signed-in user: this is how you find someone whose
+    // `users/{uid}` you cannot read yet. Uniqueness comes from `create` only firing when the
+    // document does not exist — a second claimant lands on `update` and is denied.
+    match /usernames/{username} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() &&
+        request.resource.data.uid == request.auth.uid &&
+        request.resource.data.username == username;
+      // The owner may refresh their display name, never hand the reservation to someone else.
+      allow update: if isSignedIn() &&
+        resource.data.uid == request.auth.uid &&
+        request.resource.data.uid == resource.data.uid &&
+        request.resource.data.username == resource.data.username;
+      allow delete: if isSignedIn() && resource.data.uid == request.auth.uid;
+    }
+
     match /groups/{groupId} {
       allow read: if isMember(groupId);
       allow create: if isSignedIn();

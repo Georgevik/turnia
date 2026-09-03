@@ -5,6 +5,8 @@ data class ProfileScreenUi(
 ) {
     data class UserDetails(
         val displayName: String,
-        val email: String
+        val username: String,
+        val email: String,
+        val isPremium: Boolean,
     )
 }

@@ -42,6 +42,7 @@ so it carries nothing but the name and the grant list. Everything else lives und
 | Field | Type | Description |
 |-------|------|-------------|
 | `name` | string | Display name. |
+| `username` | string | Handle, `a-z0-9._`, 3-20 chars. Auto-generated from the name on sign-up (`jorgeg482`); the user can change it. Kept unique by the `usernames` collection. |
 | `calendarSharedWith` | string[] | UIDs this user grants read access to **their** calendar. Written only by the owner. |
 | `groupEventTypeColors` | map&lt;string,string&gt; | Color per group event type, keyed by `"{groupId}_{groupEventTypeId}"` → hex. |
 
@@ -87,6 +88,37 @@ the documents that query returns, so nothing else is readable through it.
 **A single source of truth for a grant** — A may read B's calendar if and only if `A ∈ users/B.calendarSharedWith`.
 Only B writes it, on their own document; `getSharedCalendar` and the security rules both check that one list.
 There is no mirrored list on the reader's side to drift out of sync with it.
+
+---
+
+## `usernames/{username}`
+
+The reservation that makes a username unique, and the only way to find a user you cannot read yet.
+The **document id is the username**; `username` repeats it as a field because a document id cannot be
+prefix-queried.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `username` | string | Same as the document id. |
+| `uid` | string | The user who reserved it. |
+| `name` | string | Display name, so a search result can be rendered without reading `users/{uid}`. |
+
+**Access**: readable by any signed-in user — that is the point, since `users/{uid}` is not. `create`
+only when `uid == auth.uid`; `update` and `delete` only by the uid already in the document.
+
+**Uniqueness** comes from Firestore itself: a write to a document that does not exist is a `create`, and
+one to an existing document is an `update`. A second claimant therefore lands on `update`, where the rule
+demands they already own it, and is denied. No transaction needed.
+
+**Search** is a prefix query: `username >= q` and `username <= q + '\uf8ff'`, minimum 3 characters, capped
+at 20 results. Firestore has **no substring or full-text search** — `jorge` finds `jorgeg482`, but `geg`
+finds nothing. Matching the middle of a handle, or searching by display name, needs either an n-gram field,
+a Cloud Function, or an external search index.
+
+**Renaming** is claim-then-release: reserve the new document, point `users/{uid}.username` at it, then
+delete the old one. A release that fails leaves a stale reservation, which only blocks that one username.
+
+---
 
 ### `users/{uid}/personalEventTypes/{typeId}`
 
@@ -282,6 +314,8 @@ Firestore keeps only a **recent window** of events; older events are purged and 
 - **Group-wide event queries are bounded to a ≤ 3-month `date` range** (collection-group on `event`, filtered by `groupId`).
 - **Cross-group shared calendars** are served on demand by the `getSharedCalendar` Cloud Function
   (collection-group on `event` filtered by `assigneeId` + date range); nothing is mirrored.
+- **A username is unique and reserved**: `usernames/{username}` holds it; claim the reservation *before*
+  writing `users/{uid}.username`, and release the old one after.
 - **A grant lives in one place**: `users/{owner}.calendarSharedWith`, written only by the owner. No mirrored list.
 - **`users/{uid}` is public to everyone you share with** — the name and the grant list, nothing else; email,
   FCM tokens and entitlement live under `users/{uid}/private/**`.

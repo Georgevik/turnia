@@ -5,6 +5,7 @@ data class User(
     val firebaseUid: String,
     val email: String?,
     val displayName: String?,
+    val username: String,
     val membership: Membership
 )
 
