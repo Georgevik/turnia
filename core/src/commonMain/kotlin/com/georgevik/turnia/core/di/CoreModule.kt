@@ -18,11 +18,14 @@ import com.georgevik.turnia.core.domain.repository.AppConfigRepository
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
 import com.georgevik.turnia.core.domain.repository.UserRepository
+import com.georgevik.turnia.core.domain.session.SessionEvents
 import com.georgevik.turnia.core.domain.username.UsernameFactory
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
 import dev.gitlive.firebase.firestore.firestore
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -30,20 +33,23 @@ import org.koin.dsl.module
  * Domain/data layer dependencies. It will grow as the Turnia domain does.
  */
 val coreModule: Module = module {
+    // Outlives every screen: it carries the session and the cache subscriptions.
+    single { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
+    single { SessionEvents() }
     single { Firebase.firestore }
     single { UserPathFirestore(get(), get()) }
     single { UserPrivateFirestore(get()) }
     single { UsernameFirestore(get()) }
     single { UserSyncFirestore(get()) }
     single { PersonalEventFirestore(get(), get(), get()) }
-    single { PersonalEventTypesFirestore(get(), get(), get()) }
+    single { PersonalEventTypesFirestore(get(), get(), get(), get(), get()) }
     factory { UserDocumentMapper() }
     factory { UsernameFactory() }
     factory { PersonalEventMapper() }
     factory { PersonalEventTypeDocMapper() }
     single { UserProvisioner(get(), get(), get(), get()) }
-    single<UserRepository> { UserRepositoryImpl(Firebase.auth, get(), get(), get(), get(), get(), GlobalScope) }
+    single<UserRepository> { UserRepositoryImpl(Firebase.auth, get(), get(), get(), get(), get(), get(), get()) }
     single<AppConfigRepository> { AppConfigRepositoryImpl() }
     single<GroupRepository> { GroupRepositoryImpl() }
-    single<PersonalEventRepository> { PersonalEventRepositoryImpl(get(), get(), get(),get()) }
+    single<PersonalEventRepository> { PersonalEventRepositoryImpl(get(), get(), get(), get(), get(), get()) }
 }

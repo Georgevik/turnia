@@ -5,6 +5,8 @@ import com.georgevik.turnia.core.data.datasource.firestore.errors.GenericFiresto
 import com.georgevik.turnia.core.data.datasource.firestore.mappers.PersonalEventTypeDocMapper
 import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.PersonalEventType
+import com.georgevik.turnia.core.domain.session.SessionEvents
+import com.georgevik.turnia.core.domain.session.clearOnSignOut
 import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.errorOrNull
 import com.georgevik.turnia.core.system.outcomeCatching
@@ -12,6 +14,7 @@ import com.georgevik.turnia.core.system.toInstantOrNull
 import com.georgevik.turnia.core.system.valueOrNull
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Source
+import kotlinx.coroutines.CoroutineScope
 import kotlin.time.Instant
 
 /**
@@ -20,10 +23,16 @@ import kotlin.time.Instant
 class PersonalEventTypesFirestore(
     private val firestore: FirebaseFirestore,
     private val personalEventTypeDocMapper: PersonalEventTypeDocMapper,
-    private val userSyncFirestore: UserSyncFirestore
+    private val userSyncFirestore: UserSyncFirestore,
+    sessionEvents: SessionEvents,
+    scope: CoroutineScope,
 ) {
 
     private val lastSeenUpdate = mutableMapOf<String, Instant>()
+
+    init {
+        sessionEvents.clearOnSignOut(scope) { lastSeenUpdate.clear() }
+    }
 
     suspend fun get(
         uid: String,

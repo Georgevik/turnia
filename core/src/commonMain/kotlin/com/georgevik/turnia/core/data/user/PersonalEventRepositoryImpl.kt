@@ -8,6 +8,8 @@ import com.georgevik.turnia.core.domain.model.PersonalEvent
 import com.georgevik.turnia.core.domain.model.PersonalEventType
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
 import com.georgevik.turnia.core.domain.repository.UserRepository
+import com.georgevik.turnia.core.domain.session.SessionEvents
+import com.georgevik.turnia.core.domain.session.clearOnSignOut
 import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.errorOrNull
 import com.georgevik.turnia.core.system.isFailure
@@ -15,6 +17,7 @@ import com.georgevik.turnia.core.system.toFailure
 import com.georgevik.turnia.core.system.toInstant
 import com.georgevik.turnia.core.system.toSuccess
 import com.georgevik.turnia.core.system.valueOrNull
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.datetime.DateTimeUnit
@@ -27,10 +30,16 @@ class PersonalEventRepositoryImpl(
     private val userRepository: UserRepository,
     private val personalEventMapper: PersonalEventMapper,
     private val personalEventFirestore: PersonalEventFirestore,
-    private val personalEventTypesFirestore: PersonalEventTypesFirestore
+    private val personalEventTypesFirestore: PersonalEventTypesFirestore,
+    sessionEvents: SessionEvents,
+    scope: CoroutineScope,
 ) : PersonalEventRepository {
 
     private var eventTypesCache = mutableMapOf<String, PersonalEventType>()
+
+    init {
+        sessionEvents.clearOnSignOut(scope) { eventTypesCache.clear() }
+    }
 
     private val _onEventsChanged = MutableSharedFlow<Int>(replay = 0, extraBufferCapacity = 1)
     override val onEventsChanged = _onEventsChanged.asSharedFlow()
