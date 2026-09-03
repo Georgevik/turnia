@@ -16,25 +16,31 @@ service cloud.firestore {
       return isMember(groupId) &&
         get(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid)).data.role == 'admin';
     }
+    // `.get(field, [])` and not `.data.calendarSharedWith`: reading a field a document does not
+    // have raises an error, which denies the whole request instead of just this branch.
     function ownerOrShared(uid) {
       return isSignedIn() && (request.auth.uid == uid ||
-        request.auth.uid in get(/databases/$(database)/documents/users/$(uid)).data.calendarSharedWith);
+        request.auth.uid in get(/databases/$(database)/documents/users/$(uid)).data.get('calendarSharedWith', []));
     }
-    // A non-owner may only add/remove their own uid, and only in `calendarsSharedWithMe`.
-    function selfDeltaInSharedWithMe() {
-      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['calendarsSharedWithMe']) &&
-        request.resource.data.get('calendarsSharedWithMe', []).toSet()
-          .difference(resource.data.get('calendarsSharedWithMe', []).toSet()).hasOnly([request.auth.uid]) &&
-        resource.data.get('calendarsSharedWithMe', []).toSet()
-          .difference(request.resource.data.get('calendarsSharedWithMe', []).toSet()).hasOnly([request.auth.uid]);
-    }
-
+    // The public profile: the name, plus the `calendarSharedWith` grant list the rules and the
+    // sharing query both need. Anything else about a user lives under `private`.
     match /users/{uid} {
       allow read: if isSignedIn() && (request.auth.uid == uid ||
-        request.auth.uid in resource.data.calendarSharedWith);
+        request.auth.uid in resource.data.get('calendarSharedWith', []));
       allow write: if isSignedIn() && request.auth.uid == uid;
-      // Another user records a grant by adding themselves to `calendarsSharedWithMe`.
-      allow update: if isSignedIn() && request.auth.uid != uid && selfDeltaInSharedWithMe();
+
+      // Email, FCM tokens and entitlement: never readable by anyone else.
+      // `allow` rules are additive, so the wildcard has to exclude `subscription` explicitly —
+      // otherwise it would grant the write that the rule below denies.
+      match /private/{docId} {
+        allow read: if isSignedIn() && request.auth.uid == uid;
+        allow write: if isSignedIn() && request.auth.uid == uid && docId != 'subscription';
+      }
+      // Entitlement is server-verified: only the receipt-verification Cloud Function writes it.
+      match /private/subscription {
+        allow read: if isSignedIn() && request.auth.uid == uid;
+        allow write: if false;
+      }
 
       // Personal event types & events: owner writes; owner and shared users read.
       match /personalEventTypes/{typeId} {

@@ -15,7 +15,7 @@ class UserSyncFirestore(
     private val firestore: FirebaseFirestore
 ) {
 
-    suspend fun get(uid: String, ): Outcome<UserSyncDocument, GenericFirestoreError> =
+    suspend fun get(uid: String): Outcome<UserSyncDocument, GenericFirestoreError> =
         outcomeCatching({ GenericFirestoreError(it) }) {
             val snapshot = syncDocument(uid).get()
             Logger.d(TAG, "Sync updates. Cached: ${snapshot.metadata.isFromCache}")

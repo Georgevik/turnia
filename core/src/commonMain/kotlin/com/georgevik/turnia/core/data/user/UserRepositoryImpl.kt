@@ -1,17 +1,21 @@
 package com.georgevik.turnia.core.data.user
 
 import com.georgevik.turnia.core.data.datasource.firestore.UserPathFirestore
-import com.georgevik.turnia.core.data.datasource.firestore.doc.SubscriptionDocument
-import com.georgevik.turnia.core.data.datasource.firestore.doc.Tier
+import com.georgevik.turnia.core.data.datasource.firestore.UserPrivateFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.doc.UserDocument
+import com.georgevik.turnia.core.data.datasource.firestore.doc.UserPrivateDocument
 import com.georgevik.turnia.core.data.datasource.firestore.errors.UserProfileError
 import com.georgevik.turnia.core.data.datasource.firestore.mappers.UserDocumentMapper
 import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.User
+import com.georgevik.turnia.core.domain.model.UserProfile
 import com.georgevik.turnia.core.domain.model.UserSession
 import com.georgevik.turnia.core.domain.repository.UserRepository
+import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.errorOrNull
 import com.georgevik.turnia.core.system.fold
+import com.georgevik.turnia.core.system.mapError
+import com.georgevik.turnia.core.system.toFailure
 import com.georgevik.turnia.core.system.valueOrNull
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
@@ -31,6 +35,7 @@ import kotlinx.coroutines.flow.stateIn
 class UserRepositoryImpl(
     private val auth: FirebaseAuth,
     private val remoteProfiles: UserPathFirestore,
+    private val remotePrivate: UserPrivateFirestore,
     private val userFactory: UserDocumentMapper,
     private val scope: CoroutineScope
 ) : UserRepository {
@@ -59,8 +64,9 @@ class UserRepositoryImpl(
         val remoteUserResult = remoteProfiles.fetch(firebaseUser.uid)
         remoteUserResult.valueOrNull()?.let { fetchedUser ->
             Logger.i(TAG, "Success user info for users/<uid>")
+            val subscription = remotePrivate.fetchSubscription(firebaseUser.uid).valueOrNull()
             // Emit session with updated userinfo
-            emit(UserSession.Authenticated(userFactory.map(firebaseUser, fetchedUser)))
+            emit(UserSession.Authenticated(userFactory.map(firebaseUser, fetchedUser, subscription)))
             return@flow
         }
 
@@ -80,13 +86,15 @@ class UserRepositoryImpl(
     private suspend fun createUserInFirestore(firebaseUser: FirebaseUser) {
         Logger.w(TAG, "Empty users/${firebaseUser.uid}. New user ")
 
-        remoteProfiles.update(
-            firebaseUser.uid, UserDocument(
-                name = firebaseUser.displayName.orEmpty(),
+        remotePrivate.updateAccount(
+            firebaseUser.uid, UserPrivateDocument(
                 email = firebaseUser.email.orEmpty(),
                 fcmTokens = emptyList(),
-                subscription = SubscriptionDocument(tier = Tier.FREE)
             )
+        )
+
+        remoteProfiles.update(
+            firebaseUser.uid, UserDocument(name = firebaseUser.displayName.orEmpty())
         ).fold(
             onSuccess = { Logger.i(TAG, "Created users/${firebaseUser.uid}") },
             onFailure = {
@@ -96,6 +104,13 @@ class UserRepositoryImpl(
                 )
             }
         )
+    }
+
+    override suspend fun getCalendarsSharedWithMe(): Outcome<List<UserProfile>, Unit> {
+        val uid = _user?.firebaseUid ?: return Unit.toFailure()
+
+        return remoteProfiles.fetchCalendarsSharedWithMe(uid)
+            .mapError { error -> Logger.e(TAG, "Failed load shared calendars: $error") }
     }
 
     override suspend fun signOut() {

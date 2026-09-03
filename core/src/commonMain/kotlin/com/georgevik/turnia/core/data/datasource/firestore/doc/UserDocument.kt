@@ -3,10 +3,17 @@ package com.georgevik.turnia.core.data.datasource.firestore.doc
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+/**
+ * The public part of a user: readable by everyone they share their calendar with, so it holds only
+ * the name. `calendarSharedWith` stays here because the grant has to be queryable and the security
+ * rules read it to authorize the very access it grants — everything else lives under `private`.
+ */
 @Serializable
 data class UserDocument(
     @SerialName("name") val name: String,
-    @SerialName("email") val email: String,
-    @SerialName("fcmTokens") val fcmTokens: List<String>,
-    @SerialName("subscription") val subscription: SubscriptionDocument,
-)
+    @SerialName(FIELD_CALENDAR_SHARED_WITH) val calendarSharedWith: List<String> = emptyList(),
+) {
+    companion object {
+        const val FIELD_CALENDAR_SHARED_WITH = "calendarSharedWith"
+    }
+}

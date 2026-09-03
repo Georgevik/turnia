@@ -36,17 +36,36 @@ Everything on a calendar is an **event** (there is no separate "shift" term). Tw
 
 ## `users/{uid}`
 
+The **public** profile: every user this one shares their calendar with can read this whole document,
+so it carries nothing but the name and the grant list. Everything else lives under `private` (below).
+
 | Field | Type | Description |
 |-------|------|-------------|
 | `name` | string | Display name. |
+| `calendarSharedWith` | string[] | UIDs this user grants read access to **their** calendar. Written only by the owner. |
+| `groupEventTypeColors` | map&lt;string,string&gt; | Color per group event type, keyed by `"{groupId}_{groupEventTypeId}"` → hex. |
+
+> `calendarSharedWith` has to stay on the public document: the security rules read it to authorize the
+> very access it grants, and the "calendars shared with me" list is a query over it. The cost is that a
+> user you share with can see who else you share with.
+
+### `users/{uid}/private/account`
+
+Readable and writable **only by the owner**.
+
+| Field | Type | Description |
+|-------|------|-------------|
 | `email` | string | Account email. |
 | `fcmTokens` | string[] | FCM device tokens for push. |
-| `calendarSharedWith` | string[] | UIDs this user grants read access to **their** calendar. Written only by the owner. |
-| `calendarsSharedWithMe` | string[] | UIDs **whose** calendars this user may read. Written by those granters (each adds/removes only themselves). |
-| `groupEventTypeColors` | map&lt;string,string&gt; | Color per group event type, keyed by `"{groupId}_{groupEventTypeId}"` → hex. |
-| `subscription` | map \| null | Premium entitlement, **written only server-side** — see below. `null` / absent = free tier. |
 
-**`subscription`** map — set only by the subscription-verification Cloud Function after validating a store receipt:
+### `users/{uid}/private/subscription`
+
+Premium entitlement. Readable only by the owner; **the client can never write it** — the document is
+created and updated solely by the subscription-verification Cloud Function after validating a store
+receipt. An absent document means the free tier.
+
+| Field | Type | Description |
+|-------|------|-------------|
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -56,13 +75,18 @@ Everything on a calendar is an **event** (there is no separate "shift" term). Tw
 | `expiresAt` | timestamp \| null | Current period end; entitlement is active while now &lt; `expiresAt`. |
 | `updatedAt` | timestamp | Last time the server updated this from a store notification. |
 
-**Access**: readable by the owner and by UIDs in `calendarSharedWith`. The whole doc is writable only by the owner,
-**except**: (1) `calendarsSharedWithMe`, which another user may update by adding/removing **only their own uid**; and
-(2) `subscription`, which the **client can never write** — only the subscription-verification Cloud Function sets it.
+**Access**: `users/{uid}` is readable by the owner and by UIDs in `calendarSharedWith`, and writable only by
+the owner. `users/{uid}/private/**` is readable and writable only by the owner, except
+`private/subscription`, which the owner may read but never write.
 
-**Double check** — a user A may read B's calendar only if **both** hold: `B ∈ users/A.calendarsSharedWithMe`
-**and** `A ∈ users/B.calendarSharedWith`. To grant, the owner B writes A into `users/B.calendarSharedWith`
-(own doc) and adds B to `users/A.calendarsSharedWithMe` (a self-add into A's doc). `getSharedCalendar` enforces both.
+**Listing the calendars shared with me** — the grant lives on the **granter's** document, so the list is a
+query over `users` filtered by `calendarSharedWith array-contains {myUid}`, not a field of my own document.
+`array-contains` is covered by the automatic single-field index, and the rule on `users/{uid}` allows exactly
+the documents that query returns, so nothing else is readable through it.
+
+**A single source of truth for a grant** — A may read B's calendar if and only if `A ∈ users/B.calendarSharedWith`.
+Only B writes it, on their own document; `getSharedCalendar` and the security rules both check that one list.
+There is no mirrored list on the reader's side to drift out of sync with it.
 
 ### `users/{uid}/personalEventTypes/{typeId}`
 
@@ -258,10 +282,12 @@ Firestore keeps only a **recent window** of events; older events are purged and 
 - **Group-wide event queries are bounded to a ≤ 3-month `date` range** (collection-group on `event`, filtered by `groupId`).
 - **Cross-group shared calendars** are served on demand by the `getSharedCalendar` Cloud Function
   (collection-group on `event` filtered by `assigneeId` + date range); nothing is mirrored.
-- **Calendar sharing needs both sides**: `B ∈ users/A.calendarsSharedWithMe` and `A ∈ users/B.calendarSharedWith`.
+- **A grant lives in one place**: `users/{owner}.calendarSharedWith`, written only by the owner. No mirrored list.
+- **`users/{uid}` is public to everyone you share with** — the name and the grant list, nothing else; email,
+  FCM tokens and entitlement live under `users/{uid}/private/**`.
 - **Sync timestamps are bumped on every personal write**: a write to `personalEvents` / `personalEventTypes` must also
   merge the matching field of `users/{uid}/sync/updates`, or readers keep serving a stale cache.
-- **`subscription` is server-only**: only the subscription-verification Cloud Function writes `users/{uid}.subscription`; the client can never set itself premium.
+- **`subscription` is server-only**: only the subscription-verification Cloud Function writes `users/{uid}/private/subscription`; the client can never set itself premium.
 - **Firestore holds only recent events**: events with `date` older than 1 month are purged by the scheduled cleanup function; older events live only in the client's local NoSQL cache. History is append-only *within the retention window*, not forever in Firebase.
 
 See the domain overview in the root [`CLAUDE.md`](../CLAUDE.md) and the enforcement in [`firestore.rules`](./firestore.rules).

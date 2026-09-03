@@ -38,13 +38,11 @@ export const getSharedCalendar = onCall(async (request) => {
   const db = getFirestore();
   const ownerDoc = await db.doc(`users/${ownerUid}`).get();
 
-  // Authorization: the owner themselves, or a double-verified share — the owner
-  // granted the viewer AND the viewer's doc records the grant.
+  // Authorization: the owner themselves, or someone the owner listed in `calendarSharedWith`,
+  // which is the single source of truth for a grant.
   if (viewer !== ownerUid) {
     const sharedWith = (ownerDoc.get("calendarSharedWith") as string[] | undefined) ?? [];
-    const viewerDoc = await db.doc(`users/${viewer}`).get();
-    const sharedWithMe = (viewerDoc.get("calendarsSharedWithMe") as string[] | undefined) ?? [];
-    if (!sharedWith.includes(viewer) || !sharedWithMe.includes(ownerUid)) {
+    if (!sharedWith.includes(viewer)) {
       throw new HttpErrorPermissionDenied(TurniaErrorCode.SharedCalendarNotShared, "This calendar is not shared with you.");
     }
   }

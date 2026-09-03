@@ -23,8 +23,17 @@ class UserPathFirestore(
             Logger.d(TAG, "Fetch user from cache: ${snapshot.metadata.isFromCache}")
 
             if (!snapshot.exists) return Outcome.Failure(UserProfileError.NotFound)
-            val userDocument = snapshot.data(UserDocument.serializer())
-            mapper.map(uid, userDocument)
+            mapper.map(snapshot)
+        }
+
+    suspend fun fetchCalendarsSharedWithMe(uid: String): Outcome<List<UserProfile>, UserProfileError> =
+        outcomeCatching({ UserProfileError.LoadFailed(it) }) {
+            val snapshot = firestore.collection(PATH_USER).where {
+                UserDocument.FIELD_CALENDAR_SHARED_WITH contains uid
+            }.get()
+            Logger.d(TAG, "Calendars shared with me: ${snapshot.documents.size}")
+
+            snapshot.documents.map { mapper.map(it) }
         }
 
     suspend fun update(uid: String, userPatched: UserDocument): Outcome<Unit, UserProfileError> =
