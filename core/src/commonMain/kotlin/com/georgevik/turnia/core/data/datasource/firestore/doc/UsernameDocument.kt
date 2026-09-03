@@ -14,10 +14,11 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class UsernameDocument(
     @SerialName(FIELD_USERNAME) val username: String,
-    @SerialName("uid") val uid: String,
+    @SerialName(FIELD_UID) val uid: String,
     @SerialName("name") val name: String,
 ) {
     companion object {
         const val FIELD_USERNAME = "username"
+        const val FIELD_UID = "uid"
     }
 }

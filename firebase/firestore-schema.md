@@ -115,6 +115,10 @@ at 20 results. Firestore has **no substring or full-text search** — `jorge` fi
 finds nothing. Matching the middle of a handle, or searching by display name, needs either an n-gram field,
 a Cloud Function, or an external search index.
 
+**Resolving a uid** — `usernames` is also queried by `uid in [...]`, because `users/{uid}` is unreadable
+unless that person shares their calendar back: it is the only way to put a name to someone *you* granted
+access to. `uid` is covered by the automatic single-field index.
+
 **Renaming** is claim-then-release: reserve the new document, point `users/{uid}.username` at it, then
 delete the old one. A release that fails leaves a stale reservation, which only blocks that one username.
 

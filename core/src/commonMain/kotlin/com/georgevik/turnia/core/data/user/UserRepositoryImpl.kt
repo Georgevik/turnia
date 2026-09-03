@@ -16,6 +16,7 @@ import com.georgevik.turnia.core.system.errorOrNull
 import com.georgevik.turnia.core.system.mapError
 import com.georgevik.turnia.core.system.toFailure
 import com.georgevik.turnia.core.system.toSuccess
+import com.georgevik.turnia.core.system.valueOrElse
 import com.georgevik.turnia.core.system.valueOrNull
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
@@ -138,6 +139,26 @@ class UserRepositoryImpl(
     override suspend fun searchUsers(prefix: String): Outcome<List<UserProfile>, Unit> =
         remoteUsernames.search(prefix.trim().lowercase())
             .mapError { error -> Logger.e(TAG, "Failed username search: $error") }
+
+    override suspend fun getCalendarSharedWith(): Outcome<List<UserProfile>, Unit> {
+        val uid = loggedUser?.firebaseUid ?: return Unit.toFailure()
+
+        val sharedUids = remoteProfiles.getUserDocument(uid).valueOrElse { error ->
+            Logger.e(TAG, "Failed load the calendar grant list: $error")
+            return Unit.toFailure()
+        }.calendarSharedWith
+
+        if (sharedUids.isEmpty()) return emptyList<UserProfile>().toSuccess()
+
+        val resolved = remoteUsernames.findByUids(sharedUids).valueOrElse { error ->
+            Logger.e(TAG, "Failed resolve the users shared with: $error")
+            return Unit.toFailure()
+        }.associateBy { it.id }
+
+        return sharedUids.map { sharedUid ->
+            resolved[sharedUid] ?: UserProfile(id = sharedUid, name = "Unknown", username = "")
+        }.toSuccess()
+    }
 
     override suspend fun signOut() {
         auth.signOut()

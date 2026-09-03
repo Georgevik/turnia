@@ -35,6 +35,18 @@ class UsernameFirestore(
             firestore.collection(PATH_USERNAMES).document(username).delete()
         }
 
+    suspend fun findByUids(uids: List<String>): Outcome<List<UserProfile>, UsernameError> =
+        outcomeCatching({ UsernameError.SaveFailed }) {
+            uids.chunked(UID_QUERY_CHUNK).flatMap { chunk ->
+                val snapshot = firestore.collection(PATH_USERNAMES)
+                    .where { UsernameDocument.FIELD_UID inArray chunk }
+                    .get()
+                Logger.d(TAG, "Resolved ${snapshot.documents.size} of ${chunk.size} uids")
+
+                snapshot.documents.map { it.data(UsernameDocument.serializer()).toProfile() }
+            }
+        }
+
     suspend fun search(
         prefix: String,
         limit: Int = SEARCH_LIMIT
@@ -73,6 +85,9 @@ class UsernameFirestore(
         private const val TAG = "UsernameFirestore"
         private const val PATH_USERNAMES = "usernames"
         const val MIN_SEARCH_LENGTH = 3
+
+        // `in` takes a bounded list; ten keeps it well inside every SDK's limit.
+        private const val UID_QUERY_CHUNK = 10
         private const val SEARCH_LIMIT = 20
     }
 }

@@ -36,6 +36,14 @@ class UserPathFirestore(
             snapshot.documents.map { mapper.map(it) }
         }
 
+    suspend fun getUserDocument(uid: String): Outcome<UserDocument, UserProfileError> =
+        outcomeCatching({ UserProfileError.LoadFailed(it) }) {
+            val snapshot = firestore.collection(PATH_USER).document(uid).get()
+            if (!snapshot.exists) return Outcome.Failure(UserProfileError.NotFound)
+
+            snapshot.data(UserDocument.serializer())
+        }
+
     suspend fun updateProfile(
         uid: String,
         name: String,
