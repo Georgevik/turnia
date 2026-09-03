@@ -1,6 +1,6 @@
 package com.georgevik.turnia.core.data.user
 
-import com.georgevik.turnia.core.data.datasource.firestore.UserPathFirestore
+import com.georgevik.turnia.core.data.datasource.firestore.PersonalEventTypesFirestore
 import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.PersonalEvent
 import com.georgevik.turnia.core.domain.model.PersonalEventType
@@ -20,7 +20,7 @@ import kotlinx.datetime.plus
 
 class PersonalEventRepositoryImpl(
     private val userRepository: UserRepository,
-    private val userPathFirestore: UserPathFirestore
+    private val personalEventTypesFirestore: PersonalEventTypesFirestore
 ) : PersonalEventRepository {
 
     private val mockedMonths = mutableMapOf<String, List<PersonalEvent>>()
@@ -44,7 +44,7 @@ class PersonalEventRepositoryImpl(
 
     override suspend fun saveEventType(type: PersonalEventType): Outcome<Unit, Unit> {
         val userId = userRepository.loggedUser?.firebaseUid ?: return Unit.toFailure()
-        userPathFirestore.setPersonalEventType(userId, type)
+        personalEventTypesFirestore.set(userId, type)
         eventTypesCache[type.id] = type
         return Unit.toSuccess()
     }
@@ -52,7 +52,7 @@ class PersonalEventRepositoryImpl(
     override suspend fun deleteEventType(typeId: String): Outcome<Unit, Unit> {
         val userId = userRepository.loggedUser?.firebaseUid ?: return Unit.toFailure()
 
-        userPathFirestore.deletePersonalEventType(userId, typeId).errorOrNull()?.let { error ->
+        personalEventTypesFirestore.delete(userId, typeId).errorOrNull()?.let { error ->
             Logger.e(TAG, "Error deleting personal event type", error.error)
             return Unit.toFailure()
         }
@@ -94,7 +94,7 @@ class PersonalEventRepositoryImpl(
         }
 
         val userId = userRepository.loggedUser?.firebaseUid ?: return emptyList()
-        val typeResult = userPathFirestore.getPersonalEventTypes(userId)
+        val typeResult = personalEventTypesFirestore.get(userId)
 
         typeResult.errorOrNull()?.let { error ->
             Logger.e(TAG, "Error fetching personal event types", error.error)
