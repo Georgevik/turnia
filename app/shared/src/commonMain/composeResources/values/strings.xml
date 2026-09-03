@@ -171,6 +171,11 @@
     <string name="profile_error_username_taken">Ese nombre de usuario ya está en uso.</string>
     <string name="profile_error_save">No hemos podido guardar los cambios.</string>
 
+    <!-- Share calendar -->
+    <string name="share_calendar_title">Compartir calendario</string>
+    <string name="share_calendar_empty">Todavía no compartes tu calendario con nadie.</string>
+    <string name="calendar_more_options">Más opciones</string>
+
     <!-- Day detail sheet -->
     <string name="day_detail_personal_events">EVENTOS PERSONALES</string>
     <string name="day_detail_group_events">EVENTOS DE GRUPO</string>
