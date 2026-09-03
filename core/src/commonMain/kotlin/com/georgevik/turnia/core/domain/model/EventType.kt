@@ -15,4 +15,5 @@ sealed interface EventType {
     val startTime: String?
     val endTime: String?
     val color: String
+    val isDeleted: Boolean
 }

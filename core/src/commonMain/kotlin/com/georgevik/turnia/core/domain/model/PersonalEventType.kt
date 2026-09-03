@@ -8,4 +8,5 @@ data class PersonalEventType(
     override val description: String?,
     override val startTime: String?,
     override val endTime: String?,
+    override val isDeleted: Boolean = false,
 ) : EventType

@@ -28,6 +28,7 @@ class PersonalEventTypeDocMapper {
             description = doc.description,
             startTime = doc.startTime,
             endTime = doc.endTime,
+            isDeleted = doc.isDeleted,
         )
     }
 }

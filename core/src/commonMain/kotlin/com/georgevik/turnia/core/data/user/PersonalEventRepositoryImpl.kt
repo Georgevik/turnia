@@ -26,24 +26,8 @@ class PersonalEventRepositoryImpl(
     private val mockedMonths = mutableMapOf<String, List<PersonalEvent>>()
     private var eventTypesCache = mutableMapOf<String, PersonalEventType>()
 
-    override suspend fun getEventTypes(): List<PersonalEventType> {
-        if (eventTypesCache.isNotEmpty()) {
-            Logger.i(TAG, "Returning memory cached personal event types")
-            return eventTypesCache.values.toList()
-        }
-
-        val userId = userRepository.loggedUser?.firebaseUid ?: return emptyList()
-        val typeResult = userPathFirestore.getPersonalEventTypes(userId)
-
-        typeResult.errorOrNull()?.let { error ->
-            Logger.e(TAG, "Error fetching personal event types", error.error)
-        }
-
-        val eventTypes = typeResult.valueOrNull().orEmpty()
-        eventTypesCache.clear()
-        eventTypesCache.putAll(eventTypes.associateBy { it.id })
-        return eventTypes
-    }
+    override suspend fun getEventTypes(): List<PersonalEventType> =
+        allEventTypes().filterNot { it.isDeleted }
 
     override suspend fun addEvent(event: PersonalEvent) {
         mockDelay()
@@ -103,11 +87,27 @@ class PersonalEventRepositoryImpl(
 
     private fun bucketKey(date: LocalDate) = "${date.year}_${date.month}"
 
+    private suspend fun allEventTypes(): List<PersonalEventType> {
+        if (eventTypesCache.isNotEmpty()) {
+            Logger.i(TAG, "Returning memory cached personal event types")
+            return eventTypesCache.values.toList()
+        }
+
+        val userId = userRepository.loggedUser?.firebaseUid ?: return emptyList()
+        val typeResult = userPathFirestore.getPersonalEventTypes(userId)
+
+        typeResult.errorOrNull()?.let { error ->
+            Logger.e(TAG, "Error fetching personal event types", error.error)
+        }
+
+        val eventTypes = typeResult.valueOrNull().orEmpty()
+        eventTypesCache.clear()
+        eventTypesCache.putAll(eventTypes.associateBy { it.id })
+        return eventTypes
+    }
+
     override suspend fun getEventType(typeId: String): Result<PersonalEventType> {
-        // TODO If personal type is empty, then refresh. Otherwise we don't need to refresh
-        val eventType = getEventTypes().find { it.id == typeId }
-
-
+        val eventType = allEventTypes().find { it.id == typeId }
         return if (eventType != null) Result.success(eventType)
         else Result.failure(Exception("Type not found"))
     }

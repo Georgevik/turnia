@@ -11,7 +11,8 @@ data class GroupEventType(
     override val endTime: String?,
     val swappable: Boolean,
     private val colorHex: String,
-    private val userColor: String?
+    private val userColor: String?,
+    override val isDeleted: Boolean = false
 ) : EventType {
     override val color = userColor ?: colorHex
 }

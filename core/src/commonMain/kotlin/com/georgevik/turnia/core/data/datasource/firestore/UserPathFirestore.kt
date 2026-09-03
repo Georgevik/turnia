@@ -1,5 +1,6 @@
 package com.georgevik.turnia.core.data.datasource.firestore
 
+import com.georgevik.turnia.core.data.datasource.firestore.doc.PersonalEventTypeDocument
 import com.georgevik.turnia.core.data.datasource.firestore.doc.UserDocument
 import com.georgevik.turnia.core.data.datasource.firestore.errors.GenericFirestoreError
 import com.georgevik.turnia.core.data.datasource.firestore.errors.UserProfileError
@@ -65,11 +66,13 @@ class UserPathFirestore(
     ): Outcome<Unit, GenericFirestoreError> =
         outcomeCatching({ GenericFirestoreError(it) }) {
             Logger.i(TAG, "Delete personal type document")
-            firestore.collection(PATH_PERSONAL_TYPES(uid)).document(typeId).delete()
+            firestore.collection(PATH_PERSONAL_TYPES(uid)).document(typeId).updateFields {
+                PersonalEventTypeDocument.FIELD_IS_DELETED to true
+            }
         }
 
     companion object {
-        private const val TAG = "UserProfileFirestore"
+        private const val TAG = "UserPathFirestore"
         private const val PATH_USER = "users"
         private fun PATH_PERSONAL_TYPES(uid: String) = "${PATH_USER}/${uid}/personalEventTypes"
     }

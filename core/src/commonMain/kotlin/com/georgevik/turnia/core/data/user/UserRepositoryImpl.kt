@@ -58,7 +58,7 @@ class UserRepositoryImpl(
         // Firestore's own offline persistence serves this from disk when there is no network.
         val remoteUserResult = remoteProfiles.fetch(firebaseUser.uid)
         remoteUserResult.valueOrNull()?.let { fetchedUser ->
-            Logger.i(TAG, "Success user info for users/${firebaseUser.uid}")
+            Logger.i(TAG, "Success user info for users/<uid>")
             // Emit session with updated userinfo
             emit(UserSession.Authenticated(userFactory.map(firebaseUser, fetchedUser)))
             return@flow
