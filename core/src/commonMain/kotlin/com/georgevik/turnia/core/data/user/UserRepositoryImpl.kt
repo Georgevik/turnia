@@ -160,6 +160,20 @@ class UserRepositoryImpl(
         }.toSuccess()
     }
 
+    override suspend fun grantCalendarAccess(userId: String): Outcome<Unit, Unit> {
+        val uid = loggedUser?.firebaseUid ?: return Unit.toFailure()
+
+        return remoteProfiles.grantCalendarAccess(uid, userId)
+            .mapError { error -> Logger.e(TAG, "Failed to grant calendar access: $error") }
+    }
+
+    override suspend fun revokeCalendarAccess(userId: String): Outcome<Unit, Unit> {
+        val uid = loggedUser?.firebaseUid ?: return Unit.toFailure()
+
+        return remoteProfiles.revokeCalendarAccess(uid, userId)
+            .mapError { error -> Logger.e(TAG, "Failed to revoke calendar access: $error") }
+    }
+
     override suspend fun signOut() {
         auth.signOut()
     }

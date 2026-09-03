@@ -4,6 +4,7 @@ import com.georgevik.turnia.core.data.datasource.firestore.doc.UsernameDocument
 import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.UserProfile
 import com.georgevik.turnia.core.domain.model.UsernameError
+import com.georgevik.turnia.core.domain.username.USERNAME_SEARCH_MIN_LENGTH
 import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.outcomeCatching
 import dev.gitlive.firebase.firestore.FirebaseFirestore
@@ -52,7 +53,7 @@ class UsernameFirestore(
         limit: Int = SEARCH_LIMIT
     ): Outcome<List<UserProfile>, UsernameError> =
         outcomeCatching({ UsernameError.SaveFailed }) {
-            if (prefix.length < MIN_SEARCH_LENGTH) return@outcomeCatching emptyList()
+            if (prefix.length < USERNAME_SEARCH_MIN_LENGTH) return@outcomeCatching emptyList()
 
             val snapshot = firestore.collection(PATH_USERNAMES)
                 .where {
@@ -84,7 +85,6 @@ class UsernameFirestore(
     companion object {
         private const val TAG = "UsernameFirestore"
         private const val PATH_USERNAMES = "usernames"
-        const val MIN_SEARCH_LENGTH = 3
 
         // `in` takes a bounded list; ten keeps it well inside every SDK's limit.
         private const val UID_QUERY_CHUNK = 10

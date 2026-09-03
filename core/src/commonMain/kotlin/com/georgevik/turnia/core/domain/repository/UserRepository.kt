@@ -19,4 +19,8 @@ interface UserRepository {
     suspend fun searchUsers(prefix: String): Outcome<List<UserProfile>, Unit>
 
     suspend fun getCalendarSharedWith(): Outcome<List<UserProfile>, Unit>
+
+    suspend fun grantCalendarAccess(userId: String): Outcome<Unit, Unit>
+
+    suspend fun revokeCalendarAccess(userId: String): Outcome<Unit, Unit>
 }

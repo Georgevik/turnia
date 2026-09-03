@@ -7,6 +7,9 @@ private const val FALLBACK_BASE = "user"
 const val USERNAME_MIN_LENGTH = 3
 const val USERNAME_MAX_LENGTH = 20
 
+/** Below this a search matches most of the directory, so it is not run at all. */
+const val USERNAME_SEARCH_MIN_LENGTH = 3
+
 // Folded by hand: kotlin common has no Unicode normalizer, and these are the letters a Spanish
 // or Portuguese name actually brings.
 private val ACCENTS = mapOf(

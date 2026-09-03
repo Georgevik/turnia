@@ -7,6 +7,7 @@ import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.UserProfile
 import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.outcomeCatching
+import dev.gitlive.firebase.firestore.FieldValue
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 
 /**
@@ -42,6 +43,28 @@ class UserPathFirestore(
             if (!snapshot.exists) return Outcome.Failure(UserProfileError.NotFound)
 
             snapshot.data(UserDocument.serializer())
+        }
+
+    suspend fun grantCalendarAccess(
+        uid: String,
+        granteeUid: String
+    ): Outcome<Unit, UserProfileError> =
+        outcomeCatching({ UserProfileError.LoadFailed(it) }) {
+            Logger.i(TAG, "Grant calendar access")
+            firestore.collection(PATH_USER).document(uid).updateFields {
+                UserDocument.FIELD_CALENDAR_SHARED_WITH to FieldValue.arrayUnion(granteeUid)
+            }
+        }
+
+    suspend fun revokeCalendarAccess(
+        uid: String,
+        granteeUid: String
+    ): Outcome<Unit, UserProfileError> =
+        outcomeCatching({ UserProfileError.LoadFailed(it) }) {
+            Logger.i(TAG, "Revoke calendar access")
+            firestore.collection(PATH_USER).document(uid).updateFields {
+                UserDocument.FIELD_CALENDAR_SHARED_WITH to FieldValue.arrayRemove(granteeUid)
+            }
         }
 
     suspend fun updateProfile(

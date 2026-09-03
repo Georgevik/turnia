@@ -177,6 +177,17 @@
     <string name="share_calendar_empty">Todavía no compartes tu calendario con nadie.</string>
     <string name="share_calendar_unknown_user">Usuario sin perfil</string>
     <string name="share_calendar_load_error">No hemos podido cargar con quién compartes tu calendario.</string>
+    <string name="share_calendar_add">Compartir con alguien</string>
+    <string name="share_calendar_search_hint">nombre de usuario</string>
+    <string name="share_calendar_search_min">Escribe al menos 3 caracteres del nombre de usuario.</string>
+    <string name="share_calendar_search_empty">Nadie con ese nombre de usuario.</string>
+    <string name="share_calendar_already_shared">Ya ve tu calendario</string>
+    <string name="share_calendar_grant_error">No hemos podido compartir tu calendario.</string>
+    <string name="share_calendar_revoke">Dejar de compartir</string>
+    <string name="share_calendar_revoke_title">¿Dejar de compartir?</string>
+    <string name="share_calendar_revoke_message">%1$s dejará de ver tu calendario.</string>
+    <string name="share_calendar_revoke_confirm">Dejar de compartir</string>
+    <string name="share_calendar_revoke_error">No hemos podido dejar de compartir.</string>
     <string name="calendar_more_options">Más opciones</string>
 
     <!-- Day detail sheet -->
