@@ -7,7 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-/** Top-level divider between the private and group areas of the add-event sheet. */
+/** Top-level divider between the personal and group areas of the add-event sheet. */
 @Composable
 fun DayCategoryLabel(text: String, modifier: Modifier = Modifier) {
     Text(

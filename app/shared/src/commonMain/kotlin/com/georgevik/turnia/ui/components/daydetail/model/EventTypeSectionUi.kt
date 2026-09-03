@@ -4,11 +4,11 @@ import androidx.compose.runtime.Immutable
 
 @Immutable
 data class EventTypeSectionUi(
-    val type: Type,
-    val events: List<PredefinedEventUi>,
+    val source: Source,
+    val events: List<EventTypeUi>,
 ) {
-    sealed interface Type {
-        data object Personal : Type
-        data class Group(var groupId: String, var groupName: String) : Type
+    sealed interface Source {
+        data object Personal : Source
+        data class Group(var groupId: String, var groupName: String) : Source
     }
 }

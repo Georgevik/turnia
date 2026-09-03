@@ -1,4 +1,4 @@
-package com.georgevik.turnia.ui.composables.components.custom
+package com.georgevik.turnia.ui.system.components
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text

@@ -1,11 +1,11 @@
 package com.georgevik.turnia.core.domain.model
 
 data class PersonalEventType(
-    val id: String,
-    val name: String,
-    val color: String,
-    val acronym: String,
-    val description: String?,
-    val startTime: String?,
-    val endTime: String?,
-)
+    override val id: String,
+    override val name: String,
+    override val color: String,
+    override val acronym: String,
+    override val description: String?,
+    override val startTime: String?,
+    override val endTime: String?,
+) : EventType

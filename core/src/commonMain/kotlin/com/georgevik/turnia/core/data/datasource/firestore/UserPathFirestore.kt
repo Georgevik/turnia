@@ -37,7 +37,7 @@ class UserPathFirestore(
             firestore.collection(PATH_USER).document(uid).set(userPatched)
         }
 
-    suspend fun personalTypes(uid: String): Outcome<List<PersonalEventType>, GenericFirestoreError> =
+    suspend fun getPersonalEventTypes(uid: String): Outcome<List<PersonalEventType>, GenericFirestoreError> =
         outcomeCatching({ GenericFirestoreError(it) }) {
             val snapshot = firestore.collection("${PATH_USER}/${uid}/personalEventTypes").get()
             Logger.i(
@@ -48,7 +48,7 @@ class UserPathFirestore(
             snapshot.documents.map { personalEventTypeDocMapper.map(it) }
         }
 
-    suspend fun setPersonalType(
+    suspend fun setPersonalEventType(
         uid: String,
         personalType: PersonalEventType
     ): Outcome<Unit, GenericFirestoreError> =

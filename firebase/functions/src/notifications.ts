@@ -3,12 +3,12 @@ import { getFirestore } from "firebase-admin/firestore";
 import { getMessaging } from "firebase-admin/messaging";
 
 /**
- * Notifies the other group members when an event is put on sale.
+ * Notifies the other group members when an event is put up for swap.
  *
  * Triggered on the event doc under its assignee. Only reacts to the
- * `onSale: false → true` transition; transfers are notified by `takeEvent`.
+ * `onSwap: false → true` transition; transfers are notified by `takeEvent`.
  */
-export const onEventPutOnSale = onDocumentWritten(
+export const onEventPutOnSwap = onDocumentWritten(
   "groups/{groupId}/members/{memberUid}/event/{eventId}",
   async (event) => {
     const before = event.data?.before.data();
@@ -16,7 +16,7 @@ export const onEventPutOnSale = onDocumentWritten(
     if (!before || !after) {
       return;
     }
-    if (before.onSale === true || after.onSale !== true) {
+    if (before.onSwap === true || after.onSwap !== true) {
       return;
     }
 
@@ -41,7 +41,7 @@ export const onEventPutOnSale = onDocumentWritten(
 
     await getMessaging().sendEachForMulticast({
       tokens,
-      notification: { title: "Turnia", body: "A shift was put on sale." },
+      notification: { title: "Turnia", body: "A shift was put up for swap." },
       data: { groupId, eventId },
     });
   }

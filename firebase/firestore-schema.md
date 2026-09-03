@@ -21,10 +21,10 @@ Everything on a calendar is an **event** (there is no separate "shift" term). Tw
 
 - **Group event** — stored under the group member who currently performs it
   (`groups/{groupId}/members/{uid}/event/{eventId}`), typed by a `groupEventType` the admin defines.
-  Can be put on sale and transferred between members (traceable). Single source of truth — there is no
+  Can be put up for swap and transferred between members (traceable). Single source of truth — there is no
   separate mirror.
 - **Personal event** — stored under a single user, typed by a `personalEventType` the user defines. Not
-  shareable/tradeable; just shown on the calendar.
+  shareable/swappable; just shown on the calendar.
 
 ## Colors
 
@@ -154,7 +154,7 @@ subcollection.
 | `assigneeId` | string | Current performer / last taker (equals `{uid}`). |
 | `groupEventTypeId` | string | References `groups/{groupId}.groupEventTypes[].id`. |
 | `date` | string | `YYYY-MM-DD`. |
-| `onSale` | boolean | `true` = offered for others to take. |
+| `onSwap` | boolean | `true` = offered for others to take. |
 | `createdAt` | timestamp | Creation time. |
 
 **Access**: readable by any member of the group; `create` by the member for themselves
@@ -168,13 +168,13 @@ Taking is a cross-member move done by the `takeEvent` Cloud Function (see below)
 
 ### `groups/{groupId}/members/{uid}/event/{eventId}/history/{historyId}`
 
-**Append-only** log of the event's tradeable lifecycle (put on sale, transfers), stored alongside the event
+**Append-only** log of the event's swap lifecycle (offered for swap, transfers), stored alongside the event
 under the current assignee. On a transfer the `takeEvent` function copies it forward to the new assignee, so
 the current holder always has the full chain. Each entry links to the previous via `parentEventId`.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `type` | string | `put_on_sale` \| `transferred`. |
+| `type` | string | `put_on_swap` \| `transferred`. |
 | `actorUid` | string | Who performed the action. |
 | `fromUid` | string \| null | Previous assignee (for `transferred`). |
 | `toUid` | string \| null | New assignee (for `transferred`). |
@@ -187,13 +187,13 @@ the current holder always has the full chain. Each entry links to the previous v
 
 ## Enumerations
 
-### On sale
+### Offered for swap
 
-An event is either on sale or not — no multi-value state and no "deleted" state (a deleted event is removed).
-Represented by the boolean `event.onSale`.
+An event is either offered for swap or not — no multi-value state and no "deleted" state (a deleted event is removed).
+Represented by the boolean `event.onSwap`.
 
-- `onSale: false → true` — the current assignee offers the event.
-- `onSale: true → false` — the offer is withdrawn, or a member takes it (moving the event to the new assignee).
+- `onSwap: false → true` — the current assignee offers the event.
+- `onSwap: true → false` — the offer is withdrawn, or a member takes it (moving the event to the new assignee).
 
 ### History event type
 
@@ -201,7 +201,7 @@ Represented by the boolean `event.onSale`.
 
 | Value | Emitted when | `fromUid` / `toUid` |
 |-------|--------------|---------------------|
-| `put_on_sale` | The assignee puts the event on sale. | — |
+| `put_on_swap` | The assignee puts the event up for swap. | — |
 | `transferred` | A member takes the event; it moves to the new assignee. | `from` = previous assignee, `to` = new assignee |
 
 ### Member role
@@ -235,7 +235,7 @@ Firestore keeps only a **recent window** of events; older events are purged and 
 - **Group event docs are readable by every group member** — never put private data (e.g. notes) on them.
   Personal events are private to the owner and their shared users, so their `notes` live on the event doc.
 - **Joining a group is two steps**: `requestToJoinGroup` then `acceptJoinRequest` (admin). The client never writes `members` on join.
-- **Taking an on-sale event** is a `takeEvent` Cloud Function that verifies `onSale == true` in a transaction and moves the event (a cross-member write).
+- **Taking an event offered for swap** is a `takeEvent` Cloud Function that verifies `onSwap == true` in a transaction and moves the event (a cross-member write).
 - **Push** is sent only from Cloud Functions, never from the client.
 - **Colors**: `groupEventType` has no color (user's `groupEventTypeColors` decides it); `personalEventType` carries its own.
 - **Group-wide event queries are bounded to a ≤ 3-month `date` range** (collection-group on `event`, filtered by `groupId`).

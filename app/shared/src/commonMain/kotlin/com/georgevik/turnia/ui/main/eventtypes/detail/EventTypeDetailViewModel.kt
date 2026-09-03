@@ -92,7 +92,7 @@ class EventTypeDetailViewModel(
     fun onPickColor(color: Color) {
         viewModelScope.launch {
             when (key) {
-                is EventTypeDetailData.EditGroup -> groupRepository.updateColor(
+                is EventTypeDetailData.EditGroup -> groupRepository.saveTypeColor(
                     typeId = key.typeId,
                     groupId = key.groupId,
                     color = color.toHex()
@@ -148,7 +148,7 @@ class EventTypeDetailViewModel(
         viewModelScope.launch {
             updateSuccess { it.copy(saveButtonLoading = true) }
 
-            personalRepository.update(type).fold(
+            personalRepository.saveEventType(type).fold(
                 onSuccess = { updateSuccess { it.copy(saveButtonLoading = false, isSaved = true) } },
                 onFailure = {
                     updateSuccess {

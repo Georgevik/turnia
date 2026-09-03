@@ -36,8 +36,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import com.georgevik.turnia.ui.composables.components.custom.ConfirmationDialog
 import com.georgevik.turnia.ui.system.LocalPaddings
+import com.georgevik.turnia.ui.system.components.ConfirmationDialog
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import turnia.app.shared.generated.resources.Res

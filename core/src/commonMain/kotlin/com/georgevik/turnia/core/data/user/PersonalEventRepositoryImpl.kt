@@ -24,48 +24,48 @@ class PersonalEventRepositoryImpl(
 ) : PersonalEventRepository {
 
     private val mockedMonths = mutableMapOf<String, List<PersonalEvent>>()
-    private var myPersonalEvents = mutableMapOf<String, PersonalEventType>()
+    private var eventTypesCache = mutableMapOf<String, PersonalEventType>()
 
-    override suspend fun getPersonalEventTypes(): List<PersonalEventType> {
-        if (myPersonalEvents.isNotEmpty()) {
+    override suspend fun getEventTypes(): List<PersonalEventType> {
+        if (eventTypesCache.isNotEmpty()) {
             Logger.i(TAG, "Returning memory cached personal event types")
-            return myPersonalEvents.values.toList()
+            return eventTypesCache.values.toList()
         }
 
         val userId = userRepository.loggedUser?.firebaseUid ?: return emptyList()
-        val typeResult = userPathFirestore.personalTypes(userId)
+        val typeResult = userPathFirestore.getPersonalEventTypes(userId)
 
         typeResult.errorOrNull()?.let { error ->
             Logger.e(TAG, "Error fetching personal event types", error.error)
         }
 
-        val newPersonalTypeEvent = typeResult.valueOrNull().orEmpty()
-        myPersonalEvents.clear()
-        myPersonalEvents.putAll(newPersonalTypeEvent.associateBy { it.id })
-        return newPersonalTypeEvent
+        val eventTypes = typeResult.valueOrNull().orEmpty()
+        eventTypesCache.clear()
+        eventTypesCache.putAll(eventTypes.associateBy { it.id })
+        return eventTypes
     }
 
-    override suspend fun addPersonalEvent(event: PersonalEvent) {
+    override suspend fun addEvent(event: PersonalEvent) {
         mockDelay()
         val existing = getEventsPerDate(event.date)
         mockedMonths[bucketKey(event.date)] = existing + event
     }
 
-    override suspend fun deletePersonalEvent(eventId: String) {
+    override suspend fun deleteEvent(eventId: String) {
         mockDelay()
         mockedMonths.keys.toList().forEach { key ->
             mockedMonths[key] = mockedMonths.getValue(key).filterNot { it.id == eventId }
         }
     }
 
-    override suspend fun update(type: PersonalEventType): Outcome<Unit, Unit> {
+    override suspend fun saveEventType(type: PersonalEventType): Outcome<Unit, Unit> {
         val userId = userRepository.loggedUser?.firebaseUid ?: return Unit.toFailure()
-        userPathFirestore.setPersonalType(userId, type)
-        myPersonalEvents[type.id] = type
+        userPathFirestore.setPersonalEventType(userId, type)
+        eventTypesCache[type.id] = type
         return Unit.toSuccess()
     }
 
-    override suspend fun retrievePersonalEvents(
+    override suspend fun getEvents(
         userId: String,
         date: LocalDate,
         monthDelta: Int
@@ -93,7 +93,7 @@ class PersonalEventRepositoryImpl(
 
     override suspend fun getEventType(typeId: String): Result<PersonalEventType> {
         // TODO If personal type is empty, then refresh. Otherwise we don't need to refresh
-        val eventType = getPersonalEventTypes().find { it.id == typeId }
+        val eventType = getEventTypes().find { it.id == typeId }
 
 
         return if (eventType != null) Result.success(eventType)

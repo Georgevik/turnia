@@ -2,6 +2,7 @@ package com.georgevik.turnia.ui.components.daydetail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.georgevik.turnia.core.domain.model.EventType
 import com.georgevik.turnia.core.domain.model.Group
 import com.georgevik.turnia.core.domain.model.GroupEvent
 import com.georgevik.turnia.core.domain.model.GroupEventType
@@ -12,12 +13,12 @@ import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
 import com.georgevik.turnia.core.domain.repository.UserRepository
 import com.georgevik.turnia.core.system.fold
 import com.georgevik.turnia.core.system.outcomeCatching
-import com.georgevik.turnia.ui.components.calendar.model.CalendarEventType
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
+import com.georgevik.turnia.ui.components.calendar.model.EventSource
 import com.georgevik.turnia.ui.components.daydetail.model.AddEventTypesError
 import com.georgevik.turnia.ui.components.daydetail.model.AddEventTypesUi
 import com.georgevik.turnia.ui.components.daydetail.model.EventTypeSectionUi
-import com.georgevik.turnia.ui.components.daydetail.model.PredefinedEventUi
+import com.georgevik.turnia.ui.components.daydetail.model.EventTypeUi
 import com.georgevik.turnia.ui.system.entityColor
 import com.georgevik.turnia.ui.system.toComposeColorOr
 import com.georgevik.turnia.ui.system.toHex
@@ -54,7 +55,7 @@ class DayDetailSheetViewModel(
             val outcome = outcomeCatching({ AddEventTypesError.LoadFailed }) {
                 coroutineScope {
                     val groups = async { groupRepository.getGroups() }
-                    val personalTypes = async { personalRepository.getPersonalEventTypes() }
+                    val personalTypes = async { personalRepository.getEventTypes() }
                     buildSections(personalTypes.await(), groups.await())
                 }
             }
@@ -70,25 +71,24 @@ class DayDetailSheetViewModel(
 
     fun removeEvent(event: CalendarEventUi) {
         viewModelScope.launch {
-            when (event.type) {
-                CalendarEventType.GROUP -> groupRepository.deleteGroupEvent(event.id)
-                CalendarEventType.PERSONAL -> personalRepository.deletePersonalEvent(event.id)
+            when (event.source) {
+                EventSource.GROUP -> groupRepository.deleteEvent(event.id)
+                EventSource.PERSONAL -> personalRepository.deleteEvent(event.id)
             }
         }
     }
 
-    fun addPredefinedEvent(predefinedEventUi: PredefinedEventUi) {
-        when (val domainObject = predefinedEventUi.domainObject) {
-            is GroupEventType -> addNewEvent(domainObject, predefinedEventUi)
-            is PersonalEventType -> addNewEvent(domainObject)
-            else -> throw IllegalArgumentException("Unknown domain object $domainObject")
+    fun addEventOfType(eventTypeUi: EventTypeUi) {
+        when (val eventType = eventTypeUi.eventType) {
+            is GroupEventType -> addNewEvent(eventType, eventTypeUi)
+            is PersonalEventType -> addNewEvent(eventType)
         }
     }
 
-    private fun addNewEvent(type: GroupEventType, predefinedEventUi: PredefinedEventUi) {
+    private fun addNewEvent(type: GroupEventType, eventTypeUi: EventTypeUi) {
         viewModelScope.launch {
             val userId = userRepository.loggedUser?.uid  ?: return@launch // TODO Emit error
-            groupRepository.addGroupEvent(
+            groupRepository.addEvent(
                 GroupEvent(
                     id = Uuid.random().toString(),
                     groupId = type.groupId,
@@ -99,7 +99,7 @@ class DayDetailSheetViewModel(
                     type = type,
                     date = date,
                     onSwap = false,
-                    colorHex = predefinedEventUi.color.toHex(),
+                    colorHex = eventTypeUi.color.toHex(),
                     history = emptyList(),
                 )
             )
@@ -108,7 +108,7 @@ class DayDetailSheetViewModel(
 
     private fun addNewEvent(type: PersonalEventType) {
         viewModelScope.launch {
-            personalRepository.addPersonalEvent(
+            personalRepository.addEvent(
                 PersonalEvent(
                     id = Uuid.random().toString(),
                     type = type,
@@ -131,8 +131,8 @@ class DayDetailSheetViewModel(
         val personalSection = when (addMode) {
             DayAddMode.Full -> listOf(
                 EventTypeSectionUi(
-                    type = EventTypeSectionUi.Type.Personal,
-                    events = personalTypes.map { it.toPredefined() },
+                    source = EventTypeSectionUi.Source.Personal,
+                    events = personalTypes.map { it.toUi() },
                 )
             )
 
@@ -140,25 +140,18 @@ class DayDetailSheetViewModel(
         }
         val groupSections = visibleGroups.map { group ->
             EventTypeSectionUi(
-                type = EventTypeSectionUi.Type.Group(group.id, group.name),
-                events = group.types.map { it.toPredefined() },
+                source = EventTypeSectionUi.Source.Group(group.id, group.name),
+                events = group.types.map { it.toUi() },
             )
         }
 
         return (personalSection + groupSections).filter { it.events.isNotEmpty() }
     }
 
-    private fun PersonalEventType.toPredefined() = PredefinedEventUi(
+    private fun EventType.toUi() = EventTypeUi(
         id = id,
         title = acronym ?: name,
         color = color.toComposeColorOr(entityColor(id)),
-        domainObject = this,
-    )
-
-    private fun GroupEventType.toPredefined() = PredefinedEventUi(
-        id = id,
-        title = acronym ?: name,
-        color = color.toComposeColorOr(entityColor(id)),
-        domainObject = this
+        eventType = this,
     )
 }

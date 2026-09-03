@@ -68,7 +68,7 @@ export const getSharedCalendar = onCall(async (request) => {
     eventId: doc.id,
     groupEventTypeId: doc.get("groupEventTypeId"),
     date: doc.get("date"),
-    onSale: doc.get("onSale"),
+    onSwap: doc.get("onSwap"),
     ownerId: doc.get("ownerId"),
     assigneeId: doc.get("assigneeId"),
   }));

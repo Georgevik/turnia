@@ -31,7 +31,7 @@ export enum TurniaErrorCode {
   TakeEventNotMember = 3003,
   TakeEventSelf = 3004,
   TakeEventNotFound = 3005,
-  TakeEventNotOnSale = 3006,
+  TakeEventNotOnSwap = 3006,
 
   // shared calendar
   SharedCalendarUnauthenticated = 4001,

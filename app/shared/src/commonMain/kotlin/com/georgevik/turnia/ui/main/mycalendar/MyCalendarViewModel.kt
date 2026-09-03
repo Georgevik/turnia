@@ -67,12 +67,12 @@ class MyCalendarViewModel(
         userId: String,
         date: LocalDate
     ): Map<LocalDate, List<CalendarEventUi>> {
-        val personalResult = personalRepository.retrievePersonalEvents(userId, date, monthDelta = 2)
+        val personalResult = personalRepository.getEvents(userId, date, monthDelta = 2)
         if (personalResult.isFailure) {
             // TODO Emit error
         }
 
-        val groupResult = groupRepository.retrieveCalendarEvents(userId, date, monthDelta = 2)
+        val groupResult = groupRepository.getEventsByUser(userId, date, monthDelta = 2)
         if (groupResult.isFailure) {
             // TODO Emit error
         }

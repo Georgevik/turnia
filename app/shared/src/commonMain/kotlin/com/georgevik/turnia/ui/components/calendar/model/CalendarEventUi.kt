@@ -8,7 +8,7 @@ import com.georgevik.turnia.core.domain.model.PersonalEvent
 import com.georgevik.turnia.ui.system.toComposeColorOrNull
 import kotlinx.datetime.LocalDate
 
-enum class CalendarEventType { GROUP, PERSONAL }
+enum class EventSource { GROUP, PERSONAL }
 
 data class TransferHolderUi(
     val name: String,
@@ -18,7 +18,7 @@ data class TransferHolderUi(
 @Immutable
 data class CalendarEventUi(
     val id: String,
-    val type: CalendarEventType,
+    val source: EventSource,
     val name: String,
     val acronym: String?,
     val background: Color,
@@ -41,7 +41,7 @@ data class CalendarEventUi(
     companion object {
         fun create(
             id: String,
-            type: CalendarEventType,
+            source: EventSource,
             name: String,
             background: Color,
             date: LocalDate,
@@ -57,7 +57,7 @@ data class CalendarEventUi(
             removable: Boolean = false,
         ): CalendarEventUi = CalendarEventUi(
             id = id,
-            type = type,
+            source = source,
             name = name,
             acronym = acronym,
             background = background,
@@ -82,7 +82,7 @@ fun GroupEvent.toUi(
     removable: Boolean = false,
 ) = CalendarEventUi.create(
     id = id,
-    type = CalendarEventType.GROUP,
+    source = EventSource.GROUP,
     name = type.name,
     acronym = type.acronym,
     date = date,
@@ -104,7 +104,7 @@ private fun GroupEvent.buildTransferChain(currentUserId: String?): List<Transfer
 
 fun PersonalEvent.toUi(removable: Boolean = false) = CalendarEventUi.create(
     id = id,
-    type = CalendarEventType.PERSONAL,
+    source = EventSource.PERSONAL,
     name = type.name,
     acronym = type.acronym,
     date = date,

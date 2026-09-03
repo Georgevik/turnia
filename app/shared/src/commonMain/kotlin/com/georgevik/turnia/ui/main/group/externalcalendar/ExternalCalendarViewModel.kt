@@ -37,7 +37,7 @@ class ExternalCalendarViewModel(
                 val uid = userRepository.loggedUser?.uid ?: return@collect
 
                 val calendarUiEvents = when (data) {
-                    is ExternalCalendarData.Group -> groupRepository.retrieveGroupEvents(
+                    is ExternalCalendarData.Group -> groupRepository.getEventsByGroup(
                         data.id,
                         date,
                         monthDelta = 2
@@ -50,7 +50,7 @@ class ExternalCalendarViewModel(
                         }
                     }
 
-                    is ExternalCalendarData.Personal -> personalRepository.retrievePersonalEvents(
+                    is ExternalCalendarData.Personal -> personalRepository.getEvents(
                         data.id,
                         date,
                         monthDelta = 2

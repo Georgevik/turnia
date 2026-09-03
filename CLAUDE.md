@@ -28,11 +28,11 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
 | **User** | Healthcare professional (nurse/doctor); can belong to several groups. |
 | **Group** | A team an admin creates; defines its own group event types. Members see the group's events. |
 | **Group event type** | An event template of a group (name, description, optional start/end time). **No color** — each user colors it themselves. |
-| **Group event** | Stored under the member who performs it (`{uid} == assigneeId`); has an `ownerId` (creator). Can be on sale. |
+| **Group event** | Stored under the member who performs it (`{uid} == assigneeId`); has an `ownerId` (creator). Can be offered for swap. |
 | **Personal event type** | A template a user defines for themselves (name, color, optional description/times). |
 | **Personal event** | An instance of a personal event type on a date; belongs to no group. |
-| **On sale** | The assignee offers their event; another member can take it. |
-| **Transfer** | A member takes an on-sale event; it moves to the new assignee and is logged (A→B). |
+| **Swap offer** | The assignee offers their event; another member can take it. |
+| **Transfer** | A member takes an event offered for swap; it moves to the new assignee and is logged (A→B). |
 | **Shared calendar** | A user can grant another user full read access to their calendar (across groups). |
 | **Change chain** | Ordered, append-only history of transfers over the same event. |
 
@@ -40,7 +40,7 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
 
 - An **admin** creates a group and defines the group's group event types.
 - Each group has a **single invitation**. Anyone with the code can **request** to join; a group **admin must accept** the request.
-- A user can put a group event **on sale**; another member can take it (it moves to the taker).
+- A user can put a group event **up for swap**; another member can take it (it moves to the taker).
 - A user can **delete their own** event; an **admin** can delete any group event. Deleting removes it (there is no cancelled state).
 - **Personal events** can carry notes (on the event); group event docs are shared with all members, so they hold no private notes.
 - A user can define their own **personal event types** and add **personal events** (no group), each colored by its type.
@@ -64,6 +64,16 @@ Firebase must **not** accumulate every past event forever. The backend keeps onl
 - The local cache is normalized (events reference their types/users by id) to avoid duplication and allow rendering colors/types offline.
 
 ## Code style
+
+- **Naming** — one word per concept, no synonyms. The vocabulary is fixed:
+
+  | Word | Means | Never call it |
+  |------|-------|---------------|
+  | `EventType` | The **template** an event is created from. Sealed: `GroupEventType` \| `PersonalEventType`, `Template*` |
+  | `Personal` | Belongs to one user, no group. | `Custom`, `Private`, `Own` |
+  | `Group` | Belongs to a group. | `Shared`, `Team` |
+  | `EventSource` | **Where an event comes from** (`GROUP` \| `PERSONAL`) — an axis, not a template. Field name: `source`. | `type` (that word is taken by `EventType`) |
+  | `swap` | Offering an event so another member takes it. `GroupEvent.onSwap` = offered right now; `GroupEventType.swappable` = the type allows it at all. | `sale`, `trade`, `sell` (`onSale` is dead) |
 
 - **Comments** — do **not** add a comment to every file, function or header. Comments belong only on **non-obvious, non-logic** code (a business rule, a workaround, a subtle invariant, a "why"). A comment that restates what the code already says is redundant — omit it.
 
@@ -167,9 +177,9 @@ See [firebase/firestore-schema.md](firebase/firestore-schema.md) — the single 
   (`groups/{groupId}/members/{uid}/event/{eventId}/history`).
 - On a transfer the `takeEvent` Cloud Function moves the event to the new assignee and **copies the history
   forward**, so the current holder's subcollection always has the full chain.
-- It records only the tradeable lifecycle: `put_on_sale` and `transferred` (with `fromUid`→`toUid`).
+- It records only the swap lifecycle: `put_on_swap` and `transferred` (with `fromUid`→`toUid`).
 - Each entry points to `parentEventId`, so the full chain A→B→C can be reconstructed.
-- **Taking an on-sale event** runs in a `takeEvent` transaction that checks `onSale == true` before moving it, to prevent double assignment.
+- **Taking an event offered for swap** runs in a `takeEvent` transaction that checks `onSwap == true` before moving it, to prevent double assignment.
 
 ## Permissions (Security Rules)
 
@@ -184,7 +194,7 @@ See [firebase/firestore-schema.md](firebase/firestore-schema.md) — the single 
 1. **No private fields on shared docs** — Firestore does not hide individual fields: if you can read the document, you read all of it. A group event doc is readable by every group member, so never put private data (notes, etc.) on it. Personal events are readable only by the owner and their shared users, so their `notes` may live on the doc.
 2. **Viewing another user's full calendar (crosses groups)** — group events live under group members, so a user **outside** the group cannot read them directly. The cross-group shared calendar is served **on demand** by the `getSharedCalendar` Cloud Function. Sharing is **double-verified**: A may read B only if `B ∈ users/A.calendarsSharedWithMe` **and** `A ∈ users/B.calendarSharedWith`. The function checks both, then aggregates the owner's group + personal events for a bounded date range (admin privileges, no stored copy).
 3. **Joining a group is two steps via Cloud Functions** — `requestToJoinGroup` validates the code/expiration and creates a `joinRequests` doc; `acceptJoinRequest` (admin only) moves it to `members`. Do **not** let the client write directly to `members`.
-4. **Taking / push are server-only** — `takeEvent` performs the cross-member move (verifying `onSale` in a transaction) and copies history forward; **push** is sent only from Cloud Functions, never from the client.
+4. **Taking / push are server-only** — `takeEvent` performs the cross-member move (verifying `onSwap` in a transaction) and copies history forward; **push** is sent only from Cloud Functions, never from the client.
 5. **Premium entitlement is server-verified** — the client may *request* a purchase but must never mark itself premium. Only a Cloud Function that validated the store receipt (Play RTDN / App Store Server Notifications) writes `users/{uid}.subscription`; security rules forbid the client from setting it. Ad-hiding and premium gating must read the server-verified state, not a local flag.
 6. **Retention is destructive & only server-side** — the scheduled cleanup Cloud Function is the *only* thing that bulk-deletes events older than the 1-month window (events + `history`); clients must not. Before purging, the data must already be in each user's local cache, or old events (and their traceability chain) are lost. Sync into the local NoSQL cache before, not after, relying on the purge.
 

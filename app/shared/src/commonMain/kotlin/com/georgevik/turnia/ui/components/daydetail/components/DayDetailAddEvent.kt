@@ -20,25 +20,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.georgevik.turnia.ui.components.daydetail.DayAddMode
 import com.georgevik.turnia.ui.components.daydetail.model.EventTypeSectionUi
-import com.georgevik.turnia.ui.components.daydetail.model.PredefinedEventUi
+import com.georgevik.turnia.ui.components.daydetail.model.EventTypeUi
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.day_detail_group_events
-import turnia.app.shared.generated.resources.day_detail_private_events
+import turnia.app.shared.generated.resources.day_detail_personal_events
 import turnia.app.shared.generated.resources.event_group_only_banner
 
 @Composable
 fun DayDetailAddEvent(
     addMode: DayAddMode,
     sections: List<EventTypeSectionUi>,
-    onPickPredefined: (predefined: PredefinedEventUi) -> Unit,
+    onPickEventType: (eventType: EventTypeUi) -> Unit,
     onEditGroup: (groupId: String, groupName: String) -> Unit,
-    onAddCustom: () -> Unit,
+    onAddPersonalEventType: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val filled = sections.filter { it.events.isNotEmpty() }
-    val privateSection = filled.firstOrNull { it.type is EventTypeSectionUi.Type.Personal }
-    val groupSections = filled.filter { it.type is EventTypeSectionUi.Type.Group }
+    val personalSection = filled.firstOrNull { it.source is EventTypeSectionUi.Source.Personal }
+    val groupSections = filled.filter { it.source is EventTypeSectionUi.Source.Group }
 
     Column(
         modifier = modifier.padding(vertical = 8.dp),
@@ -46,11 +46,11 @@ fun DayDetailAddEvent(
     ) {
         when (addMode) {
             DayAddMode.Disabled -> Unit
-            DayAddMode.Full -> CategoryArea(label = stringResource(Res.string.day_detail_private_events)) {
-                EventTypeChip(
-                    events = privateSection?.events.orEmpty(),
-                    onPick = onPickPredefined,
-                    trailing = { AddEventChip(onClick = onAddCustom) },
+            DayAddMode.Full -> CategoryArea(label = stringResource(Res.string.day_detail_personal_events)) {
+                EventTypeChipRow(
+                    events = personalSection?.events.orEmpty(),
+                    onPick = onPickEventType,
+                    trailing = { AddEventChip(onClick = onAddPersonalEventType) },
                 )
             }
             is DayAddMode.GroupOnly -> InfoBanner(text = stringResource(Res.string.event_group_only_banner))
@@ -59,12 +59,12 @@ fun DayDetailAddEvent(
         if (groupSections.isNotEmpty()) {
             CategoryArea(label = stringResource(Res.string.day_detail_group_events)) {
                 groupSections.forEach { section ->
-                    val type = section.type as? EventTypeSectionUi.Type.Group ?: return@forEach
+                    val group = section.source as? EventTypeSectionUi.Source.Group ?: return@forEach
                     GroupArea(
-                        title = type.groupName,
-                        onEdit = { onEditGroup(type.groupId, type.groupName) },
+                        title = group.groupName,
+                        onEdit = { onEditGroup(group.groupId, group.groupName) },
                     ) {
-                        EventTypeChip(section.events, onPickPredefined)
+                        EventTypeChipRow(section.events, onPickEventType)
                     }
                 }
             }
@@ -105,17 +105,17 @@ private fun GroupArea(
 }
 
 @Composable
-private fun EventTypeChip(
-    events: List<PredefinedEventUi>,
-    onPick: (PredefinedEventUi) -> Unit,
+private fun EventTypeChipRow(
+    events: List<EventTypeUi>,
+    onPick: (EventTypeUi) -> Unit,
     trailing: @Composable (() -> Unit)? = null,
 ) {
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        events.forEach { predefined ->
-            PredefinedEventChip(predefined = predefined, onClick = { onPick(predefined) })
+        events.forEach { eventType ->
+            EventTypeChip(eventType = eventType, onClick = { onPick(eventType) })
         }
         trailing?.invoke()
     }

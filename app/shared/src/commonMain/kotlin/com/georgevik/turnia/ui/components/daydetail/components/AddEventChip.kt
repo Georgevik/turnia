@@ -23,7 +23,7 @@ import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.day_detail_add_event
 
 /**
- * Outlined counterpart to [PredefinedEventChip]: deliberately unfilled so it reads as an action
+ * Outlined counterpart to [EventTypeChip]: deliberately unfilled so it reads as an action
  * rather than one more event type sharing the row.
  */
 @Composable

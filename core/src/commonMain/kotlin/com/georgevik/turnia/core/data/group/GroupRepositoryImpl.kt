@@ -1,18 +1,16 @@
 package com.georgevik.turnia.core.data.group
 
 import com.georgevik.turnia.core.domain.model.Group
-import com.georgevik.turnia.core.domain.model.GroupEvent
 import com.georgevik.turnia.core.domain.model.GroupError
+import com.georgevik.turnia.core.domain.model.GroupEvent
 import com.georgevik.turnia.core.domain.repository.GroupRepository
+import com.georgevik.turnia.core.system.MOCK_GROUPS
 import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.mockDelay
-import com.georgevik.turnia.core.system.MOCK_GROUPS
 import com.georgevik.turnia.core.system.mockGenerateEvents
 import com.georgevik.turnia.core.system.mockUuid
 import com.georgevik.turnia.core.system.toFailure
 import com.georgevik.turnia.core.system.toSuccess
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
@@ -28,13 +26,13 @@ class GroupRepositoryImpl : GroupRepository {
     /** Groups created or edited in this session, keyed by id; they shadow [MOCK_GROUPS]. */
     private val _mockSavedGroups = linkedMapOf<String, Group>()
 
-    override suspend fun addGroupEvent(event: GroupEvent) {
+    override suspend fun addEvent(event: GroupEvent) {
         mockDelay()
         val existing = getEventsPerDate(event.date)
         _mockEvents[bucketKey(event.date)] = existing + event
     }
 
-    override suspend fun deleteGroupEvent(eventId: String) {
+    override suspend fun deleteEvent(eventId: String) {
         // TODO use data source
         mockDelay()
         _mockEvents.keys.toList().forEach { key ->
@@ -51,9 +49,9 @@ class GroupRepositoryImpl : GroupRepository {
         return known + created
     }
 
-    override suspend fun getGroup(idGroup: String): Outcome<Group, GroupError> {
+    override suspend fun getGroup(groupId: String): Outcome<Group, GroupError> {
         mockDelay()
-        val group = getGroups().find { it.id == idGroup }
+        val group = getGroups().find { it.id == groupId }
 
         return group?.toSuccess() ?: GroupError.NotFound.toFailure()
     }
@@ -69,7 +67,7 @@ class GroupRepositoryImpl : GroupRepository {
         return saved.toSuccess()
     }
 
-    override suspend fun updateColor(typeId: String, groupId: String, color: String): Result<Unit> {
+    override suspend fun saveTypeColor(groupId: String, typeId: String, color: String): Result<Unit> {
         mockDelay()
         return if (Random.nextBoolean()) {
             Result.success(Unit)
@@ -78,7 +76,7 @@ class GroupRepositoryImpl : GroupRepository {
         }
     }
 
-    override suspend fun retrieveGroupEvents(
+    override suspend fun getEventsByGroup(
         groupId: String,
         date: LocalDate,
         monthDelta: Int
@@ -97,7 +95,7 @@ class GroupRepositoryImpl : GroupRepository {
         return Result.success(events)
     }
 
-    override suspend fun retrieveCalendarEvents(
+    override suspend fun getEventsByUser(
         userId: String,
         date: LocalDate,
         monthDelta: Int

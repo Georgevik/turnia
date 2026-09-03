@@ -11,9 +11,9 @@ import {
 } from "./errors";
 
 /**
- * Takes an on-sale group event: a cross-member move the client cannot do itself.
+ * Takes a group event offered for swap: a cross-member move the client cannot do itself.
  *
- * Verifies `onSale == true` in a transaction, then moves the event from the
+ * Verifies `onSwap == true` in a transaction, then moves the event from the
  * current assignee (`fromUid`) to the caller, copying the history forward and
  * appending a `transferred` entry so the new holder has the full chain.
  *
@@ -50,8 +50,8 @@ export const takeEvent = onCall(async (request) => {
     if (!snap.exists) {
       throw new HttpErrorNotFound(TurniaErrorCode.TakeEventNotFound, "Event not found.");
     }
-    if (snap.get("onSale") !== true) {
-      throw new HttpErrorFailedPrecondition(TurniaErrorCode.TakeEventNotOnSale, "Event is not on sale.");
+    if (snap.get("onSwap") !== true) {
+      throw new HttpErrorFailedPrecondition(TurniaErrorCode.TakeEventNotOnSwap, "Event is not offered for swap.");
     }
     const data = snap.data() as FirebaseFirestore.DocumentData;
     const history = await tx.get(fromEventRef.collection("history").orderBy("timestamp"));
@@ -63,7 +63,7 @@ export const takeEvent = onCall(async (request) => {
       assigneeId: taker,
       groupEventTypeId: data.groupEventTypeId ?? null,
       date: data.date ?? null,
-      onSale: false,
+      onSwap: false,
       createdAt: data.createdAt ?? FieldValue.serverTimestamp(),
     });
 

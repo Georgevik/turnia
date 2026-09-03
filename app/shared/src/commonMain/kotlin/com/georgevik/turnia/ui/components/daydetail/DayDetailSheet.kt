@@ -122,12 +122,12 @@ fun DayDetailSheet(
                             is AddEventTypesUi.Success -> DayDetailAddEvent(
                                 addMode = addMode,
                                 sections = state.sections,
-                                onPickPredefined = { predefined ->
-                                    viewModel.addPredefinedEvent(predefined)
+                                onPickEventType = { eventType ->
+                                    viewModel.addEventOfType(eventType)
                                     onClose(true)
                                 },
                                 onEditGroup = openEditTypeScreen,
-                                onAddCustom = openNewPersonalTypeScreen,
+                                onAddPersonalEventType = openNewPersonalTypeScreen,
                             )
                         }
                     } else if (events.isEmpty()) {

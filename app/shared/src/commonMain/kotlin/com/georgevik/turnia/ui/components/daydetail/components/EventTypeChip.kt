@@ -12,19 +12,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.georgevik.turnia.ui.components.daydetail.model.PredefinedEventUi
+import com.georgevik.turnia.ui.components.daydetail.model.EventTypeUi
 
 @Composable
-fun PredefinedEventChip(
-    predefined: PredefinedEventUi,
+fun EventTypeChip(
+    eventType: EventTypeUi,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(percent = 50),
-        color = predefined.color,
-        contentColor = predefined.textColor,
+        color = eventType.color,
+        contentColor = eventType.textColor,
     ) {
         Row(
             modifier = modifier.padding(horizontal = 14.dp, vertical = 8.dp),
@@ -32,7 +32,7 @@ fun PredefinedEventChip(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Text(
-                text = predefined.title,
+                text = eventType.title,
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
             )
