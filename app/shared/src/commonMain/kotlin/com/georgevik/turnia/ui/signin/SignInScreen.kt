@@ -88,23 +88,17 @@ fun SignInScreen(viewModel: SignInViewModel = koinViewModel()) {
 
         FeatureSection()
 
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = stringResource(Res.string.welcome_signin_hint),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            SignInSection(uiState, viewModel)
-        }
+        SignInSection(uiState, viewModel)
     }
 }
 
 @Composable
 private fun LogoAndAppName(modifier: Modifier = Modifier) {
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(
+        modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
         Box(
             modifier = modifier
                 .size(88.dp)
@@ -130,7 +124,9 @@ private fun LogoAndAppName(modifier: Modifier = Modifier) {
 
 @Composable
 private fun Welcome(modifier: Modifier = Modifier) {
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
             text = stringResource(Res.string.welcome_headline),
             style = MaterialTheme.typography.headlineSmall,
