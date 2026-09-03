@@ -17,7 +17,7 @@ interface GroupRepository {
     suspend fun getEventsByGroup(
         groupId: String, date: LocalDate,
         monthDelta: Int = 1
-    ): Result<List<GroupEvent>>
+    ): Outcome<List<GroupEvent>, Unit>
 
     suspend fun getEventsByUser(
         userId: String,

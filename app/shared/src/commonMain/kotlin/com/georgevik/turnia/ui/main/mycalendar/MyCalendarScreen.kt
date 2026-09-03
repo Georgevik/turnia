@@ -23,7 +23,6 @@ fun MyCalendarScreen(viewModel: MyCalendarViewModel = koinViewModel()) {
     CalendarViewer(
         eventsByDate = uiState.eventsByDate,
         onMonthChanged = viewModel::onMonthChanged,
-        invalidateEvents = viewModel::invalidateEvents,
         addMode = DayAddMode.Full,
         onEditGroup = { groupId, _ ->
             rootNavigator.goTo(RootRoute.GroupDetailKey(groupId))

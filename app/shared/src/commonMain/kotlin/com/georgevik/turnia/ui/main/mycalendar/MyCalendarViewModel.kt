@@ -9,6 +9,8 @@ import com.georgevik.turnia.core.domain.model.UserSession
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
 import com.georgevik.turnia.core.domain.repository.UserRepository
+import com.georgevik.turnia.core.system.isFailure
+import com.georgevik.turnia.core.system.valueOrNull
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import com.georgevik.turnia.ui.components.calendar.model.toUi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,6 +18,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -35,7 +38,6 @@ class MyCalendarViewModel(
     private val personalRepository: PersonalEventRepository,
 ) : ViewModel() {
 
-    private val invalidateData = MutableStateFlow(1)
     private val targetDay = MutableStateFlow(Clock.System.todayIn(TimeZone.currentSystemDefault()))
     private val _uiState = MutableStateFlow(MyCalendarUiState())
     val uiState: StateFlow<MyCalendarUiState> = _uiState.asStateFlow()
@@ -43,20 +45,17 @@ class MyCalendarViewModel(
     init {
         viewModelScope.launch {
             combine(
-                invalidateData,
+                personalRepository.onEventsChanged.onStart { emit(1) },
+                personalRepository.onEventTypeChanged.onStart { emit(1) },
                 userRepository.userSession.filterIsInstance(UserSession.Authenticated::class),
                 targetDay
-            ) { _, userSession, date ->
+            ) { _, _, userSession, date ->
                 _uiState.update { it.copy(isLoading = true) }
-                fetchEvents(userSession.user.uid, date)
+                fetchEvents(userSession.user.firebaseUid, date)
             }.collect { eventsByDate ->
                 _uiState.update { it.copy(isLoading = false, eventsByDate = eventsByDate) }
             }
         }
-    }
-
-    fun invalidateEvents() {
-        invalidateData.update { it + 1 }
     }
 
     fun onMonthChanged(date: LocalDate) {
@@ -64,23 +63,23 @@ class MyCalendarViewModel(
     }
 
     private suspend fun fetchEvents(
-        userId: String,
+        uid: String,
         date: LocalDate
     ): Map<LocalDate, List<CalendarEventUi>> {
-        val personalResult = personalRepository.getEvents(userId, date, monthDelta = 2)
+        val personalResult = personalRepository.getEvents(uid, date, monthDelta = 2)
         if (personalResult.isFailure) {
             // TODO Emit error
         }
 
-        val groupResult = groupRepository.getEventsByUser(userId, date, monthDelta = 2)
+        val groupResult = groupRepository.getEventsByUser(uid, date, monthDelta = 2)
         if (groupResult.isFailure) {
             // TODO Emit error
         }
 
         return mapToUiState(
-            userId,
+            uid,
             groupResult.getOrNull().orEmpty(),
-            personalResult.getOrNull().orEmpty()
+            personalResult.valueOrNull().orEmpty()
         )
     }
 
@@ -96,7 +95,7 @@ class MyCalendarViewModel(
                 )
             }
             personalEvents.forEach { ev ->
-                getOrPut(ev.date) { mutableListOf() }.add(ev.toUi(removable = true))
+                getOrPut(ev.localDate) { mutableListOf() }.add(ev.toUi(removable = true))
             }
         }
 

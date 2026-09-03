@@ -82,7 +82,6 @@ fun CalendarViewer(
     eventsByDate: Map<LocalDate, List<CalendarEventUi>> = emptyMap(),
     addMode: DayAddMode,
     titleBar: @Composable () -> Unit = {},
-    invalidateEvents: () -> Unit,
     onMonthChanged: (LocalDate) -> Unit,
     onEditGroup: (groupId: String, groupName: String) -> Unit = { _, _ -> },
     onAddPersonalType: () -> Unit = {},
@@ -197,10 +196,7 @@ fun CalendarViewer(
                         dismissSheet()
                     },
                     openNewPersonalTypeScreen = { onAddPersonalType() },
-                    onClose = {
-                        invalidateEvents()
-                        dismissSheet()
-                    },
+                    onClose = { dismissSheet() },
                 )
             }
         }

@@ -3,6 +3,7 @@ package com.georgevik.turnia.core.domain.repository
 import com.georgevik.turnia.core.domain.model.PersonalEvent
 import com.georgevik.turnia.core.domain.model.PersonalEventType
 import com.georgevik.turnia.core.system.Outcome
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.datetime.LocalDate
 
 /**
@@ -11,6 +12,8 @@ import kotlinx.datetime.LocalDate
  * user can create and edit them freely.
  */
 interface PersonalEventRepository {
+    val onEventsChanged: SharedFlow<Int>
+    val onEventTypeChanged: SharedFlow<Int>
 
     suspend fun getEventTypes(): List<PersonalEventType>
 
@@ -23,10 +26,10 @@ interface PersonalEventRepository {
     suspend fun deleteEventType(typeId: String): Outcome<Unit, Unit>
 
     suspend fun getEvents(
-        userId: String,
+        uid: String,
         date: LocalDate,
         monthDelta: Int = 1
-    ): Result<List<PersonalEvent>>
+    ): Outcome<List<PersonalEvent>, Unit>
 
     suspend fun getEventType(typeId: String): Result<PersonalEventType>
 }

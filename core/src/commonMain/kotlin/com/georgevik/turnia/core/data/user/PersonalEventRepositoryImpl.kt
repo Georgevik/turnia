@@ -1,6 +1,8 @@
 package com.georgevik.turnia.core.data.user
 
+import com.georgevik.turnia.core.data.datasource.firestore.PersonalEventFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.PersonalEventTypesFirestore
+import com.georgevik.turnia.core.data.datasource.firestore.mappers.PersonalEventMapper
 import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.PersonalEvent
 import com.georgevik.turnia.core.domain.model.PersonalEventType
@@ -8,44 +10,54 @@ import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
 import com.georgevik.turnia.core.domain.repository.UserRepository
 import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.errorOrNull
-import com.georgevik.turnia.core.system.mockDelay
-import com.georgevik.turnia.core.system.mockPersonalEvent
+import com.georgevik.turnia.core.system.isFailure
 import com.georgevik.turnia.core.system.toFailure
+import com.georgevik.turnia.core.system.toInstant
 import com.georgevik.turnia.core.system.toSuccess
 import com.georgevik.turnia.core.system.valueOrNull
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
+import kotlin.random.Random
 
 class PersonalEventRepositoryImpl(
     private val userRepository: UserRepository,
+    private val personalEventMapper: PersonalEventMapper,
+    private val personalEventFirestore: PersonalEventFirestore,
     private val personalEventTypesFirestore: PersonalEventTypesFirestore
 ) : PersonalEventRepository {
 
-    private val mockedMonths = mutableMapOf<String, List<PersonalEvent>>()
     private var eventTypesCache = mutableMapOf<String, PersonalEventType>()
+
+    private val _onEventsChanged = MutableSharedFlow<Int>(replay = 0, extraBufferCapacity = 1)
+    override val onEventsChanged = _onEventsChanged.asSharedFlow()
+
+    private val _onEventTypeChanged = MutableSharedFlow<Int>(replay = 0, extraBufferCapacity = 1)
+    override val onEventTypeChanged = _onEventTypeChanged.asSharedFlow()
 
     override suspend fun getEventTypes(): List<PersonalEventType> =
         allEventTypes().filterNot { it.isDeleted }
 
     override suspend fun addEvent(event: PersonalEvent) {
-        mockDelay()
-        val existing = getEventsPerDate(event.date)
-        mockedMonths[bucketKey(event.date)] = existing + event
+        val uid = userRepository.loggedUser?.firebaseUid ?: return
+        personalEventFirestore.set(uid, event)
+        _onEventsChanged.emit(Random.nextInt())
     }
 
     override suspend fun deleteEvent(eventId: String) {
-        mockDelay()
-        mockedMonths.keys.toList().forEach { key ->
-            mockedMonths[key] = mockedMonths.getValue(key).filterNot { it.id == eventId }
-        }
+        val uid = userRepository.loggedUser?.firebaseUid ?: return
+        personalEventFirestore.delete(uid, eventId)
+        _onEventsChanged.emit(Random.nextInt())
     }
 
     override suspend fun saveEventType(type: PersonalEventType): Outcome<Unit, Unit> {
         val userId = userRepository.loggedUser?.firebaseUid ?: return Unit.toFailure()
         personalEventTypesFirestore.set(userId, type)
         eventTypesCache[type.id] = type
+        _onEventTypeChanged.emit(Random.nextInt())
         return Unit.toSuccess()
     }
 
@@ -58,34 +70,30 @@ class PersonalEventRepositoryImpl(
         }
 
         eventTypesCache.remove(typeId)
+        _onEventTypeChanged.emit(Random.nextInt())
         return Unit.toSuccess()
     }
 
     override suspend fun getEvents(
-        userId: String,
+        uid: String,
         date: LocalDate,
         monthDelta: Int
-    ): Result<List<PersonalEvent>> {
-        mockDelay()
-        val events = buildList {
-            addAll(getEventsPerDate(date))
+    ): Outcome<List<PersonalEvent>, Unit> {
+        val eventsDocResult = personalEventFirestore.get(
+            uid,
+            from = date.minus(monthDelta, DateTimeUnit.MONTH).toInstant(),
+            until = date.plus(monthDelta, DateTimeUnit.MONTH).toInstant()
+        )
 
-            (1..monthDelta).forEach { delta ->
-                addAll(getEventsPerDate(date.plus(delta, DateTimeUnit.MONTH)))
-                addAll(getEventsPerDate(date.minus(delta, DateTimeUnit.MONTH)))
-            }
-        }.distinctBy { it.id }
-
-        return Result.success(events)
-    }
-
-    private fun getEventsPerDate(date: LocalDate): List<PersonalEvent> {
-        return mockedMonths.getOrPut(bucketKey(date)) {
-            mockPersonalEvent(fromMonth = date)
+        if (eventsDocResult.isFailure) {
+            return Unit.toFailure()
         }
-    }
 
-    private fun bucketKey(date: LocalDate) = "${date.year}_${date.month}"
+        val eventDocs = eventsDocResult.valueOrNull().orEmpty()
+
+        val types = allEventTypes().associateBy { it.id }
+        return eventDocs.mapNotNull { personalEventMapper.map(it, types) }.toSuccess()
+    }
 
     private suspend fun allEventTypes(): List<PersonalEventType> {
         if (eventTypesCache.isNotEmpty()) {

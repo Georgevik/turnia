@@ -80,7 +80,7 @@ class GroupRepositoryImpl : GroupRepository {
         groupId: String,
         date: LocalDate,
         monthDelta: Int
-    ): Result<List<GroupEvent>> {
+    ): Outcome<List<GroupEvent>, Unit> {
         mockDelay()
         // TODO Call DataSource
         val events = buildList {
@@ -92,7 +92,7 @@ class GroupRepositoryImpl : GroupRepository {
             }
         }.distinctBy { it.id }.filter { it.groupId == groupId }
 
-        return Result.success(events)
+        return events.toSuccess()
     }
 
     override suspend fun getEventsByUser(

@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import com.georgevik.turnia.core.domain.model.GroupEvent
 import com.georgevik.turnia.core.domain.model.PersonalEvent
+import com.georgevik.turnia.core.system.toLocalDate
 import com.georgevik.turnia.ui.system.toComposeColorOrNull
 import kotlinx.datetime.LocalDate
 
@@ -107,7 +108,7 @@ fun PersonalEvent.toUi(removable: Boolean = false) = CalendarEventUi.create(
     source = EventSource.PERSONAL,
     name = type.name,
     acronym = type.acronym,
-    date = date,
+    date = date.toLocalDate(),
     background = type.color.toComposeColorOrNull() ?: Color.Unspecified,
     removable = removable,
 )

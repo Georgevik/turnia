@@ -5,6 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
 import com.georgevik.turnia.core.domain.repository.UserRepository
+import com.georgevik.turnia.core.system.isFailure
+import com.georgevik.turnia.core.system.map
+import com.georgevik.turnia.core.system.valueOrEmpty
 import com.georgevik.turnia.navigation.main.routes.ExternalCalendarData
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import com.georgevik.turnia.ui.components.calendar.model.toUi
@@ -50,26 +53,26 @@ class ExternalCalendarViewModel(
                         }
                     }
 
-                    is ExternalCalendarData.Personal -> personalRepository.getEvents(
-                        data.id,
-                        date,
-                        monthDelta = 2
-                    ).map { list -> list.map { it.toUi(removable = false) } }
+                    is ExternalCalendarData.Personal -> {
+                        val result = personalRepository.getEvents(
+                            data.id,
+                            date,
+                            monthDelta = 2
+                        )
+
+                        result.map { events -> events.map { event -> event.toUi(removable = false) } }
+                    }
                 }
+
                 if (calendarUiEvents.isFailure) {
                     // TODO Emit error
                 }
 
-                val eventsByDate =
-                    calendarUiEvents.getOrNull().orEmpty().groupBy { event -> event.date }
+                val eventsByDate = calendarUiEvents.valueOrEmpty().groupBy { event -> event.date }
                 _uiState.update { it.copy(loading = false, events = eventsByDate) }
             }
 
         }
-    }
-
-    fun invalidateData() {
-        invalidateData.update { it + 1 }
     }
 
     fun onMonthChanged(date: LocalDate) {

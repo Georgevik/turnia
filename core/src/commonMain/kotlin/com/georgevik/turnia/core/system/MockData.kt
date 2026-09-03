@@ -4,15 +4,14 @@ import com.georgevik.turnia.core.domain.model.EventHistoryEntry
 import com.georgevik.turnia.core.domain.model.Group
 import com.georgevik.turnia.core.domain.model.GroupEvent
 import com.georgevik.turnia.core.domain.model.GroupEventType
-import com.georgevik.turnia.core.domain.model.PersonalEvent
 import com.georgevik.turnia.core.domain.model.PersonalEventType
 import kotlinx.coroutines.delay
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
 import kotlin.random.Random
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.random.nextInt
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.uuid.Uuid
 
 
@@ -264,18 +263,6 @@ fun mockGenerateEvents(
     }
 }
 
-fun mockPersonalEvent(amount: Int = 15, fromMonth: LocalDate): List<PersonalEvent> {
-    val firstOfMonth = LocalDate(fromMonth.year, fromMonth.month, 1)
-
-    return (0 until amount).map {
-        PersonalEvent(
-            id = mockUuid(),
-            type = MOCK_PERSONAL_TYPES.random(),
-            date = firstOfMonth.plus(Random.nextInt(0 until 30), DateTimeUnit.DAY),
-            notes = if (Random.nextInt(5) == 1) "Lorem ipsum dolor sit amet, consectetur adipiscing elit." else null,
-        )
-    }
-}
 
 /** Stands in for network latency while the repositories are backed by mock data. */
 suspend fun mockDelay() = delay(Random.nextLong(300, 1000).milliseconds)

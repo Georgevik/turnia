@@ -24,10 +24,13 @@ class PersonalEventTypesViewModel(
     val uiState: StateFlow<PersonalEventTypesUi> = _uiState.asStateFlow()
 
     init {
-        refresh()
+        refreshEvents()
+        viewModelScope.launch {
+            personalRepository.onEventTypeChanged.collect { refreshEvents() }
+        }
     }
 
-    fun refresh() {
+    fun refreshEvents() {
         viewModelScope.launch {
             val types = personalRepository.getEventTypes().map { it.toUi() }.sortedBy { it.name }
             _uiState.update { state ->
@@ -40,7 +43,7 @@ class PersonalEventTypesViewModel(
     fun onDelete(typeId: String) {
         viewModelScope.launch {
             personalRepository.deleteEventType(typeId).fold(
-                onSuccess = { refresh() },
+                onSuccess = { refreshEvents() },
                 onFailure = {
                     updateSuccess { it.copy(userMessage = PersonalEventTypesMessage.DeleteFailed) }
                 },

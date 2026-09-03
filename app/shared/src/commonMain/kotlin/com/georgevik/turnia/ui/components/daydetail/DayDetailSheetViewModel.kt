@@ -13,6 +13,7 @@ import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
 import com.georgevik.turnia.core.domain.repository.UserRepository
 import com.georgevik.turnia.core.system.fold
 import com.georgevik.turnia.core.system.outcomeCatching
+import com.georgevik.turnia.core.system.toInstant
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import com.georgevik.turnia.ui.components.calendar.model.EventSource
 import com.georgevik.turnia.ui.components.daydetail.components.EventTypeChipUi
@@ -45,6 +46,9 @@ class DayDetailSheetViewModel(
 
     init {
         loadEventTypes()
+        viewModelScope.launch {
+            personalRepository.onEventTypeChanged.collect { loadEventTypes() }
+        }
     }
 
     fun retry() = loadEventTypes()
@@ -113,7 +117,7 @@ class DayDetailSheetViewModel(
                 PersonalEvent(
                     id = Uuid.random().toString(),
                     type = type,
-                    date = date,
+                    date = date.toInstant(),
                     notes = null,
                 )
             )

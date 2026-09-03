@@ -69,7 +69,7 @@ fun PersonalEventTypesScreen(viewModel: PersonalEventTypesViewModel) {
 
     // The detail edits and creates types on its own; re-read them when coming back from it.
     LifecycleResumeEffect(Unit) {
-        viewModel.refresh()
+        viewModel.refreshEvents()
         onPauseOrDispose { }
     }
 

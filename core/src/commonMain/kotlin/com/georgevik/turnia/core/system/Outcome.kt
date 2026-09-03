@@ -30,6 +30,11 @@ fun <T, E> Outcome<T, E>.valueOrNull(): T? = when (this) {
     is Outcome.Failure -> null
 }
 
+fun <T, E> Outcome<List<T>, E>.valueOrEmpty(): List<T> = when (this) {
+    is Outcome.Success -> value
+    is Outcome.Failure -> emptyList()
+}
+
 fun <T, E> Outcome<T, E>.errorOrNull(): E? = when (this) {
     is Outcome.Success -> null
     is Outcome.Failure -> error
