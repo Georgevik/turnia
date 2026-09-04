@@ -4,6 +4,7 @@ import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackData
 import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackWrite
 import com.georgevik.turnia.core.data.datasource.firestore.doc.DocHolder
 import com.georgevik.turnia.core.data.datasource.firestore.doc.GroupEventDocument
+import com.georgevik.turnia.core.data.datasource.firestore.doc.GroupSyncDocument
 import com.georgevik.turnia.core.data.datasource.firestore.errors.GenericFirestoreError
 import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.EventId
@@ -15,13 +16,14 @@ import com.georgevik.turnia.core.system.toInstantOrNull
 import com.georgevik.turnia.core.system.toSuccess
 import com.georgevik.turnia.core.system.toTimestamp
 import com.georgevik.turnia.core.system.toYearMonth
-import com.georgevik.turnia.core.system.valueOrNull
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Source
 import dev.gitlive.firebase.firestore.Timestamp
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.YearMonthRange
@@ -35,8 +37,6 @@ class GroupEventFirestore(
     private val firestore: FirebaseFirestore,
     private val groupSyncFirestore: GroupSyncFirestore,
 ) {
-
-
     fun get(
         groupId: GroupId,
         from: Instant,
@@ -47,22 +47,31 @@ class GroupEventFirestore(
             val cachedEvents = queryEvents(groupId, months.associateWith { null }, Source.CACHE)
             emit(cachedEvents.filterNot { it.doc.isDeleted }.toSuccess())
 
-            val cacheUpdatedAt = cachedEvents.updatedByMonth()
-            val staleMonths =
-                if (cacheUpdatedAt.isEmpty()) months.associateWith { null }
-                else staleEventMonths(groupId, months, cacheUpdatedAt)
+            var known = cachedEvents
+            // An empty cache is fetched whole once, and only once: a range with no events of its
+            // own has no markers either, and would otherwise ask again on every emission.
+            var fetched = cachedEvents.isNotEmpty()
 
-            // Everything already in hand: the first emission was the answer.
-            if (staleMonths.isEmpty()) return@flow
+            emitAll(
+                groupSyncFirestore.observe(groupId).mapNotNull { sync ->
+                    val staleMonths =
+                        if (!fetched) months.associateWith { null }
+                        else staleEventMonths(months, sync, known.updatedByMonth())
+                    // Nothing moved: the emission before this one still stands.
+                    if (staleMonths.isEmpty()) return@mapNotNull null
 
-            val serverEvents = queryEvents(
-                groupId,
-                staleMonths.mapValues { (_, updatedAt) -> updatedAt?.toTimestamp() },
-                Source.SERVER
-            ).associateBy { it.id }.toMutableMap()
+                    val serverEvents = queryEvents(
+                        groupId,
+                        staleMonths.mapValues { (_, updatedAt) -> updatedAt?.toTimestamp() },
+                        Source.SERVER
+                    ).associateBy { it.id }.toMutableMap()
 
-            val merged = cachedEvents.map { cached -> serverEvents.remove(cached.id) ?: cached }
-            emit((merged + serverEvents.values).filterNot { it.doc.isDeleted }.toSuccess())
+                    val merged = known.map { cached -> serverEvents.remove(cached.id) ?: cached }
+                    known = merged + serverEvents.values
+                    fetched = true
+                    known.filterNot { it.doc.isDeleted }.toSuccess()
+                }
+            )
         }.catch { throwable ->
             Logger.e(TAG, "Failed to read group events", throwable)
             emit(GenericFirestoreError(throwable).toFailure())
@@ -138,13 +147,16 @@ class GroupEventFirestore(
             }
             .toMap()
 
-    private suspend fun staleEventMonths(
-        groupId: GroupId,
+    /**
+     * The months the server has moved on from, compared month by month: a local write in one month
+     * would otherwise mask an older change another device made in a different one.
+     */
+    private fun staleEventMonths(
         months: YearMonthRange,
+        sync: GroupSyncDocument,
         cacheUpdatedAt: Map<YearMonth, Instant>
     ): Map<YearMonth, Instant?> {
-        val serverUpdatedAt = groupSyncFirestore.get(groupId).valueOrNull()
-            ?.eventsUpdatedAt.orEmpty()
+        val serverUpdatedAt = sync.eventsUpdatedAt
 
         // Each stale month keeps its own cursor: what this device already holds of *that* month.
         val stale = months.mapNotNull { month ->

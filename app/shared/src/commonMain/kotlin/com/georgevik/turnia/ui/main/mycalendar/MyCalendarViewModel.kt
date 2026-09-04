@@ -54,10 +54,7 @@ class MyCalendarViewModel(
                 userRepository.userSession.filterIsInstance(UserSession.Authenticated::class),
                 targetDay
             ) { _, _, userSession, date -> userSession.user.id to date }
-                .flatMapLatest { (userId, date) ->
-                    _uiState.update { it.copy(isLoading = true) }
-                    events(userId, date)
-                }
+                .flatMapLatest { (userId, date) -> events(userId, date) }
                 .collect { eventsByDate ->
                     _uiState.update { it.copy(isLoading = false, eventsByDate = eventsByDate) }
                 }
@@ -74,7 +71,7 @@ class MyCalendarViewModel(
      */
     private fun events(
         userId: UserId,
-        date: LocalDate
+        date: LocalDate,
     ): Flow<Map<LocalDate, List<CalendarEventUi>>> = combine(
         personalRepository.getEvents(userId, date, monthDelta = 2),
         groupRepository.getEventsByUser(userId, date, monthDelta = 2),

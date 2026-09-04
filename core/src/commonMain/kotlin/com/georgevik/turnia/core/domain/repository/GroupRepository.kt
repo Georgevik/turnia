@@ -28,15 +28,16 @@ interface GroupRepository {
 
     /** Cached events first, then the server's if it had anything newer. */
     fun getEventsByGroup(
-        groupId: GroupId, date: LocalDate,
-        monthDelta: Int = 1
+        groupId: GroupId,
+        date: LocalDate,
+        monthDelta: Int = 1,
     ): Flow<Outcome<List<GroupEvent>, Unit>>
 
     /** Cached events first, then the server's if it had anything newer. */
     fun getEventsByUser(
         userId: UserId,
         date: LocalDate,
-        monthDelta: Int = 1
+        monthDelta: Int = 1,
     ): Flow<List<GroupEvent>>
 
     suspend fun getGroup(groupId: GroupId): Outcome<Group, GroupError>

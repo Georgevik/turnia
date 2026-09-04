@@ -4,6 +4,7 @@ import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackData
 import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackWrite
 import com.georgevik.turnia.core.data.datasource.firestore.doc.DocHolder
 import com.georgevik.turnia.core.data.datasource.firestore.doc.PersonalEventDocument
+import com.georgevik.turnia.core.data.datasource.firestore.doc.UserSyncDocument
 import com.georgevik.turnia.core.data.datasource.firestore.errors.GenericFirestoreError
 import com.georgevik.turnia.core.data.datasource.firestore.mappers.PersonalEventMapper
 import com.georgevik.turnia.core.data.logger.Logger
@@ -17,13 +18,14 @@ import com.georgevik.turnia.core.system.toInstantOrNull
 import com.georgevik.turnia.core.system.toSuccess
 import com.georgevik.turnia.core.system.toTimestamp
 import com.georgevik.turnia.core.system.toYearMonth
-import com.georgevik.turnia.core.system.valueOrNull
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Source
 import dev.gitlive.firebase.firestore.Timestamp
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.YearMonthRange
@@ -49,22 +51,31 @@ class PersonalEventFirestore(
             val cachedEvents = queryEvents(userId, months.associateWith { null }, Source.CACHE)
             emit(cachedEvents.filterNot { it.doc.isDeleted }.toSuccess())
 
-            val cacheUpdatedAt = cachedEvents.updatedByMonth()
-            val staleMonths =
-                if (cacheUpdatedAt.isEmpty()) months.associateWith { null }
-                else staleEventMonths(userId, months, cacheUpdatedAt)
+            var known = cachedEvents
+            // An empty cache is fetched whole once, and only once: a range with no events of its
+            // own has no markers either, and would otherwise ask again on every emission.
+            var fetched = cachedEvents.isNotEmpty()
 
-            // Everything already in hand: the first emission was the answer.
-            if (staleMonths.isEmpty()) return@flow
+            emitAll(
+                userSyncFirestore.observe(userId).mapNotNull { sync ->
+                    val staleMonths =
+                        if (!fetched) months.associateWith { null }
+                        else staleEventMonths(months, sync, known.updatedByMonth())
+                    // Nothing moved: the emission before this one still stands.
+                    if (staleMonths.isEmpty()) return@mapNotNull null
 
-            val serverEvents = queryEvents(
-                userId,
-                staleMonths.mapValues { (_, updatedAt) -> updatedAt?.toTimestamp() },
-                Source.SERVER
-            ).associateBy { it.id }.toMutableMap()
+                    val serverEvents = queryEvents(
+                        userId,
+                        staleMonths.mapValues { (_, updatedAt) -> updatedAt?.toTimestamp() },
+                        Source.SERVER
+                    ).associateBy { it.id }.toMutableMap()
 
-            val merged = cachedEvents.map { cached -> serverEvents.remove(cached.id) ?: cached }
-            emit((merged + serverEvents.values).filterNot { it.doc.isDeleted }.toSuccess())
+                    val merged = known.map { cached -> serverEvents.remove(cached.id) ?: cached }
+                    known = merged + serverEvents.values
+                    fetched = true
+                    known.filterNot { it.doc.isDeleted }.toSuccess()
+                }
+            )
         }.catch { throwable ->
             Logger.e(TAG, "Failed to read personal events", throwable)
             emit(GenericFirestoreError(throwable).toFailure())
@@ -139,13 +150,12 @@ class PersonalEventFirestore(
             }
             .toMap()
 
-    private suspend fun staleEventMonths(
-        userId: UserId,
+    private fun staleEventMonths(
         months: YearMonthRange,
+        sync: UserSyncDocument,
         cacheUpdatedAt: Map<YearMonth, Instant>
     ): Map<YearMonth, Instant?> {
-        val serverUpdatedAt = userSyncFirestore.get(userId).valueOrNull()
-            ?.personalEventsUpdatedAt.orEmpty()
+        val serverUpdatedAt = sync.personalEventsUpdatedAt
 
         // Each stale month keeps its own cursor: what this device already holds of *that* month.
         val stale = months.mapNotNull { month ->

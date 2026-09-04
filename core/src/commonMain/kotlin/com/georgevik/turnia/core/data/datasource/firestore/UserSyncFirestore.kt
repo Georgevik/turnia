@@ -13,6 +13,10 @@ import com.georgevik.turnia.core.system.outcomeCatching
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Timestamp
 import dev.gitlive.firebase.firestore.WriteBatch
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.datetime.YearMonth
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -30,6 +34,17 @@ class UserSyncFirestore(
 ) {
 
     private val recentReads = DebouncedReads<UserId, UserSyncDocument>(debounce)
+    fun observe(uid: UserId): Flow<UserSyncDocument> = syncDocument(uid).snapshots
+        .map { snapshot ->
+            snapshot.trackData(TAG)
+            if (!snapshot.exists) UserSyncDocument()
+            else snapshot.data(UserSyncDocument.serializer())
+        }
+        .distinctUntilChanged()
+        .catch { throwable ->
+            Logger.e(TAG, "Sync updates listener failed", throwable)
+            emit(UserSyncDocument())
+        }
 
     suspend fun get(uid: UserId): Outcome<UserSyncDocument, GenericFirestoreError> =
         outcomeCatching(TAG, { GenericFirestoreError(it) }) {
@@ -41,12 +56,6 @@ class UserSyncFirestore(
             fetch(uid)
         }
 
-    /**
-     * Adds the marker to [batch] instead of writing it on its own, so it lands in the same commit
-     * as the document it marks. A batch resolves every `ServerTimestamp` in it to a single commit
-     * time, and that is what lets a reader see document and marker as equally old — written apart,
-     * the marker is always the later of the two and the cache never looks current.
-     */
     fun writePersonalEvents(batch: WriteBatch, uid: UserId, yearMonth: YearMonth) = write(
         batch,
         uid,

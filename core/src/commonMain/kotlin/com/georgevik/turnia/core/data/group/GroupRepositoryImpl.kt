@@ -118,7 +118,7 @@ class GroupRepositoryImpl(
     override fun getEventsByGroup(
         groupId: GroupId,
         date: LocalDate,
-        monthDelta: Int
+        monthDelta: Int,
     ): Flow<Outcome<List<GroupEvent>, Unit>> = flow {
         val userId = userRepository.loggedUser?.id
         val holder = userId?.let { groupFirestore.get(groupId).valueOrNull() }
@@ -138,7 +138,7 @@ class GroupRepositoryImpl(
     override fun getEventsByUser(
         userId: UserId,
         date: LocalDate,
-        monthDelta: Int
+        monthDelta: Int,
     ): Flow<List<GroupEvent>> = flow {
         val viewer = userRepository.loggedUser?.id
         val groups = viewer?.let { groupFirestore.getMyGroups(it).valueOrNull() }.orEmpty()
@@ -162,7 +162,7 @@ class GroupRepositoryImpl(
         holder: DocHolder<GroupDocument>,
         viewer: UserId,
         date: LocalDate,
-        monthDelta: Int
+        monthDelta: Int,
     ): Flow<List<GroupEvent>> {
         val group = groupMapper.map(holder, viewer, typeColors(viewer))
         val memberNames = holder.doc.members.mapValues { (_, member) -> member.name }

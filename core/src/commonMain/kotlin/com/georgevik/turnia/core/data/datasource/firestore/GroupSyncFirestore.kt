@@ -13,6 +13,10 @@ import com.georgevik.turnia.core.system.outcomeCatching
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Timestamp
 import dev.gitlive.firebase.firestore.WriteBatch
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.datetime.YearMonth
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -26,6 +30,18 @@ class GroupSyncFirestore(
 ) {
 
     private val recentReads = DebouncedReads<GroupId, GroupSyncDocument>(debounce)
+
+    fun observe(groupId: GroupId): Flow<GroupSyncDocument> = syncDocument(groupId).snapshots
+        .map { snapshot ->
+            snapshot.trackData(TAG)
+            if (!snapshot.exists) GroupSyncDocument()
+            else snapshot.data(GroupSyncDocument.serializer())
+        }
+        .distinctUntilChanged()
+        .catch { throwable ->
+            Logger.e(TAG, "Group sync listener failed", throwable)
+            emit(GroupSyncDocument())
+        }
 
     suspend fun get(groupId: GroupId): Outcome<GroupSyncDocument, GenericFirestoreError> =
         outcomeCatching(TAG, { GenericFirestoreError(it) }) {
