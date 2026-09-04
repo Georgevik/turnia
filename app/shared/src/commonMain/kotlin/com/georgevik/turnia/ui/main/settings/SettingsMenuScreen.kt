@@ -48,6 +48,7 @@ import turnia.app.shared.generated.resources.profile_logout
 import turnia.app.shared.generated.resources.profile_logout_dialog_message
 import turnia.app.shared.generated.resources.profile_logout_dialog_title
 import turnia.app.shared.generated.resources.profile_my_events
+import turnia.app.shared.generated.resources.settings_groups_title
 import turnia.app.shared.generated.resources.settings_my_profile
 
 /**
@@ -147,7 +148,9 @@ fun SettingsMenuScreen(vm: SettingsMenuViewModel = koinViewModel()) {
         ProfileRow(Icons.Default.Event, stringResource(Res.string.profile_my_events)) {
             rootNavigator.goTo(RootRoute.PersonalEventTypesKey)
         }
-        ProfileRow(Icons.Default.Group, "Grupos")
+        ProfileRow(Icons.Default.Group, stringResource(Res.string.settings_groups_title)) {
+            rootNavigator.goTo(RootRoute.GroupsKey)
+        }
         ProfileRow(Icons.AutoMirrored.Filled.Logout, stringResource(Res.string.profile_logout)) {
             showLogoutDialog = true
         }

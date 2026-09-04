@@ -171,6 +171,11 @@
     <string name="profile_error_username_taken">Ese nombre de usuario ya está en uso.</string>
     <string name="profile_error_save">No hemos podido guardar los cambios.</string>
 
+    <!-- Groups -->
+    <string name="settings_groups_title">Grupos</string>
+    <string name="settings_groups_empty">Todavía no perteneces a ningún grupo.</string>
+    <string name="settings_groups_load_error">No hemos podido cargar tus grupos.</string>
+
     <!-- Share calendar -->
     <string name="share_calendar_title">Compartir calendario</string>
     <string name="share_calendar_action">Compartir</string>

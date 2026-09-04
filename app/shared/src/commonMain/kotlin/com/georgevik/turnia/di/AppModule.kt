@@ -15,6 +15,7 @@ import com.georgevik.turnia.ui.main.group.externalcalendar.ExternalCalendarViewM
 import com.georgevik.turnia.ui.main.mycalendar.MyCalendarViewModel
 import com.georgevik.turnia.ui.main.profile.MyProfileViewModel
 import com.georgevik.turnia.ui.main.settings.SettingsMenuViewModel
+import com.georgevik.turnia.ui.main.settings.groups.GroupsViewModel
 import com.georgevik.turnia.ui.main.sharecalendar.ShareCalendarViewModel
 import com.georgevik.turnia.ui.root.RootViewModel
 import com.georgevik.turnia.ui.signin.SignInViewModel
@@ -38,6 +39,7 @@ val appModule: Module = module {
     viewModelOf(::SettingsMenuViewModel)
     viewModelOf(::MyProfileViewModel)
     viewModelOf(::ShareCalendarViewModel)
+    viewModelOf(::GroupsViewModel)
     viewModelOf(::PersonalEventTypesViewModel)
     viewModel { (data: EventTypeDetailData) ->
         EventTypeDetailViewModel(data, get(), get())
