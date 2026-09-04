@@ -44,7 +44,7 @@ class UserPathFirestore(
 
     suspend fun getUserDocument(uid: UserId): Outcome<UserDocument, UserProfileError> =
         outcomeCatching(TAG,{ UserProfileError.LoadFailed(it) }) {
-            val snapshot = firestore.collection(PATH_USER).document(uid.value).get()
+            val snapshot = firestore.collection(PATH_USER).document(uid.value).get().trackData(TAG)
             if (!snapshot.exists) return Outcome.Failure(UserProfileError.NotFound)
 
             snapshot.data(UserDocument.serializer())

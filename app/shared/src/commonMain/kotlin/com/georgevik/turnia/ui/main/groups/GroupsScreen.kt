@@ -30,7 +30,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.georgevik.turnia.navigation.LocalNavigator
 import com.georgevik.turnia.navigation.LocalRootNavigator
@@ -62,11 +61,6 @@ fun GroupsScreen(viewModel: GroupsViewModel = koinViewModel()) {
     val rootNavigator = LocalRootNavigator.current
     val snackbar = LocalSnackbar.current
     val success = state as? GroupsUi.Success
-
-    LifecycleResumeEffect(Unit) {
-        viewModel.refresh()
-        onPauseOrDispose { }
-    }
 
     success?.userMessage?.let { message ->
         val text = stringResource(Res.string.groups_load_error)

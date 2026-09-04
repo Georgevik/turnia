@@ -13,7 +13,8 @@ import kotlinx.datetime.LocalDate
 
 interface GroupRepository {
 
-    suspend fun getGroups() : List<Group>
+    /** The user's groups, and again whenever one of them changes. */
+    fun getGroups(): Flow<List<Group>>
 
     suspend fun addEvent(event: GroupEvent)
 

@@ -18,26 +18,23 @@ class GroupsViewModel(private val groupRepository: GroupRepository) : ViewModel(
     val uiState: StateFlow<GroupsUi> = _uiState.asStateFlow()
 
     init {
-        refresh()
-    }
-
-    /** A group created on the detail screen only shows up after this. */
-    fun refresh() {
         viewModelScope.launch {
-            allGroups = groupRepository.getGroups().map {
-                GroupRowUi(
-                    id = it.id,
-                    name = it.name,
-                    members = it.memberCount,
-                    isAdmin = it.isAdmin,
+            groupRepository.getGroups().collect { groups ->
+                allGroups = groups.map {
+                    GroupRowUi(
+                        id = it.id,
+                        name = it.name,
+                        members = it.memberCount,
+                        isAdmin = it.isAdmin,
+                    )
+                }
+
+                val query = (_uiState.value as? GroupsUi.Success)?.query.orEmpty()
+                _uiState.value = GroupsUi.Success(
+                    query = query,
+                    groups = allGroups.filter { it.name.contains(query, ignoreCase = true) },
                 )
             }
-
-            val query = (_uiState.value as? GroupsUi.Success)?.query.orEmpty()
-            _uiState.value = GroupsUi.Success(
-                query = query,
-                groups = allGroups.filter { it.name.contains(query, ignoreCase = true) },
-            )
         }
     }
 

@@ -29,6 +29,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -60,7 +61,7 @@ class DayDetailSheetViewModel(
 
             val outcome = outcomeCatching({ AddEventTypesError.LoadFailed }) {
                 coroutineScope {
-                    val groups = async { groupRepository.getGroups() }
+                    val groups = async { groupRepository.getGroups().first() }
                     val personalTypes = async { personalRepository.getMyEventTypes() }
                     buildSections(personalTypes.await(), groups.await())
                 }

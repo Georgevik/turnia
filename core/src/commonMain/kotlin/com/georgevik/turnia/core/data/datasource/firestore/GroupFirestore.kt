@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlin.time.Instant
 
@@ -72,19 +73,22 @@ class GroupFirestore(
         return serverUpdatedAt > cacheUpdatedAt
     }
 
-    suspend fun getMyGroups(
-        userId: UserId
-    ): Outcome<List<DocHolder<GroupDocument>>, GenericFirestoreError> =
-        outcomeCatching(TAG, { GenericFirestoreError(it) }) {
-            val snapshot = firestore.collection(PATH_GROUPS).where {
-                GroupDocument.FIELD_MEMBER_UIDS contains userId.value
-            }.get().trackData(TAG)
-            Logger.d(TAG, "Groups of the user: ${snapshot.documents.size}")
+    fun observeMyGroups(userId: UserId): Flow<List<DocHolder<GroupDocument>>> =
+        firestore.collection(PATH_GROUPS)
+            .where { GroupDocument.FIELD_MEMBER_UIDS contains userId.value }
+            .snapshots
+            .map { snapshot ->
+                snapshot.trackData(TAG)
+                Logger.d(TAG, "Groups of the user: ${snapshot.documents.size}")
 
-            snapshot.documents.map {
-                DocHolder(id = it.reference.id, doc = it.data(GroupDocument.serializer()))
+                snapshot.documents.map {
+                    DocHolder(id = it.reference.id, doc = it.data(GroupDocument.serializer()))
+                }
             }
-        }
+            .catch { throwable ->
+                Logger.e(TAG, "Groups listener failed", throwable)
+                emit(emptyList())
+            }
 
     suspend fun save(groupId: GroupId, group: GroupDocument): Outcome<Unit, GenericFirestoreError> =
         outcomeCatching(TAG, { GenericFirestoreError(it) }) {

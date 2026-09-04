@@ -47,11 +47,19 @@ class GroupRepositoryImpl(
     private val groupMapper: GroupMapper,
 ) : GroupRepository {
 
-    override suspend fun getGroups(): List<Group> {
-        val userId = userRepository.loggedUser?.id ?: return emptyList()
+    override fun getGroups(): Flow<List<Group>> = flow {
+        val userId = userRepository.loggedUser?.id
+        if (userId == null) {
+            emit(emptyList())
+            return@flow
+        }
 
-        return groupFirestore.getMyGroups(userId).valueOrNull().orEmpty()
-            .map { groupMapper.map(it, userId, typeColors(userId)) }
+        val colors = typeColors(userId)
+        emitAll(
+            groupFirestore.observeMyGroups(userId).map { holders ->
+                holders.map { groupMapper.map(it, userId, colors) }
+            }
+        )
     }
 
     override suspend fun getGroup(groupId: GroupId): Outcome<Group, GroupError> {
@@ -127,12 +135,21 @@ class GroupRepositoryImpl(
         groupId: GroupId,
         date: LocalDate,
         monthDelta: Int,
-    ): Flow<Outcome<List<GroupEvent>, Unit>> = groupFirestore.observe(groupId)
-        .flatMapLatest { holder ->
-            val userId = userRepository.loggedUser?.id
-            if (holder == null || userId == null) flowOf(Unit.toFailure())
-            else eventsOf(holder, userId, date, monthDelta).map { it.toSuccess() }
+    ): Flow<Outcome<List<GroupEvent>, Unit>> = flow {
+        val userId = userRepository.loggedUser?.id
+        if (userId == null) {
+            emit(Unit.toFailure())
+            return@flow
         }
+
+        val colors = typeColors(userId)
+        emitAll(
+            groupFirestore.observe(groupId).flatMapLatest { holder ->
+                if (holder == null) flowOf(Unit.toFailure())
+                else eventsOf(holder, userId, colors, date, monthDelta).map { it.toSuccess() }
+            }
+        )
+    }
 
     /**
      * The user's own shifts across every group they belong to. One pass over the groups the "my
@@ -145,30 +162,40 @@ class GroupRepositoryImpl(
         monthDelta: Int,
     ): Flow<List<GroupEvent>> = flow {
         val viewer = userRepository.loggedUser?.id
-        val groups = viewer?.let { groupFirestore.getMyGroups(it).valueOrNull() }.orEmpty()
-        if (viewer == null || groups.isEmpty()) {
+        if (viewer == null) {
             emit(emptyList())
             return@flow
         }
 
-        // Combined, so a group answering from cache paints while another is still on the wire.
-        val perGroup = groups.map { holder -> eventsOf(holder, viewer, date, monthDelta) }
+        val colors = typeColors(viewer)
+
+        // Following the groups too: joining one, or an admin renaming a type, reaches the calendar
+        // without a reload — the shifts are drawn from the group as much as from the events.
         emitAll(
-            combine(perGroup) { events ->
-                events.toList().flatten()
-                    .filter { it.assigneeId == userId || it.ownerId == userId }
+            groupFirestore.observeMyGroups(viewer).flatMapLatest { groups ->
+                if (groups.isEmpty()) return@flatMapLatest flowOf(emptyList())
+
+                // Combined, so a group answering from cache paints while another is on the wire.
+                val perGroup = groups.map { holder ->
+                    eventsOf(holder, viewer, colors, date, monthDelta)
+                }
+                combine(perGroup) { events ->
+                    events.toList().flatten()
+                        .filter { it.assigneeId == userId || it.ownerId == userId }
+                }
             }
         )
     }
 
     /** Cached events first, then the merged ones when a month turned out to be behind. */
-    private suspend fun eventsOf(
+    private fun eventsOf(
         holder: DocHolder<GroupDocument>,
         viewer: UserId,
+        colors: Map<String, String>,
         date: LocalDate,
         monthDelta: Int,
     ): Flow<List<GroupEvent>> {
-        val group = groupMapper.map(holder, viewer, typeColors(viewer))
+        val group = groupMapper.map(holder, viewer, colors)
         val memberNames = holder.doc.members.mapValues { (_, member) -> member.name }
 
         return groupEventFirestore.get(
