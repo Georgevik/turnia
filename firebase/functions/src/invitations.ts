@@ -12,12 +12,12 @@ import {
 /**
  * Requests to join a group by validating its (single) invitation code.
  *
- * Anyone with the code can request access; this creates a pending
- * `groups/{groupId}/joinRequests/{uid}` doc. A group admin then accepts it with
- * `acceptJoinRequest`. The client never writes `memberUids` directly.
+ * With `invitation.autoApprove` the code is the door: the requester is added to the group here and
+ * now. Otherwise this creates a pending `groups/{groupId}/joinRequests/{uid}` doc that an admin
+ * accepts with `acceptJoinRequest`. The client never writes `memberUids` directly.
  *
  * Request data: `{ code: string }`
- * Returns: `{ groupId: string, status: "already_member" | "requested" }`
+ * Returns: `{ groupId: string, status: "already_member" | "joined" | "requested" }`
  */
 export const requestToJoinGroup = onCall(async (request) => {
   const uid = request.auth?.uid;
@@ -57,7 +57,34 @@ export const requestToJoinGroup = onCall(async (request) => {
     return { groupId: groupDoc.id, status: "already_member" as const };
   }
 
+  // The name travels with the request: `users/{uid}` is unreadable to an admin who does not share
+  // a calendar with the requester, so without it there is nobody to show on the approval screen.
+  const user = await db.doc(`users/${uid}`).get();
+  const profile = {
+    name: (user.get("name") as string | undefined) ?? "",
+    username: (user.get("username") as string | undefined) ?? "",
+  };
+
+  if (invitation.autoApprove === true) {
+    // Same commit as the group, so both resolve to one instant and a reader's cache can settle.
+    const batch = db.batch();
+    batch.update(groupDoc.ref, {
+      memberUids: FieldValue.arrayUnion(uid),
+      [`members.${uid}`]: profile,
+      updateAt: FieldValue.serverTimestamp(),
+    });
+    batch.set(
+      db.doc(`groups/${groupDoc.id}/sync/updates`),
+      { group: FieldValue.serverTimestamp() },
+      { merge: true },
+    );
+    await batch.commit();
+
+    return { groupId: groupDoc.id, status: "joined" as const };
+  }
+
   await groupDoc.ref.collection("joinRequests").doc(uid).set({
+    ...profile,
     requestedAt: FieldValue.serverTimestamp(),
   });
 

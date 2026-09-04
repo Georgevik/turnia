@@ -6,13 +6,21 @@ import com.georgevik.turnia.core.domain.model.Group
 import com.georgevik.turnia.core.domain.model.GroupError
 import com.georgevik.turnia.core.domain.model.GroupEventType
 import com.georgevik.turnia.core.domain.model.GroupId
+import com.georgevik.turnia.core.domain.model.GroupMember
+import com.georgevik.turnia.core.domain.model.JoinRequest
+import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.domain.repository.GroupRepository
+import com.georgevik.turnia.core.system.Outcome
+import com.georgevik.turnia.core.system.createInvitationCode
 import com.georgevik.turnia.core.system.fold
+import com.georgevik.turnia.core.system.valueOrEmpty
 import com.georgevik.turnia.ui.group.detail.model.GroupDetailMessage
 import com.georgevik.turnia.ui.group.detail.model.GroupDetailScreenError
 import com.georgevik.turnia.ui.group.detail.model.GroupDetailUi
 import com.georgevik.turnia.ui.group.detail.model.GroupDetailUi.GroupForm
+import com.georgevik.turnia.ui.group.detail.model.GroupMemberUi
 import com.georgevik.turnia.ui.group.detail.model.GroupTypeRowUi
+import com.georgevik.turnia.ui.group.detail.model.JoinRequestUi
 import com.georgevik.turnia.ui.system.entityColor
 import com.georgevik.turnia.ui.system.toComposeColorOr
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,18 +50,44 @@ class GroupDetailViewModel(
 
     fun retry() = load()
 
-    private fun load() {
+    /** Coming back from the event type detail: the type it just created has to show up here. */
+    fun refresh() {
+        // A group being created has nothing to re-read, and re-entering the initial state would
+        // throw away the form.
+        if (groupId.value.isBlank()) return
+
+        load(showLoading = false)
+    }
+
+    private fun load(showLoading: Boolean = true) {
         if (groupId.value.isBlank()) {
             _uiState.update { newGroupState() }
             return
         }
 
         viewModelScope.launch {
-            _uiState.update { GroupDetailUi.Loading }
+            if (showLoading) _uiState.update { GroupDetailUi.Loading }
+
             groupRepository.getGroup(groupId).fold(
                 onSuccess = { group ->
                     loadedGroup = group
-                    _uiState.update { group.toUiState() }
+                    // Only an admin can read the requests, so only an admin is asked for them.
+                    val requests = if (group.isAdmin) {
+                        groupRepository.getJoinRequests(groupId).valueOrEmpty()
+                    } else {
+                        emptyList()
+                    }
+
+                    _uiState.update { current ->
+                        val loaded = group.toUiState(requests)
+                        // A refresh brings the event types and the members up to date; whatever
+                        // the user was typing is theirs and stays.
+                        if (!showLoading && current is GroupDetailUi.Success) {
+                            loaded.copy(form = current.form)
+                        } else {
+                            loaded
+                        }
+                    }
                 },
                 onFailure = { error ->
                     _uiState.update { GroupDetailUi.Error(error.toScreenError()) }
@@ -62,19 +96,41 @@ class GroupDetailViewModel(
         }
     }
 
-    fun onNameChanged(name: String) = updateSuccess { it.copy(form = it.form.copy(name = name)) }
+    fun onNameChanged(name: String) = updateForm { it.copy(name = name) }
+
+    fun onAutoApproveChanged(autoApprove: Boolean) = updateForm {
+        it.copy(autoApprove = autoApprove)
+    }
+
+    fun onMembersCanSeeCodeChanged(canSee: Boolean) = updateForm {
+        it.copy(membersCanSeeCode = canSee)
+    }
+
+    /** The new code only reaches the group when the form is saved. */
+    fun onRegenerateCode() = updateForm {
+        it.copy(invitationCode = createInvitationCode(), codeChanged = true)
+    }
 
     fun onSave() {
         val state = _uiState.value as? GroupDetailUi.Success ?: return
-        if (!state.form.editable || state.form.name.isBlank()) return
+        val form = state.form
+        if (!form.editable || form.name.isBlank()) return
 
-        val name = state.form.name.trim()
-        val group = loadedGroup?.copy(name = name) ?: Group(
+        val name = form.name.trim()
+        val group = loadedGroup?.copy(
+            name = name,
+            invitationCode = form.invitationCode,
+            autoApprove = form.autoApprove,
+            membersCanSeeCode = form.membersCanSeeCode,
+        ) ?: Group(
             id = GroupId(""),
             name = name,
             types = emptyList(),
+            members = emptyList(),
             memberCount = 1,
             invitationCode = null,
+            autoApprove = form.autoApprove,
+            membersCanSeeCode = form.membersCanSeeCode,
             isAdmin = true,
         )
 
@@ -95,6 +151,34 @@ class GroupDetailViewModel(
         }
     }
 
+    fun onAcceptRequest(userId: UserId) = answerRequest(userId) {
+        groupRepository.acceptJoinRequest(groupId, userId)
+    }
+
+    fun onRejectRequest(userId: UserId) = answerRequest(userId) {
+        groupRepository.rejectJoinRequest(groupId, userId)
+    }
+
+    /** The answered request leaves the list at once; the group is re-read for its new members. */
+    private fun answerRequest(
+        userId: UserId,
+        answer: suspend () -> Outcome<Unit, GroupError>,
+    ) {
+        viewModelScope.launch {
+            updateSuccess { state ->
+                state.copy(joinRequests = state.joinRequests.filterNot { it.userId == userId })
+            }
+
+            answer().fold(
+                onSuccess = { load(showLoading = false) },
+                onFailure = {
+                    updateSuccess { it.copy(userMessage = GroupDetailMessage.RequestFailed) }
+                    load(showLoading = false)
+                },
+            )
+        }
+    }
+
     fun userMessageShown() = updateSuccess { it.copy(userMessage = null) }
 
     private fun newGroupState() = GroupDetailUi.Success(
@@ -102,23 +186,38 @@ class GroupDetailViewModel(
             groupId = GroupId(""),
             name = "",
             memberCount = 1,
-            invitationCode = "",
+            invitationCode = null,
+            autoApprove = false,
+            membersCanSeeCode = false,
             editable = true,
         ),
         eventTypes = emptyList(),
+        members = emptyList(),
+        joinRequests = emptyList(),
         isNew = true,
     )
 
-    private fun Group.toUiState() = GroupDetailUi.Success(
+    private fun Group.toUiState(requests: List<JoinRequest>) = GroupDetailUi.Success(
         form = GroupForm(
             groupId = id,
             name = name,
             memberCount = memberCount,
-            invitationCode = invitationCode.orEmpty(),
+            invitationCode = invitationCode,
+            autoApprove = autoApprove,
+            membersCanSeeCode = membersCanSeeCode,
             editable = isAdmin,
         ),
         eventTypes = types.map { it.toUiRow() },
+        members = members.map { it.toUiRow() },
+        joinRequests = requests.map { JoinRequestUi(it.userId, it.name, it.username) },
         isNew = false,
+    )
+
+    private fun GroupMember.toUiRow() = GroupMemberUi(
+        id = id,
+        name = name,
+        username = username,
+        isAdmin = isAdmin,
     )
 
     private fun GroupEventType.toUiRow() = GroupTypeRowUi(
@@ -136,6 +235,9 @@ class GroupDetailViewModel(
         GroupError.LoadFailed,
         GroupError.SaveFailed -> GroupDetailScreenError.LoadFailed
     }
+
+    private fun updateForm(block: (GroupForm) -> GroupForm) =
+        updateSuccess { it.copy(form = block(it.form)) }
 
     private fun updateSuccess(block: (GroupDetailUi.Success) -> GroupDetailUi.Success) =
         _uiState.update { if (it is GroupDetailUi.Success) block(it) else it }

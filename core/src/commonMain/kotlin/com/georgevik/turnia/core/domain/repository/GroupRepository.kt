@@ -5,7 +5,9 @@ import com.georgevik.turnia.core.domain.model.EventTypeId
 import com.georgevik.turnia.core.domain.model.Group
 import com.georgevik.turnia.core.domain.model.GroupError
 import com.georgevik.turnia.core.domain.model.GroupEvent
+import com.georgevik.turnia.core.domain.model.GroupEventType
 import com.georgevik.turnia.core.domain.model.GroupId
+import com.georgevik.turnia.core.domain.model.JoinRequest
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.system.Outcome
 import kotlinx.coroutines.flow.Flow
@@ -45,6 +47,16 @@ interface GroupRepository {
 
     /** Creates the group when [group] has a blank id, updates it otherwise. */
     suspend fun saveGroup(group: Group): Outcome<Group, GroupError>
+
+    /** Who is waiting to be let in. Only an admin can read them. */
+    suspend fun getJoinRequests(groupId: GroupId): Outcome<List<JoinRequest>, GroupError>
+
+    suspend fun acceptJoinRequest(groupId: GroupId, userId: UserId): Outcome<Unit, GroupError>
+
+    suspend fun rejectJoinRequest(groupId: GroupId, userId: UserId): Outcome<Unit, GroupError>
+
+    /** Adds the event type to the group, or replaces the one with the same id. Admins only. */
+    suspend fun saveEventType(groupId: GroupId, type: GroupEventType): Outcome<Unit, GroupError>
 
     suspend fun saveTypeColor(groupId: GroupId, typeId: EventTypeId, color: String) : Result<Unit>
 }

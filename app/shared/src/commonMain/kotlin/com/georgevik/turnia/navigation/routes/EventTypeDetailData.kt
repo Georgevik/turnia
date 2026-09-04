@@ -19,5 +19,5 @@ sealed interface EventTypeDetailData {
     data class EditGroup(val typeId: String, val groupId: String) : EventTypeDetailData
 
     @Serializable
-    data object NewGroup : EventTypeDetailData
+    data class NewGroup(val groupId: String) : EventTypeDetailData
 }

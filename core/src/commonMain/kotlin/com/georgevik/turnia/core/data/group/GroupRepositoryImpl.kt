@@ -2,18 +2,22 @@ package com.georgevik.turnia.core.data.group
 
 import com.georgevik.turnia.core.data.datasource.firestore.GroupEventFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.GroupFirestore
+import com.georgevik.turnia.core.data.datasource.firestore.GroupJoinRequestFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.UserPathFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.doc.DocHolder
 import com.georgevik.turnia.core.data.datasource.firestore.doc.GroupDocument
 import com.georgevik.turnia.core.data.datasource.firestore.doc.GroupMemberDocument
 import com.georgevik.turnia.core.data.datasource.firestore.mappers.GroupMapper
+import com.georgevik.turnia.core.data.datasource.firestorefunctions.GroupMembershipFunction
 import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.EventId
 import com.georgevik.turnia.core.domain.model.EventTypeId
 import com.georgevik.turnia.core.domain.model.Group
 import com.georgevik.turnia.core.domain.model.GroupError
 import com.georgevik.turnia.core.domain.model.GroupEvent
+import com.georgevik.turnia.core.domain.model.GroupEventType
 import com.georgevik.turnia.core.domain.model.GroupId
+import com.georgevik.turnia.core.domain.model.JoinRequest
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.domain.repository.UserRepository
@@ -21,6 +25,7 @@ import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.createId
 import com.georgevik.turnia.core.system.createInvitationCode
 import com.georgevik.turnia.core.system.errorOrNull
+import com.georgevik.turnia.core.system.map
 import com.georgevik.turnia.core.system.mapError
 import com.georgevik.turnia.core.system.toFailure
 import com.georgevik.turnia.core.system.toInstant
@@ -44,6 +49,8 @@ class GroupRepositoryImpl(
     private val userRepository: UserRepository,
     private val groupFirestore: GroupFirestore,
     private val groupEventFirestore: GroupEventFirestore,
+    private val groupJoinRequestFirestore: GroupJoinRequestFirestore,
+    private val groupMembershipFunction: GroupMembershipFunction,
     private val userPathFirestore: UserPathFirestore,
     private val groupMapper: GroupMapper,
 ) : GroupRepository {
@@ -102,6 +109,42 @@ class GroupRepositoryImpl(
 
         return group.copy(id = groupId, invitationCode = invitationCode, isAdmin = userId.value in adminUids)
             .toSuccess()
+    }
+
+    override suspend fun getJoinRequests(groupId: GroupId): Outcome<List<JoinRequest>, GroupError> =
+        groupJoinRequestFirestore.get(groupId)
+            .map { requests -> requests.map(groupMapper::map) }
+            .mapError { error ->
+                Logger.e(TAG, "Failed to read the join requests: $error")
+                GroupError.LoadFailed
+            }
+
+    override suspend fun acceptJoinRequest(
+        groupId: GroupId,
+        userId: UserId,
+    ): Outcome<Unit, GroupError> = groupMembershipFunction.acceptJoinRequest(groupId, userId)
+
+    override suspend fun rejectJoinRequest(
+        groupId: GroupId,
+        userId: UserId,
+    ): Outcome<Unit, GroupError> = groupJoinRequestFirestore.delete(groupId, userId)
+        .mapError { error ->
+            Logger.e(TAG, "Failed to reject the join request: $error")
+            GroupError.SaveFailed
+        }
+
+    override suspend fun saveEventType(
+        groupId: GroupId,
+        type: GroupEventType,
+    ): Outcome<Unit, GroupError> {
+        val group = when (val outcome = getGroup(groupId)) {
+            is Outcome.Failure -> return outcome
+            is Outcome.Success -> outcome.value
+        }
+
+        val types = group.types.filterNot { it.id == type.id } + type
+
+        return saveGroup(group.copy(types = types)).map { }
     }
 
     override suspend fun saveTypeColor(

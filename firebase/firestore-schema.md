@@ -198,6 +198,8 @@ own field**, so the two timestamps never overwrite each other.
 |-------|------|-------------|
 | `code` | string | Invitation code embedded in the join link. |
 | `active` | boolean | Whether the code can currently be used to request access. |
+| `autoApprove` | boolean | `true`: whoever knows the code is added to the group by `requestToJoinGroup` on the spot. `false`: it lands in `joinRequests` and an admin decides. |
+| `membersCanSeeCode` | boolean | Whether the app shows the code to plain members. **A house rule, not a boundary**: the whole group document is readable by every member, so a member who reads Firestore directly reads the code too (see *No private fields on shared docs*). |
 | `expiresAt` | timestamp \| null | Expiration; `null` = no expiry. |
 
 **Access**: readable by the UIDs in `memberUids` — read straight off the document, with no lookup, which is
@@ -213,6 +215,8 @@ A pending request to join, created after validating the invitation code. Documen
 
 | Field | Type | Description |
 |-------|------|-------------|
+| `name` | string | Requester's display name, copied so an admin can render the request without reading `users/{uid}`, which they cannot. |
+| `username` | string | Requester's username, copied for the same reason. |
 | `requestedAt` | timestamp | When the request was made. |
 
 **Access**: created only by `requestToJoinGroup`; readable by admins and by the requester; deletable by an admin (reject) or the requester (cancel).

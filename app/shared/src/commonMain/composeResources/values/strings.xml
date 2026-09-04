@@ -101,12 +101,27 @@
     <string name="group_detail_field_members">Miembros</string>
     <string name="group_detail_field_invitation">Código de invitación</string>
     <string name="group_detail_section_types">Tipos de evento</string>
+    <string name="group_detail_types_add">Añadir tipo de evento</string>
     <string name="group_detail_types_empty">Este grupo todavía no tiene tipos de evento.</string>
     <string name="group_detail_types_new_hint">Podrás añadir tipos de evento cuando guardes el grupo.</string>
     <string name="group_detail_readonly">Solo un administrador puede editar los datos del grupo.</string>
     <string name="group_detail_save">Guardar</string>
     <string name="group_detail_error_not_found">No hemos encontrado el grupo. Puede que ya no exista o que hayas salido de él.</string>
     <string name="group_detail_error_load">No hemos podido cargar el grupo.</string>
+    <string name="group_detail_section_invitation">Invitación</string>
+    <string name="group_detail_auto_approve">Aprobación automática</string>
+    <string name="group_detail_auto_approve_on">Cualquiera con el código entra en el grupo al momento.</string>
+    <string name="group_detail_auto_approve_off">Con el código se pide acceso y tú decides quién entra.</string>
+    <string name="group_detail_code_regenerate">Generar un código nuevo</string>
+    <string name="group_detail_code_changed">Guarda para que el código nuevo empiece a funcionar.</string>
+    <string name="group_detail_code_hidden">El administrador no comparte el código de invitación.</string>
+    <string name="group_detail_members_can_see_code">Los miembros pueden ver el código</string>
+    <string name="group_detail_section_members">Miembros</string>
+    <string name="group_detail_members_sheet_title">Miembros del grupo</string>
+    <string name="group_detail_requests_title">Solicitudes de acceso</string>
+    <string name="group_detail_request_accept">Aceptar</string>
+    <string name="group_detail_request_reject">Rechazar</string>
+    <string name="group_detail_error_request">No hemos podido responder a la solicitud. Inténtalo de nuevo.</string>
     <string name="group_detail_error_save">No se ha podido guardar el grupo. Inténtalo de nuevo.</string>
 
     <!-- Event types: detail (edit color / manage) -->
@@ -133,6 +148,7 @@
     <string name="event_type_error_type_not_found">No hemos encontrado este tipo de evento. Puede que se haya eliminado.</string>
     <string name="event_type_error_pick_color">No se ha podido guardar el color. Inténtalo de nuevo.</string>
     <string name="event_type_error_save_personal">No se ha podido guardar el evento. Inténtalo de nuevo.</string>
+    <string name="event_type_error_save_group">No se ha podido guardar el tipo de evento. Inténtalo de nuevo.</string>
     <string name="event_type_error_not_implemented">Esta función todavía no está disponible.</string>
 
     <!-- Personal event types: "Mis eventos" -->

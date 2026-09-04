@@ -6,6 +6,7 @@ import com.georgevik.turnia.core.data.datasource.firestore.doc.GroupDocument
 import com.georgevik.turnia.core.data.datasource.firestore.doc.GroupEventDocument
 import com.georgevik.turnia.core.data.datasource.firestore.doc.GroupEventTypeDocument
 import com.georgevik.turnia.core.data.datasource.firestore.doc.InvitationDocument
+import com.georgevik.turnia.core.data.datasource.firestore.doc.JoinRequestDocument
 import com.georgevik.turnia.core.data.datasource.firestore.doc.UserDocument
 import com.georgevik.turnia.core.domain.model.EventHistoryEntry
 import com.georgevik.turnia.core.domain.model.EventId
@@ -14,6 +15,8 @@ import com.georgevik.turnia.core.domain.model.Group
 import com.georgevik.turnia.core.domain.model.GroupEvent
 import com.georgevik.turnia.core.domain.model.GroupEventType
 import com.georgevik.turnia.core.domain.model.GroupId
+import com.georgevik.turnia.core.domain.model.GroupMember
+import com.georgevik.turnia.core.domain.model.JoinRequest
 import com.georgevik.turnia.core.domain.model.UserId
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.yearMonth
@@ -27,13 +30,29 @@ class GroupMapper {
         val groupId = GroupId(holder.id)
         val doc = holder.doc
 
+        val isAdmin = viewer.value in doc.adminUids
+        val invitation = doc.invitation
+
         return Group(
             id = groupId,
             name = doc.name,
             types = doc.groupEventTypes.map { map(it, groupId, doc.name, colors) },
+            members = doc.members.map { (uid, member) ->
+                GroupMember(
+                    id = UserId(uid),
+                    name = member.name,
+                    username = member.username,
+                    isAdmin = uid in doc.adminUids,
+                )
+            }.sortedByDescending { it.isAdmin },
+            // The uids are the source of truth for membership; the names are a copy that a member
+            // who joined before the group started keeping them may still be missing from.
             memberCount = doc.memberUids.size,
-            invitationCode = doc.invitation?.code,
-            isAdmin = viewer.value in doc.adminUids,
+            invitationCode = invitation?.code
+                ?.takeIf { isAdmin || invitation.membersCanSeeCode },
+            autoApprove = invitation?.autoApprove == true,
+            membersCanSeeCode = invitation?.membersCanSeeCode == true,
+            isAdmin = isAdmin,
         )
     }
 
@@ -42,7 +61,19 @@ class GroupMapper {
         memberUids = memberUids,
         adminUids = adminUids,
         groupEventTypes = group.types.map(::map),
-        invitation = group.invitationCode?.let { InvitationDocument(code = it) },
+        invitation = group.invitationCode?.let {
+            InvitationDocument(
+                code = it,
+                autoApprove = group.autoApprove,
+                membersCanSeeCode = group.membersCanSeeCode,
+            )
+        },
+    )
+
+    fun map(holder: DocHolder<JoinRequestDocument>) = JoinRequest(
+        userId = UserId(holder.id),
+        name = holder.doc.name,
+        username = holder.doc.username,
     )
 
     fun map(
