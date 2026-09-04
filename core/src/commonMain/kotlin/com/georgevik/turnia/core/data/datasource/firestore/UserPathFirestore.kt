@@ -12,8 +12,10 @@ import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.domain.model.UserProfile
 import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.outcomeCatching
+import dev.gitlive.firebase.firestore.DocumentSnapshot
 import dev.gitlive.firebase.firestore.FieldValue
 import dev.gitlive.firebase.firestore.FirebaseFirestore
+import dev.gitlive.firebase.firestore.Source
 
 /**
  * Interacts with Firestore: `users/{uid}`
@@ -49,6 +51,33 @@ class UserPathFirestore(
 
             snapshot.data(UserDocument.serializer())
         }
+
+    /**
+     * The user's own document, from the cache whenever it is there.
+     *
+     * `users/{uid}` is only ever written by its owner, so a cached copy is this device's own last
+     * word. The group type colours are read through here on every group screen, and asking the
+     * server each time bought nothing but reads.
+     */
+    suspend fun getCachedUserDocument(uid: UserId): Outcome<UserDocument, UserProfileError> =
+        outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
+            cachedUserDocument(uid)?.let {
+                return@outcomeCatching it.data(UserDocument.serializer())
+            }
+
+            val snapshot = queryUserDocument(uid).get(Source.SERVER).trackData(TAG)
+            if (!snapshot.exists) return Outcome.Failure(UserProfileError.NotFound)
+
+            snapshot.data(UserDocument.serializer())
+        }
+
+    /** A document the cache does not have makes the read fail rather than come back empty. */
+    private suspend fun cachedUserDocument(uid: UserId): DocumentSnapshot? = try {
+        queryUserDocument(uid).get(Source.CACHE).trackData(TAG).takeIf { it.exists }
+    } catch (exception: Exception) {
+        Logger.d(TAG, "The user document is not cached yet: ${exception.message}")
+        null
+    }
 
     suspend fun grantCalendarAccess(
         uid: UserId,
@@ -104,6 +133,9 @@ class UserPathFirestore(
             firestore.collection(PATH_USER).document(uid.value).set(userPatched)
             trackWrite(TAG)
         }
+
+    private fun queryUserDocument(uid: UserId) =
+        firestore.collection(PATH_USER).document(uid.value)
 
     companion object {
         private const val TAG = "UserPathFirestore"

@@ -263,8 +263,10 @@ class GroupRepositoryImpl(
         }
     }
 
+    /** From the cache: the colours are the user's own picks, and every group screen asks. */
     private suspend fun typeColors(userId: UserId): Map<String, String> =
-        userPathFirestore.getUserDocument(userId).valueOrNull()?.groupEventTypeColors.orEmpty()
+        userPathFirestore.getCachedUserDocument(userId).valueOrNull()
+            ?.groupEventTypeColors.orEmpty()
 
     companion object {
         private const val TAG = "GroupRepository"

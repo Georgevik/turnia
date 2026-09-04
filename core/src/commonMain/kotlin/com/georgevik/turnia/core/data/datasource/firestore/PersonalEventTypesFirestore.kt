@@ -19,15 +19,30 @@ import com.georgevik.turnia.core.system.valueOrNull
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Source
 import dev.gitlive.firebase.firestore.Timestamp
+import kotlin.concurrent.atomics.AtomicReference
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.time.Instant
 
 /**
  * Interacts with Firestore: `users/{uid}/personalEventTypes`
  */
+@OptIn(ExperimentalAtomicApi::class)
 class PersonalEventTypesFirestore(
     private val firestore: FirebaseFirestore,
     private val personalEventTypeDocMapper: PersonalEventTypeDocMapper,
     private val userSyncFirestore: UserSyncFirestore,
 ) {
+
+    /**
+     * The marker value a merge already answered.
+     *
+     * A marker written a round trip after the document it announces — as this class did before it
+     * started batching both into one commit — stays newer than anything it has to say, so the
+     * delta query comes back empty and the cache never catches up with it. Remembering which
+     * marker was already reconciled makes that cost one query per session instead of one per read;
+     * a marker that moves is a real change and is fetched as ever.
+     */
+    private val reconciled = AtomicReference(emptyMap<UserId, Instant>())
 
     suspend fun get(uid: UserId): Outcome<List<PersonalEventType>, GenericFirestoreError> =
         outcomeCatching(TAG, { GenericFirestoreError(it) }) {
@@ -44,13 +59,17 @@ class PersonalEventTypesFirestore(
             sync.errorOrNull()?.let { Logger.e(TAG, "Error reading sync updates", it.error) }
             val serverUpdatedAt = sync.valueOrNull()?.personalEventTypesUpdatedAt.toInstantOrNull()
 
-            if (serverUpdatedAt == null || serverUpdatedAt <= cacheUpdatedAt) {
+            val settled = serverUpdatedAt == null ||
+                serverUpdatedAt <= cacheUpdatedAt ||
+                reconciled.load()[uid] == serverUpdatedAt
+            if (settled) {
                 return@outcomeCatching cachedTypes.toDomain()
             }
 
             val changed = queryEventTypes(uid, cacheUpdatedAt.toTimestamp(), Source.SERVER)
                 .associateBy { it.id }
                 .toMutableMap()
+            markReconciled(uid, serverUpdatedAt)
 
             val merged = cachedTypes.map { cached -> changed.remove(cached.id) ?: cached }
             (merged + changed.values).toDomain()
@@ -92,6 +111,13 @@ class PersonalEventTypesFirestore(
             trackWrite(TAG)
             syncWrite.committed()
         }
+
+    private fun markReconciled(uid: UserId, updatedAt: Instant) {
+        while (true) {
+            val current = reconciled.load()
+            if (reconciled.compareAndSet(current, current + (uid to updatedAt))) return
+        }
+    }
 
     private suspend fun queryEventTypes(
         uid: UserId,
