@@ -80,17 +80,18 @@ object FirestoreAudit {
     }
 }
 
-/**
- * Reports a query's documents, billed or not. Returns the snapshot so it can be chained onto the
- * `get()` that produced it. [tag] is the reporting class's own `TAG`.
- */
 fun QuerySnapshot.trackData(tag: String): QuerySnapshot = apply {
-    trackRead(tag, documents.size, metadata.isFromCache)
+    val billed = documentChanges.size.takeIf { it > 0 } ?: 1
+    trackRead(tag, billed, metadata.isFromCache)
 }
 
 fun DocumentSnapshot.trackData(tag: String): DocumentSnapshot = apply {
     // A document that does not exist still costs a read.
     trackRead(tag, 1, metadata.isFromCache)
+}
+
+fun interface PendingWrite {
+    fun committed()
 }
 
 /** A write is never served from a cache: it is billed even while the device is offline. */
@@ -105,8 +106,7 @@ private fun trackRead(tag: String, documents: Int, fromCache: Boolean) {
         return
     }
 
-    val totalReads = documents.coerceAtLeast(1)
-    FirestoreAudit.add(tag, FirestoreUsage(serverReads = totalReads))
-    Logger.d(TAG, "$tag - SERVER READ: $totalReads. Documents: $documents")
+    FirestoreAudit.add(tag, FirestoreUsage(serverReads = documents))
+    Logger.d(TAG, "$tag - SERVER READ: $documents")
     FirestoreAudit.triggerSummary()
 }

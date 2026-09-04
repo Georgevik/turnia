@@ -70,9 +70,10 @@ class PersonalEventTypesFirestore(
                     .document(personalType.id.value),
                 doc,
             )
-            userSyncFirestore.writePersonalEventTypes(batch, uid)
+            val syncWrite = userSyncFirestore.writePersonalEventTypes(batch, uid)
             batch.commit()
             trackWrite(TAG)
+            syncWrite.committed()
         }
 
     suspend fun delete(uid: UserId, typeId: EventTypeId): Outcome<Unit, GenericFirestoreError> =
@@ -86,9 +87,10 @@ class PersonalEventTypesFirestore(
                 PersonalEventTypeDocument.FIELD_IS_DELETED to true
                 PersonalEventTypeDocument.FIELD_UPDATE_AT to Timestamp.ServerTimestamp
             }
-            userSyncFirestore.writePersonalEventTypes(batch, uid)
+            val syncWrite = userSyncFirestore.writePersonalEventTypes(batch, uid)
             batch.commit()
             trackWrite(TAG)
+            syncWrite.committed()
         }
 
     private suspend fun queryEventTypes(

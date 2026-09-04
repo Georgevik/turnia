@@ -46,8 +46,8 @@ val coreModule: Module = module {
     single { UserPathFirestore(get(), get()) }
     single { UserPrivateFirestore(get()) }
     single { UsernameFirestore(get()) }
-    single { UserSyncFirestore(get()) }
-    single { GroupSyncFirestore(get()) }
+    single { UserSyncFirestore(get(), get()) }
+    single { GroupSyncFirestore(get(), get()) }
     single { GroupEventFirestore(get(), get()) }
     single { GroupFirestore(get(), get()) }
     single { PersonalEventFirestore(get(), get(), get()) }

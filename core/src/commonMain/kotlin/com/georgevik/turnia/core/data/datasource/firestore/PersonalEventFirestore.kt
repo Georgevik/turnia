@@ -88,9 +88,11 @@ class PersonalEventFirestore(
 
             val batch = firestore.batch()
             batch.set(firestore.collection(PATH_EVENTS(uid.value)).document(event.id.value), doc)
-            userSyncFirestore.writePersonalEvents(batch, uid, event.date.toYearMonth())
+            val syncWrite =
+                userSyncFirestore.writePersonalEvents(batch, uid, event.date.toYearMonth())
             batch.commit()
             trackWrite(TAG)
+            syncWrite.committed()
         }
 
     suspend fun delete(
@@ -108,9 +110,10 @@ class PersonalEventFirestore(
                 PersonalEventDocument.FIELD_IS_DELETED to true
                 PersonalEventDocument.FIELD_UPDATE_AT to Timestamp.ServerTimestamp
             }
-            userSyncFirestore.writePersonalEvents(batch, uid, eventDate.yearMonth)
+            val syncWrite = userSyncFirestore.writePersonalEvents(batch, uid, eventDate.yearMonth)
             batch.commit()
             trackWrite(TAG)
+            syncWrite.committed()
         }
 
     private suspend fun queryEvents(

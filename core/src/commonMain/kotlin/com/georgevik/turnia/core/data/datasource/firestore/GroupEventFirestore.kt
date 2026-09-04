@@ -87,9 +87,11 @@ class GroupEventFirestore(
 
             val batch = firestore.batch()
             batch.set(eventDocument(groupId, eventId), event)
-            groupSyncFirestore.writeEvents(batch, groupId, YearMonth.parse(event.yearMonth))
+            val syncWrite =
+                groupSyncFirestore.writeEvents(batch, groupId, YearMonth.parse(event.yearMonth))
             batch.commit()
             trackWrite(TAG)
+            syncWrite.committed()
         }
 
     suspend fun delete(
@@ -105,9 +107,10 @@ class GroupEventFirestore(
                 GroupEventDocument.FIELD_IS_DELETED to true
                 GroupEventDocument.FIELD_UPDATE_AT to Timestamp.ServerTimestamp
             }
-            groupSyncFirestore.writeEvents(batch, groupId, eventDate.yearMonth)
+            val syncWrite = groupSyncFirestore.writeEvents(batch, groupId, eventDate.yearMonth)
             batch.commit()
             trackWrite(TAG)
+            syncWrite.committed()
         }
 
     private suspend fun queryEvents(

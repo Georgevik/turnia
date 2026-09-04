@@ -106,9 +106,10 @@ class GroupFirestore(
             // reader can see them as equally old.
             val batch = firestore.batch()
             batch.set(groupDocument(groupId), group)
-            groupSyncFirestore.writeGroup(batch, groupId)
+            val syncWrite = groupSyncFirestore.writeGroup(batch, groupId)
             batch.commit()
             trackWrite(TAG)
+            syncWrite.committed()
         }
 
     private suspend fun queryGroup(groupId: GroupId, source: Source): DocHolder<GroupDocument>? {

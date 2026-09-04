@@ -1,11 +1,13 @@
 package com.georgevik.turnia.core.data.datasource.firestore
 
+import com.georgevik.turnia.core.data.datasource.firestore.analytics.PendingWrite
 import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackData
 import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackWrite
 import com.georgevik.turnia.core.data.datasource.firestore.doc.EventSyncUpdateAt
 import com.georgevik.turnia.core.data.datasource.firestore.doc.UserSyncDocument
 import com.georgevik.turnia.core.data.datasource.firestore.errors.GenericFirestoreError
 import com.georgevik.turnia.core.data.datasource.firestore.sync.DebouncedReads
+import com.georgevik.turnia.core.data.datasource.firestore.sync.SharedListeners
 import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.system.Outcome
@@ -13,6 +15,7 @@ import com.georgevik.turnia.core.system.outcomeCatching
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Timestamp
 import dev.gitlive.firebase.firestore.WriteBatch
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -30,11 +33,16 @@ import kotlin.time.Duration.Companion.seconds
  */
 class UserSyncFirestore(
     private val firestore: FirebaseFirestore,
+    scope: CoroutineScope,
     private val debounce: Duration = DEFAULT_DEBOUNCE,
 ) {
 
     private val recentReads = DebouncedReads<UserId, UserSyncDocument>(debounce)
-    fun observe(uid: UserId): Flow<UserSyncDocument> = syncDocument(uid).snapshots
+    private val listeners = SharedListeners<UserId, UserSyncDocument>(scope)
+
+    fun observe(uid: UserId): Flow<UserSyncDocument> = listeners.shared(uid) { snapshots(uid) }
+
+    private fun snapshots(uid: UserId): Flow<UserSyncDocument> = syncDocument(uid).snapshots
         .map { snapshot ->
             snapshot.trackData(TAG)
             if (!snapshot.exists) UserSyncDocument()
@@ -69,12 +77,13 @@ class UserSyncFirestore(
     fun writePersonalEventTypes(batch: WriteBatch, uid: UserId) =
         write(batch, uid, UserSyncDocument(personalEventTypesUpdatedAt = Timestamp.ServerTimestamp))
 
-    private fun write(batch: WriteBatch, uid: UserId, patch: UserSyncDocument) {
+    private fun write(batch: WriteBatch, uid: UserId, patch: UserSyncDocument): PendingWrite {
         Logger.d(TAG, "Update sync updates")
         // Without defaults, so the fields the patch does not carry are not encoded at all.
         batch.set(syncDocument(uid), patch, merge = true) { encodeDefaults = false }
-        trackWrite(TAG)
         recentReads.forget(uid)
+
+        return PendingWrite { trackWrite(TAG) }
     }
 
     private suspend fun fetch(uid: UserId): UserSyncDocument {

@@ -1,11 +1,13 @@
 package com.georgevik.turnia.core.data.datasource.firestore
 
+import com.georgevik.turnia.core.data.datasource.firestore.analytics.PendingWrite
 import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackData
 import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackWrite
 import com.georgevik.turnia.core.data.datasource.firestore.doc.EventSyncUpdateAt
 import com.georgevik.turnia.core.data.datasource.firestore.doc.GroupSyncDocument
 import com.georgevik.turnia.core.data.datasource.firestore.errors.GenericFirestoreError
 import com.georgevik.turnia.core.data.datasource.firestore.sync.DebouncedReads
+import com.georgevik.turnia.core.data.datasource.firestore.sync.SharedListeners
 import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.GroupId
 import com.georgevik.turnia.core.system.Outcome
@@ -13,6 +15,7 @@ import com.georgevik.turnia.core.system.outcomeCatching
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Timestamp
 import dev.gitlive.firebase.firestore.WriteBatch
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -26,12 +29,18 @@ import kotlin.time.Duration.Companion.seconds
  */
 class GroupSyncFirestore(
     private val firestore: FirebaseFirestore,
+    scope: CoroutineScope,
     debounce: Duration = DEFAULT_DEBOUNCE,
 ) {
 
     private val recentReads = DebouncedReads<GroupId, GroupSyncDocument>(debounce)
+    private val listeners = SharedListeners<GroupId, GroupSyncDocument>(scope)
 
-    fun observe(groupId: GroupId): Flow<GroupSyncDocument> = syncDocument(groupId).snapshots
+    fun observe(groupId: GroupId): Flow<GroupSyncDocument> =
+        listeners.shared(groupId) { snapshots(groupId) }
+
+    private fun snapshots(groupId: GroupId): Flow<GroupSyncDocument> =
+        syncDocument(groupId).snapshots
         .map { snapshot ->
             snapshot.trackData(TAG)
             if (!snapshot.exists) GroupSyncDocument()
@@ -72,12 +81,13 @@ class GroupSyncFirestore(
     fun writeGroup(batch: WriteBatch, groupId: GroupId) =
         write(batch, groupId, GroupSyncDocument(groupUpdatedAt = Timestamp.ServerTimestamp))
 
-    private fun write(batch: WriteBatch, groupId: GroupId, patch: GroupSyncDocument) {
+    private fun write(batch: WriteBatch, groupId: GroupId, patch: GroupSyncDocument): PendingWrite {
         Logger.d(TAG, "Update group sync updates")
         // Merging derives its field mask from the leaves, so only this marker is written.
         batch.set(syncDocument(groupId), patch, merge = true) { encodeDefaults = false }
-        trackWrite(TAG)
         recentReads.forget(groupId)
+
+        return PendingWrite { trackWrite(TAG) }
     }
 
     private fun syncDocument(groupId: GroupId) =
