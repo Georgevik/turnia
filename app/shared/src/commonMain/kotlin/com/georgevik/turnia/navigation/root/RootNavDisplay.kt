@@ -14,7 +14,6 @@ import com.georgevik.turnia.ui.main.eventtypes.detail.EventTypeDetailScreen
 import com.georgevik.turnia.ui.main.eventtypes.detail.EventTypeDetailViewModel
 import com.georgevik.turnia.ui.main.eventtypes.personal.PersonalEventTypesScreen
 import com.georgevik.turnia.ui.main.profile.MyProfileScreen
-import com.georgevik.turnia.ui.main.settings.groups.GroupsScreen
 import com.georgevik.turnia.ui.main.sharecalendar.ShareCalendarScreen
 import com.georgevik.turnia.ui.signin.SignInScreen
 import com.georgevik.turnia.ui.splash.SplashScreen
@@ -52,8 +51,6 @@ fun RootNavDisplay(
             entry<RootRoute.MyProfileKey> { MyProfileScreen() }
 
             entry<RootRoute.ShareCalendarKey> { ShareCalendarScreen() }
-
-            entry<RootRoute.GroupsKey> { GroupsScreen() }
         },
     )
 }

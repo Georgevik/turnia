@@ -10,12 +10,12 @@ import com.georgevik.turnia.ui.group.detail.GroupDetailViewModel
 import com.georgevik.turnia.ui.main.MainViewModel
 import com.georgevik.turnia.ui.main.eventtypes.detail.EventTypeDetailViewModel
 import com.georgevik.turnia.ui.main.eventtypes.personal.PersonalEventTypesViewModel
-import com.georgevik.turnia.ui.main.group.calendarlist.CalendarListViewModel
 import com.georgevik.turnia.ui.main.group.externalcalendar.ExternalCalendarViewModel
+import com.georgevik.turnia.ui.main.groups.GroupsViewModel
 import com.georgevik.turnia.ui.main.mycalendar.MyCalendarViewModel
+import com.georgevik.turnia.ui.main.people.PeopleViewModel
 import com.georgevik.turnia.ui.main.profile.MyProfileViewModel
 import com.georgevik.turnia.ui.main.settings.SettingsMenuViewModel
-import com.georgevik.turnia.ui.main.settings.groups.GroupsViewModel
 import com.georgevik.turnia.ui.main.sharecalendar.ShareCalendarViewModel
 import com.georgevik.turnia.ui.root.RootViewModel
 import com.georgevik.turnia.ui.signin.SignInViewModel
@@ -34,12 +34,12 @@ val appModule: Module = module {
     viewModelOf(::SplashViewModel)
     viewModelOf(::RootViewModel)
     viewModelOf(::MyCalendarViewModel)
-    viewModelOf(::CalendarListViewModel)
     viewModelOf(::MainViewModel)
     viewModelOf(::SettingsMenuViewModel)
     viewModelOf(::MyProfileViewModel)
     viewModelOf(::ShareCalendarViewModel)
     viewModelOf(::GroupsViewModel)
+    viewModelOf(::PeopleViewModel)
     viewModelOf(::PersonalEventTypesViewModel)
     viewModel { (data: EventTypeDetailData) ->
         EventTypeDetailViewModel(data, get(), get())

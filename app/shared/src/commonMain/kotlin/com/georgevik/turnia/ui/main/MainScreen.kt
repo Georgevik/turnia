@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Icon
@@ -28,8 +29,10 @@ import com.georgevik.turnia.navigation.main.MainNavigator
 import com.georgevik.turnia.navigation.main.rememberMainNavigationState
 import com.georgevik.turnia.navigation.main.routes.MainRoute
 import com.georgevik.turnia.ui.main.changes.navigation.changesNavigation
-import com.georgevik.turnia.ui.main.group.navigation.groupsNavigation
+import com.georgevik.turnia.ui.main.group.navigation.externalCalendarNavigation
+import com.georgevik.turnia.ui.main.groups.navigation.groupsNavigation
 import com.georgevik.turnia.ui.main.mycalendar.navigation.calendarNavigation
+import com.georgevik.turnia.ui.main.people.navigation.peopleNavigation
 import com.georgevik.turnia.ui.main.settings.navigation.settingsNavigation
 import com.georgevik.turnia.ui.system.LocalSnackbar
 import com.georgevik.turnia.ui.system.TurniaSnackbarHost
@@ -44,6 +47,7 @@ private data class MainTabBarItem(
 
 private val MAIN_TABS = listOf(
     MainTabBarItem(MainRoute.CalendarTab, "Calendario", Icons.Default.CalendarMonth),
+    MainTabBarItem(MainRoute.PeopleTab, "Personas", Icons.Default.People),
     MainTabBarItem(MainRoute.GroupsTab, "Grupos", Icons.Default.Groups),
     MainTabBarItem(MainRoute.ChangesTab, "Cambios", Icons.Default.SwapHoriz, requiresSwapFlag = true),
     MainTabBarItem(MainRoute.SettingsMenuTab, "Ajustes", Icons.Default.Settings),
@@ -99,7 +103,9 @@ fun MainScreen(viewModel: MainViewModel = koinViewModel()) {
                 entries = state.toDecoratedEntries(
                     entryProvider {
                         calendarNavigation()
+                        peopleNavigation()
                         groupsNavigation()
+                        externalCalendarNavigation()
                         settingsNavigation()
                         changesNavigation()
                     }

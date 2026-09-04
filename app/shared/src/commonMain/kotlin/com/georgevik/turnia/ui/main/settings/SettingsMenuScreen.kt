@@ -36,7 +36,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.georgevik.turnia.navigation.LocalNavigator
 import com.georgevik.turnia.navigation.LocalRootNavigator
+import com.georgevik.turnia.navigation.main.routes.MainRoute
 import com.georgevik.turnia.navigation.root.routes.RootRoute
 import com.georgevik.turnia.ui.system.LocalPaddings
 import com.georgevik.turnia.ui.system.components.ConfirmationDialog
@@ -44,11 +46,11 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.dialog_cancel
+import turnia.app.shared.generated.resources.groups_title
 import turnia.app.shared.generated.resources.profile_logout
 import turnia.app.shared.generated.resources.profile_logout_dialog_message
 import turnia.app.shared.generated.resources.profile_logout_dialog_title
 import turnia.app.shared.generated.resources.profile_my_events
-import turnia.app.shared.generated.resources.settings_groups_title
 import turnia.app.shared.generated.resources.settings_my_profile
 
 /**
@@ -60,6 +62,7 @@ fun SettingsMenuScreen(vm: SettingsMenuViewModel = koinViewModel()) {
     val uiState by vm.uiState.collectAsStateWithLifecycle()
     var showLogoutDialog by remember { mutableStateOf(false) }
     val rootNavigator = LocalRootNavigator.current
+    val navigator = LocalNavigator.current
     val details = uiState.userDetails
 
     Column(
@@ -148,8 +151,8 @@ fun SettingsMenuScreen(vm: SettingsMenuViewModel = koinViewModel()) {
         ProfileRow(Icons.Default.Event, stringResource(Res.string.profile_my_events)) {
             rootNavigator.goTo(RootRoute.PersonalEventTypesKey)
         }
-        ProfileRow(Icons.Default.Group, stringResource(Res.string.settings_groups_title)) {
-            rootNavigator.goTo(RootRoute.GroupsKey)
+        ProfileRow(Icons.Default.Group, stringResource(Res.string.groups_title)) {
+            navigator.goTo(MainRoute.GroupsTab)
         }
         ProfileRow(Icons.AutoMirrored.Filled.Logout, stringResource(Res.string.profile_logout)) {
             showLogoutDialog = true

@@ -13,8 +13,8 @@ import com.georgevik.turnia.navigation.main.routes.ExternalCalendarData
 import com.georgevik.turnia.navigation.root.routes.RootRoute
 import com.georgevik.turnia.ui.components.calendar.CalendarThemes
 import com.georgevik.turnia.ui.components.calendar.CalendarViewer
+import com.georgevik.turnia.ui.components.calendar.components.CalendarTitleBar
 import com.georgevik.turnia.ui.components.daydetail.DayAddMode
-import com.georgevik.turnia.ui.main.group.calendarlist.components.CalendarTitleBar
 
 @Composable
 fun ExternalCalendar(viewModel: ExternalCalendarViewModel) {

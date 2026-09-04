@@ -30,7 +30,4 @@ sealed interface RootRoute : NavKey {
     @Serializable
     data object ShareCalendarKey : RootRoute
 
-    /** The groups this user belongs to, full screen over Main. */
-    @Serializable
-    data object GroupsKey : RootRoute
 }

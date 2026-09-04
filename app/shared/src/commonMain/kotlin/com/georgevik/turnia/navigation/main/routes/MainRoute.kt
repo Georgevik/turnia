@@ -9,6 +9,9 @@ sealed interface MainRoute : NavKey {
     data object CalendarTab : MainRoute
 
     @Serializable
+    data object PeopleTab : MainRoute
+
+    @Serializable
     data object GroupsTab : MainRoute
 
     @Serializable

@@ -171,10 +171,20 @@
     <string name="profile_error_username_taken">Ese nombre de usuario ya está en uso.</string>
     <string name="profile_error_save">No hemos podido guardar los cambios.</string>
 
-    <!-- Groups -->
-    <string name="settings_groups_title">Grupos</string>
-    <string name="settings_groups_empty">Todavía no perteneces a ningún grupo.</string>
-    <string name="settings_groups_load_error">No hemos podido cargar tus grupos.</string>
+    <!-- People and groups tabs -->
+    <string name="tab_people">Personas</string>
+    <string name="tab_groups">Grupos</string>
+    <string name="group_admin_badge">ADMIN</string>
+    <string name="people_title">Personas</string>
+    <string name="people_search_hint">Buscar personas...</string>
+    <string name="people_empty_title">Aquí no hay nadie todavía</string>
+    <string name="people_empty_body">Pide a un compañero que comparta su calendario contigo. Funciona bastante mejor que preguntarle «¿tú libras el sábado?» a las once de la noche.</string>
+    <string name="groups_title">Grupos</string>
+    <string name="groups_search_hint">Buscar grupos...</string>
+    <string name="groups_empty_title">Ningún grupo por aquí</string>
+    <string name="groups_empty_body">Crea uno y que los turnos dejen de vivir en un chat de WhatsApp.</string>
+    <string name="groups_load_error">No hemos podido cargar tus grupos.</string>
+    <string name="people_load_error">No hemos podido cargar quién comparte su calendario contigo.</string>
 
     <!-- Share calendar -->
     <string name="share_calendar_title">Compartir calendario</string>
