@@ -53,8 +53,6 @@ class UserProvisioner(
             },
             onFailure = { error ->
                 Logger.e(TAG, "Could not create users/${firebaseUser.uid}: $error")
-                // Nothing points at the reservation now, so hand the username back.
-                if (username.isNotBlank()) remoteUsernames.release(username)
                 error.toFailure()
             },
         )
@@ -70,7 +68,6 @@ class UserProvisioner(
 
         if (!remoteProfiles.updateUsername(uid, username).isSuccess) {
             Logger.w(TAG, "Could not backfill username for users/$uid")
-            remoteUsernames.release(username)
             return profile
         }
 

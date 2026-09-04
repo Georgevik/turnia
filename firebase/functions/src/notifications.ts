@@ -1,15 +1,15 @@
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import { getFirestore } from "firebase-admin/firestore";
 import { getMessaging } from "firebase-admin/messaging";
+import { fcmTokensOf } from "./users";
 
 /**
  * Notifies the other group members when an event is put up for swap.
  *
- * Triggered on the event doc under its assignee. Only reacts to the
- * `onSwap: false → true` transition; transfers are notified by `takeEvent`.
+ * Only reacts to the `onSwap: false → true` transition; a transfer is notified by `takeEvent`.
  */
 export const onEventPutOnSwap = onDocumentWritten(
-  "groups/{groupId}/members/{memberUid}/event/{eventId}",
+  "groups/{groupId}/events/{eventId}",
   async (event) => {
     const before = event.data?.before.data();
     const after = event.data?.after.data();
@@ -21,20 +21,17 @@ export const onEventPutOnSwap = onDocumentWritten(
     }
 
     const db = getFirestore();
-    const { groupId, memberUid, eventId } = event.params;
+    const { groupId, eventId } = event.params;
 
-    const members = await db.collection(`groups/${groupId}/members`).get();
-    const recipients = members.docs.map((doc) => doc.id).filter((uid) => uid !== memberUid);
+    // Membership is a field of the group, so this is one read instead of a subcollection listing.
+    const group = await db.doc(`groups/${groupId}`).get();
+    const memberUids = (group.get("memberUids") as string[] | undefined) ?? [];
+    const recipients = memberUids.filter((uid) => uid !== after.assigneeId);
     if (recipients.length === 0) {
       return;
     }
 
-    const tokens: string[] = [];
-    for (const uid of recipients) {
-      const user = await db.collection("users").doc(uid).get();
-      const userTokens = (user.get("fcmTokens") as string[] | undefined) ?? [];
-      tokens.push(...userTokens);
-    }
+    const tokens = (await Promise.all(recipients.map(fcmTokensOf))).flat();
     if (tokens.length === 0) {
       return;
     }

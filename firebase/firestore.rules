@@ -31,7 +31,14 @@ service cloud.firestore {
     match /users/{uid} {
       allow read: if isSignedIn() && (request.auth.uid == uid ||
         request.auth.uid in resource.data.get('calendarSharedWith', []));
-      allow write: if isSignedIn() && request.auth.uid == uid;
+      allow create: if isSignedIn() && request.auth.uid == uid;
+      // `name` and `username` are copied into every group the user belongs to, so only the
+      // `updateProfile` function may change them — a keeper that ships inside the app is only as
+      // current as the oldest version still installed.
+      allow update: if isSignedIn() && request.auth.uid == uid &&
+        request.resource.data.get('name', '') == resource.data.get('name', '') &&
+        request.resource.data.get('username', '') == resource.data.get('username', '');
+      allow delete: if isSignedIn() && request.auth.uid == uid;
 
       // Email, FCM tokens and entitlement: never readable by anyone else.
       // `allow` rules are additive, so the wildcard has to exclude `subscription` explicitly —
@@ -71,12 +78,8 @@ service cloud.firestore {
       allow create: if isSignedIn() &&
         request.resource.data.uid == request.auth.uid &&
         request.resource.data.username == username;
-      // The owner may refresh their display name, never hand the reservation to someone else.
-      allow update: if isSignedIn() &&
-        resource.data.uid == request.auth.uid &&
-        request.resource.data.uid == resource.data.uid &&
-        request.resource.data.username == resource.data.username;
-      allow delete: if isSignedIn() && resource.data.uid == request.auth.uid;
+      // Renaming means moving a reservation *and* every copy of the name; `updateProfile` owns it.
+      allow update, delete: if false;
     }
 
     match /groups/{groupId} {

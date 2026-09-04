@@ -1,6 +1,7 @@
 import { onCall } from "firebase-functions/v2/https";
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import { getMessaging } from "firebase-admin/messaging";
+import { fcmTokensOf } from "./users";
 import {
   HttpErrorFailedPrecondition,
   HttpErrorInvalidArgument,
@@ -11,13 +12,15 @@ import {
 } from "./errors";
 
 /**
- * Takes a group event offered for swap: a cross-member move the client cannot do itself.
+ * Takes a group event offered for swap — the one write a member may not do themselves, since it
+ * changes a document assigned to someone else.
  *
- * Verifies `onSwap == true` in a transaction, then moves the event from the
- * current assignee (`fromUid`) to the caller, copying the history forward and
- * appending a `transferred` entry so the new holder has the full chain.
+ * The event no longer moves between members: it lives in `groups/{groupId}/events` and the transfer
+ * is a change of `assigneeId`, so the history stays where it is and nothing is copied forward. The
+ * transaction verifies `onSwap` before changing anything, which is what keeps two members from
+ * taking the same shift.
  *
- * Request data: `{ groupId: string, fromUid: string, eventId: string }`
+ * Request data: `{ groupId: string, eventId: string }`
  * Returns: `{ groupId, eventId, assigneeId, status: "taken" }`
  */
 export const takeEvent = onCall(async (request) => {
@@ -27,69 +30,59 @@ export const takeEvent = onCall(async (request) => {
   }
 
   const groupId = request.data?.groupId as string | undefined;
-  const fromUid = request.data?.fromUid as string | undefined;
   const eventId = request.data?.eventId as string | undefined;
-  if (!groupId || !fromUid || !eventId) {
-    throw new HttpErrorInvalidArgument(TurniaErrorCode.TakeEventMissingArgs, "Missing groupId, fromUid or eventId.");
-  }
-  if (fromUid === taker) {
-    throw new HttpErrorFailedPrecondition(TurniaErrorCode.TakeEventSelf, "You already hold this event.");
+  if (!groupId || !eventId) {
+    throw new HttpErrorInvalidArgument(TurniaErrorCode.TakeEventMissingArgs, "Missing groupId or eventId.");
   }
 
   const db = getFirestore();
-  const takerMember = await db.doc(`groups/${groupId}/members/${taker}`).get();
-  if (!takerMember.exists) {
+  const group = await db.doc(`groups/${groupId}`).get();
+  const memberUids = (group.get("memberUids") as string[] | undefined) ?? [];
+  if (!memberUids.includes(taker)) {
     throw new HttpErrorPermissionDenied(TurniaErrorCode.TakeEventNotMember, "You are not a member of this group.");
   }
 
-  const fromEventRef = db.doc(`groups/${groupId}/members/${fromUid}/event/${eventId}`);
-  const toEventRef = db.doc(`groups/${groupId}/members/${taker}/event/${eventId}`);
+  const eventRef = db.doc(`groups/${groupId}/events/${eventId}`);
+  const syncRef = db.doc(`groups/${groupId}/sync/updates`);
 
-  await db.runTransaction(async (tx) => {
-    const snap = await tx.get(fromEventRef);
+  const fromUid = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(eventRef);
     if (!snap.exists) {
       throw new HttpErrorNotFound(TurniaErrorCode.TakeEventNotFound, "Event not found.");
     }
     if (snap.get("onSwap") !== true) {
       throw new HttpErrorFailedPrecondition(TurniaErrorCode.TakeEventNotOnSwap, "Event is not offered for swap.");
     }
-    const data = snap.data() as FirebaseFirestore.DocumentData;
-    const history = await tx.get(fromEventRef.collection("history").orderBy("timestamp"));
 
-    // Create the event under the taker.
-    tx.set(toEventRef, {
-      groupId,
-      ownerId: data.ownerId,
+    const assigneeId = snap.get("assigneeId") as string;
+    if (assigneeId === taker) {
+      throw new HttpErrorFailedPrecondition(TurniaErrorCode.TakeEventSelf, "You already hold this event.");
+    }
+
+    tx.update(eventRef, {
       assigneeId: taker,
-      groupEventTypeId: data.groupEventTypeId ?? null,
-      date: data.date ?? null,
       onSwap: false,
-      createdAt: data.createdAt ?? FieldValue.serverTimestamp(),
+      updateAt: FieldValue.serverTimestamp(),
     });
 
-    // Copy the history forward, then append the transfer entry.
-    let parentEventId: string | null = null;
-    history.forEach((entry) => {
-      tx.set(toEventRef.collection("history").doc(entry.id), entry.data());
-      parentEventId = entry.id;
-    });
-    tx.set(toEventRef.collection("history").doc(), {
+    tx.set(eventRef.collection("history").doc(), {
       type: "transferred",
       actorUid: taker,
-      fromUid,
+      fromUid: assigneeId,
       toUid: taker,
       timestamp: FieldValue.serverTimestamp(),
-      parentEventId,
+      parentEventId: null,
     });
 
-    // Remove the previous assignee's event and its history.
-    history.forEach((entry) => tx.delete(entry.ref));
-    tx.delete(fromEventRef);
+    // Same commit as the event, so the marker and the document resolve to one instant and the
+    // other members' caches can settle instead of refetching for ever.
+    const yearMonth = (snap.get("yearMonth") as string | undefined) ?? "";
+    tx.set(syncRef, { events: { [yearMonth]: { updatedAt: FieldValue.serverTimestamp() } } }, { merge: true });
+
+    return assigneeId;
   });
 
-  // Notify the previous assignee.
-  const fromUser = await db.doc(`users/${fromUid}`).get();
-  const tokens = (fromUser.get("fcmTokens") as string[] | undefined) ?? [];
+  const tokens = await fcmTokensOf(fromUid);
   if (tokens.length > 0) {
     await getMessaging().sendEachForMulticast({
       tokens,

@@ -175,6 +175,7 @@ own field**, so the two timestamps never overwrite each other.
 |-------|------|-------------|
 | `name` | string | Group name. |
 | `memberUids` | string[] | Every member. The **single source of truth** for membership — written only by `acceptJoinRequest`. |
+| `members` | map&lt;uid, {`name`, `username`}&gt; | Who those uids are. Denormalized on purpose: a calendar shows who covers each shift constantly, and `users/{uid}` is unreadable between group mates, so the alternative is a query against `usernames` every time. Here it costs **no read at all** — it arrives with the group. |
 | `adminUids` | string[] | UIDs with admin role. |
 | `groupEventTypes` | array&lt;map&gt; | Event type templates — see below. |
 | `invitation` | map | The group's single invitation — see below. |
@@ -259,6 +260,9 @@ One document answers both questions a calendar asks on opening: *have the types 
 months have?* The read is debounced, so opening a group costs **one** read when nothing moved.
 
 **Access**: read and write by any member — any member's event write moves the month every member reads.
+
+A member joining, leaving or renaming themselves moves `group`, since that is the document their name
+lives on.
 
 **Written in the same commit as the event.** A batch resolves every server timestamp in it to a single
 commit time, so a reader sees the event and its marker as equally old. Written apart, the marker is always

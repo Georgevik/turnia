@@ -13,7 +13,7 @@ const MAX_RANGE_DAYS = 92; // ~3 months
 /**
  * On-demand aggregation of another user's full calendar (across groups).
  *
- * Group events live under group members, so a non-member cannot read them
+ * Group events live under their group, so a non-member cannot read them
  * directly. This callable runs with admin privileges: it checks the caller is
  * allowed (owner, or listed in the owner's `calendarSharedWith`), then gathers
  * the owner's group events (across all their groups) and personal events for a
@@ -54,22 +54,32 @@ export const getSharedCalendar = onCall(async (request) => {
     throw new HttpErrorFailedPrecondition(TurniaErrorCode.SharedCalendarRangeTooWide, "Date range must be within 3 months.");
   }
 
-  // Group events across all the owner's groups (admin bypasses security rules).
-  const groupEventsSnap = await db
-    .collectionGroup("event")
-    .where("assigneeId", "==", ownerUid)
-    .where("date", ">=", from)
-    .where("date", "<=", to)
-    .get();
-  const groupEvents = groupEventsSnap.docs.map((doc) => ({
-    groupId: doc.get("groupId"),
-    eventId: doc.id,
-    groupEventTypeId: doc.get("groupEventTypeId"),
-    date: doc.get("date"),
-    onSwap: doc.get("onSwap"),
-    ownerId: doc.get("ownerId"),
-    assigneeId: doc.get("assigneeId"),
-  }));
+  // Group events, one query per group the owner belongs to. A collection-group query is no longer
+  // possible — nor needed — now that each group keeps its events in its own collection.
+  const ownerGroups = await db.collection("groups").where("memberUids", "array-contains", ownerUid).get();
+  const groupEventsPerGroup = await Promise.all(
+    ownerGroups.docs.map(async (group) => {
+      const snap = await group.ref
+        .collection("events")
+        .where("assigneeId", "==", ownerUid)
+        .where("date", ">=", from)
+        .where("date", "<=", to)
+        .get();
+
+      return snap.docs
+        .filter((doc) => doc.get("isDeleted") !== true)
+        .map((doc) => ({
+          groupId: group.id,
+          eventId: doc.id,
+          groupEventTypeId: doc.get("groupEventTypeId"),
+          date: doc.get("date"),
+          onSwap: doc.get("onSwap"),
+          ownerId: doc.get("ownerId"),
+          assigneeId: doc.get("assigneeId"),
+        }));
+    })
+  );
+  const groupEvents = groupEventsPerGroup.flat();
 
   // Personal events in range.
   const personalSnap = await db
@@ -90,12 +100,11 @@ export const getSharedCalendar = onCall(async (request) => {
 
   const groupEventTypeColors = (ownerDoc.get("groupEventTypeColors") as Record<string, string> | undefined) ?? {};
 
-  const groupIds = [...new Set(groupEvents.map((event) => event.groupId).filter(Boolean))];
+  // The groups were already read to find the events; their types came along with them.
   const groupEventTypes: Record<string, unknown> = {};
-  for (const groupId of groupIds) {
-    const groupDoc = await db.doc(`groups/${groupId}`).get();
-    groupEventTypes[groupId as string] = groupDoc.get("groupEventTypes") ?? [];
-  }
+  ownerGroups.docs.forEach((group) => {
+    groupEventTypes[group.id] = group.get("groupEventTypes") ?? [];
+  });
 
   return { groupEvents, personalEvents, personalEventTypes, groupEventTypeColors, groupEventTypes };
 });

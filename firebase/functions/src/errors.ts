@@ -33,6 +33,12 @@ export enum TurniaErrorCode {
   TakeEventNotFound = 3005,
   TakeEventNotOnSwap = 3006,
 
+  // profile
+  UpdateProfileUnauthenticated = 2001,
+  UpdateProfileMissingArgs = 2002,
+  UpdateProfileUsernameInvalid = 2003,
+  UpdateProfileUsernameTaken = 2004,
+
   // shared calendar
   SharedCalendarUnauthenticated = 4001,
   SharedCalendarMissingArgs = 4002,

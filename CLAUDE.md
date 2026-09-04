@@ -28,7 +28,7 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
 | **User** | Healthcare professional (nurse/doctor); can belong to several groups. |
 | **Group** | A team an admin creates; defines its own group event types. Members see the group's events. |
 | **Group event type** | An event template of a group (name, description, optional start/end time). **No color** — each user colors it themselves. |
-| **Group event** | Stored under the member who performs it (`{uid} == assigneeId`); has an `ownerId` (creator). Can be offered for swap. |
+| **Group event** | Stored under its group (`groups/{groupId}/events`); has an `ownerId` (creator) and an `assigneeId` (who performs it). Can be offered for swap. |
 | **Personal event type** | A template a user defines for themselves (name, color, optional description/times). |
 | **Personal event** | An instance of a personal event type on a date; belongs to no group. |
 | **Swap offer** | The assignee offers their event; another member can take it. |
@@ -204,21 +204,22 @@ Read Server: 14 ReadCache: 61 Writes: 3
 
 ## Traceability
 
-- The `history` is **append-only** and lives alongside the event under the current assignee
-  (`groups/{groupId}/members/{uid}/event/{eventId}/history`).
-- On a transfer the `takeEvent` Cloud Function moves the event to the new assignee and **copies the history
-  forward**, so the current holder's subcollection always has the full chain.
+- The `history` is **append-only** and lives alongside the event (`groups/{groupId}/events/{eventId}/history`).
+- A transfer changes `assigneeId` in place, so the event never moves and the history never has to be copied
+  forward: the chain is simply the entries of that one event.
 - It records only the swap lifecycle: `put_on_swap` and `transferred` (with `fromUid`→`toUid`).
 - Each entry points to `parentEventId`, so the full chain A→B→C can be reconstructed.
 - **Taking an event offered for swap** runs in a `takeEvent` transaction that checks `onSwap == true` before moving it, to prevent double assignment.
 
 ## Permissions (Security Rules)
 
-- **read** `.../event`: only members of the group.
-- **create** event: the member for themselves — `{uid} == auth.uid` and `ownerId == assigneeId == auth.uid`.
-- **update / delete** event: the assignee (`{uid}`) or an admin. (Taking is a cross-member move via `takeEvent`.)
-- Group-wide reads are a collection-group query on `event` filtered by `groupId` and bounded to a **≤ 3-month `date` range**.
-- Helpers: `isMember(g) = exists(members/uid)`; `isAdmin(g) = get(members/uid).role == 'admin'`.
+- **read** `groups/{g}/events`: only members of the group.
+- **create** event: the member for themselves — `ownerId == assigneeId == auth.uid`.
+- **update / delete** event: the assignee or an admin, with `ownerId`/`assigneeId` immutable from the client
+  (`takeEvent` is the only writer that reassigns).
+- A group's calendar is one query over its own `events` collection, filtered by `yearMonth`.
+- Membership is a field of the group: `isMember(g) = auth.uid in groups/{g}.memberUids`, and reading the group
+  itself needs no lookup at all.
 
 ## Sensitive points (do not overlook)
 
@@ -226,9 +227,10 @@ Read Server: 14 ReadCache: 61 Writes: 3
 2. **Viewing another user's full calendar (crosses groups)** — group events live under group members, so a user **outside** the group cannot read them directly. The cross-group shared calendar is served **on demand** by the `getSharedCalendar` Cloud Function. A grant has a **single source of truth**: A may read B only if `A ∈ users/B.calendarSharedWith`, a list only B writes. The function checks it, then aggregates the owner's group + personal events for a bounded date range (admin privileges, no stored copy).
 3. **A username is a reservation, not a field** — `users/{uid}` is unreadable to a stranger, so a user is found through `usernames/{username}`, a public collection keyed by the handle. Uniqueness is enforced by Firestore's create-vs-update distinction in the rules, so **always claim the reservation before writing `users/{uid}.username`**, and release the previous one after. Search there is prefix-only; Firestore has no full-text search.
 4. **Joining a group is two steps via Cloud Functions** — `requestToJoinGroup` validates the code/expiration and creates a `joinRequests` doc; `acceptJoinRequest` (admin only) moves it to `members`. Do **not** let the client write directly to `members`.
-5. **Taking / push are server-only** — `takeEvent` performs the cross-member move (verifying `onSwap` in a transaction) and copies history forward; **push** is sent only from Cloud Functions, never from the client.
-6. **Premium entitlement is server-verified** — the client may *request* a purchase but must never mark itself premium. Only a Cloud Function that validated the store receipt (Play RTDN / App Store Server Notifications) writes `users/{uid}/private/subscription`; security rules forbid the client from setting it. Ad-hiding and premium gating must read the server-verified state, not a local flag.
-7. **Retention is destructive & only server-side** — the scheduled cleanup Cloud Function is the *only* thing that bulk-deletes events older than the 1-month window (events + `history`); clients must not. Before purging, the data must already be in each user's local cache, or old events (and their traceability chain) are lost. Sync into the local NoSQL cache before, not after, relying on the purge.
+5. **Taking / push are server-only** — `takeEvent` reassigns the event in a transaction that verifies `onSwap` first; **push** is sent only from Cloud Functions, never from the client.
+6. **Denormalized names have a keeper** — a group carries its members' names so the calendar costs no read to show them, and `onUserRenamed` is the only thing keeping those copies true. A document and the sync marker that gates it must be written in the **same commit**, or the marker is always the later of the two and no cache ever settles.
+7. **Premium entitlement is server-verified** — the client may *request* a purchase but must never mark itself premium. Only a Cloud Function that validated the store receipt (Play RTDN / App Store Server Notifications) writes `users/{uid}/private/subscription`; security rules forbid the client from setting it. Ad-hiding and premium gating must read the server-verified state, not a local flag.
+8. **Retention is destructive & only server-side** — the scheduled cleanup Cloud Function is the *only* thing that bulk-deletes events older than the 1-month window (events + `history`); clients must not. Before purging, the data must already be in each user's local cache, or old events (and their traceability chain) are lost. Sync into the local NoSQL cache before, not after, relying on the purge.
 
 ## Project structure
 

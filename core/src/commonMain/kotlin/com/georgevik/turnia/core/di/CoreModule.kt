@@ -13,6 +13,7 @@ import com.georgevik.turnia.core.data.datasource.firestore.UsernameFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.mappers.PersonalEventMapper
 import com.georgevik.turnia.core.data.datasource.firestore.mappers.PersonalEventTypeDocMapper
 import com.georgevik.turnia.core.data.datasource.firestore.mappers.UserDocumentMapper
+import com.georgevik.turnia.core.data.datasource.firestorefunctions.UserProfileFunction
 import com.georgevik.turnia.core.data.group.GroupRepositoryImpl
 import com.georgevik.turnia.core.data.user.PersonalEventRepositoryImpl
 import com.georgevik.turnia.core.data.user.UserProvisioner
@@ -25,6 +26,7 @@ import com.georgevik.turnia.core.domain.username.UsernameFactory
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
 import dev.gitlive.firebase.firestore.firestore
+import dev.gitlive.firebase.functions.functions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -38,6 +40,8 @@ val coreModule: Module = module {
     // Outlives every screen: it carries the session and the cache subscriptions.
     single { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
     single { Firebase.firestore }
+    single { Firebase.functions }
+    single { UserProfileFunction(get()) }
     single { UserPathFirestore(get(), get()) }
     single { UserPrivateFirestore(get()) }
     single { UsernameFirestore(get()) }
@@ -52,7 +56,7 @@ val coreModule: Module = module {
     factory { PersonalEventMapper() }
     factory { PersonalEventTypeDocMapper() }
     single { UserProvisioner(get(), get(), get(), get()) }
-    single<UserRepository> { UserRepositoryImpl(Firebase.auth, get(), get(), get(), get(), get(), get()) }
+    single<UserRepository> { UserRepositoryImpl(Firebase.auth, get(), get(), get(), get(), get(), get(), get()) }
     single<AppConfigRepository> { AppConfigRepositoryImpl() }
     single<GroupRepository> { GroupRepositoryImpl(get()) }
     single<PersonalEventRepository> { PersonalEventRepositoryImpl(get(), get(), get(), get()) }

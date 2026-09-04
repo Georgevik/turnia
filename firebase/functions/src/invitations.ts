@@ -97,13 +97,27 @@ export const acceptJoinRequest = onCall(async (request) => {
     throw new HttpErrorNotFound(TurniaErrorCode.AcceptRequestNotFound, "No pending join request.");
   }
 
-  // Membership is a field on the group, so joining is an arrayUnion: two admins accepting at the
-  // same time add their own requester instead of overwriting each other's list.
+  // The name travels with the membership: showing who covers a shift then costs no read at all.
+  const user = await db.doc(`users/${uid}`).get();
+
+  // Membership is a field on the group, so joining is an arrayUnion and the member entry is a
+  // dotted path: two admins accepting at the same time add their own requester instead of
+  // overwriting each other's work.
   const batch = db.batch();
   batch.update(groupRef, {
     memberUids: FieldValue.arrayUnion(uid),
+    [`members.${uid}`]: {
+      name: user.get("name") ?? "",
+      username: user.get("username") ?? "",
+    },
     updateAt: FieldValue.serverTimestamp(),
   });
+  // Same commit as the group, so both resolve to one instant and a reader's cache can settle.
+  batch.set(
+    db.doc(`groups/${groupId}/sync/updates`),
+    { group: FieldValue.serverTimestamp() },
+    { merge: true },
+  );
   batch.delete(requestRef);
   await batch.commit();
 

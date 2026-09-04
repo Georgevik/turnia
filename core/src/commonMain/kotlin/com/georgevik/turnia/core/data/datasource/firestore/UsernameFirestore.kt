@@ -1,8 +1,8 @@
 package com.georgevik.turnia.core.data.datasource.firestore
 
-import com.georgevik.turnia.core.data.datasource.firestore.doc.UsernameDocument
 import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackData
 import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackWrite
+import com.georgevik.turnia.core.data.datasource.firestore.doc.UsernameDocument
 import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.domain.model.UserProfile
@@ -18,31 +18,22 @@ import dev.gitlive.firebase.firestore.code
 /**
  * Interacts with Firestore: `usernames/{username}`
  */
-class UsernameFirestore(
-    private val firestore: FirebaseFirestore
-) {
+class UsernameFirestore(private val firestore: FirebaseFirestore) {
 
     suspend fun claim(
         username: String,
         uid: UserId,
         name: String
     ): Outcome<Unit, UsernameError> =
-        outcomeCatching({ throwable -> throwable.toClaimError(username) }) {
+        outcomeCatching(TAG, { throwable -> throwable.toClaimError(username) }) {
             Logger.i(TAG, "Claim username")
             firestore.collection(PATH_USERNAMES).document(username)
                 .set(UsernameDocument(username = username, uid = uid.value, name = name))
             trackWrite(TAG)
         }
 
-    suspend fun release(username: String): Outcome<Unit, UsernameError> =
-        outcomeCatching({ UsernameError.SaveFailed }) {
-            Logger.i(TAG, "Release username")
-            firestore.collection(PATH_USERNAMES).document(username).delete()
-            trackWrite(TAG)
-        }
-
     suspend fun findByUids(uids: List<UserId>): Outcome<List<UserProfile>, UsernameError> =
-        outcomeCatching({ UsernameError.SaveFailed }) {
+        outcomeCatching(TAG, { UsernameError.SaveFailed }) {
             uids.chunked(UID_QUERY_CHUNK).flatMap { chunk ->
                 val snapshot = firestore.collection(PATH_USERNAMES)
                     .where { UsernameDocument.FIELD_UID inArray chunk.map { it.value } }
@@ -57,7 +48,7 @@ class UsernameFirestore(
         prefix: String,
         limit: Int = SEARCH_LIMIT
     ): Outcome<List<UserProfile>, UsernameError> =
-        outcomeCatching({ UsernameError.SaveFailed }) {
+        outcomeCatching(TAG, { UsernameError.SaveFailed }) {
             if (prefix.length < USERNAME_SEARCH_MIN_LENGTH) return@outcomeCatching emptyList()
 
             val snapshot = firestore.collection(PATH_USERNAMES)

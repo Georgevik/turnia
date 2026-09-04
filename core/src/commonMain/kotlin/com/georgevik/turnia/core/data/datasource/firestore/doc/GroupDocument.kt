@@ -17,6 +17,7 @@ import kotlinx.serialization.Serializable
 data class GroupDocument(
     @SerialName("name") val name: String,
     @SerialName(FIELD_MEMBER_UIDS) val memberUids: List<String> = emptyList(),
+    @SerialName("members") val members: Map<String, GroupMemberDocument> = emptyMap(),
     @SerialName("adminUids") val adminUids: List<String> = emptyList(),
     @SerialName("groupEventTypes") val groupEventTypes: List<GroupEventTypeDocument> = emptyList(),
     @SerialName("invitation") val invitation: InvitationDocument? = null,
@@ -28,6 +29,12 @@ data class GroupDocument(
         const val FIELD_UPDATE_AT = "updateAt"
     }
 }
+
+@Serializable
+data class GroupMemberDocument(
+    @SerialName("name") val name: String,
+    @SerialName("username") val username: String,
+)
 
 /** No color: each user picks their own per type in `users/{uid}.groupEventTypeColors`. */
 @Serializable

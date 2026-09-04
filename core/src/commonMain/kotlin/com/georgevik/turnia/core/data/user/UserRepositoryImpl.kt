@@ -5,6 +5,7 @@ import com.georgevik.turnia.core.data.datasource.firestore.UserPrivateFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.UsernameFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.errors.UserProfileError
 import com.georgevik.turnia.core.data.datasource.firestore.mappers.UserDocumentMapper
+import com.georgevik.turnia.core.data.datasource.firestorefunctions.UserProfileFunction
 import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.User
 import com.georgevik.turnia.core.domain.model.UserId
@@ -15,6 +16,7 @@ import com.georgevik.turnia.core.domain.repository.UserRepository
 import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.errorOrNull
 import com.georgevik.turnia.core.system.mapError
+import com.georgevik.turnia.core.system.onSuccess
 import com.georgevik.turnia.core.system.toFailure
 import com.georgevik.turnia.core.system.toSuccess
 import com.georgevik.turnia.core.system.valueOrElse
@@ -39,15 +41,13 @@ class UserRepositoryImpl(
     private val remoteProfiles: UserPathFirestore,
     private val remotePrivate: UserPrivateFirestore,
     private val remoteUsernames: UsernameFirestore,
+    private val userProfileFunction: UserProfileFunction,
     private val userMapper: UserDocumentMapper,
     private val provisioner: UserProvisioner,
     scope: CoroutineScope
 ) : UserRepository {
 
     private val _userSession = MutableStateFlow<UserSession>(UserSession.Loading)
-
-    // Held rather than derived straight from auth, so that saving the profile can publish the new
-    // user without waiting for a sign-in to happen again.
     override val userSession: StateFlow<UserSession> = _userSession.asStateFlow()
 
     override val loggedUser: User? get() = (_userSession.value as? UserSession.Authenticated)?.user
@@ -112,29 +112,13 @@ class UserRepositoryImpl(
         username: String
     ): Outcome<Unit, UsernameError> {
         if (!provisioner.isValidUsername(username)) return UsernameError.Invalid.toFailure()
-
         val user = loggedUser ?: return UsernameError.SaveFailed.toFailure()
-        val previous = user.username
 
-        // Reserve before publishing: a username taken meanwhile must fail without touching the
-        // profile. Claiming the one already ours is an allowed update, and refreshes the name the
-        // reservation carries for search results.
-        remoteUsernames.claim(username, user.id, name)
-            .errorOrNull()?.let { return it.toFailure() }
-
-        remoteProfiles.updateProfile(user.id, name, username).errorOrNull()?.let { error ->
-            Logger.e(TAG, "Failed to update profile: $error")
-            if (previous != username) remoteUsernames.release(username)
-            return UsernameError.SaveFailed.toFailure()
+        return userProfileFunction.updateProfile(name, username).onSuccess {
+            _userSession.value = UserSession.Authenticated(
+                user.copy(displayName = name, username = username)
+            )
         }
-
-        if (previous.isNotBlank() && previous != username)
-            remoteUsernames.release(previous)
-
-        _userSession.value = UserSession.Authenticated(
-            user.copy(displayName = name, username = username)
-        )
-        return Unit.toSuccess()
     }
 
     override suspend fun searchUsers(prefix: String): Outcome<List<UserProfile>, Unit> =
