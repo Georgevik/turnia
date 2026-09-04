@@ -5,6 +5,7 @@ import com.georgevik.turnia.core.data.datasource.firestore.GroupFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.UserPathFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.doc.DocHolder
 import com.georgevik.turnia.core.data.datasource.firestore.doc.GroupDocument
+import com.georgevik.turnia.core.data.datasource.firestore.doc.GroupMemberDocument
 import com.georgevik.turnia.core.data.datasource.firestore.mappers.GroupMapper
 import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.EventId
@@ -70,19 +71,31 @@ class GroupRepositoryImpl(
     }
 
     override suspend fun saveGroup(group: Group): Outcome<Group, GroupError> {
-        val userId = userRepository.loggedUser?.id ?: return GroupError.NotFound.toFailure()
+        val user = userRepository.loggedUser ?: return GroupError.NotFound.toFailure()
+        val userId = user.id
         val isNew = group.id.value.isBlank()
 
         val current = if (isNew) null else groupFirestore.get(group.id).valueOrNull()
         val groupId = if (isNew) GroupId(createId()) else group.id
         val memberUids = current?.doc?.memberUids ?: listOf(userId.value)
         val adminUids = current?.doc?.adminUids ?: listOf(userId.value)
+        // The creator is a member from the start, so their name has to be here too: the calendar
+        // reads it off the group and nothing else would ever add it.
+        val members = current?.doc?.members ?: mapOf(
+            userId.value to GroupMemberDocument(
+                name = user.displayName.orEmpty(),
+                username = user.username,
+            )
+        )
 
         val invitationCode = group.invitationCode ?: createInvitationCode()
         val document = groupMapper.map(group.copy(invitationCode = invitationCode), memberUids, adminUids)
-            .copy(members = current?.doc?.members.orEmpty())
+            .copy(members = members)
 
-        groupFirestore.save(groupId, document).errorOrNull()?.let { error ->
+        val saved = if (isNew) groupFirestore.create(groupId, document)
+        else groupFirestore.update(groupId, document)
+
+        saved.errorOrNull()?.let { error ->
             Logger.e(TAG, "Failed to save group: $error")
             return GroupError.NotFound.toFailure()
         }

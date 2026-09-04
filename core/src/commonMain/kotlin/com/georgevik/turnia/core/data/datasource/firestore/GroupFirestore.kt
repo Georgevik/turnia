@@ -90,7 +90,15 @@ class GroupFirestore(
                 emit(emptyList())
             }
 
-    suspend fun save(groupId: GroupId, group: GroupDocument): Outcome<Unit, GenericFirestoreError> =
+    suspend fun create(groupId: GroupId, group: GroupDocument): Outcome<Unit, GenericFirestoreError> =
+        outcomeCatching(TAG, { GenericFirestoreError(it) }) {
+            Logger.d(TAG, "Create group document")
+
+            groupDocument(groupId).set(group)
+            trackWrite(TAG)
+        }
+
+    suspend fun update(groupId: GroupId, group: GroupDocument): Outcome<Unit, GenericFirestoreError> =
         outcomeCatching(TAG, { GenericFirestoreError(it) }) {
             Logger.d(TAG, "Set group document")
 
