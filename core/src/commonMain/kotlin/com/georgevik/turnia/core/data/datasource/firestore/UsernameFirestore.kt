@@ -1,6 +1,8 @@
 package com.georgevik.turnia.core.data.datasource.firestore
 
 import com.georgevik.turnia.core.data.datasource.firestore.doc.UsernameDocument
+import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackData
+import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackWrite
 import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.domain.model.UserProfile
@@ -29,12 +31,14 @@ class UsernameFirestore(
             Logger.i(TAG, "Claim username")
             firestore.collection(PATH_USERNAMES).document(username)
                 .set(UsernameDocument(username = username, uid = uid.value, name = name))
+            trackWrite(TAG)
         }
 
     suspend fun release(username: String): Outcome<Unit, UsernameError> =
         outcomeCatching({ UsernameError.SaveFailed }) {
             Logger.i(TAG, "Release username")
             firestore.collection(PATH_USERNAMES).document(username).delete()
+            trackWrite(TAG)
         }
 
     suspend fun findByUids(uids: List<UserId>): Outcome<List<UserProfile>, UsernameError> =
@@ -42,7 +46,7 @@ class UsernameFirestore(
             uids.chunked(UID_QUERY_CHUNK).flatMap { chunk ->
                 val snapshot = firestore.collection(PATH_USERNAMES)
                     .where { UsernameDocument.FIELD_UID inArray chunk.map { it.value } }
-                    .get()
+                    .get().trackData(TAG)
                 Logger.d(TAG, "Resolved ${snapshot.documents.size} of ${chunk.size} uids")
 
                 snapshot.documents.map { it.data(UsernameDocument.serializer()).toProfile() }
@@ -62,7 +66,7 @@ class UsernameFirestore(
                             (UsernameDocument.FIELD_USERNAME lessThanOrEqualTo prefix + '￿')
                 }
                 .limit(limit)
-                .get()
+                .get().trackData(TAG)
             Logger.d(TAG, "Username search '$prefix': ${snapshot.documents.size} results")
 
             snapshot.documents.map { it.data(UsernameDocument.serializer()).toProfile() }

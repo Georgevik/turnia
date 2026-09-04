@@ -77,6 +77,8 @@ Firebase must **not** accumulate every past event forever. The backend keeps onl
 
 - **Comments** — do **not** add a comment to every file, function or header. Comments belong only on **non-obvious, non-logic** code (a business rule, a workaround, a subtle invariant, a "why"). A comment that restates what the code already says is redundant — omit it.
 
+- **Firestore calls** — every read and every write reports itself to the usage audit. See *[Firestore usage tracking](#firestore-usage-tracking)*.
+
 ## Error handling & UI state
 
 These follow the [official Android architecture guidance](https://developer.android.com/topic/architecture/recommendations), with one deliberate deviation (`Outcome`, below).
@@ -170,6 +172,35 @@ Build one with `value.toSuccess()` / `error.toFailure()` — both work on any re
 ## Firestore data model
 
 See [firebase/firestore-schema.md](firebase/firestore-schema.md) — the single source of truth for collections, fields, enums, access rules and invariants.
+
+## Firestore usage tracking
+
+Firestore bills **per document**: one read for every document the server returns, one write for every document sent to it. The local cache is the only lever we have on that bill, so its effect has to be measurable — a read served from cache is free, and we count those apart to see the caching working.
+
+**Every Firestore call must report itself** through [`FirestoreUsageMetrics.kt`](core/src/commonMain/kotlin/com/georgevik/turnia/core/data/datasource/firestore/analytics/FirestoreUsageMetrics.kt). A new datasource, or a new query in an existing one, is not finished until it does.
+
+| Call | How to report it |
+|------|------------------|
+| `.get()` on a query | chain `.trackData(TAG)` onto the snapshot |
+| `.get()` on a document | chain `.trackData(TAG)` — a document that does not exist still costs a read |
+| `set` / `updateFields` / `delete` | `trackWrite(TAG)` on the line **after** the call |
+
+`TAG` is the reporting class's own log tag: usage is counted per class, so the audit says **who** spent the reads and not only how many.
+
+Two rules that are easy to get wrong:
+
+- **`trackWrite` goes after the write, never before.** Inside `outcomeCatching { }` that means a call which threw never gets counted — a write rejected by the security rules is not billed, and counting it hides real failures behind plausible numbers.
+- **A write has no cache variant.** It is billed even offline; the charge simply lands when the device syncs. Only reads can be free.
+
+The audit logs under the `FirestoreAudit` tag. A billed call — a server read or any write — prints the running totals and then the breakdown per class; a cache hit only counts, at `debug`, so the noisy line is the one that costs money.
+
+```
+FirestoreAudit: UsernameFirestore: 1 write(s)
+Read Server: 14 ReadCache: 61 Writes: 3
+    PersonalEventFirestore -> Read Server: 11 ReadCache: 58 Writes: 0
+    UserPathFirestore -> Read Server: 3 ReadCache: 3 Writes: 2
+    UsernameFirestore -> Read Server: 0 ReadCache: 0 Writes: 1
+```
 
 ## Traceability
 

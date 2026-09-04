@@ -1,5 +1,7 @@
 package com.georgevik.turnia.core.data.datasource.firestore
 
+import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackData
+import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackWrite
 import com.georgevik.turnia.core.data.datasource.firestore.doc.EventSyncUpdateAt
 import com.georgevik.turnia.core.data.datasource.firestore.doc.UserSyncDocument
 import com.georgevik.turnia.core.data.datasource.firestore.errors.GenericFirestoreError
@@ -20,7 +22,7 @@ class UserSyncFirestore(
 
     suspend fun get(uid: UserId): Outcome<UserSyncDocument, GenericFirestoreError> =
         outcomeCatching(TAG,{ GenericFirestoreError(it) }) {
-            val snapshot = syncDocument(uid).get()
+            val snapshot = syncDocument(uid).get().trackData(TAG)
             Logger.d(TAG, "Sync updates. Cached: ${snapshot.metadata.isFromCache}")
 
             // A user who has never written anything has no sync document: nothing to catch up with.
@@ -33,7 +35,7 @@ class UserSyncFirestore(
         yearMonth: YearMonth
     ): Outcome<Unit, GenericFirestoreError> =
         outcomeCatching(TAG,{ GenericFirestoreError(it) }) {
-            val snapshot = syncDocument(uid).get()
+            val snapshot = syncDocument(uid).get().trackData(TAG)
 
             val syncDoc = if (!snapshot.exists) UserSyncDocument()
             else snapshot.data(UserSyncDocument.serializer())
@@ -44,6 +46,7 @@ class UserSyncFirestore(
 
             Logger.d(TAG, "Personal event sync updated")
             syncDocument(uid).set(syncDoc.copy(personalEventsUpdatedAt = eventSyncList))
+            trackWrite(TAG)
         }
 
 
@@ -58,6 +61,7 @@ class UserSyncFirestore(
             Logger.d(TAG, "Update sync updates")
             // Merging without defaults leaves the timestamps this patch does not carry untouched.
             syncDocument(uid).set(patch, merge = true) { encodeDefaults = false }
+            trackWrite(TAG)
         }
 
     private fun syncDocument(uid: UserId) =

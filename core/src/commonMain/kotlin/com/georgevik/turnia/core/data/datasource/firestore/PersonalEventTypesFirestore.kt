@@ -1,5 +1,7 @@
 package com.georgevik.turnia.core.data.datasource.firestore
 
+import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackData
+import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackWrite
 import com.georgevik.turnia.core.data.datasource.firestore.doc.PersonalEventTypeDocument
 import com.georgevik.turnia.core.data.datasource.firestore.errors.GenericFirestoreError
 import com.georgevik.turnia.core.data.datasource.firestore.mappers.PersonalEventTypeDocMapper
@@ -69,6 +71,7 @@ class PersonalEventTypesFirestore(
             Logger.i(TAG, "Set personal type document")
             firestore.collection(PATH_PERSONAL_TYPES(uid.value)).document(personalType.id.value)
                 .set(doc)
+            trackWrite(TAG)
             markTypesUpdated(uid)
         }
 
@@ -78,6 +81,7 @@ class PersonalEventTypesFirestore(
             firestore.collection(PATH_PERSONAL_TYPES(uid.value)).document(typeId.value).updateFields {
                 PersonalEventTypeDocument.FIELD_IS_DELETED to true
             }
+            trackWrite(TAG)
             markTypesUpdated(uid)
         }
 
@@ -91,7 +95,7 @@ class PersonalEventTypesFirestore(
         queryEventTypes(uid, Source.CACHE).ifEmpty { queryEventTypes(uid, Source.SERVER) }
 
     private suspend fun queryEventTypes(uid: UserId, source: Source): List<PersonalEventType> {
-        val snapshot = firestore.collection(PATH_PERSONAL_TYPES(uid.value)).get(source)
+        val snapshot = firestore.collection(PATH_PERSONAL_TYPES(uid.value)).get(source).trackData(TAG)
         Logger.i(
             TAG,
             "Personal event types. Cache: ${snapshot.metadata.isFromCache}. " +

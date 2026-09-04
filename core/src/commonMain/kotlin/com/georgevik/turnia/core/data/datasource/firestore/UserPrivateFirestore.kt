@@ -3,6 +3,8 @@ package com.georgevik.turnia.core.data.datasource.firestore
 import com.georgevik.turnia.core.data.datasource.firestore.doc.SubscriptionDocument
 import com.georgevik.turnia.core.data.datasource.firestore.doc.UserPrivateDocument
 import com.georgevik.turnia.core.data.datasource.firestore.errors.UserProfileError
+import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackData
+import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackWrite
 import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.system.Outcome
@@ -21,7 +23,7 @@ class UserPrivateFirestore(
 
     suspend fun fetchAccount(uid: UserId): Outcome<UserPrivateDocument?, UserProfileError> =
         outcomeCatching({ UserProfileError.LoadFailed(it) }) {
-            val snapshot = document(uid, DOCUMENT_ACCOUNT).get()
+            val snapshot = document(uid, DOCUMENT_ACCOUNT).get().trackData(TAG)
             Logger.d(TAG, "Fetch private account from cache: ${snapshot.metadata.isFromCache}")
 
             if (!snapshot.exists) null
@@ -30,7 +32,7 @@ class UserPrivateFirestore(
 
     suspend fun fetchSubscription(uid: UserId): Outcome<SubscriptionDocument?, UserProfileError> =
         outcomeCatching({ UserProfileError.LoadFailed(it) }) {
-            val snapshot = document(uid, DOCUMENT_SUBSCRIPTION).get()
+            val snapshot = document(uid, DOCUMENT_SUBSCRIPTION).get().trackData(TAG)
             Logger.d(TAG, "Fetch subscription from cache: ${snapshot.metadata.isFromCache}")
 
             if (!snapshot.exists) null
@@ -44,6 +46,7 @@ class UserPrivateFirestore(
         outcomeCatching({ UserProfileError.LoadFailed(it) }) {
             Logger.i(TAG, "Update private account document")
             document(uid, DOCUMENT_ACCOUNT).set(account)
+            trackWrite(TAG)
         }
 
     private fun document(uid: UserId, documentId: String) =

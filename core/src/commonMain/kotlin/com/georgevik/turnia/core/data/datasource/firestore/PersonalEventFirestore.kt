@@ -1,5 +1,7 @@
 package com.georgevik.turnia.core.data.datasource.firestore
 
+import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackData
+import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackWrite
 import com.georgevik.turnia.core.data.datasource.firestore.doc.DocHolder
 import com.georgevik.turnia.core.data.datasource.firestore.doc.PersonalEventDocument
 import com.georgevik.turnia.core.data.datasource.firestore.errors.GenericFirestoreError
@@ -58,6 +60,7 @@ class PersonalEventFirestore(
             val doc = personalEventMapper.map(event)
             Logger.d(TAG, "Set personal event document")
             firestore.collection(PATH_EVENTS(uid.value)).document(event.id.value).set(doc)
+            trackWrite(TAG)
             markEventsUpdated(uid, event.date.toYearMonth())
         }
 
@@ -69,6 +72,7 @@ class PersonalEventFirestore(
         outcomeCatching(TAG, { GenericFirestoreError(it) }) {
             Logger.d(TAG, "Delete personal event document")
             firestore.collection(PATH_EVENTS(uid.value)).document(eventId.value).delete()
+            trackWrite(TAG)
             markEventsUpdated(uid, eventDate.yearMonth)
         }
 
@@ -85,7 +89,7 @@ class PersonalEventFirestore(
     ): List<DocHolder<PersonalEventDocument>> {
         val snapshot = firestore.collection(PATH_EVENTS(uid.value)).where {
             PersonalEventDocument.FIELD_YEAR_MONTH inArray months.map { it.toString() }
-        }.get(source)
+        }.get(source).trackData(TAG)
 
         Logger.d(
             TAG,

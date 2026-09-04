@@ -1,0 +1,91 @@
+package com.georgevik.turnia.core.data.datasource.firestore.analytics
+
+import com.georgevik.turnia.core.data.logger.Logger
+import dev.gitlive.firebase.firestore.DocumentSnapshot
+import dev.gitlive.firebase.firestore.QuerySnapshot
+import kotlin.concurrent.atomics.AtomicReference
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+
+private const val TAG = "FirestoreAudit"
+
+/** What one reporting class has spent so far. */
+data class FirestoreUsage(
+    val serverReads: Int = 0,
+    val cachedReads: Int = 0,
+    val writes: Int = 0,
+) {
+    operator fun plus(other: FirestoreUsage) = FirestoreUsage(
+        serverReads = serverReads + other.serverReads,
+        cachedReads = cachedReads + other.cachedReads,
+        writes = writes + other.writes,
+    )
+
+    override fun toString(): String =
+        "Read Server: $serverReads ReadCache: $cachedReads Writes: $writes"
+}
+
+/**
+ * Counts what Firestore actually bills: one read per document the **server** returns, one write per
+ * document sent to it. Documents answered from the local cache cost nothing and are counted apart,
+ * so the caching work has a number to show for itself.
+ *
+ * Kept per reporting class, so the audit says who is spending and not only how much.
+ */
+@OptIn(ExperimentalAtomicApi::class)
+object FirestoreUsageMetrics {
+
+    // An immutable map swapped atomically: Firestore resolves its calls on its own threads, and a
+    // plain map would both lose counts and break while the summary iterates it.
+    private val usageByTag = AtomicReference(emptyMap<String, FirestoreUsage>())
+
+    fun add(tag: String, usage: FirestoreUsage) {
+        while (true) {
+            val current = usageByTag.load()
+            val updated = current + (tag to (current[tag] ?: FirestoreUsage()) + usage)
+            if (usageByTag.compareAndSet(current, updated)) return
+        }
+    }
+
+    /** Totals first, then a line per reporting class. */
+    fun summary(): String {
+        val usage = usageByTag.load()
+        val total = usage.values.fold(FirestoreUsage()) { acc, next -> acc + next }
+
+        return buildString {
+            append(total)
+            usage.entries.sortedBy { it.key }.forEach { (tag, tagUsage) ->
+                append("\n    $tag -> $tagUsage")
+            }
+        }
+    }
+}
+
+/**
+ * Reports a query's documents, billed or not. Returns the snapshot so it can be chained onto the
+ * `get()` that produced it. [tag] is the reporting class's own `TAG`.
+ */
+fun QuerySnapshot.trackData(tag: String): QuerySnapshot = apply {
+    trackRead(tag, documents.size, metadata.isFromCache)
+}
+
+fun DocumentSnapshot.trackData(tag: String): DocumentSnapshot = apply {
+    // A document that does not exist still costs a read.
+    trackRead(tag, 1, metadata.isFromCache)
+}
+
+/** A write is never served from a cache: it is billed even while the device is offline. */
+fun trackWrite(tag: String, documents: Int = 1) {
+    FirestoreUsageMetrics.add(tag, FirestoreUsage(writes = documents))
+    Logger.i(TAG, "$tag: $documents write(s)\n${FirestoreUsageMetrics.summary()}")
+}
+
+private fun trackRead(tag: String, documents: Int, fromCache: Boolean) {
+    if (fromCache) {
+        FirestoreUsageMetrics.add(tag, FirestoreUsage(cachedReads = documents))
+        Logger.d(TAG, "$tag: $documents doc(s) from cache, nothing billed")
+        return
+    }
+
+    FirestoreUsageMetrics.add(tag, FirestoreUsage(serverReads = documents))
+    Logger.i(TAG, "$tag: $documents read(s) from server\n${FirestoreUsageMetrics.summary()}")
+}

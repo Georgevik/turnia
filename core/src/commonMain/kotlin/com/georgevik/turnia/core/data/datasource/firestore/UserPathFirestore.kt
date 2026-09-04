@@ -3,6 +3,8 @@ package com.georgevik.turnia.core.data.datasource.firestore
 import com.georgevik.turnia.core.data.datasource.firestore.doc.UserDocument
 import com.georgevik.turnia.core.data.datasource.firestore.errors.UserProfileError
 import com.georgevik.turnia.core.data.datasource.firestore.mappers.UserDocumentMapper
+import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackData
+import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackWrite
 import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.domain.model.UserProfile
@@ -21,7 +23,7 @@ class UserPathFirestore(
 
     suspend fun fetch(uid: UserId): Outcome<UserProfile, UserProfileError> =
         outcomeCatching({ UserProfileError.LoadFailed(it) }) {
-            val snapshot = firestore.collection(PATH_USER).document(uid.value).get()
+            val snapshot = firestore.collection(PATH_USER).document(uid.value).get().trackData(TAG)
             Logger.d(TAG, "Fetch user from cache: ${snapshot.metadata.isFromCache}")
 
             if (!snapshot.exists) return Outcome.Failure(UserProfileError.NotFound)
@@ -32,7 +34,7 @@ class UserPathFirestore(
         outcomeCatching({ UserProfileError.LoadFailed(it) }) {
             val snapshot = firestore.collection(PATH_USER).where {
                 UserDocument.FIELD_CALENDAR_SHARED_WITH contains uid.value
-            }.get()
+            }.get().trackData(TAG)
             Logger.d(TAG, "Calendars shared with me: ${snapshot.documents.size}")
 
             snapshot.documents.map { mapper.map(it) }
@@ -55,6 +57,7 @@ class UserPathFirestore(
             firestore.collection(PATH_USER).document(uid.value).updateFields {
                 UserDocument.FIELD_CALENDAR_SHARED_WITH to FieldValue.arrayUnion(granteeUid.value)
             }
+            trackWrite(TAG)
         }
 
     suspend fun revokeCalendarAccess(
@@ -66,6 +69,7 @@ class UserPathFirestore(
             firestore.collection(PATH_USER).document(uid.value).updateFields {
                 UserDocument.FIELD_CALENDAR_SHARED_WITH to FieldValue.arrayRemove(granteeUid.value)
             }
+            trackWrite(TAG)
         }
 
     suspend fun updateProfile(
@@ -79,6 +83,7 @@ class UserPathFirestore(
                 UserDocument.FIELD_NAME to name
                 UserDocument.FIELD_USERNAME to username
             }
+            trackWrite(TAG)
         }
 
     suspend fun updateUsername(uid: UserId, username: String): Outcome<Unit, UserProfileError> =
@@ -87,12 +92,14 @@ class UserPathFirestore(
             firestore.collection(PATH_USER).document(uid.value).updateFields {
                 UserDocument.FIELD_USERNAME to username
             }
+            trackWrite(TAG)
         }
 
     suspend fun update(uid: UserId, userPatched: UserDocument): Outcome<Unit, UserProfileError> =
         outcomeCatching({ UserProfileError.LoadFailed(it) }) {
             Logger.i(TAG, "Update user document")
             firestore.collection(PATH_USER).document(uid.value).set(userPatched)
+            trackWrite(TAG)
         }
 
     companion object {
