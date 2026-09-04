@@ -25,16 +25,20 @@ import com.georgevik.turnia.core.system.toFailure
 import com.georgevik.turnia.core.system.toInstant
 import com.georgevik.turnia.core.system.toSuccess
 import com.georgevik.turnia.core.system.valueOrNull
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class GroupRepositoryImpl(
     private val userRepository: UserRepository,
     private val groupFirestore: GroupFirestore,
@@ -115,20 +119,20 @@ class GroupRepositoryImpl(
             .mapError { error -> Logger.e(TAG, "Failed to delete the group event: $error") }
     }
 
+    /**
+     * Follows the group as well as its events: a type renamed or recoloured, or a member renamed,
+     * re-renders the calendar without a reload, because the shifts are drawn from both.
+     */
     override fun getEventsByGroup(
         groupId: GroupId,
         date: LocalDate,
         monthDelta: Int,
-    ): Flow<Outcome<List<GroupEvent>, Unit>> = flow {
-        val userId = userRepository.loggedUser?.id
-        val holder = userId?.let { groupFirestore.get(groupId).valueOrNull() }
-        if (userId == null || holder == null) {
-            emit(Unit.toFailure())
-            return@flow
+    ): Flow<Outcome<List<GroupEvent>, Unit>> = groupFirestore.observe(groupId)
+        .flatMapLatest { holder ->
+            val userId = userRepository.loggedUser?.id
+            if (holder == null || userId == null) flowOf(Unit.toFailure())
+            else eventsOf(holder, userId, date, monthDelta).map { it.toSuccess() }
         }
-
-        emitAll(eventsOf(holder, userId, date, monthDelta).map { it.toSuccess() })
-    }
 
     /**
      * The user's own shifts across every group they belong to. One pass over the groups the "my

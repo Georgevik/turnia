@@ -14,6 +14,12 @@ import com.georgevik.turnia.core.system.toInstantOrNull
 import com.georgevik.turnia.core.system.valueOrNull
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Source
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.mapNotNull
+import kotlin.time.Instant
 
 /**
  * Interacts with Firestore: `groups/{groupId}`
@@ -23,21 +29,48 @@ class GroupFirestore(
     private val groupSyncFirestore: GroupSyncFirestore,
 ) {
 
+    fun observe(groupId: GroupId): Flow<DocHolder<GroupDocument>?> = flow {
+        var known = queryGroup(groupId, Source.CACHE)
+        emit(known)
+
+        var fetched = known != null
+        emitAll(
+            groupSyncFirestore.observe(groupId).mapNotNull { sync ->
+                if (fetched && !isStale(known, sync.groupUpdatedAt.toInstantOrNull())) {
+                    return@mapNotNull null
+                }
+
+                known = queryGroup(groupId, Source.SERVER)
+                fetched = true
+                known
+            }
+        )
+    }.catch { throwable ->
+        Logger.e(TAG, "Group listener failed", throwable)
+        emit(null)
+    }
+
+    /** The best answer available now, for callers with nothing to keep up to date. */
     suspend fun get(groupId: GroupId): Outcome<DocHolder<GroupDocument>?, GenericFirestoreError> =
         outcomeCatching(TAG, { GenericFirestoreError(it) }) {
-            val cached = read(groupId, Source.CACHE)
-            val cacheUpdatedAt = cached?.doc?.updateAt.toInstantOrNull()
+            val cached = queryGroup(groupId, Source.CACHE)
 
             // Nothing cached: asking the sync document first would only add a read to a fetch that
             // is going to happen anyway.
-            if (cacheUpdatedAt == null) return@outcomeCatching read(groupId, Source.SERVER)
+            if (cached == null) return@outcomeCatching queryGroup(groupId, Source.SERVER)
 
             val serverUpdatedAt = groupSyncFirestore.get(groupId).valueOrNull()
                 ?.groupUpdatedAt.toInstantOrNull()
 
-            if (serverUpdatedAt == null || serverUpdatedAt <= cacheUpdatedAt) cached
-            else read(groupId, Source.SERVER)
+            if (isStale(cached, serverUpdatedAt)) queryGroup(groupId, Source.SERVER) else cached
         }
+
+    private fun isStale(cached: DocHolder<GroupDocument>?, serverUpdatedAt: Instant?): Boolean {
+        if (serverUpdatedAt == null) return false
+        val cacheUpdatedAt = cached?.doc?.updateAt.toInstantOrNull() ?: return true
+
+        return serverUpdatedAt > cacheUpdatedAt
+    }
 
     suspend fun getMyGroups(
         userId: UserId
@@ -66,7 +99,7 @@ class GroupFirestore(
             trackWrite(TAG)
         }
 
-    private suspend fun read(groupId: GroupId, source: Source): DocHolder<GroupDocument>? {
+    private suspend fun queryGroup(groupId: GroupId, source: Source): DocHolder<GroupDocument>? {
         val snapshot = groupDocument(groupId).get(source).trackData(TAG)
         Logger.d(TAG, "Group document. Source: $source. Exists: ${snapshot.exists}")
 
