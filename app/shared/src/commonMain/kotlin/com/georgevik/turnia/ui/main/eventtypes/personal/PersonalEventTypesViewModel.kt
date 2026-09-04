@@ -32,7 +32,7 @@ class PersonalEventTypesViewModel(
 
     fun refreshEvents() {
         viewModelScope.launch {
-            val types = personalRepository.getEventTypes().map { it.toUi() }.sortedBy { it.name }
+            val types = personalRepository.getMyEventTypes().map { it.toUi() }.sortedBy { it.name }
             _uiState.update { state ->
                 val message = (state as? PersonalEventTypesUi.Success)?.userMessage
                 PersonalEventTypesUi.Success(types = types, userMessage = message)

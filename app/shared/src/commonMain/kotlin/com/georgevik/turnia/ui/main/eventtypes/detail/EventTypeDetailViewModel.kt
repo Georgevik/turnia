@@ -86,8 +86,9 @@ class EventTypeDetailViewModel(
     }
 
     private suspend fun loadPersonalType(typeId: String): Outcome<EventTypeForm, EventTypeScreenError> {
-        val eventType = personalRepository.getEventType(typeId).getOrNull()
-            ?: return EventTypeScreenError.GroupEventNotFound.toFailure()
+        val eventType =
+            personalRepository.getMyEventTypes(includeDeleted = true).find { it.id == typeId }
+                ?: return EventTypeScreenError.GroupEventNotFound.toFailure()
 
         return eventType.toUi().toSuccess()
     }

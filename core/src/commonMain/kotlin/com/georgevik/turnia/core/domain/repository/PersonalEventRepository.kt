@@ -15,7 +15,7 @@ interface PersonalEventRepository {
     val onEventsChanged: SharedFlow<Int>
     val onEventTypeChanged: SharedFlow<Int>
 
-    suspend fun getEventTypes(): List<PersonalEventType>
+    suspend fun getMyEventTypes(includeDeleted: Boolean = false): List<PersonalEventType>
 
     suspend fun addEvent(event: PersonalEvent)
 
@@ -30,6 +30,4 @@ interface PersonalEventRepository {
         date: LocalDate,
         monthDelta: Int = 1
     ): Outcome<List<PersonalEvent>, Unit>
-
-    suspend fun getEventType(typeId: String): Result<PersonalEventType>
 }

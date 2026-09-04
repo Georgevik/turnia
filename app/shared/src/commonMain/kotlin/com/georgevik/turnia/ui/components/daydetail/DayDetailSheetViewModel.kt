@@ -60,7 +60,7 @@ class DayDetailSheetViewModel(
             val outcome = outcomeCatching({ AddEventTypesError.LoadFailed }) {
                 coroutineScope {
                     val groups = async { groupRepository.getGroups() }
-                    val personalTypes = async { personalRepository.getEventTypes() }
+                    val personalTypes = async { personalRepository.getMyEventTypes() }
                     buildSections(personalTypes.await(), groups.await())
                 }
             }
