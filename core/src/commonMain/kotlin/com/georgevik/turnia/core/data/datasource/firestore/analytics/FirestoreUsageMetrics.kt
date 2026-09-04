@@ -3,8 +3,14 @@ package com.georgevik.turnia.core.data.datasource.firestore.analytics
 import com.georgevik.turnia.core.data.logger.Logger
 import dev.gitlive.firebase.firestore.DocumentSnapshot
 import dev.gitlive.firebase.firestore.QuerySnapshot
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.random.Random
+import kotlin.time.Duration.Companion.seconds
 
 private const val TAG = "FirestoreAudit"
 
@@ -34,6 +40,15 @@ data class FirestoreUsage(
 @OptIn(ExperimentalAtomicApi::class)
 object FirestoreUsageMetrics {
 
+
+    private val summaryLogger = MutableStateFlow(Random.nextInt())
+
+    init {
+        GlobalScope.launch {
+            summaryLogger.debounce(1.seconds).collect { printSummary() }
+        }
+    }
+
     // An immutable map swapped atomically: Firestore resolves its calls on its own threads, and a
     // plain map would both lose counts and break while the summary iterates it.
     private val usageByTag = AtomicReference(emptyMap<String, FirestoreUsage>())
@@ -46,17 +61,22 @@ object FirestoreUsageMetrics {
         }
     }
 
+    fun triggerSummary() {
+        summaryLogger.tryEmit(Random.nextInt())
+    }
+
     /** Totals first, then a line per reporting class. */
-    fun summary(): String {
+    private fun printSummary() {
         val usage = usageByTag.load()
         val total = usage.values.fold(FirestoreUsage()) { acc, next -> acc + next }
 
-        return buildString {
+        val summary = buildString {
             append(total)
             usage.entries.sortedBy { it.key }.forEach { (tag, tagUsage) ->
                 append("\n    $tag -> $tagUsage")
             }
         }
+        Logger.i(TAG, summary)
     }
 }
 
@@ -76,16 +96,15 @@ fun DocumentSnapshot.trackData(tag: String): DocumentSnapshot = apply {
 /** A write is never served from a cache: it is billed even while the device is offline. */
 fun trackWrite(tag: String, documents: Int = 1) {
     FirestoreUsageMetrics.add(tag, FirestoreUsage(writes = documents))
-    Logger.i(TAG, "$tag: $documents write(s)\n${FirestoreUsageMetrics.summary()}")
+    FirestoreUsageMetrics.triggerSummary()
 }
 
 private fun trackRead(tag: String, documents: Int, fromCache: Boolean) {
     if (fromCache) {
         FirestoreUsageMetrics.add(tag, FirestoreUsage(cachedReads = documents))
-        Logger.d(TAG, "$tag: $documents doc(s) from cache, nothing billed")
         return
     }
 
     FirestoreUsageMetrics.add(tag, FirestoreUsage(serverReads = documents))
-    Logger.i(TAG, "$tag: $documents read(s) from server\n${FirestoreUsageMetrics.summary()}")
+    FirestoreUsageMetrics.triggerSummary()
 }

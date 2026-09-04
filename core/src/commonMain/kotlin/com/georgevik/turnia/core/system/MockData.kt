@@ -231,6 +231,7 @@ fun mockGenerateEvents(
     me: UserId,
     amount: Int = 30
 ): List<GroupEvent> {
+    if (true) return emptyList()
     val firstOfMonth = LocalDate(fromMonth.year, fromMonth.month, 1)
     // The pool's stand-in for "me" becomes whoever is actually signed in, so the events the
     // calendar marks as mine are the ones this account owns.

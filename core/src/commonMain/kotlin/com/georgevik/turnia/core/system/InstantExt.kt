@@ -1,5 +1,7 @@
 package com.georgevik.turnia.core.system
 
+import dev.gitlive.firebase.firestore.BaseTimestamp
+import dev.gitlive.firebase.firestore.Timestamp
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.YearMonth
@@ -15,5 +17,16 @@ fun Instant.toLocalDate(): LocalDate = toLocalDateTime(TimeZone.currentSystemDef
     LocalDate(it.year, it.month, it.day)
 }
 
+fun Instant.toTimestamp(): Timestamp = Timestamp(
+    seconds = this.epochSeconds,
+    nanoseconds = this.nanosecondsOfSecond
+)
 
 fun LocalDate.toInstant() = atStartOfDayIn(TimeZone.currentSystemDefault())
+
+fun BaseTimestamp?.toInstantOrNull(): Instant? = when (this) {
+    is Timestamp -> this.toInstant()
+    else -> null
+}
+
+fun Timestamp.toInstant(): Instant = Instant.fromEpochSeconds(seconds, nanoseconds)

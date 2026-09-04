@@ -17,7 +17,7 @@ class PersonalEventMapper {
             typeId = event.type.id.value,
             date = event.date.toString(),
             yearMonth = event.date.toYearMonth().toString(),
-            notes = event.notes.takeIf { it?.isNotEmpty() == true }
+            notes = event.notes.takeIf { it?.isNotEmpty() == true },
         )
     }
 
