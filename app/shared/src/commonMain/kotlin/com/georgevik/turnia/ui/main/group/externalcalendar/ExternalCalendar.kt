@@ -39,7 +39,7 @@ fun ExternalCalendar(viewModel: ExternalCalendarViewModel) {
                 icon = if (isGroup) Icons.Default.Groups else Icons.Default.Person,
                 theme = theme,
                 onBack = navigator::goBack,
-                onTitleClick = if (data is ExternalCalendarData.Group) {
+                onInfo = if (data is ExternalCalendarData.Group) {
                     { rootNavigator.goTo(RootRoute.GroupDetailKey(data.id)) }
                 } else {
                     null

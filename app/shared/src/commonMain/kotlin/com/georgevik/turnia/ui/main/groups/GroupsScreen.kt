@@ -50,8 +50,8 @@ import turnia.app.shared.generated.resources.groups_load_error
 import turnia.app.shared.generated.resources.groups_search_hint
 
 /**
- * "Grupos" tab: the groups this user belongs to. Tapping one opens its calendar; the info button
- * opens the group itself, which is where an admin edits it.
+ * "Grupos" tab: the groups this user belongs to. Tapping one opens its calendar, and the group
+ * itself — where an admin edits it — hangs off the info button in that calendar's title bar.
  */
 @Composable
 fun GroupsScreen(viewModel: GroupsViewModel = koinViewModel()) {
@@ -127,9 +127,6 @@ fun GroupsScreen(viewModel: GroupsViewModel = koinViewModel()) {
                                         ExternalCalendarData.Group(group.id.value, group.name)
                                     )
                                 )
-                            },
-                            onDetails = {
-                                rootNavigator.goTo(RootRoute.GroupDetailKey(group.id.value))
                             },
                         )
                     }

@@ -3,13 +3,9 @@ package com.georgevik.turnia.ui.main.groups.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -27,11 +23,10 @@ import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.group_admin_badge
-import turnia.app.shared.generated.resources.group_detail_open
 import turnia.app.shared.generated.resources.group_member_count
 
 @Composable
-fun GroupCard(group: GroupRowUi, onClick: () -> Unit, onDetails: () -> Unit) {
+fun GroupCard(group: GroupRowUi, onClick: () -> Unit) {
     TListItem(
         title = group.name,
         subtitle = pluralStringResource(
@@ -47,14 +42,6 @@ fun GroupCard(group: GroupRowUi, onClick: () -> Unit, onDetails: () -> Unit) {
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 if (group.isAdmin) AdminBadge()
-                IconButton(onClick = onDetails) {
-                    Icon(
-                        imageVector = Icons.Outlined.Info,
-                        contentDescription = stringResource(Res.string.group_detail_open),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
                 Chevron()
             }
         },
