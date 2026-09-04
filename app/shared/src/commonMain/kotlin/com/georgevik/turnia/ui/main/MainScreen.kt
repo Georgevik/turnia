@@ -36,21 +36,35 @@ import com.georgevik.turnia.ui.main.people.navigation.peopleNavigation
 import com.georgevik.turnia.ui.main.settings.navigation.settingsNavigation
 import com.georgevik.turnia.ui.system.LocalSnackbar
 import com.georgevik.turnia.ui.system.TurniaSnackbarHost
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import turnia.app.shared.generated.resources.Res
+import turnia.app.shared.generated.resources.tab_calendar
+import turnia.app.shared.generated.resources.tab_changes
+import turnia.app.shared.generated.resources.tab_groups
+import turnia.app.shared.generated.resources.tab_people
+import turnia.app.shared.generated.resources.tab_settings
 
 private data class MainTabBarItem(
     val route: MainRoute,
-    val title: String,
+    /** A resource and not a resolved string: this list outlives a language change. */
+    val title: StringResource,
     val icon: ImageVector,
     val requiresSwapFlag: Boolean = false,
 )
 
 private val MAIN_TABS = listOf(
-    MainTabBarItem(MainRoute.CalendarTab, "Calendario", Icons.Default.CalendarMonth),
-    MainTabBarItem(MainRoute.PeopleTab, "Personas", Icons.Default.People),
-    MainTabBarItem(MainRoute.GroupsTab, "Grupos", Icons.Default.Groups),
-    MainTabBarItem(MainRoute.ChangesTab, "Cambios", Icons.Default.SwapHoriz, requiresSwapFlag = true),
-    MainTabBarItem(MainRoute.SettingsMenuTab, "Ajustes", Icons.Default.Settings),
+    MainTabBarItem(MainRoute.CalendarTab, Res.string.tab_calendar, Icons.Default.CalendarMonth),
+    MainTabBarItem(MainRoute.PeopleTab, Res.string.tab_people, Icons.Default.People),
+    MainTabBarItem(MainRoute.GroupsTab, Res.string.tab_groups, Icons.Default.Groups),
+    MainTabBarItem(
+        route = MainRoute.ChangesTab,
+        title = Res.string.tab_changes,
+        icon = Icons.Default.SwapHoriz,
+        requiresSwapFlag = true,
+    ),
+    MainTabBarItem(MainRoute.SettingsMenuTab, Res.string.tab_settings, Icons.Default.Settings),
 )
 
 /**
@@ -87,13 +101,12 @@ fun MainScreen(viewModel: MainViewModel = koinViewModel()) {
             bottomBar = {
                 NavigationBar {
                     visibleTabs.forEach { tab ->
+                        val title = stringResource(tab.title)
                         NavigationBarItem(
                             selected = state.topLevelRoute == tab.route,
                             onClick = { navigator.goTo(tab.route) },
-                            icon = {
-                                Icon(imageVector = tab.icon, contentDescription = tab.title)
-                            },
-                            label = { Text(text = tab.title) },
+                            icon = { Icon(imageVector = tab.icon, contentDescription = title) },
+                            label = { Text(text = title) },
                         )
                     }
                 }
