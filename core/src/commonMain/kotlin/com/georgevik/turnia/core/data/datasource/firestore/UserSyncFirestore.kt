@@ -11,6 +11,7 @@ import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.outcomeCatching
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Timestamp
+import dev.gitlive.firebase.firestore.WriteBatch
 import kotlinx.datetime.YearMonth
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
@@ -49,10 +50,14 @@ class UserSyncFirestore(
             fetch(uid)
         }
 
-    suspend fun updatePersonalEvents(
-        uid: UserId,
-        yearMonth: YearMonth
-    ): Outcome<Unit, GenericFirestoreError> = update(
+    /**
+     * Adds the marker to [batch] instead of writing it on its own, so it lands in the same commit
+     * as the document it marks. A batch resolves every `ServerTimestamp` in it to a single commit
+     * time, and that is what lets a reader see document and marker as equally old — written apart,
+     * the marker is always the later of the two and the cache never looks current.
+     */
+    fun writePersonalEvents(batch: WriteBatch, uid: UserId, yearMonth: YearMonth) = write(
+        batch,
         uid,
         UserSyncDocument(
             personalEventsUpdatedAt = mapOf(
@@ -61,19 +66,16 @@ class UserSyncFirestore(
         ),
     )
 
-    suspend fun updatePersonalEventTypes(uid: UserId): Outcome<Unit, GenericFirestoreError> =
-        update(uid, UserSyncDocument(personalEventTypesUpdatedAt = Timestamp.ServerTimestamp))
+    fun writePersonalEventTypes(batch: WriteBatch, uid: UserId) =
+        write(batch, uid, UserSyncDocument(personalEventTypesUpdatedAt = Timestamp.ServerTimestamp))
 
-    private suspend fun update(
-        uid: UserId,
-        patch: UserSyncDocument
-    ): Outcome<Unit, GenericFirestoreError> =
-        outcomeCatching(TAG, { GenericFirestoreError(it) }) {
-            Logger.d(TAG, "Update sync updates")
-            syncDocument(uid).set(patch, merge = true) { encodeDefaults = false }
-            trackWrite(TAG)
-            forget(uid)
-        }
+    private fun write(batch: WriteBatch, uid: UserId, patch: UserSyncDocument) {
+        Logger.d(TAG, "Update sync updates")
+        // Without defaults, so the fields the patch does not carry are not encoded at all.
+        batch.set(syncDocument(uid), patch, merge = true) { encodeDefaults = false }
+        trackWrite(TAG)
+        forget(uid)
+    }
 
     private suspend fun fetch(uid: UserId): UserSyncDocument {
         val snapshot = syncDocument(uid).get().trackData(TAG)

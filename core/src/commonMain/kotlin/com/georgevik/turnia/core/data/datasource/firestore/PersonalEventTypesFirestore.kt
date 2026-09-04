@@ -63,29 +63,33 @@ class PersonalEventTypesFirestore(
         outcomeCatching(TAG, { GenericFirestoreError(it) }) {
             val doc = personalEventTypeDocMapper.map(personalType)
             Logger.i(TAG, "Set personal type document")
-            firestore.collection(PATH_PERSONAL_TYPES(uid.value)).document(personalType.id.value)
-                .set(doc)
+
+            val batch = firestore.batch()
+            batch.set(
+                firestore.collection(PATH_PERSONAL_TYPES(uid.value))
+                    .document(personalType.id.value),
+                doc,
+            )
+            userSyncFirestore.writePersonalEventTypes(batch, uid)
+            batch.commit()
             trackWrite(TAG)
-            markTypesUpdated(uid)
         }
 
     suspend fun delete(uid: UserId, typeId: EventTypeId): Outcome<Unit, GenericFirestoreError> =
         outcomeCatching(TAG, { GenericFirestoreError(it) }) {
             Logger.i(TAG, "Delete personal type document")
-            firestore.collection(PATH_PERSONAL_TYPES(uid.value)).document(typeId.value)
-                .updateFields {
-                    PersonalEventTypeDocument.FIELD_IS_DELETED to true
-                    PersonalEventTypeDocument.FIELD_UPDATE_AT to Timestamp.ServerTimestamp
-                }
-            trackWrite(TAG)
-            markTypesUpdated(uid)
-        }
 
-    private suspend fun markTypesUpdated(uid: UserId) {
-        userSyncFirestore.updatePersonalEventTypes(uid).errorOrNull()?.let { error ->
-            Logger.e(TAG, "Error updating personal event types sync", error.error)
+            val batch = firestore.batch()
+            batch.updateFields(
+                firestore.collection(PATH_PERSONAL_TYPES(uid.value)).document(typeId.value)
+            ) {
+                PersonalEventTypeDocument.FIELD_IS_DELETED to true
+                PersonalEventTypeDocument.FIELD_UPDATE_AT to Timestamp.ServerTimestamp
+            }
+            userSyncFirestore.writePersonalEventTypes(batch, uid)
+            batch.commit()
+            trackWrite(TAG)
         }
-    }
 
     private suspend fun queryEventTypes(
         uid: UserId,
