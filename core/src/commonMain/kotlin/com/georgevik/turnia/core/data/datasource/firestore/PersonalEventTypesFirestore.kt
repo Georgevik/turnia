@@ -2,6 +2,7 @@ package com.georgevik.turnia.core.data.datasource.firestore
 
 import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackData
 import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackWrite
+import com.georgevik.turnia.core.data.datasource.firestore.doc.DocHolder
 import com.georgevik.turnia.core.data.datasource.firestore.doc.PersonalEventTypeDocument
 import com.georgevik.turnia.core.data.datasource.firestore.errors.GenericFirestoreError
 import com.georgevik.turnia.core.data.datasource.firestore.mappers.PersonalEventTypeDocMapper
@@ -9,17 +10,15 @@ import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.EventTypeId
 import com.georgevik.turnia.core.domain.model.PersonalEventType
 import com.georgevik.turnia.core.domain.model.UserId
-import com.georgevik.turnia.core.domain.session.SessionEvents
-import com.georgevik.turnia.core.domain.session.clearOnSignOut
 import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.errorOrNull
 import com.georgevik.turnia.core.system.outcomeCatching
 import com.georgevik.turnia.core.system.toInstantOrNull
+import com.georgevik.turnia.core.system.toTimestamp
 import com.georgevik.turnia.core.system.valueOrNull
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Source
-import kotlinx.coroutines.CoroutineScope
-import kotlin.time.Instant
+import dev.gitlive.firebase.firestore.Timestamp
 
 /**
  * Interacts with Firestore: `users/{uid}/personalEventTypes`
@@ -28,45 +27,40 @@ class PersonalEventTypesFirestore(
     private val firestore: FirebaseFirestore,
     private val personalEventTypeDocMapper: PersonalEventTypeDocMapper,
     private val userSyncFirestore: UserSyncFirestore,
-    sessionEvents: SessionEvents,
-    scope: CoroutineScope,
 ) {
 
-    private val lastSeenUpdate = mutableMapOf<UserId, Instant>()
+    suspend fun get(uid: UserId): Outcome<List<PersonalEventType>, GenericFirestoreError> =
+        outcomeCatching(TAG, { GenericFirestoreError(it) }) {
+            val cachedTypes = queryEventTypes(uid, null, Source.CACHE)
+            val cacheUpdatedAt = cachedTypes.mapNotNull { it.doc.updateAt.toInstantOrNull() }
+                .maxOrNull()
 
-    init {
-        sessionEvents.clearOnSignOut(scope) { lastSeenUpdate.clear() }
-    }
-
-    suspend fun get(
-        uid: UserId,
-        isHostUser: Boolean
-    ): Outcome<List<PersonalEventType>, GenericFirestoreError> =
-        outcomeCatching({ GenericFirestoreError(it) }) {
-            if (isHostUser) return@outcomeCatching cachedOrServer(uid)
+            if (cacheUpdatedAt == null) {
+                // No cache -> Fetch from Server
+                return@outcomeCatching queryEventTypes(uid, null, Source.SERVER).toDomain()
+            }
 
             val sync = userSyncFirestore.get(uid)
             sync.errorOrNull()?.let { Logger.e(TAG, "Error reading sync updates", it.error) }
-            val updatedAt = sync.valueOrNull()?.personalEventTypesUpdatedAt.toInstantOrNull()
+            val serverUpdatedAt = sync.valueOrNull()?.personalEventTypesUpdatedAt.toInstantOrNull()
 
-            // Sin timestamp no hay nada contra lo que comparar: sirve caché, pero una caché vacía
-            // puede significar que nunca bajamos los tipos de este usuario, no que no tenga.
-            if (updatedAt == null) return@outcomeCatching cachedOrServer(uid)
-
-            val seen = lastSeenUpdate[uid]
-            if (seen != null && seen >= updatedAt) {
-                return@outcomeCatching queryEventTypes(uid, Source.CACHE)
+            if (serverUpdatedAt == null || serverUpdatedAt <= cacheUpdatedAt) {
+                return@outcomeCatching cachedTypes.toDomain()
             }
 
-            // Solo se registra si la bajada fue bien: si lanza, el próximo intento reintenta.
-            queryEventTypes(uid, Source.SERVER).also { lastSeenUpdate[uid] = updatedAt }
+            val changed = queryEventTypes(uid, cacheUpdatedAt.toTimestamp(), Source.SERVER)
+                .associateBy { it.id }
+                .toMutableMap()
+
+            val merged = cachedTypes.map { cached -> changed.remove(cached.id) ?: cached }
+            (merged + changed.values).toDomain()
         }
 
     suspend fun set(
         uid: UserId,
         personalType: PersonalEventType
     ): Outcome<Unit, GenericFirestoreError> =
-        outcomeCatching({ GenericFirestoreError(it) }) {
+        outcomeCatching(TAG, { GenericFirestoreError(it) }) {
             val doc = personalEventTypeDocMapper.map(personalType)
             Logger.i(TAG, "Set personal type document")
             firestore.collection(PATH_PERSONAL_TYPES(uid.value)).document(personalType.id.value)
@@ -76,11 +70,13 @@ class PersonalEventTypesFirestore(
         }
 
     suspend fun delete(uid: UserId, typeId: EventTypeId): Outcome<Unit, GenericFirestoreError> =
-        outcomeCatching({ GenericFirestoreError(it) }) {
+        outcomeCatching(TAG, { GenericFirestoreError(it) }) {
             Logger.i(TAG, "Delete personal type document")
-            firestore.collection(PATH_PERSONAL_TYPES(uid.value)).document(typeId.value).updateFields {
-                PersonalEventTypeDocument.FIELD_IS_DELETED to true
-            }
+            firestore.collection(PATH_PERSONAL_TYPES(uid.value)).document(typeId.value)
+                .updateFields {
+                    PersonalEventTypeDocument.FIELD_IS_DELETED to true
+                    PersonalEventTypeDocument.FIELD_UPDATE_AT to Timestamp.ServerTimestamp
+                }
             trackWrite(TAG)
             markTypesUpdated(uid)
         }
@@ -91,20 +87,27 @@ class PersonalEventTypesFirestore(
         }
     }
 
-    private suspend fun cachedOrServer(uid: UserId): List<PersonalEventType> =
-        queryEventTypes(uid, Source.CACHE).ifEmpty { queryEventTypes(uid, Source.SERVER) }
+    private suspend fun queryEventTypes(
+        uid: UserId,
+        sinceUpdateAt: Timestamp?,
+        source: Source
+    ): List<DocHolder<PersonalEventTypeDocument>> {
+        val snapshot = firestore.collection(PATH_PERSONAL_TYPES(uid.value)).where {
+            sinceUpdateAt?.let { PersonalEventTypeDocument.FIELD_UPDATE_AT greaterThan it }
+        }.get(source).trackData(TAG)
 
-    private suspend fun queryEventTypes(uid: UserId, source: Source): List<PersonalEventType> {
-        val snapshot = firestore.collection(PATH_PERSONAL_TYPES(uid.value)).get(source).trackData(TAG)
         Logger.i(
             TAG,
-            "Personal event types. Cache: ${snapshot.metadata.isFromCache}. " +
+            "Personal event types. Source: $source. " +
                     "Amount: ${snapshot.documents.size}. " +
                     "Changes: ${snapshot.documentChanges.size}"
         )
 
         return snapshot.documents.map { personalEventTypeDocMapper.map(it) }
     }
+
+    private fun List<DocHolder<PersonalEventTypeDocument>>.toDomain(): List<PersonalEventType> =
+        map { personalEventTypeDocMapper.map(it) }
 
     companion object {
         private const val TAG = "PersonalEventTypesFirestore"

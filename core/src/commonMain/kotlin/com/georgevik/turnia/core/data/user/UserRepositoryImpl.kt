@@ -12,7 +12,6 @@ import com.georgevik.turnia.core.domain.model.UserProfile
 import com.georgevik.turnia.core.domain.model.UserSession
 import com.georgevik.turnia.core.domain.model.UsernameError
 import com.georgevik.turnia.core.domain.repository.UserRepository
-import com.georgevik.turnia.core.domain.session.SessionEvents
 import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.errorOrNull
 import com.georgevik.turnia.core.system.mapError
@@ -42,8 +41,7 @@ class UserRepositoryImpl(
     private val remoteUsernames: UsernameFirestore,
     private val userMapper: UserDocumentMapper,
     private val provisioner: UserProvisioner,
-    private val sessionEvents: SessionEvents,
-    private val scope: CoroutineScope
+    scope: CoroutineScope
 ) : UserRepository {
 
     private val _userSession = MutableStateFlow<UserSession>(UserSession.Loading)
@@ -62,18 +60,7 @@ class UserRepositoryImpl(
                 .flatMapLatest { firebaseUser ->
                     if (firebaseUser == null) flowOf(UserSession.Unauthenticated)
                     else gatherUserInfo(firebaseUser)
-                }
-                .collect { session ->
-                    val wasAuthenticated = _userSession.value is UserSession.Authenticated
-                    _userSession.value = session
-
-                    // Signalled here and not in signOut(): a session also ends when the token is
-                    // revoked or the account is deleted, and the caches are just as stale then.
-                    if (wasAuthenticated && session !is UserSession.Authenticated) {
-                        Logger.i(TAG, "Session ended, clearing caches")
-                        sessionEvents.notifySignedOut()
-                    }
-                }
+                }.collect { session -> _userSession.value = session }
         }
     }
 
@@ -143,7 +130,7 @@ class UserRepositoryImpl(
 
         if (previous.isNotBlank() && previous != username)
             remoteUsernames.release(previous)
-        
+
         _userSession.value = UserSession.Authenticated(
             user.copy(displayName = name, username = username)
         )

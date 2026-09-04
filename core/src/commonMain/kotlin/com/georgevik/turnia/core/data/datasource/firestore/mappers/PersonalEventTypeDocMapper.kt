@@ -1,5 +1,6 @@
 package com.georgevik.turnia.core.data.datasource.firestore.mappers
 
+import com.georgevik.turnia.core.data.datasource.firestore.doc.DocHolder
 import com.georgevik.turnia.core.data.datasource.firestore.doc.PersonalEventTypeDocument
 import com.georgevik.turnia.core.domain.model.EventTypeId
 import com.georgevik.turnia.core.domain.model.PersonalEventType
@@ -18,11 +19,16 @@ class PersonalEventTypeDocMapper {
         )
     }
 
-    fun map(snapshot: DocumentSnapshot): PersonalEventType {
-        val doc = snapshot.data(PersonalEventTypeDocument.serializer())
+    fun map(snapshot: DocumentSnapshot): DocHolder<PersonalEventTypeDocument> = DocHolder(
+        id = snapshot.reference.id,
+        doc = snapshot.data(PersonalEventTypeDocument.serializer()),
+    )
+
+    fun map(holder: DocHolder<PersonalEventTypeDocument>): PersonalEventType {
+        val doc = holder.doc
 
         return PersonalEventType(
-            id = EventTypeId(snapshot.reference.id),
+            id = EventTypeId(holder.id),
             name = doc.name,
             color = doc.color,
             acronym = doc.acronym,

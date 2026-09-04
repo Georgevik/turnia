@@ -98,8 +98,7 @@ class PersonalEventRepositoryImpl(
     }
 
     private suspend fun getAllEventTypes(uid: UserId): List<PersonalEventType> {
-        val hostUserId = userRepository.loggedUser?.id ?: return emptyList()
-        val typeResult = personalEventTypesFirestore.get(uid, isHostUser = uid == hostUserId)
+        val typeResult = personalEventTypesFirestore.get(uid)
 
         typeResult.errorOrNull()?.let { error ->
             Logger.e(TAG, "Error fetching personal event types", error.error)
