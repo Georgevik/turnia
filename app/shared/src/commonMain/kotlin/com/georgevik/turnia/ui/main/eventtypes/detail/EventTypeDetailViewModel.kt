@@ -54,7 +54,7 @@ class EventTypeDetailViewModel(
                 is EventTypeDetailData.EditGroup -> loadGroupType(GroupId(key.groupId), EventTypeId(key.typeId))
                 is EventTypeDetailData.EditPersonal -> loadPersonalType(EventTypeId(key.typeId))
                 EventTypeDetailData.NewPersonal,
-                EventTypeDetailData.NewGroup -> newForm().toSuccess()
+                is EventTypeDetailData.NewGroup -> newForm().toSuccess()
 
             }.fold(
                 onSuccess = { form ->
@@ -106,7 +106,8 @@ class EventTypeDetailViewModel(
 
                 is EventTypeDetailData.EditPersonal,
                 EventTypeDetailData.NewPersonal,
-                EventTypeDetailData.NewGroup -> Result.success(Unit)
+                // Nothing to colour yet: the pick is saved with the type it belongs to.
+                is EventTypeDetailData.NewGroup -> Result.success(Unit)
             }.fold(
                 onSuccess = { updateSuccess { it.copy(form = it.form.copy(color = color)) } },
                 onFailure = { updateSuccess { it.copy(toastError = EventTypeToastError.PickColor) } }
@@ -137,17 +138,10 @@ class EventTypeDetailViewModel(
         )
     }
 
-    fun onSavePersonal() {
+    fun onSave() {
         val state = uiState.value as? EventTypeDetailUi.Success ?: return
-        val typeId = when (key) {
-            is EventTypeDetailData.EditPersonal -> key.typeId
-            EventTypeDetailData.NewPersonal -> createId()
-            is EventTypeDetailData.EditGroup,
-            EventTypeDetailData.NewGroup ->
-                return updateSuccess { it.copy(toastError = EventTypeToastError.NotImplemented) }
-        }
-
         val form = state.form
+
         val nameError = EventTypeFieldError.Required.takeIf { form.name.isBlank() }
         val acronymError = EventTypeFieldError.Required.takeIf { form.acronym.isBlank() }
         if (nameError != null || acronymError != null) {
@@ -161,8 +155,18 @@ class EventTypeDetailViewModel(
             }
         }
 
+        when (key) {
+            is EventTypeDetailData.EditPersonal -> savePersonal(EventTypeId(key.typeId), form)
+            EventTypeDetailData.NewPersonal -> savePersonal(EventTypeId(createId()), form)
+            is EventTypeDetailData.NewGroup -> saveGroupType(GroupId(key.groupId), form)
+            is EventTypeDetailData.EditGroup ->
+                updateSuccess { it.copy(toastError = EventTypeToastError.NotImplemented) }
+        }
+    }
+
+    private fun savePersonal(typeId: EventTypeId, form: EventTypeForm) {
         val type = PersonalEventType(
-            id = EventTypeId(typeId),
+            id = typeId,
             name = form.name.trim(),
             color = form.color.toHex(),
             acronym = form.acronym.trim(),
@@ -188,6 +192,47 @@ class EventTypeDetailViewModel(
                         it.copy(
                             toastError = EventTypeToastError.SavePersonal,
                             saveButtonLoading = false
+                        )
+                    }
+                }
+            )
+        }
+    }
+
+    private fun saveGroupType(groupId: GroupId, form: EventTypeForm) {
+        val typeId = EventTypeId(createId())
+        val type = GroupEventType(
+            id = typeId,
+            groupId = groupId,
+            // The type does not store the group's name; the mapper drops it on the way out.
+            groupName = "",
+            name = form.name.trim(),
+            acronym = form.acronym.trim(),
+            description = form.description.trim().ifBlank { null },
+            startTime = form.startTime.toTimeOrNull(),
+            endTime = form.endTime.toTimeOrNull(),
+            // A type nobody can offer for swap defeats the point of the group; the screen has no
+            // switch for it yet.
+            swappable = true,
+            colorHex = "",
+            userColor = null,
+        )
+
+        viewModelScope.launch {
+            updateSuccess { it.copy(saveButtonLoading = true) }
+
+            groupRepository.saveEventType(groupId, type).fold(
+                onSuccess = {
+                    // The colour is the author's own pick, not the type's: it is saved apart, and
+                    // a group type nobody coloured still renders.
+                    groupRepository.saveTypeColor(groupId, typeId, form.color.toHex())
+                    updateSuccess { it.copy(saveButtonLoading = false, isSaved = true) }
+                },
+                onFailure = {
+                    updateSuccess {
+                        it.copy(
+                            toastError = EventTypeToastError.SaveGroup,
+                            saveButtonLoading = false,
                         )
                     }
                 }

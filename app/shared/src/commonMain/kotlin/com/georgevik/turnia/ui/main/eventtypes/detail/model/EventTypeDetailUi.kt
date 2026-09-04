@@ -51,5 +51,5 @@ sealed interface EventTypeTitle{
 enum class EventTypeFieldError { Required }
 
 enum class EventTypeToastError {
-    PickColor, NotImplemented, SavePersonal
+    PickColor, NotImplemented, SavePersonal, SaveGroup
 }

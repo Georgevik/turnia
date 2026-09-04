@@ -65,6 +65,7 @@ import turnia.app.shared.generated.resources.event_type_error_group_not_found
 import turnia.app.shared.generated.resources.event_type_error_not_implemented
 import turnia.app.shared.generated.resources.event_type_error_pick_color
 import turnia.app.shared.generated.resources.event_type_error_required
+import turnia.app.shared.generated.resources.event_type_error_save_group
 import turnia.app.shared.generated.resources.event_type_error_save_personal
 import turnia.app.shared.generated.resources.event_type_error_type_not_found
 import turnia.app.shared.generated.resources.event_type_field_acronym
@@ -134,7 +135,7 @@ fun EventTypeDetailScreen(viewModel: EventTypeDetailViewModel) {
                         .padding(innerPadding)
                         .padding(20.dp),
                     state = state,
-                    onSavePersonal = viewModel::onSavePersonal,
+                    onSave = viewModel::onSave,
                     onPickColor = viewModel::onPickColor,
                     onFieldChanged = viewModel::onFieldChanged
                 )
@@ -164,7 +165,7 @@ private fun LoadingContent(modifier: Modifier = Modifier) {
 private fun EventTypeFormContent(
     modifier: Modifier = Modifier,
     state: EventTypeDetailUi.Success,
-    onSavePersonal: () -> Unit,
+    onSave: () -> Unit,
     onPickColor: (color: Color) -> Unit,
     onFieldChanged: (EventTypeField, String) -> Unit,
 ) {
@@ -189,7 +190,7 @@ private fun EventTypeFormContent(
 
         if (eventTypeForm.fieldsEditable) {
             Button(
-                onClick = onSavePersonal,
+                onClick = onSave,
                 enabled = !state.saveButtonLoading,
                 shape = RoundedCornerShape(percent = 50),
                 contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
@@ -388,6 +389,7 @@ private fun EventTypeToastError.message(): String = stringResource(
     when (this) {
         EventTypeToastError.PickColor -> Res.string.event_type_error_pick_color
         EventTypeToastError.SavePersonal -> Res.string.event_type_error_save_personal
+        EventTypeToastError.SaveGroup -> Res.string.event_type_error_save_group
         EventTypeToastError.NotImplemented -> Res.string.event_type_error_not_implemented
     }
 )
