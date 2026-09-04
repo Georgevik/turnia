@@ -105,7 +105,8 @@ private fun trackRead(tag: String, documents: Int, fromCache: Boolean) {
         return
     }
 
-    FirestoreAudit.add(tag, FirestoreUsage(serverReads = documents))
-    Logger.d(TAG, "$tag - Read $documents documents from server")
+    val totalReads = documents.coerceAtLeast(1)
+    FirestoreAudit.add(tag, FirestoreUsage(serverReads = totalReads))
+    Logger.d(TAG, "$tag - SERVER READ: $totalReads. Documents: $documents")
     FirestoreAudit.triggerSummary()
 }

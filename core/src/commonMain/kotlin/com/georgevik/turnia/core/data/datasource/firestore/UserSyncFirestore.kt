@@ -52,19 +52,14 @@ class UserSyncFirestore(
     suspend fun updatePersonalEvents(
         uid: UserId,
         yearMonth: YearMonth
-    ): Outcome<Unit, GenericFirestoreError> =
-        outcomeCatching(TAG, { GenericFirestoreError(it) }) {
-            val syncDoc = fetch(uid)
-
-            val eventSyncList = syncDoc.personalEventsUpdatedAt.toMutableMap().apply {
-                this[yearMonth] = EventSyncUpdateAt(Timestamp.ServerTimestamp)
-            }
-
-            Logger.d(TAG, "Personal event sync updated")
-            syncDocument(uid).set(syncDoc.copy(personalEventsUpdatedAt = eventSyncList))
-            trackWrite(TAG)
-            forget(uid)
-        }
+    ): Outcome<Unit, GenericFirestoreError> = update(
+        uid,
+        UserSyncDocument(
+            personalEventsUpdatedAt = mapOf(
+                yearMonth to EventSyncUpdateAt(Timestamp.ServerTimestamp)
+            ),
+        ),
+    )
 
     suspend fun updatePersonalEventTypes(uid: UserId): Outcome<Unit, GenericFirestoreError> =
         update(uid, UserSyncDocument(personalEventTypesUpdatedAt = Timestamp.ServerTimestamp))
@@ -75,7 +70,6 @@ class UserSyncFirestore(
     ): Outcome<Unit, GenericFirestoreError> =
         outcomeCatching(TAG, { GenericFirestoreError(it) }) {
             Logger.d(TAG, "Update sync updates")
-            // Merging without defaults leaves the timestamps this patch does not carry untouched.
             syncDocument(uid).set(patch, merge = true) { encodeDefaults = false }
             trackWrite(TAG)
             forget(uid)
