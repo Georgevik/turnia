@@ -38,7 +38,7 @@ data class FirestoreUsage(
  * Kept per reporting class, so the audit says who is spending and not only how much.
  */
 @OptIn(ExperimentalAtomicApi::class)
-object FirestoreUsageMetrics {
+object FirestoreAudit {
 
 
     private val summaryLogger = MutableStateFlow(Random.nextInt())
@@ -95,16 +95,17 @@ fun DocumentSnapshot.trackData(tag: String): DocumentSnapshot = apply {
 
 /** A write is never served from a cache: it is billed even while the device is offline. */
 fun trackWrite(tag: String, documents: Int = 1) {
-    FirestoreUsageMetrics.add(tag, FirestoreUsage(writes = documents))
-    FirestoreUsageMetrics.triggerSummary()
+    FirestoreAudit.add(tag, FirestoreUsage(writes = documents))
+    FirestoreAudit.triggerSummary()
 }
 
 private fun trackRead(tag: String, documents: Int, fromCache: Boolean) {
     if (fromCache) {
-        FirestoreUsageMetrics.add(tag, FirestoreUsage(cachedReads = documents))
+        FirestoreAudit.add(tag, FirestoreUsage(cachedReads = documents))
         return
     }
 
-    FirestoreUsageMetrics.add(tag, FirestoreUsage(serverReads = documents))
-    FirestoreUsageMetrics.triggerSummary()
+    FirestoreAudit.add(tag, FirestoreUsage(serverReads = documents))
+    Logger.d(TAG, "$tag - Read $documents documents from server")
+    FirestoreAudit.triggerSummary()
 }
