@@ -4,8 +4,11 @@ import com.georgevik.turnia.core.data.datasource.firestore.PersonalEventFirestor
 import com.georgevik.turnia.core.data.datasource.firestore.PersonalEventTypesFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.mappers.PersonalEventMapper
 import com.georgevik.turnia.core.data.logger.Logger
+import com.georgevik.turnia.core.domain.model.EventId
+import com.georgevik.turnia.core.domain.model.EventTypeId
 import com.georgevik.turnia.core.domain.model.PersonalEvent
 import com.georgevik.turnia.core.domain.model.PersonalEventType
+import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
 import com.georgevik.turnia.core.domain.repository.UserRepository
 import com.georgevik.turnia.core.system.Outcome
@@ -37,32 +40,32 @@ class PersonalEventRepositoryImpl(
     override val onEventTypeChanged = _onEventTypeChanged.asSharedFlow()
 
     override suspend fun getMyEventTypes(includeDeleted: Boolean): List<PersonalEventType> {
-        val userId = userRepository.loggedUser?.firebaseUid ?: return emptyList()
+        val userId = userRepository.loggedUser?.id ?: return emptyList()
         val types = getAllEventTypes(userId)
         return if (!includeDeleted) types.filterNot { it.isDeleted } else types
     }
 
     override suspend fun addEvent(event: PersonalEvent) {
-        val uid = userRepository.loggedUser?.firebaseUid ?: return
+        val uid = userRepository.loggedUser?.id ?: return
         personalEventFirestore.set(uid, event)
         _onEventsChanged.emit(Random.nextInt())
     }
 
-    override suspend fun deleteEvent(eventId: String, eventDate: LocalDate) {
-        val uid = userRepository.loggedUser?.firebaseUid ?: return
+    override suspend fun deleteEvent(eventId: EventId, eventDate: LocalDate) {
+        val uid = userRepository.loggedUser?.id ?: return
         personalEventFirestore.delete(uid, eventId, eventDate)
         _onEventsChanged.emit(Random.nextInt())
     }
 
     override suspend fun saveEventType(type: PersonalEventType): Outcome<Unit, Unit> {
-        val userId = userRepository.loggedUser?.firebaseUid ?: return Unit.toFailure()
+        val userId = userRepository.loggedUser?.id ?: return Unit.toFailure()
         personalEventTypesFirestore.set(userId, type)
         _onEventTypeChanged.emit(Random.nextInt())
         return Unit.toSuccess()
     }
 
-    override suspend fun deleteEventType(typeId: String): Outcome<Unit, Unit> {
-        val userId = userRepository.loggedUser?.firebaseUid ?: return Unit.toFailure()
+    override suspend fun deleteEventType(typeId: EventTypeId): Outcome<Unit, Unit> {
+        val userId = userRepository.loggedUser?.id ?: return Unit.toFailure()
 
         personalEventTypesFirestore.delete(userId, typeId).errorOrNull()?.let { error ->
             Logger.e(TAG, "Error deleting personal event type", error.error)
@@ -74,7 +77,7 @@ class PersonalEventRepositoryImpl(
     }
 
     override suspend fun getEvents(
-        userId: String,
+        userId: UserId,
         date: LocalDate,
         monthDelta: Int
     ): Outcome<List<PersonalEvent>, Unit> {
@@ -94,8 +97,8 @@ class PersonalEventRepositoryImpl(
         return eventDocs.mapNotNull { personalEventMapper.map(it, types) }.toSuccess()
     }
 
-    private suspend fun getAllEventTypes(uid: String): List<PersonalEventType> {
-        val hostUserId = userRepository.loggedUser?.firebaseUid ?: return emptyList()
+    private suspend fun getAllEventTypes(uid: UserId): List<PersonalEventType> {
+        val hostUserId = userRepository.loggedUser?.id ?: return emptyList()
         val typeResult = personalEventTypesFirestore.get(uid, isHostUser = uid == hostUserId)
 
         typeResult.errorOrNull()?.let { error ->

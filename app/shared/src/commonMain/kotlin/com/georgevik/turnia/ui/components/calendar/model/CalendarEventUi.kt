@@ -3,8 +3,10 @@ package com.georgevik.turnia.ui.components.calendar.model
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import com.georgevik.turnia.core.domain.model.EventId
 import com.georgevik.turnia.core.domain.model.GroupEvent
 import com.georgevik.turnia.core.domain.model.PersonalEvent
+import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.system.toLocalDate
 import com.georgevik.turnia.ui.system.toComposeColorOrNull
 import kotlinx.datetime.LocalDate
@@ -18,7 +20,7 @@ data class TransferHolderUi(
 
 @Immutable
 data class CalendarEventUi(
-    val id: String,
+    val id: EventId,
     val source: EventSource,
     val name: String,
     val acronym: String?,
@@ -41,7 +43,7 @@ data class CalendarEventUi(
 
     companion object {
         fun create(
-            id: String,
+            id: EventId,
             source: EventSource,
             name: String,
             background: Color,
@@ -79,7 +81,7 @@ data class CalendarEventUi(
 
 
 fun GroupEvent.toUi(
-    currentUserId: String?,
+    currentUserId: UserId?,
     removable: Boolean = false,
 ) = CalendarEventUi.create(
     id = id,
@@ -96,7 +98,7 @@ fun GroupEvent.toUi(
     transferChain = buildTransferChain(currentUserId),
 )
 
-private fun GroupEvent.buildTransferChain(currentUserId: String?): List<TransferHolderUi> {
+private fun GroupEvent.buildTransferChain(currentUserId: UserId?): List<TransferHolderUi> {
     if (history.size < 2) return emptyList()
     return history.map { entry ->
         TransferHolderUi(name = entry.userName, isMe = entry.userId == currentUserId)

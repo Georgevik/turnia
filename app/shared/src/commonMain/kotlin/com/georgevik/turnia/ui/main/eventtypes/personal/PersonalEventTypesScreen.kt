@@ -135,13 +135,13 @@ fun PersonalEventTypesScreen(viewModel: PersonalEventTypesViewModel) {
                         ),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        items(state.types, key = { it.typeId }) { row ->
+                        items(state.types, key = { it.typeId.value }) { row ->
                             PersonalEventTypeRow(
                                 row = row,
                                 onClick = {
                                     navigator.goTo(
                                         RootRoute.EventTypeDetailKey(
-                                            EventTypeDetailData.EditPersonal(row.typeId)
+                                            EventTypeDetailData.EditPersonal(row.typeId.value)
                                         )
                                     )
                                 },

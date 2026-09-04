@@ -34,7 +34,7 @@ fun GroupCard(group: GroupRowUi, onClick: () -> Unit, onDetails: () -> Unit) {
             group.members,
         ),
         onClick = onClick,
-        leading = { Avatar(background = entityColor(group.id), icon = Icons.Default.Groups) },
+        leading = { Avatar(background = entityColor(group.id.value), icon = Icons.Default.Groups) },
         trailing = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,

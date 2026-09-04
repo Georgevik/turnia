@@ -1,10 +1,16 @@
 package com.georgevik.turnia.core.data.group
 
+import com.georgevik.turnia.core.domain.model.EventId
+import com.georgevik.turnia.core.domain.model.EventTypeId
 import com.georgevik.turnia.core.domain.model.Group
 import com.georgevik.turnia.core.domain.model.GroupError
 import com.georgevik.turnia.core.domain.model.GroupEvent
+import com.georgevik.turnia.core.domain.model.GroupId
+import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.domain.repository.GroupRepository
+import com.georgevik.turnia.core.domain.repository.UserRepository
 import com.georgevik.turnia.core.system.MOCK_GROUPS
+import com.georgevik.turnia.core.system.MOCK_MY_ID
 import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.mockDelay
 import com.georgevik.turnia.core.system.mockGenerateEvents
@@ -19,12 +25,14 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.random.Random
 
 @OptIn(ExperimentalAtomicApi::class)
-class GroupRepositoryImpl : GroupRepository {
+class GroupRepositoryImpl(
+    private val userRepository: UserRepository,
+) : GroupRepository {
 
     private val _mockEvents = mutableMapOf<String, List<GroupEvent>>()
 
     /** Groups created or edited in this session, keyed by id; they shadow [MOCK_GROUPS]. */
-    private val _mockSavedGroups = linkedMapOf<String, Group>()
+    private val _mockSavedGroups = linkedMapOf<GroupId, Group>()
 
     override suspend fun addEvent(event: GroupEvent) {
         mockDelay()
@@ -32,7 +40,7 @@ class GroupRepositoryImpl : GroupRepository {
         _mockEvents[bucketKey(event.date)] = existing + event
     }
 
-    override suspend fun deleteEvent(eventId: String) {
+    override suspend fun deleteEvent(eventId: EventId) {
         // TODO use data source
         mockDelay()
         _mockEvents.keys.toList().forEach { key ->
@@ -49,7 +57,7 @@ class GroupRepositoryImpl : GroupRepository {
         return known + created
     }
 
-    override suspend fun getGroup(groupId: String): Outcome<Group, GroupError> {
+    override suspend fun getGroup(groupId: GroupId): Outcome<Group, GroupError> {
         mockDelay()
         val group = getGroups().find { it.id == groupId }
 
@@ -58,8 +66,8 @@ class GroupRepositoryImpl : GroupRepository {
 
     override suspend fun saveGroup(group: Group): Outcome<Group, GroupError> {
         mockDelay()
-        val saved = if (group.id.isBlank()) {
-            group.copy(id = mockUuid(), invitationCode = mockUuid().take(6).uppercase(), isAdmin = true)
+        val saved = if (group.id.value.isBlank()) {
+            group.copy(id = GroupId(mockUuid()), invitationCode = mockUuid().take(6).uppercase(), isAdmin = true)
         } else {
             group
         }
@@ -67,7 +75,7 @@ class GroupRepositoryImpl : GroupRepository {
         return saved.toSuccess()
     }
 
-    override suspend fun saveTypeColor(groupId: String, typeId: String, color: String): Result<Unit> {
+    override suspend fun saveTypeColor(groupId: GroupId, typeId: EventTypeId, color: String): Result<Unit> {
         mockDelay()
         return if (Random.nextBoolean()) {
             Result.success(Unit)
@@ -77,7 +85,7 @@ class GroupRepositoryImpl : GroupRepository {
     }
 
     override suspend fun getEventsByGroup(
-        groupId: String,
+        groupId: GroupId,
         date: LocalDate,
         monthDelta: Int
     ): Outcome<List<GroupEvent>, Unit> {
@@ -96,7 +104,7 @@ class GroupRepositoryImpl : GroupRepository {
     }
 
     override suspend fun getEventsByUser(
-        userId: String,
+        userId: UserId,
         date: LocalDate,
         monthDelta: Int
     ): Result<List<GroupEvent>> {
@@ -114,8 +122,9 @@ class GroupRepositoryImpl : GroupRepository {
 
 
     private fun getEventsPerDate(date: LocalDate): List<GroupEvent> {
+        val me = userRepository.loggedUser?.id ?: MOCK_MY_ID
         return _mockEvents.getOrPut("${date.year}_${date.month}") {
-            mockGenerateEvents(date)
+            mockGenerateEvents(date, me)
         }
     }
 

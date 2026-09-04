@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.georgevik.turnia.core.domain.model.Group
 import com.georgevik.turnia.core.domain.model.GroupError
 import com.georgevik.turnia.core.domain.model.GroupEventType
+import com.georgevik.turnia.core.domain.model.GroupId
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.system.fold
 import com.georgevik.turnia.ui.group.detail.model.GroupDetailMessage
@@ -25,7 +26,7 @@ import kotlinx.coroutines.launch
  * loaded group's [Group.isAdmin] decides whether an existing one can be edited or is read-only.
  */
 class GroupDetailViewModel(
-    private val groupId: String,
+    private val groupId: GroupId,
     private val groupRepository: GroupRepository,
 ) : ViewModel() {
 
@@ -42,7 +43,7 @@ class GroupDetailViewModel(
     fun retry() = load()
 
     private fun load() {
-        if (groupId.isBlank()) {
+        if (groupId.value.isBlank()) {
             _uiState.update { newGroupState() }
             return
         }
@@ -69,7 +70,7 @@ class GroupDetailViewModel(
 
         val name = state.form.name.trim()
         val group = loadedGroup?.copy(name = name) ?: Group(
-            id = "",
+            id = GroupId(""),
             name = name,
             types = emptyList(),
             memberCount = 1,
@@ -98,7 +99,7 @@ class GroupDetailViewModel(
 
     private fun newGroupState() = GroupDetailUi.Success(
         form = GroupForm(
-            groupId = "",
+            groupId = GroupId(""),
             name = "",
             memberCount = 1,
             invitationCode = "",
@@ -127,7 +128,7 @@ class GroupDetailViewModel(
         acronym = acronym,
         startTime = startTime,
         endTime = endTime,
-        color = color.toComposeColorOr(entityColor(id)),
+        color = color.toComposeColorOr(entityColor(id.value)),
     )
 
     private fun GroupError.toScreenError() = when (this) {

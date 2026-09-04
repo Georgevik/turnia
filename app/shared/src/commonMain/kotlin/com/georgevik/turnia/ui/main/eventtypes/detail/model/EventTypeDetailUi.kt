@@ -1,6 +1,7 @@
 package com.georgevik.turnia.ui.main.eventtypes.detail.model
 
 import androidx.compose.ui.graphics.Color
+import com.georgevik.turnia.core.domain.model.EventTypeId
 import com.georgevik.turnia.ui.components.daydetail.components.EventTypeChipUi
 
 sealed interface EventTypeDetailUi {
@@ -18,7 +19,7 @@ sealed interface EventTypeDetailUi {
     data object Loading : EventTypeDetailUi
 
     data class EventTypeForm(
-        val typeId: String?,
+        val typeId: EventTypeId?,
         val fieldsEditable: Boolean,
         val name: String,
         val acronym: String,

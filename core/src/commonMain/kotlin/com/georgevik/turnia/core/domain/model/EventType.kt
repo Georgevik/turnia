@@ -8,7 +8,7 @@ package com.georgevik.turnia.core.domain.model
  * the user's pick for that type.
  */
 sealed interface EventType {
-    val id: String
+    val id: EventTypeId
     val name: String
     val acronym: String?
     val description: String?

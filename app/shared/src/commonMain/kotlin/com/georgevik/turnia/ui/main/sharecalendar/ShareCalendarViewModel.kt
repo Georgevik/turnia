@@ -2,6 +2,7 @@ package com.georgevik.turnia.ui.main.sharecalendar
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.domain.model.UserProfile
 import com.georgevik.turnia.core.domain.repository.UserRepository
 import com.georgevik.turnia.core.domain.username.USERNAME_SEARCH_MIN_LENGTH
@@ -63,7 +64,7 @@ class ShareCalendarViewModel(private val userRepository: UserRepository) : ViewM
         viewModelScope.launch { _searchFlow.emit("") }
     }
 
-    fun onGrant(userId: String) {
+    fun onGrant(userId: UserId) {
         viewModelScope.launch {
             userRepository.grantCalendarAccess(userId).fold(
                 onSuccess = {
@@ -75,7 +76,7 @@ class ShareCalendarViewModel(private val userRepository: UserRepository) : ViewM
         }
     }
 
-    fun onRevoke(userId: String) {
+    fun onRevoke(userId: UserId) {
         viewModelScope.launch {
             userRepository.revokeCalendarAccess(userId).fold(
                 onSuccess = { refresh() },
@@ -99,7 +100,7 @@ class ShareCalendarViewModel(private val userRepository: UserRepository) : ViewM
         val shared = current.sharedWith.map { it.id }.toSet()
         val results = userRepository.searchUsers(prefix).valueOrEmpty()
             // Sharing with yourself is not a thing, and the row would be confusing.
-            .filterNot { it.id == userRepository.loggedUser?.firebaseUid }
+            .filterNot { it.id == userRepository.loggedUser?.id }
             .map { user ->
                 SearchResultUi(
                     id = user.id,

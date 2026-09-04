@@ -4,7 +4,7 @@ import com.georgevik.turnia.core.system.toLocalDate
 import kotlin.time.Instant
 
 data class PersonalEvent(
-    val id: String,
+    val id: EventId,
     val type: PersonalEventType,
     val date: Instant,
     val notes: String?,

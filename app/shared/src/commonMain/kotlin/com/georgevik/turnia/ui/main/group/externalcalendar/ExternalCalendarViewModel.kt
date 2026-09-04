@@ -2,6 +2,8 @@ package com.georgevik.turnia.ui.main.group.externalcalendar
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.georgevik.turnia.core.domain.model.GroupId
+import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
 import com.georgevik.turnia.core.domain.repository.UserRepository
@@ -37,11 +39,11 @@ class ExternalCalendarViewModel(
     init {
         viewModelScope.launch {
             combine(monthDate, invalidateData) { date, _ -> date }.collect { date ->
-                val uid = userRepository.loggedUser?.uid ?: return@collect
+                val uid = userRepository.loggedUser?.id ?: return@collect
 
                 val calendarUiEvents = when (data) {
                     is ExternalCalendarData.Group -> groupRepository.getEventsByGroup(
-                        data.id,
+                        GroupId(data.id),
                         date,
                         monthDelta = 2
                     ).map { list ->
@@ -55,7 +57,7 @@ class ExternalCalendarViewModel(
 
                     is ExternalCalendarData.Personal -> {
                         val result = personalRepository.getEvents(
-                            data.id,
+                            UserId(data.id),
                             date,
                             monthDelta = 2
                         )

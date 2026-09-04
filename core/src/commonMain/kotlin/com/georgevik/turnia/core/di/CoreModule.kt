@@ -50,6 +50,6 @@ val coreModule: Module = module {
     single { UserProvisioner(get(), get(), get(), get()) }
     single<UserRepository> { UserRepositoryImpl(Firebase.auth, get(), get(), get(), get(), get(), get(), get()) }
     single<AppConfigRepository> { AppConfigRepositoryImpl() }
-    single<GroupRepository> { GroupRepositoryImpl() }
+    single<GroupRepository> { GroupRepositoryImpl(get()) }
     single<PersonalEventRepository> { PersonalEventRepositoryImpl(get(), get(), get(), get()) }
 }

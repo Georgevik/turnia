@@ -2,6 +2,8 @@ package com.georgevik.turnia.ui.group.detail.model
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
+import com.georgevik.turnia.core.domain.model.EventTypeId
+import com.georgevik.turnia.core.domain.model.GroupId
 
 sealed interface GroupDetailUi {
     data object Loading : GroupDetailUi
@@ -19,7 +21,7 @@ sealed interface GroupDetailUi {
 
     @Immutable
     data class GroupForm(
-        val groupId: String,
+        val groupId: GroupId,
         val name: String,
         val memberCount: Int,
         val invitationCode: String,
@@ -30,8 +32,8 @@ sealed interface GroupDetailUi {
 
 @Immutable
 data class GroupTypeRowUi(
-    val typeId: String,
-    val groupId: String,
+    val typeId: EventTypeId,
+    val groupId: GroupId,
     val name: String,
     val acronym: String?,
     val startTime: String?,

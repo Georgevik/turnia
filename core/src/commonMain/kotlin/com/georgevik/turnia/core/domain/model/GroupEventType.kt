@@ -1,8 +1,8 @@
 package com.georgevik.turnia.core.domain.model
 
 data class GroupEventType(
-    override val id: String,
-    val groupId: String,
+    override val id: EventTypeId,
+    val groupId: GroupId,
     val groupName: String,
     override val name: String,
     override val acronym: String?,

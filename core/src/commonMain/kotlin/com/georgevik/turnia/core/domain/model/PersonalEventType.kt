@@ -1,7 +1,7 @@
 package com.georgevik.turnia.core.domain.model
 
 data class PersonalEventType(
-    override val id: String,
+    override val id: EventTypeId,
     override val name: String,
     override val color: String,
     override val acronym: String,

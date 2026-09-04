@@ -15,7 +15,7 @@ fun ColleagueCard(colleague: ColleageRowUi, onClick: () -> Unit) {
         title = colleague.name,
         subtitle = colleague.subtitle,
         onClick = onClick,
-        leading = { Avatar(background = entityColor(colleague.id), icon = Icons.Default.Person) },
+        leading = { Avatar(background = entityColor(colleague.id.value), icon = Icons.Default.Person) },
         trailing = { Chevron() },
     )
 }

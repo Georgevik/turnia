@@ -41,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.navigation.LocalNavigator
 import com.georgevik.turnia.ui.system.LocalSnackbar
 import com.georgevik.turnia.ui.system.components.Avatar
@@ -186,7 +187,7 @@ private fun SharedList(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        items(sharedWith, key = { it.id }) { user ->
+        items(sharedWith, key = { it.id.value }) { user ->
             TListItem(
                 title = user.displayName(),
                 subtitle = user.username.takeIf { it.isNotBlank() }?.let { "@$it" },
@@ -209,7 +210,7 @@ private fun SharedList(
 private fun SearchContent(
     search: SearchUi,
     onQueryChanged: (String) -> Unit,
-    onPick: (String) -> Unit,
+    onPick: (UserId) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -247,7 +248,7 @@ private fun SearchContent(
             is SearchUi.Panel.Results -> LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(panel.users, key = { it.id }) { result ->
+                items(panel.users, key = { it.id.value }) { result ->
                     TListItem(
                         title = result.name.ifBlank {
                             stringResource(Res.string.share_calendar_unknown_user)
@@ -274,8 +275,8 @@ private fun SearchContent(
 }
 
 @Composable
-private fun UserAvatar(id: String) =
-    Avatar(background = entityColor(id), icon = Icons.Default.Person)
+private fun UserAvatar(id: UserId) =
+    Avatar(background = entityColor(id.value), icon = Icons.Default.Person)
 
 @Composable
 private fun Message(text: String) = Text(

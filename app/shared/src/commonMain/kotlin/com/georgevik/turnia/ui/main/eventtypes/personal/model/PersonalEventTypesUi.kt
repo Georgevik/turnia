@@ -2,6 +2,7 @@ package com.georgevik.turnia.ui.main.eventtypes.personal.model
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
+import com.georgevik.turnia.core.domain.model.EventTypeId
 
 sealed interface PersonalEventTypesUi {
     data object Loading : PersonalEventTypesUi
@@ -14,7 +15,7 @@ sealed interface PersonalEventTypesUi {
 
 @Immutable
 data class PersonalEventTypeRowUi(
-    val typeId: String,
+    val typeId: EventTypeId,
     val name: String,
     val acronym: String?,
     val startTime: String?,

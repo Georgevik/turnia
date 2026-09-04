@@ -7,6 +7,7 @@ import com.georgevik.turnia.core.data.datasource.firestore.errors.UserProfileErr
 import com.georgevik.turnia.core.data.datasource.firestore.mappers.UserDocumentMapper
 import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.User
+import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.domain.model.UserProfile
 import com.georgevik.turnia.core.domain.model.UserSession
 import com.georgevik.turnia.core.domain.model.UsernameError
@@ -77,15 +78,16 @@ class UserRepositoryImpl(
     }
 
     private fun gatherUserInfo(firebaseUser: FirebaseUser): Flow<UserSession.Authenticated> = flow {
+        val userId = UserId(firebaseUser.uid)
         // Emit what auth already knows so the UI is never blocked on the profile read.
         emit(UserSession.Authenticated(userMapper.map(firebaseUser)))
 
         // Firestore's own offline persistence serves this from disk when there is no network.
-        val remoteUserResult = remoteProfiles.fetch(firebaseUser.uid)
+        val remoteUserResult = remoteProfiles.fetch(userId)
         remoteUserResult.valueOrNull()?.let { fetchedUser ->
             Logger.i(TAG, "Success user info for users/<uid>")
-            val subscription = remotePrivate.fetchSubscription(firebaseUser.uid).valueOrNull()
-            val profile = provisioner.backfillUsername(firebaseUser.uid, fetchedUser)
+            val subscription = remotePrivate.fetchSubscription(userId).valueOrNull()
+            val profile = provisioner.backfillUsername(userId, fetchedUser)
             // Emit session with updated userinfo
             emit(UserSession.Authenticated(userMapper.map(firebaseUser, profile, subscription)))
             return@flow
@@ -112,7 +114,7 @@ class UserRepositoryImpl(
     }
 
     override suspend fun getCalendarsSharedWithMe(): Outcome<List<UserProfile>, Unit> {
-        val uid = loggedUser?.firebaseUid ?: return Unit.toFailure()
+        val uid = loggedUser?.id ?: return Unit.toFailure()
 
         return remoteProfiles.fetchCalendarsSharedWithMe(uid)
             .mapError { error -> Logger.e(TAG, "Failed load shared calendars: $error") }
@@ -130,10 +132,10 @@ class UserRepositoryImpl(
         // Reserve before publishing: a username taken meanwhile must fail without touching the
         // profile. Claiming the one already ours is an allowed update, and refreshes the name the
         // reservation carries for search results.
-        remoteUsernames.claim(username, user.firebaseUid, name)
+        remoteUsernames.claim(username, user.id, name)
             .errorOrNull()?.let { return it.toFailure() }
 
-        remoteProfiles.updateProfile(user.firebaseUid, name, username).errorOrNull()?.let { error ->
+        remoteProfiles.updateProfile(user.id, name, username).errorOrNull()?.let { error ->
             Logger.e(TAG, "Failed to update profile: $error")
             if (previous != username) remoteUsernames.release(username)
             return UsernameError.SaveFailed.toFailure()
@@ -153,12 +155,12 @@ class UserRepositoryImpl(
             .mapError { error -> Logger.e(TAG, "Failed username search: $error") }
 
     override suspend fun getCalendarSharedWith(): Outcome<List<UserProfile>, Unit> {
-        val uid = loggedUser?.firebaseUid ?: return Unit.toFailure()
+        val uid = loggedUser?.id ?: return Unit.toFailure()
 
         val sharedUids = remoteProfiles.getUserDocument(uid).valueOrElse { error ->
             Logger.e(TAG, "Failed load the calendar grant list: $error")
             return Unit.toFailure()
-        }.calendarSharedWith
+        }.calendarSharedWith.map(::UserId)
 
         if (sharedUids.isEmpty()) return emptyList<UserProfile>().toSuccess()
 
@@ -172,15 +174,15 @@ class UserRepositoryImpl(
         }.toSuccess()
     }
 
-    override suspend fun grantCalendarAccess(userId: String): Outcome<Unit, Unit> {
-        val uid = loggedUser?.firebaseUid ?: return Unit.toFailure()
+    override suspend fun grantCalendarAccess(userId: UserId): Outcome<Unit, Unit> {
+        val uid = loggedUser?.id ?: return Unit.toFailure()
 
         return remoteProfiles.grantCalendarAccess(uid, userId)
             .mapError { error -> Logger.e(TAG, "Failed to grant calendar access: $error") }
     }
 
-    override suspend fun revokeCalendarAccess(userId: String): Outcome<Unit, Unit> {
-        val uid = loggedUser?.firebaseUid ?: return Unit.toFailure()
+    override suspend fun revokeCalendarAccess(userId: UserId): Outcome<Unit, Unit> {
+        val uid = loggedUser?.id ?: return Unit.toFailure()
 
         return remoteProfiles.revokeCalendarAccess(uid, userId)
             .mapError { error -> Logger.e(TAG, "Failed to revoke calendar access: $error") }

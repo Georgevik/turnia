@@ -2,6 +2,7 @@ package com.georgevik.turnia.ui.components.daydetail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.georgevik.turnia.core.domain.model.EventId
 import com.georgevik.turnia.core.domain.model.EventType
 import com.georgevik.turnia.core.domain.model.Group
 import com.georgevik.turnia.core.domain.model.GroupEvent
@@ -92,10 +93,10 @@ class DayDetailSheetViewModel(
 
     private fun addNewEvent(type: GroupEventType, eventTypeUi: EventTypeUi) {
         viewModelScope.launch {
-            val userId = userRepository.loggedUser?.uid ?: return@launch // TODO Emit error
+            val userId = userRepository.loggedUser?.id ?: return@launch // TODO Emit error
             groupRepository.addEvent(
                 GroupEvent(
-                    id = Uuid.random().toString(),
+                    id = EventId(Uuid.random().toString()),
                     groupId = type.groupId,
                     groupName = type.groupName,
                     ownerId = userId,
@@ -115,7 +116,7 @@ class DayDetailSheetViewModel(
         viewModelScope.launch {
             personalRepository.addEvent(
                 PersonalEvent(
-                    id = Uuid.random().toString(),
+                    id = EventId(Uuid.random().toString()),
                     type = type,
                     date = date.toInstant(),
                     notes = null,
@@ -145,7 +146,7 @@ class DayDetailSheetViewModel(
         }
         val groupSections = visibleGroups.map { group ->
             EventTypeSectionUi(
-                source = EventTypeSectionUi.Source.Group(group.id, group.name),
+                source = EventTypeSectionUi.Source.Group(group.id.value, group.name),
                 events = group.types.map { it.toUi() },
             )
         }
@@ -156,7 +157,7 @@ class DayDetailSheetViewModel(
     private fun EventType.toUi() = EventTypeUi(
         chipUi = EventTypeChipUi(
             title = acronym ?: name,
-            color = color.toComposeColorOr(entityColor(id))
+            color = color.toComposeColorOr(entityColor(id.value))
         ),
         eventType = this,
     )

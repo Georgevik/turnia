@@ -155,8 +155,8 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
                         navigator.goTo(
                             RootRoute.EventTypeDetailKey(
                                 EventTypeDetailData.EditGroup(
-                                    typeId = row.typeId,
-                                    groupId = row.groupId,
+                                    typeId = row.typeId.value,
+                                    groupId = row.groupId.value,
                                 )
                             )
                         )
@@ -183,7 +183,7 @@ private fun GroupDetailContent(
     ) {
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             Avatar(
-                background = entityColor(form.groupId.ifBlank { form.name }),
+                background = entityColor(form.groupId.value.ifBlank { form.name }),
                 icon = Icons.Default.Groups,
                 size = 72.dp,
             )

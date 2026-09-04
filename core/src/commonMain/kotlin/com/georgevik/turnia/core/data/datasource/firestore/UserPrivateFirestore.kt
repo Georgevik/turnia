@@ -4,6 +4,7 @@ import com.georgevik.turnia.core.data.datasource.firestore.doc.SubscriptionDocum
 import com.georgevik.turnia.core.data.datasource.firestore.doc.UserPrivateDocument
 import com.georgevik.turnia.core.data.datasource.firestore.errors.UserProfileError
 import com.georgevik.turnia.core.data.logger.Logger
+import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.outcomeCatching
 import dev.gitlive.firebase.firestore.FirebaseFirestore
@@ -18,7 +19,7 @@ class UserPrivateFirestore(
     private val firestore: FirebaseFirestore
 ) {
 
-    suspend fun fetchAccount(uid: String): Outcome<UserPrivateDocument?, UserProfileError> =
+    suspend fun fetchAccount(uid: UserId): Outcome<UserPrivateDocument?, UserProfileError> =
         outcomeCatching({ UserProfileError.LoadFailed(it) }) {
             val snapshot = document(uid, DOCUMENT_ACCOUNT).get()
             Logger.d(TAG, "Fetch private account from cache: ${snapshot.metadata.isFromCache}")
@@ -27,7 +28,7 @@ class UserPrivateFirestore(
             else snapshot.data(UserPrivateDocument.serializer())
         }
 
-    suspend fun fetchSubscription(uid: String): Outcome<SubscriptionDocument?, UserProfileError> =
+    suspend fun fetchSubscription(uid: UserId): Outcome<SubscriptionDocument?, UserProfileError> =
         outcomeCatching({ UserProfileError.LoadFailed(it) }) {
             val snapshot = document(uid, DOCUMENT_SUBSCRIPTION).get()
             Logger.d(TAG, "Fetch subscription from cache: ${snapshot.metadata.isFromCache}")
@@ -37,7 +38,7 @@ class UserPrivateFirestore(
         }
 
     suspend fun updateAccount(
-        uid: String,
+        uid: UserId,
         account: UserPrivateDocument
     ): Outcome<Unit, UserProfileError> =
         outcomeCatching({ UserProfileError.LoadFailed(it) }) {
@@ -45,8 +46,8 @@ class UserPrivateFirestore(
             document(uid, DOCUMENT_ACCOUNT).set(account)
         }
 
-    private fun document(uid: String, documentId: String) =
-        firestore.collection(PATH_PRIVATE(uid)).document(documentId)
+    private fun document(uid: UserId, documentId: String) =
+        firestore.collection(PATH_PRIVATE(uid.value)).document(documentId)
 
     companion object {
         private const val TAG = "UserPrivateFirestore"

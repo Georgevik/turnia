@@ -6,6 +6,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.georgevik.turnia.core.domain.model.GroupId
 import com.georgevik.turnia.navigation.LocalNavigator
 import com.georgevik.turnia.navigation.LocalRootNavigator
 import com.georgevik.turnia.navigation.main.routes.ExternalCalendarData
@@ -25,7 +26,7 @@ fun ExternalCalendar(viewModel: ExternalCalendarViewModel) {
     val isGroup = data is ExternalCalendarData.Group
     val theme = if (isGroup) CalendarThemes.group() else CalendarThemes.colleague()
     val addMode = when (data) {
-        is ExternalCalendarData.Group -> DayAddMode.GroupOnly(data.id)
+        is ExternalCalendarData.Group -> DayAddMode.GroupOnly(GroupId(data.id))
         is ExternalCalendarData.Personal -> DayAddMode.Disabled
     }
 

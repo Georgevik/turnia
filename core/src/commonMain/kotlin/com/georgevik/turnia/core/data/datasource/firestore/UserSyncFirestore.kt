@@ -4,6 +4,7 @@ import com.georgevik.turnia.core.data.datasource.firestore.doc.EventSyncUpdateAt
 import com.georgevik.turnia.core.data.datasource.firestore.doc.UserSyncDocument
 import com.georgevik.turnia.core.data.datasource.firestore.errors.GenericFirestoreError
 import com.georgevik.turnia.core.data.logger.Logger
+import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.outcomeCatching
 import dev.gitlive.firebase.firestore.FirebaseFirestore
@@ -17,7 +18,7 @@ class UserSyncFirestore(
     private val firestore: FirebaseFirestore
 ) {
 
-    suspend fun get(uid: String): Outcome<UserSyncDocument, GenericFirestoreError> =
+    suspend fun get(uid: UserId): Outcome<UserSyncDocument, GenericFirestoreError> =
         outcomeCatching(TAG,{ GenericFirestoreError(it) }) {
             val snapshot = syncDocument(uid).get()
             Logger.d(TAG, "Sync updates. Cached: ${snapshot.metadata.isFromCache}")
@@ -28,7 +29,7 @@ class UserSyncFirestore(
         }
 
     suspend fun updatePersonalEvents(
-        uid: String,
+        uid: UserId,
         yearMonth: YearMonth
     ): Outcome<Unit, GenericFirestoreError> =
         outcomeCatching(TAG,{ GenericFirestoreError(it) }) {
@@ -46,11 +47,11 @@ class UserSyncFirestore(
         }
 
 
-    suspend fun updatePersonalEventTypes(uid: String): Outcome<Unit, GenericFirestoreError> =
+    suspend fun updatePersonalEventTypes(uid: UserId): Outcome<Unit, GenericFirestoreError> =
         update(uid, UserSyncDocument(personalEventTypesUpdatedAt = Timestamp.ServerTimestamp))
 
     private suspend fun update(
-        uid: String,
+        uid: UserId,
         patch: UserSyncDocument
     ): Outcome<Unit, GenericFirestoreError> =
         outcomeCatching(TAG,{ GenericFirestoreError(it) }) {
@@ -59,8 +60,8 @@ class UserSyncFirestore(
             syncDocument(uid).set(patch, merge = true) { encodeDefaults = false }
         }
 
-    private fun syncDocument(uid: String) =
-        firestore.collection(PATH_SYNC(uid)).document(DOCUMENT_UPDATES)
+    private fun syncDocument(uid: UserId) =
+        firestore.collection(PATH_SYNC(uid.value)).document(DOCUMENT_UPDATES)
 
     companion object {
         private const val TAG = "UserSyncFirestore"

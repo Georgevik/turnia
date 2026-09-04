@@ -7,6 +7,7 @@ import com.georgevik.turnia.core.data.datasource.firestore.doc.UserDocument
 import com.georgevik.turnia.core.data.datasource.firestore.doc.UserPrivateDocument
 import com.georgevik.turnia.core.data.datasource.firestore.errors.UserProfileError
 import com.georgevik.turnia.core.data.logger.Logger
+import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.domain.model.UserProfile
 import com.georgevik.turnia.core.domain.username.UsernameFactory
 import com.georgevik.turnia.core.system.Outcome
@@ -28,10 +29,11 @@ class UserProvisioner(
     suspend fun create(
         firebaseUser: FirebaseUser
     ): Outcome<UserProfile, UserProfileError> {
+        val userId = UserId(firebaseUser.uid)
         Logger.w(TAG, "Empty users/${firebaseUser.uid}. New user")
 
         remotePrivate.updateAccount(
-            firebaseUser.uid, UserPrivateDocument(
+            userId, UserPrivateDocument(
                 email = firebaseUser.email.orEmpty(),
                 fcmTokens = emptyList(),
             )
@@ -40,14 +42,14 @@ class UserProvisioner(
         }
 
         val name = firebaseUser.displayName.orEmpty()
-        val username = claimUsername(firebaseUser.uid, name).orEmpty()
+        val username = claimUsername(userId, name).orEmpty()
 
         return remoteProfiles.update(
-            firebaseUser.uid, UserDocument(name = name, username = username)
+            userId, UserDocument(name = name, username = username)
         ).fold(
             onSuccess = {
                 Logger.i(TAG, "Created users/${firebaseUser.uid}")
-                UserProfile(id = firebaseUser.uid, name = name, username = username).toSuccess()
+                UserProfile(id = userId, name = name, username = username).toSuccess()
             },
             onFailure = { error ->
                 Logger.e(TAG, "Could not create users/${firebaseUser.uid}: $error")
@@ -62,7 +64,7 @@ class UserProvisioner(
         return usernameFactory.isValid(username)
     }
 
-    suspend fun backfillUsername(uid: String, profile: UserProfile): UserProfile {
+    suspend fun backfillUsername(uid: UserId, profile: UserProfile): UserProfile {
         val generated = usernameFactory.createForBackfill(profile) ?: return profile
         val username = claimUsername(uid, profile.name, generated) ?: return profile
 
@@ -76,7 +78,7 @@ class UserProvisioner(
         return profile.copy(username = username)
     }
 
-    private suspend fun claimUsername(uid: String, name: String, first: String? = null): String? {
+    private suspend fun claimUsername(uid: UserId, name: String, first: String? = null): String? {
         var candidate = first ?: usernameFactory.create(name)
 
         repeat(UsernameFactory.CLAIM_ATTEMPTS) {

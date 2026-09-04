@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.georgevik.turnia.core.domain.model.GroupEvent
 import com.georgevik.turnia.core.domain.model.PersonalEvent
+import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.domain.model.UserSession
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
@@ -51,7 +52,7 @@ class MyCalendarViewModel(
                 targetDay
             ) { _, _, userSession, date ->
                 _uiState.update { it.copy(isLoading = true) }
-                fetchEvents(userSession.user.firebaseUid, date)
+                fetchEvents(userSession.user.id, date)
             }.collect { eventsByDate ->
                 _uiState.update { it.copy(isLoading = false, eventsByDate = eventsByDate) }
             }
@@ -63,7 +64,7 @@ class MyCalendarViewModel(
     }
 
     private suspend fun fetchEvents(
-        uid: String,
+        uid: UserId,
         date: LocalDate
     ): Map<LocalDate, List<CalendarEventUi>> {
         val personalResult = personalRepository.getEvents(uid, date, monthDelta = 2)
@@ -84,7 +85,7 @@ class MyCalendarViewModel(
     }
 
     private fun mapToUiState(
-        userId: String,
+        userId: UserId,
         groupEvents: List<GroupEvent>, personalEvents: List<PersonalEvent>
     ): Map<LocalDate, List<CalendarEventUi>> {
         val eventsByDate: Map<LocalDate, MutableList<CalendarEventUi>> = buildMap {

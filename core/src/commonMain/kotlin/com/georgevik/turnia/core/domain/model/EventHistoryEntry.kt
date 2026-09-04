@@ -1,6 +1,6 @@
 package com.georgevik.turnia.core.domain.model
 
 data class EventHistoryEntry(
-    val userId: String,
+    val userId: UserId,
     val userName: String,
 )

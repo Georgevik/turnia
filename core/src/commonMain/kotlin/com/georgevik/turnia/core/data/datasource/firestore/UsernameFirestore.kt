@@ -2,6 +2,7 @@ package com.georgevik.turnia.core.data.datasource.firestore
 
 import com.georgevik.turnia.core.data.datasource.firestore.doc.UsernameDocument
 import com.georgevik.turnia.core.data.logger.Logger
+import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.domain.model.UserProfile
 import com.georgevik.turnia.core.domain.model.UsernameError
 import com.georgevik.turnia.core.domain.username.USERNAME_SEARCH_MIN_LENGTH
@@ -21,13 +22,13 @@ class UsernameFirestore(
 
     suspend fun claim(
         username: String,
-        uid: String,
+        uid: UserId,
         name: String
     ): Outcome<Unit, UsernameError> =
         outcomeCatching({ throwable -> throwable.toClaimError(username) }) {
             Logger.i(TAG, "Claim username")
             firestore.collection(PATH_USERNAMES).document(username)
-                .set(UsernameDocument(username = username, uid = uid, name = name))
+                .set(UsernameDocument(username = username, uid = uid.value, name = name))
         }
 
     suspend fun release(username: String): Outcome<Unit, UsernameError> =
@@ -36,11 +37,11 @@ class UsernameFirestore(
             firestore.collection(PATH_USERNAMES).document(username).delete()
         }
 
-    suspend fun findByUids(uids: List<String>): Outcome<List<UserProfile>, UsernameError> =
+    suspend fun findByUids(uids: List<UserId>): Outcome<List<UserProfile>, UsernameError> =
         outcomeCatching({ UsernameError.SaveFailed }) {
             uids.chunked(UID_QUERY_CHUNK).flatMap { chunk ->
                 val snapshot = firestore.collection(PATH_USERNAMES)
-                    .where { UsernameDocument.FIELD_UID inArray chunk }
+                    .where { UsernameDocument.FIELD_UID inArray chunk.map { it.value } }
                     .get()
                 Logger.d(TAG, "Resolved ${snapshot.documents.size} of ${chunk.size} uids")
 
@@ -71,7 +72,7 @@ class UsernameFirestore(
      * UsernameDocument contains the minimum info for unknown external users
      */
     private fun UsernameDocument.toProfile() =
-        UserProfile(id = uid, name = name, username = username)
+        UserProfile(id = UserId(uid), name = name, username = username)
 
     private fun Throwable.toClaimError(username: String): UsernameError =
         if (this is FirebaseFirestoreException && code == FirestoreExceptionCode.PERMISSION_DENIED) {

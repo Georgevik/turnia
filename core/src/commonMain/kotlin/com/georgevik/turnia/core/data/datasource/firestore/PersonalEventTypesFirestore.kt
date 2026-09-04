@@ -4,7 +4,9 @@ import com.georgevik.turnia.core.data.datasource.firestore.doc.PersonalEventType
 import com.georgevik.turnia.core.data.datasource.firestore.errors.GenericFirestoreError
 import com.georgevik.turnia.core.data.datasource.firestore.mappers.PersonalEventTypeDocMapper
 import com.georgevik.turnia.core.data.logger.Logger
+import com.georgevik.turnia.core.domain.model.EventTypeId
 import com.georgevik.turnia.core.domain.model.PersonalEventType
+import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.domain.session.SessionEvents
 import com.georgevik.turnia.core.domain.session.clearOnSignOut
 import com.georgevik.turnia.core.system.Outcome
@@ -28,14 +30,14 @@ class PersonalEventTypesFirestore(
     scope: CoroutineScope,
 ) {
 
-    private val lastSeenUpdate = mutableMapOf<String, Instant>()
+    private val lastSeenUpdate = mutableMapOf<UserId, Instant>()
 
     init {
         sessionEvents.clearOnSignOut(scope) { lastSeenUpdate.clear() }
     }
 
     suspend fun get(
-        uid: String,
+        uid: UserId,
         isHostUser: Boolean
     ): Outcome<List<PersonalEventType>, GenericFirestoreError> =
         outcomeCatching({ GenericFirestoreError(it) }) {
@@ -59,37 +61,37 @@ class PersonalEventTypesFirestore(
         }
 
     suspend fun set(
-        uid: String,
+        uid: UserId,
         personalType: PersonalEventType
     ): Outcome<Unit, GenericFirestoreError> =
         outcomeCatching({ GenericFirestoreError(it) }) {
             val doc = personalEventTypeDocMapper.map(personalType)
             Logger.i(TAG, "Set personal type document")
-            firestore.collection(PATH_PERSONAL_TYPES(uid)).document(personalType.id)
+            firestore.collection(PATH_PERSONAL_TYPES(uid.value)).document(personalType.id.value)
                 .set(doc)
             markTypesUpdated(uid)
         }
 
-    suspend fun delete(uid: String, typeId: String): Outcome<Unit, GenericFirestoreError> =
+    suspend fun delete(uid: UserId, typeId: EventTypeId): Outcome<Unit, GenericFirestoreError> =
         outcomeCatching({ GenericFirestoreError(it) }) {
             Logger.i(TAG, "Delete personal type document")
-            firestore.collection(PATH_PERSONAL_TYPES(uid)).document(typeId).updateFields {
+            firestore.collection(PATH_PERSONAL_TYPES(uid.value)).document(typeId.value).updateFields {
                 PersonalEventTypeDocument.FIELD_IS_DELETED to true
             }
             markTypesUpdated(uid)
         }
 
-    private suspend fun markTypesUpdated(uid: String) {
+    private suspend fun markTypesUpdated(uid: UserId) {
         userSyncFirestore.updatePersonalEventTypes(uid).errorOrNull()?.let { error ->
             Logger.e(TAG, "Error updating personal event types sync", error.error)
         }
     }
 
-    private suspend fun cachedOrServer(uid: String): List<PersonalEventType> =
+    private suspend fun cachedOrServer(uid: UserId): List<PersonalEventType> =
         queryEventTypes(uid, Source.CACHE).ifEmpty { queryEventTypes(uid, Source.SERVER) }
 
-    private suspend fun queryEventTypes(uid: String, source: Source): List<PersonalEventType> {
-        val snapshot = firestore.collection(PATH_PERSONAL_TYPES(uid)).get(source)
+    private suspend fun queryEventTypes(uid: UserId, source: Source): List<PersonalEventType> {
+        val snapshot = firestore.collection(PATH_PERSONAL_TYPES(uid.value)).get(source)
         Logger.i(
             TAG,
             "Personal event types. Cache: ${snapshot.metadata.isFromCache}. " +

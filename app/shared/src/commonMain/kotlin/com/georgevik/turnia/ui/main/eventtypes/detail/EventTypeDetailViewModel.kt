@@ -3,7 +3,9 @@ package com.georgevik.turnia.ui.main.eventtypes.detail
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.georgevik.turnia.core.domain.model.EventTypeId
 import com.georgevik.turnia.core.domain.model.GroupEventType
+import com.georgevik.turnia.core.domain.model.GroupId
 import com.georgevik.turnia.core.domain.model.PersonalEventType
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
@@ -49,8 +51,8 @@ class EventTypeDetailViewModel(
     private fun loadForm() {
         viewModelScope.launch {
             when (key) {
-                is EventTypeDetailData.EditGroup -> loadGroupType(key.groupId, key.typeId)
-                is EventTypeDetailData.EditPersonal -> loadPersonalType(key.typeId)
+                is EventTypeDetailData.EditGroup -> loadGroupType(GroupId(key.groupId), EventTypeId(key.typeId))
+                is EventTypeDetailData.EditPersonal -> loadPersonalType(EventTypeId(key.typeId))
                 EventTypeDetailData.NewPersonal,
                 EventTypeDetailData.NewGroup -> newForm().toSuccess()
 
@@ -74,8 +76,8 @@ class EventTypeDetailViewModel(
 
 
     private suspend fun loadGroupType(
-        groupId: String,
-        typeId: String
+        groupId: GroupId,
+        typeId: EventTypeId
     ): Outcome<EventTypeForm, EventTypeScreenError> {
         val group =
             groupRepository.getGroup(groupId).valueOrNull()
@@ -85,7 +87,7 @@ class EventTypeDetailViewModel(
             ?: EventTypeScreenError.GroupEventNotFound.toFailure()
     }
 
-    private suspend fun loadPersonalType(typeId: String): Outcome<EventTypeForm, EventTypeScreenError> {
+    private suspend fun loadPersonalType(typeId: EventTypeId): Outcome<EventTypeForm, EventTypeScreenError> {
         val eventType =
             personalRepository.getMyEventTypes(includeDeleted = true).find { it.id == typeId }
                 ?: return EventTypeScreenError.GroupEventNotFound.toFailure()
@@ -97,8 +99,8 @@ class EventTypeDetailViewModel(
         viewModelScope.launch {
             when (key) {
                 is EventTypeDetailData.EditGroup -> groupRepository.saveTypeColor(
-                    typeId = key.typeId,
-                    groupId = key.groupId,
+                    typeId = EventTypeId(key.typeId),
+                    groupId = GroupId(key.groupId),
                     color = color.toHex()
                 )
 
@@ -160,7 +162,7 @@ class EventTypeDetailViewModel(
         }
 
         val type = PersonalEventType(
-            id = typeId,
+            id = EventTypeId(typeId),
             name = form.name.trim(),
             color = form.color.toHex(),
             acronym = form.acronym.trim(),
@@ -201,7 +203,7 @@ class EventTypeDetailViewModel(
         description = description.orEmpty(),
         startTime = startTime.orEmpty().toTimeInput(),
         endTime = endTime.orEmpty().toTimeInput(),
-        color = color.toComposeColorOr(entityColor(id)),
+        color = color.toComposeColorOr(entityColor(id.value)),
         swappable = false,
     )
 
@@ -213,7 +215,7 @@ class EventTypeDetailViewModel(
         description = description.orEmpty(),
         startTime = startTime.orEmpty(),
         endTime = endTime.orEmpty(),
-        color = color.toComposeColorOr(entityColor(id)),
+        color = color.toComposeColorOr(entityColor(id.value)),
         swappable = false,
     )
 
@@ -223,7 +225,7 @@ class EventTypeDetailViewModel(
 
     companion object {
         private fun newForm() = EventTypeForm(
-            typeId = "",
+            typeId = null,
             fieldsEditable = true,
             name = "",
             acronym = "",

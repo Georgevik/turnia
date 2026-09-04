@@ -1,5 +1,7 @@
 package com.georgevik.turnia.ui.components.daydetail
 
+import com.georgevik.turnia.core.domain.model.GroupId
+
 /**
  * What a viewer may add from a day's detail sheet, which depends on whose
  * calendar is open:
@@ -9,7 +11,7 @@ package com.georgevik.turnia.ui.components.daydetail
  */
 sealed interface DayAddMode {
     data object Full : DayAddMode
-    data class GroupOnly(val groupId: String) : DayAddMode
+    data class GroupOnly(val groupId: GroupId) : DayAddMode
     data object Disabled : DayAddMode
 
     val canAdd: Boolean get() = this != Disabled

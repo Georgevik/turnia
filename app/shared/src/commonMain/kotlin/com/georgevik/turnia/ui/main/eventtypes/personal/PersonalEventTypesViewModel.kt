@@ -2,6 +2,7 @@ package com.georgevik.turnia.ui.main.eventtypes.personal
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.georgevik.turnia.core.domain.model.EventTypeId
 import com.georgevik.turnia.core.domain.model.PersonalEventType
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
 import com.georgevik.turnia.core.system.fold
@@ -40,7 +41,7 @@ class PersonalEventTypesViewModel(
         }
     }
 
-    fun onDelete(typeId: String) {
+    fun onDelete(typeId: EventTypeId) {
         viewModelScope.launch {
             personalRepository.deleteEventType(typeId).fold(
                 onSuccess = { refreshEvents() },
@@ -59,7 +60,7 @@ class PersonalEventTypesViewModel(
         acronym = acronym,
         startTime = startTime,
         endTime = endTime,
-        color = color.toComposeColorOr(entityColor(id)),
+        color = color.toComposeColorOr(entityColor(id.value)),
     )
 
     private fun updateSuccess(block: (PersonalEventTypesUi.Success) -> PersonalEventTypesUi.Success) =

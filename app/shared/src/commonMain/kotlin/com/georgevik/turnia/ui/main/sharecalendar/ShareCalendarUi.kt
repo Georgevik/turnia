@@ -1,5 +1,7 @@
 package com.georgevik.turnia.ui.main.sharecalendar
 
+import com.georgevik.turnia.core.domain.model.UserId
+
 sealed interface ShareCalendarUi {
 
     data object Loading : ShareCalendarUi
@@ -20,7 +22,7 @@ sealed interface ShareCalendarUi {
  * that user has no username reservation to resolve them from.
  */
 data class SharedUserUi(
-    val id: String,
+    val id: UserId,
     val name: String,
     val username: String,
 )
@@ -45,7 +47,7 @@ data class SearchUi(
 
 /** [alreadyShared] rows stay visible but cannot be picked, so a search never looks empty-handed. */
 data class SearchResultUi(
-    val id: String,
+    val id: UserId,
     val name: String,
     val username: String,
     val alreadyShared: Boolean,

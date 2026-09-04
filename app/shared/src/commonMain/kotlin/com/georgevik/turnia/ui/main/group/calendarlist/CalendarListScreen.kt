@@ -95,12 +95,12 @@ fun CalendarListScreen(viewModel: CalendarListViewModel = koinViewModel()) {
                     onAction = null,
                 )
             }
-            items(uiState.colleagues, key = { it.id }) { colleague ->
+            items(uiState.colleagues, key = { it.id.value }) { colleague ->
                 ColleagueCard(
                     colleague = colleague,
                     onClick = {
                         val route = MainRoute.ExternalCalendar(
-                            ExternalCalendarData.Personal(colleague.id, colleague.name)
+                            ExternalCalendarData.Personal(colleague.id.value, colleague.name)
                         )
                         navigator.goTo(route)
                     },
@@ -116,16 +116,16 @@ fun CalendarListScreen(viewModel: CalendarListViewModel = koinViewModel()) {
                     onAction = { rootNavigator.goTo(RootRoute.GroupDetailKey(groupId = "")) },
                 )
             }
-            items(uiState.groups, key = { it.id }) { group ->
+            items(uiState.groups, key = { it.id.value }) { group ->
                 GroupCard(
                     group = group,
                     onClick = {
                         val route = MainRoute.ExternalCalendar(
-                            ExternalCalendarData.Group(group.id, group.name)
+                            ExternalCalendarData.Group(group.id.value, group.name)
                         )
                         navigator.goTo(route)
                     },
-                    onDetails = { rootNavigator.goTo(RootRoute.GroupDetailKey(group.id)) },
+                    onDetails = { rootNavigator.goTo(RootRoute.GroupDetailKey(group.id.value)) },
                 )
             }
         }

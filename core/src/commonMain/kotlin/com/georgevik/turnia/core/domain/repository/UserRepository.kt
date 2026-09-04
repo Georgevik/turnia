@@ -1,6 +1,7 @@
 package com.georgevik.turnia.core.domain.repository
 
 import com.georgevik.turnia.core.domain.model.User
+import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.domain.model.UserProfile
 import com.georgevik.turnia.core.domain.model.UserSession
 import com.georgevik.turnia.core.domain.model.UsernameError
@@ -20,7 +21,7 @@ interface UserRepository {
 
     suspend fun getCalendarSharedWith(): Outcome<List<UserProfile>, Unit>
 
-    suspend fun grantCalendarAccess(userId: String): Outcome<Unit, Unit>
+    suspend fun grantCalendarAccess(userId: UserId): Outcome<Unit, Unit>
 
-    suspend fun revokeCalendarAccess(userId: String): Outcome<Unit, Unit>
+    suspend fun revokeCalendarAccess(userId: UserId): Outcome<Unit, Unit>
 }

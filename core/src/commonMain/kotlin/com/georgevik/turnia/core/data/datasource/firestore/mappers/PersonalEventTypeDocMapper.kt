@@ -1,6 +1,7 @@
 package com.georgevik.turnia.core.data.datasource.firestore.mappers
 
 import com.georgevik.turnia.core.data.datasource.firestore.doc.PersonalEventTypeDocument
+import com.georgevik.turnia.core.domain.model.EventTypeId
 import com.georgevik.turnia.core.domain.model.PersonalEventType
 import dev.gitlive.firebase.firestore.DocumentSnapshot
 
@@ -21,7 +22,7 @@ class PersonalEventTypeDocMapper {
         val doc = snapshot.data(PersonalEventTypeDocument.serializer())
 
         return PersonalEventType(
-            id = snapshot.reference.id,
+            id = EventTypeId(snapshot.reference.id),
             name = doc.name,
             color = doc.color,
             acronym = doc.acronym,

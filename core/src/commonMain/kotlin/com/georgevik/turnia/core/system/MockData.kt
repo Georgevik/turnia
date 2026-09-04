@@ -1,10 +1,14 @@
 package com.georgevik.turnia.core.system
 
 import com.georgevik.turnia.core.domain.model.EventHistoryEntry
+import com.georgevik.turnia.core.domain.model.EventId
+import com.georgevik.turnia.core.domain.model.EventTypeId
 import com.georgevik.turnia.core.domain.model.Group
 import com.georgevik.turnia.core.domain.model.GroupEvent
 import com.georgevik.turnia.core.domain.model.GroupEventType
+import com.georgevik.turnia.core.domain.model.GroupId
 import com.georgevik.turnia.core.domain.model.PersonalEventType
+import com.georgevik.turnia.core.domain.model.UserId
 import kotlinx.coroutines.delay
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
@@ -15,11 +19,11 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.uuid.Uuid
 
 
-val MOCK_MY_ID = mockUuid()
+val MOCK_MY_ID = UserId(mockUuid())
 
 /** Builds a single mock group event type belonging to [groupId]. */
 fun mockGroupType(
-    groupId: String,
+    groupId: GroupId,
     groupName: String,
     name: String,
     acronym: String?,
@@ -28,7 +32,7 @@ fun mockGroupType(
     endTime: String?,
     swappable: Boolean = true,
 ): GroupEventType = GroupEventType(
-    id = mockUuid(),
+    id = EventTypeId(mockUuid()),
     groupId = groupId,
     groupName = groupName,
     name = name,
@@ -100,7 +104,7 @@ private val GROUP_TYPE_SETS: List<List<GroupTypeSpec>> = listOf(
 )
 val MOCK_GROUPS: List<Group> by lazy {
     GROUP_TYPE_SETS.mapIndexed { index, specs ->
-        val groupId = mockUuid()
+        val groupId = GroupId(mockUuid())
         val groupName = mockGroupName()
         Group(
             id = groupId,
@@ -128,7 +132,7 @@ val MOCK_GROUPS: List<Group> by lazy {
 
 val MOCK_PERSONAL_TYPES = listOf(
     PersonalEventType(
-        id = mockUuid(),
+        id = EventTypeId(mockUuid()),
         name = "Vacaciones",
         color = mockColor(),
         acronym = "V",
@@ -137,7 +141,7 @@ val MOCK_PERSONAL_TYPES = listOf(
         endTime = null,
     ),
     PersonalEventType(
-        id = mockUuid(),
+        id = EventTypeId(mockUuid()),
         name = "Cita médica",
         color = mockColor(),
         acronym = "CM",
@@ -146,7 +150,7 @@ val MOCK_PERSONAL_TYPES = listOf(
         endTime = "11:00",
     ),
     PersonalEventType(
-        id = mockUuid(),
+        id = EventTypeId(mockUuid()),
         name = "Gimnasio",
         color = mockColor(),
         acronym = "G",
@@ -155,7 +159,7 @@ val MOCK_PERSONAL_TYPES = listOf(
         endTime = "19:30",
     ),
     PersonalEventType(
-        id = mockUuid(),
+        id = EventTypeId(mockUuid()),
         name = "Cumpleaños",
         color = mockColor(),
         acronym = "C",
@@ -209,7 +213,7 @@ fun mockGroupName(): String {
 
 
 /** A mock person with a stable id and name. */
-data class MockPerson(val id: String, val name: String)
+data class MockPerson(val id: UserId, val name: String)
 
 /**
  * A fixed pool of 10 people reused across mock events (owners, assignees, transfer
@@ -219,27 +223,31 @@ data class MockPerson(val id: String, val name: String)
  * firstNames/lastNames) declared below are set (see MockData init-order note).
  */
 val MOCK_PEOPLE: List<MockPerson> by lazy {
-    (1..4).map { MockPerson(id = mockUuid(), name = mockRealName()) } + MockPerson(MOCK_MY_ID, "")
+    (1..4).map { MockPerson(id = UserId(mockUuid()), name = mockRealName()) } + MockPerson(MOCK_MY_ID, "")
 }
 
 fun mockGenerateEvents(
     fromMonth: LocalDate,
+    me: UserId,
     amount: Int = 30
 ): List<GroupEvent> {
     val firstOfMonth = LocalDate(fromMonth.year, fromMonth.month, 1)
+    // The pool's stand-in for "me" becomes whoever is actually signed in, so the events the
+    // calendar marks as mine are the ones this account owns.
+    val people = MOCK_PEOPLE.map { if (it.id == MOCK_MY_ID) it.copy(id = me) else it }
 
     return (0 until amount).map {
         val group = MOCK_GROUPS.random()
         val groupType = group.types.random()
-        val owner = MOCK_PEOPLE.random()
+        val owner = people.random()
 
         val history = buildList {
             add(EventHistoryEntry(owner.id, owner.name))
-            var remainPeople = MOCK_PEOPLE - owner
+            var remainPeople = people - owner
 
             (0 until Random.nextInt(0, 6)).forEach {
                 val person = remainPeople.random()
-                remainPeople = MOCK_PEOPLE - person
+                remainPeople = people - person
                 add(EventHistoryEntry(userId = person.id, userName = person.name))
             }
         }
@@ -248,7 +256,7 @@ fun mockGenerateEvents(
         val assignee = history.last()
 
         GroupEvent(
-            id = mockUuid(),
+            id = EventId(mockUuid()),
             groupId = group.id,
             groupName = group.name,
             ownerId = owner.id,
