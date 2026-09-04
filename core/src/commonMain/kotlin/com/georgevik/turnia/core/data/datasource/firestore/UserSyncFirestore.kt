@@ -1,5 +1,6 @@
 package com.georgevik.turnia.core.data.datasource.firestore
 
+import com.georgevik.turnia.core.data.datasource.firestore.doc.EventSyncUpdateAt
 import com.georgevik.turnia.core.data.datasource.firestore.doc.UserSyncDocument
 import com.georgevik.turnia.core.data.datasource.firestore.errors.GenericFirestoreError
 import com.georgevik.turnia.core.data.logger.Logger
@@ -7,6 +8,7 @@ import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.outcomeCatching
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Timestamp
+import kotlinx.datetime.YearMonth
 
 /**
  * Interacts with Firestore: `users/{uid}/sync/updates`
@@ -16,7 +18,7 @@ class UserSyncFirestore(
 ) {
 
     suspend fun get(uid: String): Outcome<UserSyncDocument, GenericFirestoreError> =
-        outcomeCatching({ GenericFirestoreError(it) }) {
+        outcomeCatching(TAG,{ GenericFirestoreError(it) }) {
             val snapshot = syncDocument(uid).get()
             Logger.d(TAG, "Sync updates. Cached: ${snapshot.metadata.isFromCache}")
 
@@ -25,8 +27,24 @@ class UserSyncFirestore(
             else snapshot.data(UserSyncDocument.serializer())
         }
 
-    suspend fun updatePersonalEvents(uid: String): Outcome<Unit, GenericFirestoreError> =
-        update(uid, UserSyncDocument(personalEventsUpdatedAt = Timestamp.ServerTimestamp))
+    suspend fun updatePersonalEvents(
+        uid: String,
+        yearMonth: YearMonth
+    ): Outcome<Unit, GenericFirestoreError> =
+        outcomeCatching(TAG,{ GenericFirestoreError(it) }) {
+            val snapshot = syncDocument(uid).get()
+
+            val syncDoc = if (!snapshot.exists) UserSyncDocument()
+            else snapshot.data(UserSyncDocument.serializer())
+
+            val eventSyncList = syncDoc.personalEventsUpdatedAt.toMutableMap().apply {
+                this[yearMonth] = EventSyncUpdateAt(Timestamp.ServerTimestamp)
+            }
+
+            Logger.d(TAG, "Personal event sync updated")
+            syncDocument(uid).set(syncDoc.copy(personalEventsUpdatedAt = eventSyncList))
+        }
+
 
     suspend fun updatePersonalEventTypes(uid: String): Outcome<Unit, GenericFirestoreError> =
         update(uid, UserSyncDocument(personalEventTypesUpdatedAt = Timestamp.ServerTimestamp))
@@ -35,7 +53,7 @@ class UserSyncFirestore(
         uid: String,
         patch: UserSyncDocument
     ): Outcome<Unit, GenericFirestoreError> =
-        outcomeCatching({ GenericFirestoreError(it) }) {
+        outcomeCatching(TAG,{ GenericFirestoreError(it) }) {
             Logger.d(TAG, "Update sync updates")
             // Merging without defaults leaves the timestamps this patch does not carry untouched.
             syncDocument(uid).set(patch, merge = true) { encodeDefaults = false }

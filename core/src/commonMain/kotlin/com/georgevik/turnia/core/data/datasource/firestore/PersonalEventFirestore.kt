@@ -12,8 +12,10 @@ import com.georgevik.turnia.core.system.outcomeCatching
 import com.georgevik.turnia.core.system.toYearMonth
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Source
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.YearMonthRange
+import kotlinx.datetime.yearMonth
 import kotlin.time.Instant
 
 /**
@@ -36,7 +38,8 @@ class PersonalEventFirestore(
             val cachedEvents = queryEvents(uid, monthRange.toList(), Source.CACHE)
             val monthsWithEvents =
                 cachedEvents.distinctBy { it.doc.yearMonth }.map { it.doc.yearMonth }.toSet()
-            val monthMissingEvents = monthRange.filterNot { monthsWithEvents.contains(it.toString()) }
+            val monthMissingEvents =
+                monthRange.filterNot { monthsWithEvents.contains(it.toString()) }
 
             if (monthMissingEvents.isNotEmpty()) {
                 // Ask for those months that doesn't have events
@@ -51,18 +54,22 @@ class PersonalEventFirestore(
             val doc = personalEventMapper.map(event)
             Logger.d(TAG, "Set personal event document")
             firestore.collection(PATH_EVENTS(uid)).document(event.id).set(doc)
-            markEventsUpdated(uid)
+            markEventsUpdated(uid, event.date.toYearMonth())
         }
 
-    suspend fun delete(uid: String, eventId: String): Outcome<Unit, GenericFirestoreError> =
+    suspend fun delete(
+        uid: String,
+        eventId: String,
+        eventDate: LocalDate
+    ): Outcome<Unit, GenericFirestoreError> =
         outcomeCatching({ GenericFirestoreError(it) }) {
             Logger.d(TAG, "Delete personal event document")
             firestore.collection(PATH_EVENTS(uid)).document(eventId).delete()
-            markEventsUpdated(uid)
+            markEventsUpdated(uid, eventDate.yearMonth)
         }
 
-    private suspend fun markEventsUpdated(uid: String) {
-        userSyncFirestore.updatePersonalEvents(uid).errorOrNull()?.let { error ->
+    private suspend fun markEventsUpdated(uid: String, yearMonth: YearMonth) {
+        userSyncFirestore.updatePersonalEvents(uid, yearMonth).errorOrNull()?.let { error ->
             Logger.e(TAG, "Error updating personal events sync", error.error)
         }
     }

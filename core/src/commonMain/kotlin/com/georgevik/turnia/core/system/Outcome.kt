@@ -1,5 +1,6 @@
 package com.georgevik.turnia.core.system
 
+import com.georgevik.turnia.core.data.logger.Logger
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
@@ -74,10 +75,7 @@ inline fun <T, E> Outcome<T, E>.onFailure(action: (E) -> Unit): Outcome<T, E> = 
     if (this is Outcome.Failure) action(error)
 }
 
-/**
- * Bridges a throwing API — Firebase/GitLive calls genuinely throw — into a typed [Outcome] at the
- * data-layer boundary, so exceptions never travel further up than the repository that produced them.
- */
+@Deprecated("Use `outcomeCatching` with TAG for logging the error")
 inline fun <T, E> outcomeCatching(mapError: (Throwable) -> E, block: () -> T): Outcome<T, E> =
     try {
         Outcome.Success(block())
@@ -86,6 +84,22 @@ inline fun <T, E> outcomeCatching(mapError: (Throwable) -> E, block: () -> T): O
         // cancelled. `runCatching` gets this wrong, which is another reason not to use it here.
         throw cancellation
     } catch (throwable: Throwable) {
+        Outcome.Failure(mapError(throwable))
+    }
+
+inline fun <T, E> outcomeCatching(
+    tag: String,
+    mapError: (Throwable) -> E,
+    block: () -> T
+): Outcome<T, E> =
+    try {
+        Outcome.Success(block())
+    } catch (cancellation: CancellationException) {
+        // Swallowing this would break structured concurrency: a cancelled coroutine has to stay
+        // cancelled. `runCatching` gets this wrong, which is another reason not to use it here.
+        throw cancellation
+    } catch (throwable: Throwable) {
+        Logger.e(tag, "Error", throwable)
         Outcome.Failure(mapError(throwable))
     }
 

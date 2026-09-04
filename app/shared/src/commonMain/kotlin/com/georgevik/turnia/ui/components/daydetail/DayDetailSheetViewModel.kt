@@ -78,7 +78,7 @@ class DayDetailSheetViewModel(
         viewModelScope.launch {
             when (event.source) {
                 EventSource.GROUP -> groupRepository.deleteEvent(event.id)
-                EventSource.PERSONAL -> personalRepository.deleteEvent(event.id)
+                EventSource.PERSONAL -> personalRepository.deleteEvent(event.id, event.date)
             }
         }
     }

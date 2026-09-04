@@ -48,9 +48,9 @@ class PersonalEventRepositoryImpl(
         _onEventsChanged.emit(Random.nextInt())
     }
 
-    override suspend fun deleteEvent(eventId: String) {
+    override suspend fun deleteEvent(eventId: String, eventDate: LocalDate) {
         val uid = userRepository.loggedUser?.firebaseUid ?: return
-        personalEventFirestore.delete(uid, eventId)
+        personalEventFirestore.delete(uid, eventId, eventDate)
         _onEventsChanged.emit(Random.nextInt())
     }
 
@@ -74,12 +74,12 @@ class PersonalEventRepositoryImpl(
     }
 
     override suspend fun getEvents(
-        uid: String,
+        userId: String,
         date: LocalDate,
         monthDelta: Int
     ): Outcome<List<PersonalEvent>, Unit> {
         val eventsDocResult = personalEventFirestore.get(
-            uid,
+            userId,
             from = date.minus(monthDelta, DateTimeUnit.MONTH).toInstant(),
             until = date.plus(monthDelta, DateTimeUnit.MONTH).toInstant()
         )
@@ -90,7 +90,7 @@ class PersonalEventRepositoryImpl(
 
         val eventDocs = eventsDocResult.valueOrNull().orEmpty()
 
-        val types = getAllEventTypes(uid).associateBy { it.id }
+        val types = getAllEventTypes(userId).associateBy { it.id }
         return eventDocs.mapNotNull { personalEventMapper.map(it, types) }.toSuccess()
     }
 
