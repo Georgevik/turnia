@@ -102,20 +102,20 @@ service cloud.firestore {
         allow create: if isMember(groupId) &&
           request.resource.data.ownerId == request.auth.uid &&
           request.resource.data.assigneeId == request.auth.uid;
-        // ownerId is the creator forever, and assigneeId only changes through takeEvent.
+        // ownerId is the creator forever, assigneeId only changes through takeEvent, and the
+        // history only grows there too — frozen here, it cannot be rewritten by anyone but the
+        // function, which is a firmer append-only than a subcollection of member-writable entries.
         allow update: if isMember(groupId) &&
           (resource.data.assigneeId == request.auth.uid || isAdmin(groupId)) &&
           request.resource.data.ownerId == resource.data.ownerId &&
-          request.resource.data.assigneeId == resource.data.assigneeId;
+          request.resource.data.assigneeId == resource.data.assigneeId &&
+          request.resource.data.get('history', []) == resource.data.get('history', []);
+        // Only the creator, and only while they still hold it: once a shift has been handed to
+        // someone else it is theirs to cover, and deleting it out from under them is not the
+        // creator's call. Giving it back is putting it up for swap, not deleting it.
         allow delete: if isMember(groupId) &&
-          (resource.data.assigneeId == request.auth.uid || isAdmin(groupId));
-
-        // Append-only history alongside the event.
-        match /history/{historyId} {
-          allow read: if isMember(groupId);
-          allow create: if isMember(groupId);
-          allow update, delete: if false;
-        }
+          resource.data.ownerId == request.auth.uid &&
+          resource.data.assigneeId == request.auth.uid;
       }
 
       // When each month of the group's calendar last changed: any member's write moves it.

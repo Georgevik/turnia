@@ -204,7 +204,9 @@ Read Server: 14 ReadCache: 61 Writes: 3
 
 ## Traceability
 
-- The `history` is **append-only** and lives alongside the event (`groups/{groupId}/events/{eventId}/history`).
+- The `history` is **append-only** and lives **on the event document**, as an array: a subcollection would cost
+  a read per event to show the chain, and the array is frozen for clients by the rules, so only `takeEvent`
+  can add to it.
 - A transfer changes `assigneeId` in place, so the event never moves and the history never has to be copied
   forward: the chain is simply the entries of that one event.
 - It records only the swap lifecycle: `put_on_swap` and `transferred` (with `fromUid`→`toUid`).
@@ -215,8 +217,9 @@ Read Server: 14 ReadCache: 61 Writes: 3
 
 - **read** `groups/{g}/events`: only members of the group.
 - **create** event: the member for themselves — `ownerId == assigneeId == auth.uid`.
-- **update / delete** event: the assignee or an admin, with `ownerId`/`assigneeId` immutable from the client
-  (`takeEvent` is the only writer that reassigns).
+- **update** event: the assignee or an admin, with `ownerId`, `assigneeId` and `history` immutable from the
+  client (`takeEvent` is the only writer that reassigns or appends to the chain).
+- **delete** event: only the creator while they still hold it (`ownerId == assigneeId == auth.uid`).
 - A group's calendar is one query over its own `events` collection, filtered by `yearMonth`.
 - Membership is a field of the group: `isMember(g) = auth.uid in groups/{g}.memberUids`, and reading the group
   itself needs no lookup at all.

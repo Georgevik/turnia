@@ -13,10 +13,15 @@ data class UserDocument(
     @SerialName(FIELD_NAME) val name: String,
     @SerialName(FIELD_USERNAME) val username: String = "",
     @SerialName(FIELD_CALENDAR_SHARED_WITH) val calendarSharedWith: List<String> = emptyList(),
+    /** Colour per group event type, keyed `"{groupId}_{typeId}"`: the type itself carries none. */
+    @SerialName(FIELD_TYPE_COLORS) val groupEventTypeColors: Map<String, String> = emptyMap(),
 ) {
     companion object {
         const val FIELD_NAME = "name"
         const val FIELD_USERNAME = "username"
         const val FIELD_CALENDAR_SHARED_WITH = "calendarSharedWith"
+        const val FIELD_TYPE_COLORS = "groupEventTypeColors"
+
+        fun typeColorKey(groupId: String, typeId: String) = "${groupId}_${typeId}"
     }
 }

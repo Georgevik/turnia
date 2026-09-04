@@ -1,5 +1,5 @@
 import { onCall } from "firebase-functions/v2/https";
-import { FieldValue, getFirestore } from "firebase-admin/firestore";
+import { FieldValue, Timestamp, getFirestore } from "firebase-admin/firestore";
 import { getMessaging } from "firebase-admin/messaging";
 import { fcmTokensOf } from "./users";
 import {
@@ -16,7 +16,7 @@ import {
  * changes a document assigned to someone else.
  *
  * The event no longer moves between members: it lives in `groups/{groupId}/events` and the transfer
- * is a change of `assigneeId`, so the history stays where it is and nothing is copied forward. The
+ * is a change of `assigneeId` and one more entry in the event's own history. The
  * transaction verifies `onSwap` before changing anything, which is what keeps two members from
  * taking the same shift.
  *
@@ -59,19 +59,20 @@ export const takeEvent = onCall(async (request) => {
       throw new HttpErrorFailedPrecondition(TurniaErrorCode.TakeEventSelf, "You already hold this event.");
     }
 
+    // The chain lives on the event, so it travels with it and costs no read to show. A server
+    // timestamp sentinel is not allowed inside an array, hence `Timestamp.now()` — still server
+    // time, since this runs on the server.
     tx.update(eventRef, {
       assigneeId: taker,
       onSwap: false,
       updateAt: FieldValue.serverTimestamp(),
-    });
-
-    tx.set(eventRef.collection("history").doc(), {
-      type: "transferred",
-      actorUid: taker,
-      fromUid: assigneeId,
-      toUid: taker,
-      timestamp: FieldValue.serverTimestamp(),
-      parentEventId: null,
+      history: FieldValue.arrayUnion({
+        type: "transferred",
+        actorUid: taker,
+        fromUid: assigneeId,
+        toUid: taker,
+        timestamp: Timestamp.now(),
+      }),
     });
 
     // Same commit as the event, so the marker and the document resolve to one instant and the

@@ -1,11 +1,13 @@
 package com.georgevik.turnia.core.data.datasource.firestore
 
+import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackData
+import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackWrite
 import com.georgevik.turnia.core.data.datasource.firestore.doc.UserDocument
 import com.georgevik.turnia.core.data.datasource.firestore.errors.UserProfileError
 import com.georgevik.turnia.core.data.datasource.firestore.mappers.UserDocumentMapper
-import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackData
-import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackWrite
 import com.georgevik.turnia.core.data.logger.Logger
+import com.georgevik.turnia.core.domain.model.EventTypeId
+import com.georgevik.turnia.core.domain.model.GroupId
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.domain.model.UserProfile
 import com.georgevik.turnia.core.system.Outcome
@@ -22,7 +24,7 @@ class UserPathFirestore(
 ) {
 
     suspend fun fetch(uid: UserId): Outcome<UserProfile, UserProfileError> =
-        outcomeCatching({ UserProfileError.LoadFailed(it) }) {
+        outcomeCatching(TAG,{ UserProfileError.LoadFailed(it) }) {
             val snapshot = firestore.collection(PATH_USER).document(uid.value).get().trackData(TAG)
             Logger.d(TAG, "Fetch user from cache: ${snapshot.metadata.isFromCache}")
 
@@ -31,7 +33,7 @@ class UserPathFirestore(
         }
 
     suspend fun fetchCalendarsSharedWithMe(uid: UserId): Outcome<List<UserProfile>, UserProfileError> =
-        outcomeCatching({ UserProfileError.LoadFailed(it) }) {
+        outcomeCatching(TAG,{ UserProfileError.LoadFailed(it) }) {
             val snapshot = firestore.collection(PATH_USER).where {
                 UserDocument.FIELD_CALENDAR_SHARED_WITH contains uid.value
             }.get().trackData(TAG)
@@ -41,7 +43,7 @@ class UserPathFirestore(
         }
 
     suspend fun getUserDocument(uid: UserId): Outcome<UserDocument, UserProfileError> =
-        outcomeCatching({ UserProfileError.LoadFailed(it) }) {
+        outcomeCatching(TAG,{ UserProfileError.LoadFailed(it) }) {
             val snapshot = firestore.collection(PATH_USER).document(uid.value).get()
             if (!snapshot.exists) return Outcome.Failure(UserProfileError.NotFound)
 
@@ -52,7 +54,7 @@ class UserPathFirestore(
         uid: UserId,
         granteeUid: UserId
     ): Outcome<Unit, UserProfileError> =
-        outcomeCatching({ UserProfileError.LoadFailed(it) }) {
+        outcomeCatching(TAG,{ UserProfileError.LoadFailed(it) }) {
             Logger.i(TAG, "Grant calendar access")
             firestore.collection(PATH_USER).document(uid.value).updateFields {
                 UserDocument.FIELD_CALENDAR_SHARED_WITH to FieldValue.arrayUnion(granteeUid.value)
@@ -64,7 +66,7 @@ class UserPathFirestore(
         uid: UserId,
         granteeUid: UserId
     ): Outcome<Unit, UserProfileError> =
-        outcomeCatching({ UserProfileError.LoadFailed(it) }) {
+        outcomeCatching(TAG,{ UserProfileError.LoadFailed(it) }) {
             Logger.i(TAG, "Revoke calendar access")
             firestore.collection(PATH_USER).document(uid.value).updateFields {
                 UserDocument.FIELD_CALENDAR_SHARED_WITH to FieldValue.arrayRemove(granteeUid.value)
@@ -72,22 +74,23 @@ class UserPathFirestore(
             trackWrite(TAG)
         }
 
-    suspend fun updateProfile(
+    suspend fun updateTypeColor(
         uid: UserId,
-        name: String,
-        username: String
+        groupId: GroupId,
+        typeId: EventTypeId,
+        color: String
     ): Outcome<Unit, UserProfileError> =
-        outcomeCatching({ UserProfileError.LoadFailed(it) }) {
-            Logger.i(TAG, "Update public profile")
+        outcomeCatching(TAG,{ UserProfileError.LoadFailed(it) }) {
+            Logger.i(TAG, "Update group event type colour")
+            val key = UserDocument.typeColorKey(groupId.value, typeId.value)
             firestore.collection(PATH_USER).document(uid.value).updateFields {
-                UserDocument.FIELD_NAME to name
-                UserDocument.FIELD_USERNAME to username
+                "${UserDocument.FIELD_TYPE_COLORS}.$key" to color
             }
             trackWrite(TAG)
         }
 
     suspend fun updateUsername(uid: UserId, username: String): Outcome<Unit, UserProfileError> =
-        outcomeCatching({ UserProfileError.LoadFailed(it) }) {
+        outcomeCatching(TAG,{ UserProfileError.LoadFailed(it) }) {
             Logger.i(TAG, "Update username")
             firestore.collection(PATH_USER).document(uid.value).updateFields {
                 UserDocument.FIELD_USERNAME to username
@@ -96,7 +99,7 @@ class UserPathFirestore(
         }
 
     suspend fun update(uid: UserId, userPatched: UserDocument): Outcome<Unit, UserProfileError> =
-        outcomeCatching({ UserProfileError.LoadFailed(it) }) {
+        outcomeCatching(TAG,{ UserProfileError.LoadFailed(it) }) {
             Logger.i(TAG, "Update user document")
             firestore.collection(PATH_USER).document(uid.value).set(userPatched)
             trackWrite(TAG)

@@ -233,10 +233,14 @@ the document.
 | `onSwap` | boolean | `true` = offered for others to take. |
 | `isDeleted` | boolean | Soft delete — see below. |
 | `updateAt` | timestamp \| null | Last change, written in the same commit as the month's sync marker. |
+| `history` | array&lt;map&gt; | The swap chain, in order — see below. |
 
 **Access**: readable by any member; `create` by the member for themselves (`ownerId == assigneeId == auth.uid`);
-`update`/`delete` by the assignee or an admin, with `ownerId` and `assigneeId` immutable from the client.
-Taking is done by the `takeEvent` Cloud Function, which is the only writer allowed to change `assigneeId`.
+`update` by the assignee or an admin, with `ownerId`, `assigneeId` and `history` immutable from the client.
+**`delete` only by the creator while they still hold it** (`ownerId == assigneeId == auth.uid`) — once a shift
+has been handed to someone else it is theirs to cover, and giving it back means putting it up for swap, not
+deleting it. Taking is done by
+the `takeEvent` Cloud Function, the only writer that changes `assigneeId` or appends to `history`.
 
 **Deletes are soft.** A removed document is invisible to a "what changed since" query, so nothing would
 carry a newer timestamp for the other members to notice the event is gone. The scheduled retention
@@ -268,10 +272,9 @@ lives on.
 commit time, so a reader sees the event and its marker as equally old. Written apart, the marker is always
 the later of the two and no cache ever looks current.
 
-### `groups/{groupId}/events/{eventId}/history/{historyId}`
-
-**Append-only** log of the event's swap lifecycle, alongside the event. Since the event no longer moves
-between members, the history stays where it is and nothing is copied forward.
+**`history[]`** — the swap chain, on the event and not in a subcollection. Documents of a subcollection are
+never returned by a query on their parent, so rendering "who held this before" would cost a read per event;
+here it travels with the event for free. Each entry:
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -279,10 +282,10 @@ between members, the history stays where it is and nothing is copied forward.
 | `actorUid` | string | Who performed the action. |
 | `fromUid` | string \| null | Previous assignee (for `transferred`). |
 | `toUid` | string \| null | New assignee (for `transferred`). |
-| `timestamp` | timestamp | When it happened. |
-| `parentEventId` | string \| null | Previous history entry on this event; `null` for the first. |
+| `timestamp` | timestamp | When it happened — a real timestamp, since Firestore forbids the server-timestamp sentinel inside an array. |
 
-**Access**: readable by members; `create` by members; **`update`/`delete` always denied**.
+**Append-only, and more firmly than before**: the rules freeze the whole field for clients, so only
+`takeEvent` can add to it. The subcollection it replaces let any member create entries.
 
 ---
 

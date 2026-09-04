@@ -78,10 +78,17 @@ class DayDetailSheetViewModel(
     fun removeEvent(event: CalendarEventUi) {
         viewModelScope.launch {
             when (event.source) {
-                EventSource.GROUP -> groupRepository.deleteEvent(event.id)
+                EventSource.GROUP -> deleteGroupEvent(event)
                 EventSource.PERSONAL -> personalRepository.deleteEvent(event.id, event.date)
             }
         }
+    }
+
+    private suspend fun deleteGroupEvent(event: CalendarEventUi) {
+        val groupId = event.groupId ?: return
+        val ownerId = event.ownerId ?: return
+        val assigneeId = event.assigneeId ?: return
+        groupRepository.deleteEvent(groupId, event.id, event.date, ownerId, assigneeId)
     }
 
     fun addEventOfType(eventTypeUi: EventTypeUi) {

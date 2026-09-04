@@ -10,8 +10,8 @@ import com.georgevik.turnia.core.domain.model.PersonalEventType
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
 import com.georgevik.turnia.core.system.Outcome
+import com.georgevik.turnia.core.system.createId
 import com.georgevik.turnia.core.system.fold
-import com.georgevik.turnia.core.system.mockUuid
 import com.georgevik.turnia.core.system.toFailure
 import com.georgevik.turnia.core.system.toSuccess
 import com.georgevik.turnia.core.system.valueOrNull
@@ -141,7 +141,7 @@ class EventTypeDetailViewModel(
         val state = uiState.value as? EventTypeDetailUi.Success ?: return
         val typeId = when (key) {
             is EventTypeDetailData.EditPersonal -> key.typeId
-            EventTypeDetailData.NewPersonal -> mockUuid()
+            EventTypeDetailData.NewPersonal -> createId()
             is EventTypeDetailData.EditGroup,
             EventTypeDetailData.NewGroup ->
                 return updateSuccess { it.copy(toastError = EventTypeToastError.NotImplemented) }

@@ -16,7 +16,14 @@ interface GroupRepository {
 
     suspend fun addEvent(event: GroupEvent)
 
-    suspend fun deleteEvent(eventId: EventId)
+    /** A shift is only deletable by whoever created it *and* still holds it. */
+    suspend fun deleteEvent(
+        groupId: GroupId,
+        eventId: EventId,
+        eventDate: LocalDate,
+        ownerId: UserId,
+        assigneeId: UserId
+    ): Outcome<Unit, Unit>
 
     suspend fun getEventsByGroup(
         groupId: GroupId, date: LocalDate,

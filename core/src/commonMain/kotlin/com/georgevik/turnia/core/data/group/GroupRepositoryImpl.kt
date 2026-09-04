@@ -1,5 +1,12 @@
 package com.georgevik.turnia.core.data.group
 
+import com.georgevik.turnia.core.data.datasource.firestore.GroupEventFirestore
+import com.georgevik.turnia.core.data.datasource.firestore.GroupFirestore
+import com.georgevik.turnia.core.data.datasource.firestore.UserPathFirestore
+import com.georgevik.turnia.core.data.datasource.firestore.doc.DocHolder
+import com.georgevik.turnia.core.data.datasource.firestore.doc.GroupDocument
+import com.georgevik.turnia.core.data.datasource.firestore.mappers.GroupMapper
+import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.EventId
 import com.georgevik.turnia.core.domain.model.EventTypeId
 import com.georgevik.turnia.core.domain.model.Group
@@ -9,79 +16,98 @@ import com.georgevik.turnia.core.domain.model.GroupId
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.domain.repository.UserRepository
-import com.georgevik.turnia.core.system.MOCK_GROUPS
-import com.georgevik.turnia.core.system.MOCK_MY_ID
 import com.georgevik.turnia.core.system.Outcome
-import com.georgevik.turnia.core.system.mockDelay
-import com.georgevik.turnia.core.system.mockGenerateEvents
-import com.georgevik.turnia.core.system.mockUuid
+import com.georgevik.turnia.core.system.createId
+import com.georgevik.turnia.core.system.createInvitationCode
+import com.georgevik.turnia.core.system.errorOrNull
+import com.georgevik.turnia.core.system.mapError
 import com.georgevik.turnia.core.system.toFailure
+import com.georgevik.turnia.core.system.toInstant
 import com.georgevik.turnia.core.system.toSuccess
+import com.georgevik.turnia.core.system.valueOrNull
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
-import kotlin.concurrent.atomics.ExperimentalAtomicApi
-import kotlin.random.Random
 
-@OptIn(ExperimentalAtomicApi::class)
 class GroupRepositoryImpl(
     private val userRepository: UserRepository,
+    private val groupFirestore: GroupFirestore,
+    private val groupEventFirestore: GroupEventFirestore,
+    private val userPathFirestore: UserPathFirestore,
+    private val groupMapper: GroupMapper,
 ) : GroupRepository {
 
-    private val _mockEvents = mutableMapOf<String, List<GroupEvent>>()
-
-    /** Groups created or edited in this session, keyed by id; they shadow [MOCK_GROUPS]. */
-    private val _mockSavedGroups = linkedMapOf<GroupId, Group>()
-
-    override suspend fun addEvent(event: GroupEvent) {
-        mockDelay()
-        val existing = getEventsPerDate(event.date)
-        _mockEvents[bucketKey(event.date)] = existing + event
-    }
-
-    override suspend fun deleteEvent(eventId: EventId) {
-        // TODO use data source
-        mockDelay()
-        _mockEvents.keys.toList().forEach { key ->
-            _mockEvents[key] = _mockEvents.getValue(key).filterNot { it.id == eventId }
-        }
-    }
-
     override suspend fun getGroups(): List<Group> {
-        mockDelay()
-        val known = MOCK_GROUPS.map { _mockSavedGroups[it.id] ?: it }
-        val created = _mockSavedGroups.values.filterNot { saved ->
-            MOCK_GROUPS.any { it.id == saved.id }
-        }
-        return known + created
+        val userId = userRepository.loggedUser?.id ?: return emptyList()
+
+        return groupFirestore.getMyGroups(userId).valueOrNull().orEmpty()
+            .map { groupMapper.map(it, userId, typeColors(userId)) }
     }
 
     override suspend fun getGroup(groupId: GroupId): Outcome<Group, GroupError> {
-        mockDelay()
-        val group = getGroups().find { it.id == groupId }
+        val userId = userRepository.loggedUser?.id ?: return GroupError.NotFound.toFailure()
+        val holder = groupFirestore.get(groupId).valueOrNull() ?: return GroupError.NotFound.toFailure()
 
-        return group?.toSuccess() ?: GroupError.NotFound.toFailure()
+        return groupMapper.map(holder, userId, typeColors(userId)).toSuccess()
     }
 
     override suspend fun saveGroup(group: Group): Outcome<Group, GroupError> {
-        mockDelay()
-        val saved = if (group.id.value.isBlank()) {
-            group.copy(id = GroupId(mockUuid()), invitationCode = mockUuid().take(6).uppercase(), isAdmin = true)
-        } else {
-            group
+        val userId = userRepository.loggedUser?.id ?: return GroupError.NotFound.toFailure()
+        val isNew = group.id.value.isBlank()
+
+        val current = if (isNew) null else groupFirestore.get(group.id).valueOrNull()
+        val groupId = if (isNew) GroupId(createId()) else group.id
+        val memberUids = current?.doc?.memberUids ?: listOf(userId.value)
+        val adminUids = current?.doc?.adminUids ?: listOf(userId.value)
+
+        val invitationCode = group.invitationCode ?: createInvitationCode()
+        val document = groupMapper.map(group.copy(invitationCode = invitationCode), memberUids, adminUids)
+            .copy(members = current?.doc?.members.orEmpty())
+
+        groupFirestore.save(groupId, document).errorOrNull()?.let { error ->
+            Logger.e(TAG, "Failed to save group: $error")
+            return GroupError.NotFound.toFailure()
         }
-        _mockSavedGroups[saved.id] = saved
-        return saved.toSuccess()
+
+        return group.copy(id = groupId, invitationCode = invitationCode, isAdmin = userId.value in adminUids)
+            .toSuccess()
     }
 
-    override suspend fun saveTypeColor(groupId: GroupId, typeId: EventTypeId, color: String): Result<Unit> {
-        mockDelay()
-        return if (Random.nextBoolean()) {
-            Result.success(Unit)
-        } else {
-            Result.failure(Throwable())
+    override suspend fun saveTypeColor(
+        groupId: GroupId,
+        typeId: EventTypeId,
+        color: String
+    ): Result<Unit> {
+        val userId = userRepository.loggedUser?.id
+            ?: return Result.failure(IllegalStateException("No signed-in user"))
+
+        return userPathFirestore.updateTypeColor(userId, groupId, typeId, color).errorOrNull()
+            ?.let { Result.failure(IllegalStateException("Failed to save the colour: $it")) }
+            ?: Result.success(Unit)
+    }
+
+    override suspend fun addEvent(event: GroupEvent) {
+        groupEventFirestore.set(event.groupId, event.id, groupMapper.map(event))
+    }
+
+    override suspend fun deleteEvent(
+        groupId: GroupId,
+        eventId: EventId,
+        eventDate: LocalDate,
+        ownerId: UserId,
+        assigneeId: UserId
+    ): Outcome<Unit, Unit> {
+        // Checked here to fail before the write and with something to show the user; the security
+        // rules refuse it anyway, which is what actually keeps a member from deleting another's.
+        val userId = userRepository.loggedUser?.id
+        if (userId != ownerId || userId != assigneeId) {
+            Logger.w(TAG, "Only the creator still holding a shift can delete it")
+            return Unit.toFailure()
         }
+
+        return groupEventFirestore.delete(groupId, eventId, eventDate)
+            .mapError { error -> Logger.e(TAG, "Failed to delete the group event: $error") }
     }
 
     override suspend fun getEventsByGroup(
@@ -89,18 +115,10 @@ class GroupRepositoryImpl(
         date: LocalDate,
         monthDelta: Int
     ): Outcome<List<GroupEvent>, Unit> {
-        mockDelay()
-        // TODO Call DataSource
-        val events = buildList {
-            addAll(getEventsPerDate(date))
+        val userId = userRepository.loggedUser?.id ?: return Unit.toFailure()
+        val holder = groupFirestore.get(groupId).valueOrNull() ?: return Unit.toFailure()
 
-            (1..monthDelta).forEach { delta ->
-                addAll(getEventsPerDate(date.plus(delta, DateTimeUnit.MONTH)))
-                addAll(getEventsPerDate(date.minus(delta, DateTimeUnit.MONTH)))
-            }
-        }.distinctBy { it.id }.filter { it.groupId == groupId }
-
-        return events.toSuccess()
+        return eventsOf(holder, userId, date, monthDelta).toSuccess()
     }
 
     override suspend fun getEventsByUser(
@@ -108,28 +126,35 @@ class GroupRepositoryImpl(
         date: LocalDate,
         monthDelta: Int
     ): Result<List<GroupEvent>> {
-        val events = buildList {
-            addAll(getEventsPerDate(date))
+        val viewer = userRepository.loggedUser?.id ?: return Result.success(emptyList())
 
-            (1..monthDelta).forEach { delta ->
-                addAll(getEventsPerDate(date.plus(delta, DateTimeUnit.MONTH)))
-                addAll(getEventsPerDate(date.minus(delta, DateTimeUnit.MONTH)))
-            }
-        }.distinctBy { it.id }.filter { it.ownerId == userId || it.assigneeId == userId }
+        val events = groupFirestore.getMyGroups(viewer).valueOrNull().orEmpty()
+            .flatMap { holder -> eventsOf(holder, viewer, date, monthDelta) }
+            .filter { it.assigneeId == userId || it.ownerId == userId }
 
         return Result.success(events)
     }
 
+    private suspend fun eventsOf(
+        holder: DocHolder<GroupDocument>,
+        viewer: UserId,
+        date: LocalDate,
+        monthDelta: Int
+    ): List<GroupEvent> {
+        val group = groupMapper.map(holder, viewer, typeColors(viewer))
+        val memberNames = holder.doc.members.mapValues { (_, member) -> member.name }
 
-    private fun getEventsPerDate(date: LocalDate): List<GroupEvent> {
-        val me = userRepository.loggedUser?.id ?: MOCK_MY_ID
-        return _mockEvents.getOrPut("${date.year}_${date.month}") {
-            mockGenerateEvents(date, me)
-        }
+        val documents = groupEventFirestore.get(
+            group.id,
+            from = date.minus(monthDelta, DateTimeUnit.MONTH).toInstant(),
+            until = date.plus(monthDelta, DateTimeUnit.MONTH).toInstant(),
+        ).valueOrNull().orEmpty()
+
+        return documents.mapNotNull { groupMapper.map(it, group, memberNames) }
     }
 
-
-    private fun bucketKey(date: LocalDate) = "${date.year}_${date.month}"
+    private suspend fun typeColors(userId: UserId): Map<String, String> =
+        userPathFirestore.getUserDocument(userId).valueOrNull()?.groupEventTypeColors.orEmpty()
 
     companion object {
         private const val TAG = "GroupRepository"

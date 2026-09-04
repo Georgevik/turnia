@@ -1,0 +1,127 @@
+package com.georgevik.turnia.core.data.datasource.firestore.mappers
+
+import com.georgevik.turnia.core.data.datasource.firestore.doc.DocHolder
+import com.georgevik.turnia.core.data.datasource.firestore.doc.EventHistoryDocument
+import com.georgevik.turnia.core.data.datasource.firestore.doc.GroupDocument
+import com.georgevik.turnia.core.data.datasource.firestore.doc.GroupEventDocument
+import com.georgevik.turnia.core.data.datasource.firestore.doc.GroupEventTypeDocument
+import com.georgevik.turnia.core.data.datasource.firestore.doc.InvitationDocument
+import com.georgevik.turnia.core.data.datasource.firestore.doc.UserDocument
+import com.georgevik.turnia.core.domain.model.EventHistoryEntry
+import com.georgevik.turnia.core.domain.model.EventId
+import com.georgevik.turnia.core.domain.model.EventTypeId
+import com.georgevik.turnia.core.domain.model.Group
+import com.georgevik.turnia.core.domain.model.GroupEvent
+import com.georgevik.turnia.core.domain.model.GroupEventType
+import com.georgevik.turnia.core.domain.model.GroupId
+import com.georgevik.turnia.core.domain.model.UserId
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.yearMonth
+
+/**
+ * Group documents to the domain and back.
+ */
+class GroupMapper {
+
+    fun map(holder: DocHolder<GroupDocument>, viewer: UserId, colors: Map<String, String>): Group {
+        val groupId = GroupId(holder.id)
+        val doc = holder.doc
+
+        return Group(
+            id = groupId,
+            name = doc.name,
+            types = doc.groupEventTypes.map { map(it, groupId, doc.name, colors) },
+            memberCount = doc.memberUids.size,
+            invitationCode = doc.invitation?.code,
+            isAdmin = viewer.value in doc.adminUids,
+        )
+    }
+
+    fun map(group: Group, memberUids: List<String>, adminUids: List<String>) = GroupDocument(
+        name = group.name,
+        memberUids = memberUids,
+        adminUids = adminUids,
+        groupEventTypes = group.types.map(::map),
+        invitation = group.invitationCode?.let { InvitationDocument(code = it) },
+    )
+
+    fun map(
+        holder: DocHolder<GroupEventDocument>,
+        group: Group,
+        members: Map<String, String>,
+    ): GroupEvent? {
+        val doc = holder.doc
+        // An event whose type the admin removed has nothing left to render.
+        val type = group.types.find { it.id.value == doc.groupEventTypeId } ?: return null
+
+        return GroupEvent(
+            id = EventId(holder.id),
+            groupId = group.id,
+            groupName = group.name,
+            ownerId = UserId(doc.ownerId),
+            assigneeId = UserId(doc.assigneeId),
+            assigneeName = members[doc.assigneeId].orEmpty(),
+            type = type,
+            date = LocalDate.parse(doc.date),
+            onSwap = doc.onSwap,
+            colorHex = type.color,
+            history = chainOf(doc, members),
+        )
+    }
+
+    /**
+     * Who has held this shift, in order: the creator first, then whoever each transfer handed it
+     * to. The names come from the group's own member list, so the chain costs nothing to render.
+     */
+    private fun chainOf(
+        doc: GroupEventDocument,
+        members: Map<String, String>
+    ): List<EventHistoryEntry> {
+        val holders = listOf(doc.ownerId) + doc.history
+            .filter { it.type == EventHistoryDocument.TYPE_TRANSFERRED }
+            .mapNotNull { it.toUid }
+
+        return holders.map { uid ->
+            EventHistoryEntry(userId = UserId(uid), userName = members[uid].orEmpty())
+        }
+    }
+
+    fun map(event: GroupEvent) = GroupEventDocument(
+        ownerId = event.ownerId.value,
+        assigneeId = event.assigneeId.value,
+        groupEventTypeId = event.type.id.value,
+        date = event.date.toString(),
+        yearMonth = event.date.yearMonth.toString(),
+        onSwap = event.onSwap,
+    )
+
+    private fun map(
+        doc: GroupEventTypeDocument,
+        groupId: GroupId,
+        groupName: String,
+        colors: Map<String, String>,
+    ) = GroupEventType(
+        id = EventTypeId(doc.id),
+        groupId = groupId,
+        groupName = groupName,
+        name = doc.name,
+        acronym = doc.acronym,
+        description = doc.description,
+        startTime = doc.startTime,
+        endTime = doc.endTime,
+        swappable = doc.swappable,
+        // The stored type has no colour of its own: every member picks theirs.
+        colorHex = "",
+        userColor = colors[UserDocument.typeColorKey(groupId.value, doc.id)],
+    )
+
+    private fun map(type: GroupEventType) = GroupEventTypeDocument(
+        id = type.id.value,
+        name = type.name,
+        acronym = type.acronym,
+        description = type.description,
+        startTime = type.startTime,
+        endTime = type.endTime,
+        swappable = type.swappable,
+    )
+}

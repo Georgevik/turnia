@@ -7,6 +7,7 @@ import com.georgevik.turnia.core.data.datasource.firestore.doc.GroupDocument
 import com.georgevik.turnia.core.data.datasource.firestore.errors.GenericFirestoreError
 import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.GroupId
+import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.outcomeCatching
 import com.georgevik.turnia.core.system.toInstantOrNull
@@ -36,6 +37,20 @@ class GroupFirestore(
 
             if (serverUpdatedAt == null || serverUpdatedAt <= cacheUpdatedAt) cached
             else read(groupId, Source.SERVER)
+        }
+
+    suspend fun getMyGroups(
+        userId: UserId
+    ): Outcome<List<DocHolder<GroupDocument>>, GenericFirestoreError> =
+        outcomeCatching(TAG, { GenericFirestoreError(it) }) {
+            val snapshot = firestore.collection(PATH_GROUPS).where {
+                GroupDocument.FIELD_MEMBER_UIDS contains userId.value
+            }.get().trackData(TAG)
+            Logger.d(TAG, "Groups of the user: ${snapshot.documents.size}")
+
+            snapshot.documents.map {
+                DocHolder(id = it.reference.id, doc = it.data(GroupDocument.serializer()))
+            }
         }
 
     suspend fun save(groupId: GroupId, group: GroupDocument): Outcome<Unit, GenericFirestoreError> =

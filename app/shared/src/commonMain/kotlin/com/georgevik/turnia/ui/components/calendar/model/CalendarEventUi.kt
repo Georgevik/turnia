@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import com.georgevik.turnia.core.domain.model.EventId
+import com.georgevik.turnia.core.domain.model.GroupId
 import com.georgevik.turnia.core.domain.model.GroupEvent
 import com.georgevik.turnia.core.domain.model.PersonalEvent
 import com.georgevik.turnia.core.domain.model.UserId
@@ -21,6 +22,10 @@ data class TransferHolderUi(
 @Immutable
 data class CalendarEventUi(
     val id: EventId,
+    /** Only a group event has these, and deleting one needs them. */
+    val groupId: GroupId?,
+    val ownerId: UserId?,
+    val assigneeId: UserId?,
     val source: EventSource,
     val name: String,
     val acronym: String?,
@@ -44,6 +49,9 @@ data class CalendarEventUi(
     companion object {
         fun create(
             id: EventId,
+            groupId: GroupId?,
+            ownerId: UserId?,
+            assigneeId: UserId?,
             source: EventSource,
             name: String,
             background: Color,
@@ -60,6 +68,9 @@ data class CalendarEventUi(
             removable: Boolean = false,
         ): CalendarEventUi = CalendarEventUi(
             id = id,
+            groupId = groupId,
+            ownerId = ownerId,
+            assigneeId = assigneeId,
             source = source,
             name = name,
             acronym = acronym,
@@ -85,6 +96,9 @@ fun GroupEvent.toUi(
     removable: Boolean = false,
 ) = CalendarEventUi.create(
     id = id,
+    groupId = groupId,
+    ownerId = ownerId,
+    assigneeId = assigneeId,
     source = EventSource.GROUP,
     name = type.name,
     acronym = type.acronym,
@@ -107,6 +121,9 @@ private fun GroupEvent.buildTransferChain(currentUserId: UserId?): List<Transfer
 
 fun PersonalEvent.toUi(removable: Boolean = false) = CalendarEventUi.create(
     id = id,
+    groupId = null,
+    ownerId = null,
+    assigneeId = null,
     source = EventSource.PERSONAL,
     name = type.name,
     acronym = type.acronym,

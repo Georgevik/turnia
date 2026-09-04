@@ -10,6 +10,7 @@ import com.georgevik.turnia.core.data.datasource.firestore.UserPathFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.UserPrivateFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.UserSyncFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.UsernameFirestore
+import com.georgevik.turnia.core.data.datasource.firestore.mappers.GroupMapper
 import com.georgevik.turnia.core.data.datasource.firestore.mappers.PersonalEventMapper
 import com.georgevik.turnia.core.data.datasource.firestore.mappers.PersonalEventTypeDocMapper
 import com.georgevik.turnia.core.data.datasource.firestore.mappers.UserDocumentMapper
@@ -55,9 +56,10 @@ val coreModule: Module = module {
     factory { UsernameFactory() }
     factory { PersonalEventMapper() }
     factory { PersonalEventTypeDocMapper() }
+    factory { GroupMapper() }
     single { UserProvisioner(get(), get(), get(), get()) }
     single<UserRepository> { UserRepositoryImpl(Firebase.auth, get(), get(), get(), get(), get(), get(), get()) }
     single<AppConfigRepository> { AppConfigRepositoryImpl() }
-    single<GroupRepository> { GroupRepositoryImpl(get()) }
+    single<GroupRepository> { GroupRepositoryImpl(get(), get(), get(), get(), get()) }
     single<PersonalEventRepository> { PersonalEventRepositoryImpl(get(), get(), get(), get()) }
 }
