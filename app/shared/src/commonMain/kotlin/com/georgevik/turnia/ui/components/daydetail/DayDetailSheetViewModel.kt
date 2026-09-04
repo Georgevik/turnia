@@ -12,24 +12,19 @@ import com.georgevik.turnia.core.domain.model.PersonalEventType
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
 import com.georgevik.turnia.core.domain.repository.UserRepository
-import com.georgevik.turnia.core.system.fold
-import com.georgevik.turnia.core.system.outcomeCatching
 import com.georgevik.turnia.core.system.toInstant
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import com.georgevik.turnia.ui.components.calendar.model.EventSource
 import com.georgevik.turnia.ui.components.daydetail.components.EventTypeChipUi
-import com.georgevik.turnia.ui.components.daydetail.model.AddEventTypesError
 import com.georgevik.turnia.ui.components.daydetail.model.AddEventTypesUi
 import com.georgevik.turnia.ui.components.daydetail.model.EventTypeSectionUi
 import com.georgevik.turnia.ui.components.daydetail.model.EventTypeUi
 import com.georgevik.turnia.ui.system.entityColor
 import com.georgevik.turnia.ui.system.toComposeColorOr
 import com.georgevik.turnia.ui.system.toHex
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -47,34 +42,23 @@ class DayDetailSheetViewModel(
     val uiState = _uiState.asStateFlow()
 
     init {
-        loadEventTypes()
         viewModelScope.launch {
-            personalRepository.onEventTypeChanged.collect { loadEventTypes() }
-        }
-    }
+            viewModelScope.launch {
+                _uiState.update { AddEventTypesUi.Loading }
 
-    fun retry() = loadEventTypes()
-
-    private fun loadEventTypes() {
-        viewModelScope.launch {
-            _uiState.update { AddEventTypesUi.Loading }
-
-            val outcome = outcomeCatching({ AddEventTypesError.LoadFailed }) {
-                coroutineScope {
-                    val groups = async { groupRepository.getGroups().first() }
-                    val personalTypes = async { personalRepository.getMyEventTypes() }
-                    buildSections(personalTypes.await(), groups.await())
+                combine(
+                    groupRepository.getGroups(),
+                    personalRepository.getMyEventTypes()
+                ) { groups, personalTypes ->
+                    buildSections(personalTypes, groups)
+                }.collect { sections ->
+                    _uiState.update { AddEventTypesUi.Success(sections) }
                 }
             }
-
-            _uiState.update {
-                outcome.fold(
-                    onSuccess = { sections -> AddEventTypesUi.Success(sections) },
-                    onFailure = { error -> AddEventTypesUi.Error(error) },
-                )
-            }
         }
     }
+
+    fun retry() = Unit //loadEventTypes()
 
     fun removeEvent(event: CalendarEventUi) {
         viewModelScope.launch {

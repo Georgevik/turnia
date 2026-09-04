@@ -55,24 +55,20 @@ class GroupRepositoryImpl(
     private val groupMapper: GroupMapper,
 ) : GroupRepository {
 
-    override fun getGroups(): Flow<List<Group>> = flow {
-        val userId = userRepository.loggedUser?.id
-        if (userId == null) {
-            emit(emptyList())
-            return@flow
-        }
+    override fun getGroups(): Flow<List<Group>> =
+        userRepository.loggedUserFlow.flatMapLatest { user ->
+            val userId = user.id
+            val colors = typeColors(userId)
 
-        val colors = typeColors(userId)
-        emitAll(
             groupFirestore.observeMyGroups(userId).map { holders ->
                 holders.map { groupMapper.map(it, userId, colors) }
             }
-        )
-    }
+        }
 
     override suspend fun getGroup(groupId: GroupId): Outcome<Group, GroupError> {
         val userId = userRepository.loggedUser?.id ?: return GroupError.NotFound.toFailure()
-        val holder = groupFirestore.get(groupId).valueOrNull() ?: return GroupError.NotFound.toFailure()
+        val holder =
+            groupFirestore.get(groupId).valueOrNull() ?: return GroupError.NotFound.toFailure()
 
         return groupMapper.map(holder, userId, typeColors(userId)).toSuccess()
     }
@@ -96,8 +92,9 @@ class GroupRepositoryImpl(
         )
 
         val invitationCode = group.invitationCode ?: createInvitationCode()
-        val document = groupMapper.map(group.copy(invitationCode = invitationCode), memberUids, adminUids)
-            .copy(members = members)
+        val document =
+            groupMapper.map(group.copy(invitationCode = invitationCode), memberUids, adminUids)
+                .copy(members = members)
 
         val saved = if (isNew) groupFirestore.create(groupId, document)
         else groupFirestore.update(groupId, document)
@@ -107,7 +104,11 @@ class GroupRepositoryImpl(
             return GroupError.NotFound.toFailure()
         }
 
-        return group.copy(id = groupId, invitationCode = invitationCode, isAdmin = userId.value in adminUids)
+        return group.copy(
+            id = groupId,
+            invitationCode = invitationCode,
+            isAdmin = userId.value in adminUids
+        )
             .toSuccess()
     }
 
@@ -191,20 +192,14 @@ class GroupRepositoryImpl(
         groupId: GroupId,
         date: LocalDate,
         monthDelta: Int,
-    ): Flow<Outcome<List<GroupEvent>, Unit>> = flow {
-        val userId = userRepository.loggedUser?.id
-        if (userId == null) {
-            emit(Unit.toFailure())
-            return@flow
-        }
-
+    ): Flow<Outcome<List<GroupEvent>, Unit>> = userRepository.loggedUserFlow.flatMapLatest { user ->
+        val userId = user.id
         val colors = typeColors(userId)
-        emitAll(
-            groupFirestore.observe(groupId).flatMapLatest { holder ->
-                if (holder == null) flowOf(Unit.toFailure())
-                else eventsOf(holder, userId, colors, date, monthDelta).map { it.toSuccess() }
-            }
-        )
+
+        groupFirestore.observe(groupId).flatMapLatest { holder ->
+            if (holder == null) flowOf(Unit.toFailure())
+            else eventsOf(holder, userId, colors, date, monthDelta).map { it.toSuccess() }
+        }
     }
 
     /**

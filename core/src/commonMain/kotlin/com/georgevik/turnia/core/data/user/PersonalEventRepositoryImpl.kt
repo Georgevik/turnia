@@ -18,14 +18,13 @@ import com.georgevik.turnia.core.system.toInstant
 import com.georgevik.turnia.core.system.toSuccess
 import com.georgevik.turnia.core.system.valueOrNull
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
-import kotlin.random.Random
 
 class PersonalEventRepositoryImpl(
     private val userRepository: UserRepository,
@@ -34,34 +33,25 @@ class PersonalEventRepositoryImpl(
     private val personalEventTypesFirestore: PersonalEventTypesFirestore,
 ) : PersonalEventRepository {
 
-    private val _onEventsChanged = MutableSharedFlow<Int>(replay = 0, extraBufferCapacity = 1)
-    override val onEventsChanged = _onEventsChanged.asSharedFlow()
-
-    private val _onEventTypeChanged = MutableSharedFlow<Int>(replay = 0, extraBufferCapacity = 1)
-    override val onEventTypeChanged = _onEventTypeChanged.asSharedFlow()
-
-    override suspend fun getMyEventTypes(includeDeleted: Boolean): List<PersonalEventType> {
-        val userId = userRepository.loggedUser?.id ?: return emptyList()
-        val types = getAllEventTypes(userId)
-        return if (!includeDeleted) types.filterNot { it.isDeleted } else types
+    override fun getMyEventTypes(includeDeleted: Boolean): Flow<List<PersonalEventType>> {
+        return userRepository.loggedUserFlow
+            .flatMapLatest { user -> getAllEventTypes(user.id) }
+            .map { types -> types.filterNot { !includeDeleted && it.isDeleted } }
     }
 
     override suspend fun addEvent(event: PersonalEvent) {
         val uid = userRepository.loggedUser?.id ?: return
         personalEventFirestore.set(uid, event)
-        _onEventsChanged.emit(Random.nextInt())
     }
 
     override suspend fun deleteEvent(eventId: EventId, eventDate: LocalDate) {
         val uid = userRepository.loggedUser?.id ?: return
         personalEventFirestore.delete(uid, eventId, eventDate)
-        _onEventsChanged.emit(Random.nextInt())
     }
 
     override suspend fun saveEventType(type: PersonalEventType): Outcome<Unit, Unit> {
         val userId = userRepository.loggedUser?.id ?: return Unit.toFailure()
         personalEventTypesFirestore.set(userId, type)
-        _onEventTypeChanged.emit(Random.nextInt())
         return Unit.toSuccess()
     }
 
@@ -73,7 +63,6 @@ class PersonalEventRepositoryImpl(
             return Unit.toFailure()
         }
 
-        _onEventTypeChanged.emit(Random.nextInt())
         return Unit.toSuccess()
     }
 
@@ -81,26 +70,22 @@ class PersonalEventRepositoryImpl(
         uid: UserId,
         date: LocalDate,
         monthDelta: Int
-    ): Flow<Outcome<List<PersonalEvent>, Unit>> = personalEventFirestore.get(
-        uid,
-        from = date.minus(monthDelta, DateTimeUnit.MONTH).toInstant(),
-        until = date.plus(monthDelta, DateTimeUnit.MONTH).toInstant(),
-    ).map { outcome ->
-        val documents = outcome.valueOrNull() ?: return@map Unit.toFailure()
+    ): Flow<Outcome<List<PersonalEvent>, Unit>> = combine(
+        getAllEventTypes(uid), personalEventFirestore.get(
+            uid,
+            from = date.minus(monthDelta, DateTimeUnit.MONTH).toInstant(),
+            until = date.plus(monthDelta, DateTimeUnit.MONTH).toInstant(),
+        )
+    ) { types, outcome ->
+        val documents = outcome.valueOrNull() ?: return@combine Unit.toFailure()
 
-        val types = getAllEventTypes(uid).associateBy { it.id }
-        documents.mapNotNull { personalEventMapper.map(it, types) }.toSuccess()
+        val typesMap = types.associateBy { it.id }
+        documents.mapNotNull { personalEventMapper.map(it, typesMap) }.toSuccess()
     }
 
-    private suspend fun getAllEventTypes(uid: UserId): List<PersonalEventType> {
-        val typeResult = personalEventTypesFirestore.get(uid)
+    private fun getAllEventTypes(uid: UserId): Flow<List<PersonalEventType>> =
+        personalEventTypesFirestore.observe(uid)
 
-        typeResult.errorOrNull()?.let { error ->
-            Logger.e(TAG, "Error fetching personal event types", error.error)
-        }
-
-        return typeResult.valueOrNull().orEmpty()
-    }
 
     companion object {
         private const val TAG = "PersonalEventRepository"

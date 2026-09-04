@@ -55,7 +55,7 @@ val coreModule: Module = module {
     single { GroupJoinRequestFirestore(get()) }
     single { GroupMembershipFunction(get()) }
     single { PersonalEventFirestore(get(), get(), get()) }
-    single { PersonalEventTypesFirestore(get(), get(), get()) }
+    single { PersonalEventTypesFirestore(get(), get(), get(),get()) }
     factory { UserDocumentMapper() }
     factory { UsernameFactory() }
     factory { PersonalEventMapper() }

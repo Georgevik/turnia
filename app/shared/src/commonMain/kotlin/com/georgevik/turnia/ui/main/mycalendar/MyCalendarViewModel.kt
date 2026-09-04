@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import com.georgevik.turnia.core.domain.model.GroupEvent
 import com.georgevik.turnia.core.domain.model.PersonalEvent
 import com.georgevik.turnia.core.domain.model.UserId
-import com.georgevik.turnia.core.domain.model.UserSession
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
 import com.georgevik.turnia.core.domain.repository.UserRepository
@@ -19,9 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -48,12 +45,7 @@ class MyCalendarViewModel(
 
     init {
         viewModelScope.launch {
-            combine(
-                personalRepository.onEventsChanged.onStart { emit(1) },
-                personalRepository.onEventTypeChanged.onStart { emit(1) },
-                userRepository.userSession.filterIsInstance(UserSession.Authenticated::class),
-                targetDay
-            ) { _, _, userSession, date -> userSession.user.id to date }
+            combine(userRepository.loggedUserFlow, targetDay) { user, date -> user.id to date }
                 .flatMapLatest { (userId, date) -> events(userId, date) }
                 .collect { eventsByDate ->
                     _uiState.update { it.copy(isLoading = false, eventsByDate = eventsByDate) }

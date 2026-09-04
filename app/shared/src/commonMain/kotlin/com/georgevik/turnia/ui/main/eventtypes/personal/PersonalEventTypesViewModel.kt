@@ -14,6 +14,7 @@ import com.georgevik.turnia.ui.system.toComposeColorOr
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -25,26 +26,23 @@ class PersonalEventTypesViewModel(
     val uiState: StateFlow<PersonalEventTypesUi> = _uiState.asStateFlow()
 
     init {
-        refreshEvents()
         viewModelScope.launch {
-            personalRepository.onEventTypeChanged.collect { refreshEvents() }
+            personalRepository.getMyEventTypes()
+                .map { list -> list.map { it.toUi() }.sortedBy { it.name } }
+                .collect { types ->
+                    _uiState.update { state ->
+                        val message = (state as? PersonalEventTypesUi.Success)?.userMessage
+                        PersonalEventTypesUi.Success(types = types, userMessage = message)
+                    }
+                }
         }
     }
 
-    fun refreshEvents() {
-        viewModelScope.launch {
-            val types = personalRepository.getMyEventTypes().map { it.toUi() }.sortedBy { it.name }
-            _uiState.update { state ->
-                val message = (state as? PersonalEventTypesUi.Success)?.userMessage
-                PersonalEventTypesUi.Success(types = types, userMessage = message)
-            }
-        }
-    }
 
     fun onDelete(typeId: EventTypeId) {
         viewModelScope.launch {
             personalRepository.deleteEventType(typeId).fold(
-                onSuccess = { refreshEvents() },
+                onSuccess = {  },
                 onFailure = {
                     updateSuccess { it.copy(userMessage = PersonalEventTypesMessage.DeleteFailed) }
                 },

@@ -32,8 +32,12 @@ import com.georgevik.turnia.ui.system.toHex
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.timeout
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.seconds
 
 class EventTypeDetailViewModel(
     private val key: EventTypeDetailData,
@@ -51,7 +55,11 @@ class EventTypeDetailViewModel(
     private fun loadForm() {
         viewModelScope.launch {
             when (key) {
-                is EventTypeDetailData.EditGroup -> loadGroupType(GroupId(key.groupId), EventTypeId(key.typeId))
+                is EventTypeDetailData.EditGroup -> loadGroupType(
+                    GroupId(key.groupId),
+                    EventTypeId(key.typeId)
+                )
+
                 is EventTypeDetailData.EditPersonal -> loadPersonalType(EventTypeId(key.typeId))
                 EventTypeDetailData.NewPersonal,
                 is EventTypeDetailData.NewGroup -> newForm().toSuccess()
@@ -88,9 +96,13 @@ class EventTypeDetailViewModel(
     }
 
     private suspend fun loadPersonalType(typeId: EventTypeId): Outcome<EventTypeForm, EventTypeScreenError> {
-        val eventType =
-            personalRepository.getMyEventTypes(includeDeleted = true).find { it.id == typeId }
-                ?: return EventTypeScreenError.GroupEventNotFound.toFailure()
+        val eventTypes =
+            personalRepository.getMyEventTypes(includeDeleted = true).timeout(5.seconds)
+                .catch { emit(emptyList()) }
+                .firstOrNull()
+
+        val eventType = eventTypes?.find { it.id == typeId }
+            ?: return EventTypeScreenError.GroupEventNotFound.toFailure()
 
         return eventType.toUi().toSuccess()
     }
@@ -106,7 +118,7 @@ class EventTypeDetailViewModel(
 
                 is EventTypeDetailData.EditPersonal,
                 EventTypeDetailData.NewPersonal,
-                // Nothing to colour yet: the pick is saved with the type it belongs to.
+                    // Nothing to colour yet: the pick is saved with the type it belongs to.
                 is EventTypeDetailData.NewGroup -> Result.success(Unit)
             }.fold(
                 onSuccess = { updateSuccess { it.copy(form = it.form.copy(color = color)) } },

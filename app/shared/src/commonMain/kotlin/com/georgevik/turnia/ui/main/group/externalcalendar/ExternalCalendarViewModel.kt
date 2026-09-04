@@ -18,7 +18,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -54,30 +53,31 @@ class ExternalCalendarViewModel(
      * Cached events first, then the server's if it had anything newer: the month paints without
      * waiting on a round trip.
      */
-    private fun events(date: LocalDate): Flow<Map<LocalDate, List<CalendarEventUi>>> {
-        val uid = userRepository.loggedUser?.id ?: return flowOf(emptyMap())
+    private fun events(date: LocalDate): Flow<Map<LocalDate, List<CalendarEventUi>>> =
+        userRepository.loggedUserFlow.flatMapLatest { user ->
+            val uid = user.id
+            val events = when (data) {
+                is ExternalCalendarData.Group ->
 
-        val events = when (data) {
-            is ExternalCalendarData.Group ->
-                groupRepository.getEventsByGroup(GroupId(data.id), date, monthDelta = 2)
-                    .map { outcome ->
-                        outcome.valueOrEmpty().map {
-                            it.toUi(
-                                currentUserId = uid,
-                                removable = it.ownerId == uid && it.assigneeId == uid,
-                            )
+                    groupRepository.getEventsByGroup(GroupId(data.id), date, monthDelta = 2)
+                        .map { outcome ->
+                            outcome.valueOrEmpty().map {
+                                it.toUi(
+                                    currentUserId = uid,
+                                    removable = it.ownerId == uid && it.assigneeId == uid,
+                                )
+                            }
                         }
-                    }
 
-            is ExternalCalendarData.Personal ->
-                personalRepository.getEvents(UserId(data.id), date, monthDelta = 2)
-                    .map { outcome ->
-                        outcome.valueOrEmpty().map { event -> event.toUi(removable = false) }
-                    }
+                is ExternalCalendarData.Personal ->
+                    personalRepository.getEvents(UserId(data.id), date, monthDelta = 2)
+                        .map { outcome ->
+                            outcome.valueOrEmpty().map { event -> event.toUi(removable = false) }
+                        }
+            }
+
+            events.map { list -> list.groupBy { event -> event.date } }
         }
-
-        return events.map { list -> list.groupBy { event -> event.date } }
-    }
 
     fun onMonthChanged(date: LocalDate) {
         monthDate.update { date }

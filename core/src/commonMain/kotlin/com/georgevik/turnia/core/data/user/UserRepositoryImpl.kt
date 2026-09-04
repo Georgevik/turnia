@@ -30,9 +30,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -49,6 +51,8 @@ class UserRepositoryImpl(
 
     private val _userSession = MutableStateFlow<UserSession>(UserSession.Loading)
     override val userSession: StateFlow<UserSession> = _userSession.asStateFlow()
+
+    override val loggedUserFlow: Flow<User> = _userSession.filterIsInstance(UserSession.Authenticated::class).map { it.user }
 
     override val loggedUser: User? get() = (_userSession.value as? UserSession.Authenticated)?.user
 

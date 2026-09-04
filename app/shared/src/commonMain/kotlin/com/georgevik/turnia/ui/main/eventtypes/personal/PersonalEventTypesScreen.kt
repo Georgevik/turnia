@@ -29,7 +29,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.georgevik.turnia.navigation.LocalNavigator
 import com.georgevik.turnia.navigation.root.routes.RootRoute
@@ -66,12 +65,6 @@ fun PersonalEventTypesScreen(viewModel: PersonalEventTypesViewModel) {
     val navigator = LocalNavigator.current
     val snackbar = LocalSnackbar.current
     var typeToDelete by remember { mutableStateOf<PersonalEventTypeRowUi?>(null) }
-
-    // The detail edits and creates types on its own; re-read them when coming back from it.
-    LifecycleResumeEffect(Unit) {
-        viewModel.refreshEvents()
-        onPauseOrDispose { }
-    }
 
     Scaffold(
         topBar = {

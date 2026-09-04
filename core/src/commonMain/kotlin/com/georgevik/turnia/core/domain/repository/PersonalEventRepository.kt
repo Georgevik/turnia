@@ -7,7 +7,6 @@ import com.georgevik.turnia.core.domain.model.PersonalEventType
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.system.Outcome
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.datetime.LocalDate
 
 /**
@@ -16,10 +15,7 @@ import kotlinx.datetime.LocalDate
  * user can create and edit them freely.
  */
 interface PersonalEventRepository {
-    val onEventsChanged: SharedFlow<Int>
-    val onEventTypeChanged: SharedFlow<Int>
-
-    suspend fun getMyEventTypes(includeDeleted: Boolean = false): List<PersonalEventType>
+    fun getMyEventTypes(includeDeleted: Boolean = false): Flow<List<PersonalEventType>>
 
     suspend fun addEvent(event: PersonalEvent)
 
@@ -29,10 +25,6 @@ interface PersonalEventRepository {
 
     suspend fun deleteEventType(typeId: EventTypeId): Outcome<Unit, Unit>
 
-    /**
-     * Emits the cached events first and, when the server had something newer, again with it: the
-     * calendar has something to paint before any round trip.
-     */
     fun getEvents(
         uid: UserId,
         date: LocalDate,
