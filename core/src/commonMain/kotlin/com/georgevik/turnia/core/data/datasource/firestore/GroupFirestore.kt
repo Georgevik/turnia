@@ -5,6 +5,7 @@ import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackWrite
 import com.georgevik.turnia.core.data.datasource.firestore.doc.DocHolder
 import com.georgevik.turnia.core.data.datasource.firestore.doc.GroupDocument
 import com.georgevik.turnia.core.data.datasource.firestore.errors.GenericFirestoreError
+import com.georgevik.turnia.core.data.datasource.firestore.sync.SharedListeners
 import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.GroupId
 import com.georgevik.turnia.core.domain.model.UserId
@@ -14,6 +15,7 @@ import com.georgevik.turnia.core.system.toInstantOrNull
 import com.georgevik.turnia.core.system.valueOrNull
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Source
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.emitAll
@@ -28,7 +30,10 @@ import kotlin.time.Instant
 class GroupFirestore(
     private val firestore: FirebaseFirestore,
     private val groupSyncFirestore: GroupSyncFirestore,
-) {
+    scope: CoroutineScope,
+    ) {
+
+    private val userGroupsFlow = SharedListeners<UserId, List<DocHolder<GroupDocument>>>(scope)
 
     fun observe(groupId: GroupId): Flow<DocHolder<GroupDocument>?> = flow {
         var known = queryGroup(groupId, Source.CACHE)
@@ -74,6 +79,9 @@ class GroupFirestore(
     }
 
     fun observeMyGroups(userId: UserId): Flow<List<DocHolder<GroupDocument>>> =
+        userGroupsFlow.shared(userId) { snapshotMyGroups(userId) }
+
+    private fun snapshotMyGroups(userId: UserId): Flow<List<DocHolder<GroupDocument>>> =
         firestore.collection(PATH_GROUPS)
             .where { GroupDocument.FIELD_MEMBER_UIDS contains userId.value }
             .snapshots

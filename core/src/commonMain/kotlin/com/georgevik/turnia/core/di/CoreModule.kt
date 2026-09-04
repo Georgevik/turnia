@@ -51,7 +51,7 @@ val coreModule: Module = module {
     single { UserSyncFirestore(get(), get()) }
     single { GroupSyncFirestore(get(), get()) }
     single { GroupEventFirestore(get(), get()) }
-    single { GroupFirestore(get(), get()) }
+    single { GroupFirestore(get(), get(), get()) }
     single { GroupJoinRequestFirestore(get()) }
     single { GroupMembershipFunction(get()) }
     single { PersonalEventFirestore(get(), get(), get()) }
