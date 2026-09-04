@@ -171,9 +171,13 @@
     <string name="profile_error_username_taken">Ese nombre de usuario ya está en uso.</string>
     <string name="profile_error_save">No hemos podido guardar los cambios.</string>
 
-    <!-- People and groups tabs -->
+    <!-- Bottom bar -->
+    <string name="tab_calendar">Calendario</string>
     <string name="tab_people">Personas</string>
     <string name="tab_groups">Grupos</string>
+    <string name="tab_changes">Cambios</string>
+    <string name="tab_settings">Ajustes</string>
+
     <string name="group_admin_badge">ADMIN</string>
     <string name="people_title">Personas</string>
     <string name="people_search_hint">Buscar personas...</string>
