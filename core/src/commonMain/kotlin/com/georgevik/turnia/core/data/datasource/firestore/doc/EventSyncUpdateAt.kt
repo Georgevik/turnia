@@ -6,5 +6,5 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class EventSyncUpdateAt(
-    @SerialName("updatedAt") val updatedAt: BaseTimestamp,
+    @SerialName("updatedAt") val updatedAt: BaseTimestamp? = null,
 )
