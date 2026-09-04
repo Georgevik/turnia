@@ -8,6 +8,7 @@ import com.georgevik.turnia.core.domain.model.GroupEvent
 import com.georgevik.turnia.core.domain.model.GroupId
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.system.Outcome
+import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
 
 interface GroupRepository {
@@ -25,16 +26,18 @@ interface GroupRepository {
         assigneeId: UserId
     ): Outcome<Unit, Unit>
 
-    suspend fun getEventsByGroup(
+    /** Cached events first, then the server's if it had anything newer. */
+    fun getEventsByGroup(
         groupId: GroupId, date: LocalDate,
         monthDelta: Int = 1
-    ): Outcome<List<GroupEvent>, Unit>
+    ): Flow<Outcome<List<GroupEvent>, Unit>>
 
-    suspend fun getEventsByUser(
+    /** Cached events first, then the server's if it had anything newer. */
+    fun getEventsByUser(
         userId: UserId,
         date: LocalDate,
         monthDelta: Int = 1
-    ): Result<List<GroupEvent>>
+    ): Flow<List<GroupEvent>>
 
     suspend fun getGroup(groupId: GroupId): Outcome<Group, GroupError>
 

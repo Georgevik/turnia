@@ -12,13 +12,18 @@ import com.georgevik.turnia.core.domain.model.PersonalEvent
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.outcomeCatching
+import com.georgevik.turnia.core.system.toFailure
 import com.georgevik.turnia.core.system.toInstantOrNull
+import com.georgevik.turnia.core.system.toSuccess
 import com.georgevik.turnia.core.system.toTimestamp
 import com.georgevik.turnia.core.system.toYearMonth
 import com.georgevik.turnia.core.system.valueOrNull
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Source
 import dev.gitlive.firebase.firestore.Timestamp
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flow
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.YearMonthRange
@@ -34,43 +39,35 @@ class PersonalEventFirestore(
     private val userSyncFirestore: UserSyncFirestore
 ) {
 
-    suspend fun get(
+    fun get(
         userId: UserId,
         from: Instant,
         until: Instant
-    ): Outcome<List<DocHolder<PersonalEventDocument>>, GenericFirestoreError> =
-        outcomeCatching(TAG, { GenericFirestoreError(it) }) {
+    ): Flow<Outcome<List<DocHolder<PersonalEventDocument>>, GenericFirestoreError>> =
+        flow<Outcome<List<DocHolder<PersonalEventDocument>>, GenericFirestoreError>> {
             val months = YearMonthRange(from.toYearMonth(), until.toYearMonth())
             val cachedEvents = queryEvents(userId, months.associateWith { null }, Source.CACHE)
-            val cacheUpdatedAt = cachedEvents.updatedByMonth()
+            emit(cachedEvents.filterNot { it.doc.isDeleted }.toSuccess())
 
+            val cacheUpdatedAt = cachedEvents.updatedByMonth()
             val staleMonths =
                 if (cacheUpdatedAt.isEmpty()) months.associateWith { null }
                 else staleEventMonths(userId, months, cacheUpdatedAt)
 
-            if (staleMonths.isEmpty()) {
-                // Events are updated
-                return@outcomeCatching cachedEvents.filterNot { it.doc.isDeleted }
-            }
+            // Everything already in hand: the first emission was the answer.
+            if (staleMonths.isEmpty()) return@flow
 
-            val serverCachedEvents = queryEvents(
+            val serverEvents = queryEvents(
                 userId,
                 staleMonths.mapValues { (_, updatedAt) -> updatedAt?.toTimestamp() },
                 Source.SERVER
-            ).associateBy { (id, doc) -> id }.toMutableMap()
+            ).associateBy { it.id }.toMutableMap()
 
-            // Replace cached events with server events
-            val newEvents = cachedEvents
-                .map { cachedHolder ->
-                    serverCachedEvents[cachedHolder.id]?.let { serverHolder ->
-                        serverCachedEvents.remove(cachedHolder.id)
-                        serverHolder
-                    } ?: cachedHolder
-                }.toMutableList()
-
-            // Add new server events
-            newEvents.addAll(serverCachedEvents.values)
-            newEvents.filterNot { it.doc.isDeleted }
+            val merged = cachedEvents.map { cached -> serverEvents.remove(cached.id) ?: cached }
+            emit((merged + serverEvents.values).filterNot { it.doc.isDeleted }.toSuccess())
+        }.catch { throwable ->
+            Logger.e(TAG, "Failed to read personal events", throwable)
+            emit(GenericFirestoreError(throwable).toFailure())
         }
 
     suspend fun set(uid: UserId, event: PersonalEvent): Outcome<Unit, GenericFirestoreError> =

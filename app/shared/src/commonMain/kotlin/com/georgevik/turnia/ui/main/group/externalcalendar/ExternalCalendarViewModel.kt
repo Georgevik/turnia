@@ -7,16 +7,19 @@ import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
 import com.georgevik.turnia.core.domain.repository.UserRepository
-import com.georgevik.turnia.core.system.isFailure
-import com.georgevik.turnia.core.system.map
 import com.georgevik.turnia.core.system.valueOrEmpty
 import com.georgevik.turnia.navigation.main.routes.ExternalCalendarData
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import com.georgevik.turnia.ui.components.calendar.model.toUi
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -24,10 +27,11 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 import kotlin.time.Clock
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class ExternalCalendarViewModel(
     val data: ExternalCalendarData,
-    groupRepository: GroupRepository,
-    personalRepository: PersonalEventRepository,
+    private val groupRepository: GroupRepository,
+    private val personalRepository: PersonalEventRepository,
     private val userRepository: UserRepository,
 ) : ViewModel() {
     private val monthDate = MutableStateFlow(Clock.System.todayIn(TimeZone.currentSystemDefault()))
@@ -38,16 +42,26 @@ class ExternalCalendarViewModel(
 
     init {
         viewModelScope.launch {
-            combine(monthDate, invalidateData) { date, _ -> date }.collect { date ->
-                val uid = userRepository.loggedUser?.id ?: return@collect
+            combine(monthDate, invalidateData) { date, _ -> date }
+                .flatMapLatest { date -> events(date) }
+                .collect { eventsByDate ->
+                    _uiState.update { it.copy(loading = false, events = eventsByDate) }
+                }
+        }
+    }
 
-                val calendarUiEvents = when (data) {
-                    is ExternalCalendarData.Group -> groupRepository.getEventsByGroup(
-                        GroupId(data.id),
-                        date,
-                        monthDelta = 2
-                    ).map { list ->
-                        list.map {
+    /**
+     * Cached events first, then the server's if it had anything newer: the month paints without
+     * waiting on a round trip.
+     */
+    private fun events(date: LocalDate): Flow<Map<LocalDate, List<CalendarEventUi>>> {
+        val uid = userRepository.loggedUser?.id ?: return flowOf(emptyMap())
+
+        val events = when (data) {
+            is ExternalCalendarData.Group ->
+                groupRepository.getEventsByGroup(GroupId(data.id), date, monthDelta = 2)
+                    .map { outcome ->
+                        outcome.valueOrEmpty().map {
                             it.toUi(
                                 currentUserId = uid,
                                 removable = it.ownerId == uid && it.assigneeId == uid,
@@ -55,26 +69,14 @@ class ExternalCalendarViewModel(
                         }
                     }
 
-                    is ExternalCalendarData.Personal -> {
-                        val result = personalRepository.getEvents(
-                            UserId(data.id),
-                            date,
-                            monthDelta = 2
-                        )
-
-                        result.map { events -> events.map { event -> event.toUi(removable = false) } }
+            is ExternalCalendarData.Personal ->
+                personalRepository.getEvents(UserId(data.id), date, monthDelta = 2)
+                    .map { outcome ->
+                        outcome.valueOrEmpty().map { event -> event.toUi(removable = false) }
                     }
-                }
-
-                if (calendarUiEvents.isFailure) {
-                    // TODO Emit error
-                }
-
-                val eventsByDate = calendarUiEvents.valueOrEmpty().groupBy { event -> event.date }
-                _uiState.update { it.copy(loading = false, events = eventsByDate) }
-            }
-
         }
+
+        return events.map { list -> list.groupBy { event -> event.date } }
     }
 
     fun onMonthChanged(date: LocalDate) {

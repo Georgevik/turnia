@@ -10,15 +10,17 @@ import com.georgevik.turnia.core.domain.model.UserSession
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
 import com.georgevik.turnia.core.domain.repository.UserRepository
-import com.georgevik.turnia.core.system.isFailure
 import com.georgevik.turnia.core.system.valueOrNull
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import com.georgevik.turnia.ui.components.calendar.model.toUi
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -33,6 +35,7 @@ data class MyCalendarUiState(
     val eventsByDate: Map<LocalDate, List<CalendarEventUi>> = emptyMap(),
 )
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class MyCalendarViewModel(
     userRepository: UserRepository,
     private val groupRepository: GroupRepository,
@@ -50,12 +53,14 @@ class MyCalendarViewModel(
                 personalRepository.onEventTypeChanged.onStart { emit(1) },
                 userRepository.userSession.filterIsInstance(UserSession.Authenticated::class),
                 targetDay
-            ) { _, _, userSession, date ->
-                _uiState.update { it.copy(isLoading = true) }
-                fetchEvents(userSession.user.id, date)
-            }.collect { eventsByDate ->
-                _uiState.update { it.copy(isLoading = false, eventsByDate = eventsByDate) }
-            }
+            ) { _, _, userSession, date -> userSession.user.id to date }
+                .flatMapLatest { (userId, date) ->
+                    _uiState.update { it.copy(isLoading = true) }
+                    events(userId, date)
+                }
+                .collect { eventsByDate ->
+                    _uiState.update { it.copy(isLoading = false, eventsByDate = eventsByDate) }
+                }
         }
     }
 
@@ -63,25 +68,18 @@ class MyCalendarViewModel(
         targetDay.update { date }
     }
 
-    private suspend fun fetchEvents(
-        uid: UserId,
+    /**
+     * Both sources answer from cache first and again once the server has something newer, so the
+     * month paints on the first pair of emissions instead of waiting on the slower of the two.
+     */
+    private fun events(
+        userId: UserId,
         date: LocalDate
-    ): Map<LocalDate, List<CalendarEventUi>> {
-        val personalResult = personalRepository.getEvents(uid, date, monthDelta = 2)
-        if (personalResult.isFailure) {
-            // TODO Emit error
-        }
-
-        val groupResult = groupRepository.getEventsByUser(uid, date, monthDelta = 2)
-        if (groupResult.isFailure) {
-            // TODO Emit error
-        }
-
-        return mapToUiState(
-            uid,
-            groupResult.getOrNull().orEmpty(),
-            personalResult.valueOrNull().orEmpty()
-        )
+    ): Flow<Map<LocalDate, List<CalendarEventUi>>> = combine(
+        personalRepository.getEvents(userId, date, monthDelta = 2),
+        groupRepository.getEventsByUser(userId, date, monthDelta = 2),
+    ) { personal, group ->
+        mapToUiState(userId, group, personal.valueOrNull().orEmpty())
     }
 
     private fun mapToUiState(

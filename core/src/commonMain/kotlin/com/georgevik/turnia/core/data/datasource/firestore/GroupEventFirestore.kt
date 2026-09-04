@@ -10,13 +10,18 @@ import com.georgevik.turnia.core.domain.model.EventId
 import com.georgevik.turnia.core.domain.model.GroupId
 import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.outcomeCatching
+import com.georgevik.turnia.core.system.toFailure
 import com.georgevik.turnia.core.system.toInstantOrNull
+import com.georgevik.turnia.core.system.toSuccess
 import com.georgevik.turnia.core.system.toTimestamp
 import com.georgevik.turnia.core.system.toYearMonth
 import com.georgevik.turnia.core.system.valueOrNull
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Source
 import dev.gitlive.firebase.firestore.Timestamp
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flow
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.YearMonthRange
@@ -31,21 +36,24 @@ class GroupEventFirestore(
     private val groupSyncFirestore: GroupSyncFirestore,
 ) {
 
-    suspend fun get(
+
+    fun get(
         groupId: GroupId,
         from: Instant,
         until: Instant
-    ): Outcome<List<DocHolder<GroupEventDocument>>, GenericFirestoreError> =
-        outcomeCatching(TAG, { GenericFirestoreError(it) }) {
+    ): Flow<Outcome<List<DocHolder<GroupEventDocument>>, GenericFirestoreError>> =
+        flow<Outcome<List<DocHolder<GroupEventDocument>>, GenericFirestoreError>> {
             val months = YearMonthRange(from.toYearMonth(), until.toYearMonth())
             val cachedEvents = queryEvents(groupId, months.associateWith { null }, Source.CACHE)
-            val cacheUpdatedAt = cachedEvents.updatedByMonth()
+            emit(cachedEvents.filterNot { it.doc.isDeleted }.toSuccess())
 
+            val cacheUpdatedAt = cachedEvents.updatedByMonth()
             val staleMonths =
                 if (cacheUpdatedAt.isEmpty()) months.associateWith { null }
                 else staleEventMonths(groupId, months, cacheUpdatedAt)
 
-            if (staleMonths.isEmpty()) return@outcomeCatching cachedEvents.filterNot { it.doc.isDeleted }
+            // Everything already in hand: the first emission was the answer.
+            if (staleMonths.isEmpty()) return@flow
 
             val serverEvents = queryEvents(
                 groupId,
@@ -54,7 +62,10 @@ class GroupEventFirestore(
             ).associateBy { it.id }.toMutableMap()
 
             val merged = cachedEvents.map { cached -> serverEvents.remove(cached.id) ?: cached }
-            (merged + serverEvents.values).filterNot { it.doc.isDeleted }
+            emit((merged + serverEvents.values).filterNot { it.doc.isDeleted }.toSuccess())
+        }.catch { throwable ->
+            Logger.e(TAG, "Failed to read group events", throwable)
+            emit(GenericFirestoreError(throwable).toFailure())
         }
 
     suspend fun set(

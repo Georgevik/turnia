@@ -6,6 +6,7 @@ import com.georgevik.turnia.core.domain.model.PersonalEvent
 import com.georgevik.turnia.core.domain.model.PersonalEventType
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.system.Outcome
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.datetime.LocalDate
 
@@ -28,9 +29,13 @@ interface PersonalEventRepository {
 
     suspend fun deleteEventType(typeId: EventTypeId): Outcome<Unit, Unit>
 
-    suspend fun getEvents(
+    /**
+     * Emits the cached events first and, when the server had something newer, again with it: the
+     * calendar has something to paint before any round trip.
+     */
+    fun getEvents(
         uid: UserId,
         date: LocalDate,
         monthDelta: Int = 1
-    ): Outcome<List<PersonalEvent>, Unit>
+    ): Flow<Outcome<List<PersonalEvent>, Unit>>
 }

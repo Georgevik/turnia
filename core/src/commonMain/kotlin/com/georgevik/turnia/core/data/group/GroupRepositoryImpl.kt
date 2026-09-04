@@ -25,6 +25,11 @@ import com.georgevik.turnia.core.system.toFailure
 import com.georgevik.turnia.core.system.toInstant
 import com.georgevik.turnia.core.system.toSuccess
 import com.georgevik.turnia.core.system.valueOrNull
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
@@ -110,47 +115,65 @@ class GroupRepositoryImpl(
             .mapError { error -> Logger.e(TAG, "Failed to delete the group event: $error") }
     }
 
-    override suspend fun getEventsByGroup(
+    override fun getEventsByGroup(
         groupId: GroupId,
         date: LocalDate,
         monthDelta: Int
-    ): Outcome<List<GroupEvent>, Unit> {
-        val userId = userRepository.loggedUser?.id ?: return Unit.toFailure()
-        val holder = groupFirestore.get(groupId).valueOrNull() ?: return Unit.toFailure()
+    ): Flow<Outcome<List<GroupEvent>, Unit>> = flow {
+        val userId = userRepository.loggedUser?.id
+        val holder = userId?.let { groupFirestore.get(groupId).valueOrNull() }
+        if (userId == null || holder == null) {
+            emit(Unit.toFailure())
+            return@flow
+        }
 
-        return eventsOf(holder, userId, date, monthDelta).toSuccess()
+        emitAll(eventsOf(holder, userId, date, monthDelta).map { it.toSuccess() })
     }
 
-    override suspend fun getEventsByUser(
+    /**
+     * The user's own shifts across every group they belong to. One pass over the groups the "my
+     * groups" query already returns — each carries its types and its members, so nothing else has
+     * to be read to render them.
+     */
+    override fun getEventsByUser(
         userId: UserId,
         date: LocalDate,
         monthDelta: Int
-    ): Result<List<GroupEvent>> {
-        val viewer = userRepository.loggedUser?.id ?: return Result.success(emptyList())
+    ): Flow<List<GroupEvent>> = flow {
+        val viewer = userRepository.loggedUser?.id
+        val groups = viewer?.let { groupFirestore.getMyGroups(it).valueOrNull() }.orEmpty()
+        if (viewer == null || groups.isEmpty()) {
+            emit(emptyList())
+            return@flow
+        }
 
-        val events = groupFirestore.getMyGroups(viewer).valueOrNull().orEmpty()
-            .flatMap { holder -> eventsOf(holder, viewer, date, monthDelta) }
-            .filter { it.assigneeId == userId || it.ownerId == userId }
-
-        return Result.success(events)
+        // Combined, so a group answering from cache paints while another is still on the wire.
+        val perGroup = groups.map { holder -> eventsOf(holder, viewer, date, monthDelta) }
+        emitAll(
+            combine(perGroup) { events ->
+                events.toList().flatten()
+                    .filter { it.assigneeId == userId || it.ownerId == userId }
+            }
+        )
     }
 
+    /** Cached events first, then the merged ones when a month turned out to be behind. */
     private suspend fun eventsOf(
         holder: DocHolder<GroupDocument>,
         viewer: UserId,
         date: LocalDate,
         monthDelta: Int
-    ): List<GroupEvent> {
+    ): Flow<List<GroupEvent>> {
         val group = groupMapper.map(holder, viewer, typeColors(viewer))
         val memberNames = holder.doc.members.mapValues { (_, member) -> member.name }
 
-        val documents = groupEventFirestore.get(
+        return groupEventFirestore.get(
             group.id,
             from = date.minus(monthDelta, DateTimeUnit.MONTH).toInstant(),
             until = date.plus(monthDelta, DateTimeUnit.MONTH).toInstant(),
-        ).valueOrNull().orEmpty()
-
-        return documents.mapNotNull { groupMapper.map(it, group, memberNames) }
+        ).map { outcome ->
+            outcome.valueOrNull().orEmpty().mapNotNull { groupMapper.map(it, group, memberNames) }
+        }
     }
 
     private suspend fun typeColors(userId: UserId): Map<String, String> =

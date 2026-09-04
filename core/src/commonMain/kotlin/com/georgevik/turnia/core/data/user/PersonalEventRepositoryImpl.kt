@@ -13,13 +13,14 @@ import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
 import com.georgevik.turnia.core.domain.repository.UserRepository
 import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.errorOrNull
-import com.georgevik.turnia.core.system.isFailure
 import com.georgevik.turnia.core.system.toFailure
 import com.georgevik.turnia.core.system.toInstant
 import com.georgevik.turnia.core.system.toSuccess
 import com.georgevik.turnia.core.system.valueOrNull
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
@@ -76,25 +77,19 @@ class PersonalEventRepositoryImpl(
         return Unit.toSuccess()
     }
 
-    override suspend fun getEvents(
-        userId: UserId,
+    override fun getEvents(
+        uid: UserId,
         date: LocalDate,
         monthDelta: Int
-    ): Outcome<List<PersonalEvent>, Unit> {
-        val eventsDocResult = personalEventFirestore.get(
-            userId,
-            from = date.minus(monthDelta, DateTimeUnit.MONTH).toInstant(),
-            until = date.plus(monthDelta, DateTimeUnit.MONTH).toInstant()
-        )
+    ): Flow<Outcome<List<PersonalEvent>, Unit>> = personalEventFirestore.get(
+        uid,
+        from = date.minus(monthDelta, DateTimeUnit.MONTH).toInstant(),
+        until = date.plus(monthDelta, DateTimeUnit.MONTH).toInstant(),
+    ).map { outcome ->
+        val documents = outcome.valueOrNull() ?: return@map Unit.toFailure()
 
-        if (eventsDocResult.isFailure) {
-            return Unit.toFailure()
-        }
-
-        val eventDocs = eventsDocResult.valueOrNull().orEmpty()
-
-        val types = getAllEventTypes(userId).associateBy { it.id }
-        return eventDocs.mapNotNull { personalEventMapper.map(it, types) }.toSuccess()
+        val types = getAllEventTypes(uid).associateBy { it.id }
+        documents.mapNotNull { personalEventMapper.map(it, types) }.toSuccess()
     }
 
     private suspend fun getAllEventTypes(uid: UserId): List<PersonalEventType> {
