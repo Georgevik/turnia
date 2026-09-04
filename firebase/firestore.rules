@@ -8,13 +8,17 @@ service cloud.firestore {
     function isSignedIn() {
       return request.auth != null;
     }
+    // Membership lives on the group document, so a member reading the group needs no extra lookup
+    // and "my groups" is a single query. `.get(field, [])` because a field a document does not have
+    // raises an error, which would deny the whole request instead of just this branch.
+    function groupData(groupId) {
+      return get(/databases/$(database)/documents/groups/$(groupId)).data;
+    }
     function isMember(groupId) {
-      return isSignedIn() &&
-        exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid));
+      return isSignedIn() && request.auth.uid in groupData(groupId).get('memberUids', []);
     }
     function isAdmin(groupId) {
-      return isMember(groupId) &&
-        get(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid)).data.role == 'admin';
+      return isSignedIn() && request.auth.uid in groupData(groupId).get('adminUids', []);
     }
     // `.get(field, [])` and not `.data.calendarSharedWith`: reading a field a document does not
     // have raises an error, which denies the whole request instead of just this branch.
@@ -76,38 +80,45 @@ service cloud.firestore {
     }
 
     match /groups/{groupId} {
-      allow read: if isMember(groupId);
-      allow create: if isSignedIn();
-      allow update, delete: if isAdmin(groupId);
+      // Read straight off the document being read — no lookup, and it makes the "my groups" query
+      // (`memberUids array-contains me`) return exactly the documents this rule allows.
+      allow read: if isSignedIn() && request.auth.uid in resource.data.get('memberUids', []);
+      allow create: if isSignedIn() &&
+        request.resource.data.get('memberUids', []) == [request.auth.uid] &&
+        request.resource.data.get('adminUids', []) == [request.auth.uid];
+      // Membership is granted by the acceptJoinRequest Cloud Function, never by a client.
+      allow update: if isAdmin(groupId) &&
+        request.resource.data.get('memberUids', []) == resource.data.get('memberUids', []) &&
+        request.resource.data.get('adminUids', []) == resource.data.get('adminUids', []);
+      allow delete: if isAdmin(groupId);
 
-      // Membership is granted by the acceptJoinRequest Cloud Function (or an admin).
-      match /members/{memberUid} {
+      // Group events live in one collection per group, not one per member: a group's calendar is
+      // a single query, and a transfer changes `assigneeId` instead of moving the document.
+      match /events/{eventId} {
         allow read: if isMember(groupId);
-        allow write: if isAdmin(groupId);
+        allow create: if isMember(groupId) &&
+          request.resource.data.ownerId == request.auth.uid &&
+          request.resource.data.assigneeId == request.auth.uid;
+        // ownerId is the creator forever, and assigneeId only changes through takeEvent.
+        allow update: if isMember(groupId) &&
+          (resource.data.assigneeId == request.auth.uid || isAdmin(groupId)) &&
+          request.resource.data.ownerId == resource.data.ownerId &&
+          request.resource.data.assigneeId == resource.data.assigneeId;
+        allow delete: if isMember(groupId) &&
+          (resource.data.assigneeId == request.auth.uid || isAdmin(groupId));
 
-        // Group events, stored under the assignee (memberUid == assigneeId).
-        // Taking (cross-member move) is done by the takeEvent Cloud Function.
-        match /event/{eventId} {
+        // Append-only history alongside the event.
+        match /history/{historyId} {
           allow read: if isMember(groupId);
-          allow create: if isMember(groupId) &&
-            memberUid == request.auth.uid &&
-            request.resource.data.ownerId == request.auth.uid &&
-            request.resource.data.assigneeId == request.auth.uid;
-          // ownerId/assigneeId are immutable from the client — transfers go through takeEvent.
-          allow update: if isMember(groupId) &&
-            (memberUid == request.auth.uid || isAdmin(groupId)) &&
-            request.resource.data.ownerId == resource.data.ownerId &&
-            request.resource.data.assigneeId == resource.data.assigneeId;
-          allow delete: if isMember(groupId) &&
-            (memberUid == request.auth.uid || isAdmin(groupId));
-
-          // Append-only history alongside the event.
-          match /history/{historyId} {
-            allow read: if isMember(groupId);
-            allow create: if isMember(groupId) && memberUid == request.auth.uid;
-            allow update, delete: if false;
-          }
+          allow create: if isMember(groupId);
+          allow update, delete: if false;
         }
+      }
+
+      // When each month of the group's calendar last changed: any member's write moves it.
+      match /sync/{docId} {
+        allow read: if isMember(groupId);
+        allow write: if isMember(groupId);
       }
 
       // Join requests: created only by requestToJoinGroup (Cloud Function).

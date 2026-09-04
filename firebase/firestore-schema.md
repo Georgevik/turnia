@@ -20,7 +20,7 @@ database shape changes, update this file first.
 Everything on a calendar is an **event** (there is no separate "shift" term). Two kinds:
 
 - **Group event** — stored under the group member who currently performs it
-  (`groups/{groupId}/members/{uid}/event/{eventId}`), typed by a `groupEventType` the admin defines.
+  (`groups/{groupId}/events/{eventId}`), typed by a `groupEventType` the admin defines.
   Can be put up for swap and transferred between members (traceable). Single source of truth — there is no
   separate mirror.
 - **Personal event** — stored under a single user, typed by a `personalEventType` the user defines. Not
@@ -174,7 +174,8 @@ own field**, so the two timestamps never overwrite each other.
 | Field | Type | Description |
 |-------|------|-------------|
 | `name` | string | Group name. |
-| `adminUids` | string[] | UIDs with admin role (denormalized; source of truth for role is the `members` doc). |
+| `memberUids` | string[] | Every member. The **single source of truth** for membership — written only by `acceptJoinRequest`. |
+| `adminUids` | string[] | UIDs with admin role. |
 | `groupEventTypes` | array&lt;map&gt; | Event type templates — see below. |
 | `invitation` | map | The group's single invitation — see below. |
 
@@ -188,6 +189,8 @@ own field**, so the two timestamps never overwrite each other.
 | `startTime` | string \| null | `HH:mm` or `null`. |
 | `endTime` | string \| null | `HH:mm` or `null`. |
 
+| `updateAt` | timestamp \| null | Last change, written in the same commit as the group's sync marker. |
+
 **`invitation`** map — **unique per group**. Anyone with the code can request access; a group admin must accept.
 
 | Field | Type | Description |
@@ -196,16 +199,12 @@ own field**, so the two timestamps never overwrite each other.
 | `active` | boolean | Whether the code can currently be used to request access. |
 | `expiresAt` | timestamp \| null | Expiration; `null` = no expiry. |
 
-**Access**: readable by members; `create` by any signed-in user (becomes admin); `update`/`delete` by admins.
-
-### `groups/{groupId}/members/{uid}`
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `role` | string | `admin` \| `member`. |
-| `joinedAt` | timestamp | When they joined. |
-
-**Access**: readable by members; written by admins or by the `acceptJoinRequest` Cloud Function.
+**Access**: readable by the UIDs in `memberUids` — read straight off the document, with no lookup, which is
+what lets **"my groups" be one query**: `memberUids array-contains {myUid}` returns exactly the documents the
+rule allows, and each one already carries its event types. `create` by any signed-in user, who becomes the
+sole member and admin; `update`/`delete` by admins, with `memberUids` and `adminUids` immutable from the
+client — only `acceptJoinRequest` grows them, with an `arrayUnion` so two admins accepting at once do not
+overwrite each other.
 
 ### `groups/{groupId}/joinRequests/{uid}`
 
@@ -217,37 +216,58 @@ A pending request to join, created after validating the invitation code. Documen
 
 **Access**: created only by `requestToJoinGroup`; readable by admins and by the requester; deletable by an admin (reject) or the requester (cancel).
 
-### `groups/{groupId}/members/{uid}/event/{eventId}`
+### `groups/{groupId}/events/{eventId}`
 
-A group event, stored under the member who currently performs it (`{uid}` = `assigneeId`). This is the
-single source of truth for group events. `ownerId` is the creator (immutable); `assigneeId` is the current
-performer / last taker (equals the path `{uid}`). On a transfer the event moves to the new assignee's
-subcollection.
+A group event, in **one collection per group** rather than one per member. `ownerId` is the creator
+(immutable); `assigneeId` is the current performer, and a transfer changes that field instead of moving
+the document.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `groupId` | string | Owning group (denormalized, for collection-group queries). |
 | `ownerId` | string | Creator of the event (immutable). |
-| `assigneeId` | string | Current performer / last taker (equals `{uid}`). |
+| `assigneeId` | string | Current performer / last taker. |
 | `groupEventTypeId` | string | References `groups/{groupId}.groupEventTypes[].id`. |
 | `date` | string | `YYYY-MM-DD`. |
+| `yearMonth` | string | `YYYY-MM`, the partition the sync markers and the queries use. |
 | `onSwap` | boolean | `true` = offered for others to take. |
-| `createdAt` | timestamp | Creation time. |
+| `isDeleted` | boolean | Soft delete — see below. |
+| `updateAt` | timestamp \| null | Last change, written in the same commit as the month's sync marker. |
 
-**Access**: readable by any member of the group; `create` by the member for themselves
-(`{uid} == auth.uid` and `ownerId == assigneeId == auth.uid`); `update`/`delete` by the assignee (`{uid}`) or an admin.
-Taking is a cross-member move done by the `takeEvent` Cloud Function (see below) — clients don't write another member's subcollection.
+**Access**: readable by any member; `create` by the member for themselves (`ownerId == assigneeId == auth.uid`);
+`update`/`delete` by the assignee or an admin, with `ownerId` and `assigneeId` immutable from the client.
+Taking is done by the `takeEvent` Cloud Function, which is the only writer allowed to change `assigneeId`.
 
-**Queries**
-- All events of a group (all members): a **collection-group query** on `event` filtered by `groupId ==` and a
-  **`date` range of at most 3 months**.
-- A user's events in a group: read the subcollection `groups/{groupId}/members/{uid}/event` directly.
+**Deletes are soft.** A removed document is invisible to a "what changed since" query, so nothing would
+carry a newer timestamp for the other members to notice the event is gone. The scheduled retention
+cleanup is what removes them for real.
 
-### `groups/{groupId}/members/{uid}/event/{eventId}/history/{historyId}`
+**Queries**: a group's calendar is one query over this collection — `yearMonth` in the visible months,
+each month optionally bounded by `updateAt >` its own cursor. No collection-group query and no `groupId`
+denormalisation.
 
-**Append-only** log of the event's swap lifecycle (offered for swap, transfers), stored alongside the event
-under the current assignee. On a transfer the `takeEvent` function copies it forward to the new assignee, so
-the current holder always has the full chain. Each entry links to the previous via `parentEventId`.
+### `groups/{groupId}/sync/updates`
+
+When each month of the group's calendar last changed, so a member can tell whether their cache is behind
+before reading any event.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `events` | map&lt;`YYYY-MM`, {`updatedAt`: timestamp}&gt; | Per month, when it last changed. |
+| `group` | timestamp \| null | When the group document last changed — its name, its invitation and above all its event types. |
+
+One document answers both questions a calendar asks on opening: *have the types changed?* and *which
+months have?* The read is debounced, so opening a group costs **one** read when nothing moved.
+
+**Access**: read and write by any member — any member's event write moves the month every member reads.
+
+**Written in the same commit as the event.** A batch resolves every server timestamp in it to a single
+commit time, so a reader sees the event and its marker as equally old. Written apart, the marker is always
+the later of the two and no cache ever looks current.
+
+### `groups/{groupId}/events/{eventId}/history/{historyId}`
+
+**Append-only** log of the event's swap lifecycle, alongside the event. Since the event no longer moves
+between members, the history stays where it is and nothing is copied forward.
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -258,7 +278,7 @@ the current holder always has the full chain. Each entry links to the previous v
 | `timestamp` | timestamp | When it happened. |
 | `parentEventId` | string \| null | Previous history entry on this event; `null` for the first. |
 
-**Access**: readable by members; `create` by the assignee (`{uid}`) or the `takeEvent` function; **`update`/`delete` always denied** (append-only).
+**Access**: readable by members; `create` by members; **`update`/`delete` always denied**.
 
 ---
 
@@ -306,12 +326,15 @@ Firestore keeps only a **recent window** of events; older events are purged and 
 
 ## Invariants (do not break)
 
-- **A group event lives in exactly one place**: `groups/{groupId}/members/{assigneeId}/event/{eventId}` — no mirror.
+- **A group event lives in exactly one place**: `groups/{groupId}/events/{eventId}` — one collection per group,
+  no mirror, and a transfer changes `assigneeId` instead of moving the document.
+- **Membership lives on the group document** (`memberUids`), so a group's calendar and its event types are
+  reachable in one query and the rules need no lookup to authorize a member.
 - **History is append-only** and lives alongside the event; on transfer `takeEvent` copies it forward to the new assignee.
 - **A deleted event is deleted** — there is no cancelled/deleted state.
 - **Group event docs are readable by every group member** — never put private data (e.g. notes) on them.
   Personal events are private to the owner and their shared users, so their `notes` live on the event doc.
-- **Joining a group is two steps**: `requestToJoinGroup` then `acceptJoinRequest` (admin). The client never writes `members` on join.
+- **Joining a group is two steps**: `requestToJoinGroup` then `acceptJoinRequest` (admin). The client never writes `memberUids`.
 - **Taking an event offered for swap** is a `takeEvent` Cloud Function that verifies `onSwap == true` in a transaction and moves the event (a cross-member write).
 - **Push** is sent only from Cloud Functions, never from the client.
 - **Colors**: `groupEventType` has no color (user's `groupEventTypeColors` decides it); `personalEventType` carries its own.

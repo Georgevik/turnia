@@ -14,7 +14,7 @@ import {
  *
  * Anyone with the code can request access; this creates a pending
  * `groups/{groupId}/joinRequests/{uid}` doc. A group admin then accepts it with
- * `acceptJoinRequest`. The client never writes to `members` directly.
+ * `acceptJoinRequest`. The client never writes `memberUids` directly.
  *
  * Request data: `{ code: string }`
  * Returns: `{ groupId: string, status: "already_member" | "requested" }`
@@ -52,8 +52,8 @@ export const requestToJoinGroup = onCall(async (request) => {
     throw new HttpErrorFailedPrecondition(TurniaErrorCode.JoinRequestInvitationExpired, "Invitation has expired.");
   }
 
-  const member = await groupDoc.ref.collection("members").doc(uid).get();
-  if (member.exists) {
+  const memberUids = (groupDoc.get("memberUids") as string[] | undefined) ?? [];
+  if (memberUids.includes(uid)) {
     return { groupId: groupDoc.id, status: "already_member" as const };
   }
 
@@ -65,8 +65,8 @@ export const requestToJoinGroup = onCall(async (request) => {
 });
 
 /**
- * Accepts a pending join request. Admin-only: adds the requester to `members`
- * and removes the request atomically.
+ * Accepts a pending join request. Admin-only: adds the requester to the group's
+ * `memberUids` and removes the request atomically.
  *
  * Request data: `{ groupId: string, uid: string }`
  * Returns: `{ groupId: string, uid: string, status: "accepted" }`
@@ -84,8 +84,10 @@ export const acceptJoinRequest = onCall(async (request) => {
   }
 
   const db = getFirestore();
-  const adminMember = await db.doc(`groups/${groupId}/members/${adminUid}`).get();
-  if (!adminMember.exists || adminMember.get("role") !== "admin") {
+  const groupRef = db.doc(`groups/${groupId}`);
+  const group = await groupRef.get();
+  const adminUids = (group.get("adminUids") as string[] | undefined) ?? [];
+  if (!adminUids.includes(adminUid)) {
     throw new HttpErrorPermissionDenied(TurniaErrorCode.AcceptRequestNotAdmin, "Only a group admin can accept requests.");
   }
 
@@ -95,10 +97,12 @@ export const acceptJoinRequest = onCall(async (request) => {
     throw new HttpErrorNotFound(TurniaErrorCode.AcceptRequestNotFound, "No pending join request.");
   }
 
+  // Membership is a field on the group, so joining is an arrayUnion: two admins accepting at the
+  // same time add their own requester instead of overwriting each other's list.
   const batch = db.batch();
-  batch.set(db.doc(`groups/${groupId}/members/${uid}`), {
-    role: "member",
-    joinedAt: FieldValue.serverTimestamp(),
+  batch.update(groupRef, {
+    memberUids: FieldValue.arrayUnion(uid),
+    updateAt: FieldValue.serverTimestamp(),
   });
   batch.delete(requestRef);
   await batch.commit();

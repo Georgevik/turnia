@@ -1,6 +1,9 @@
 package com.georgevik.turnia.core.di
 
 import com.georgevik.turnia.core.data.config.AppConfigRepositoryImpl
+import com.georgevik.turnia.core.data.datasource.firestore.GroupEventFirestore
+import com.georgevik.turnia.core.data.datasource.firestore.GroupFirestore
+import com.georgevik.turnia.core.data.datasource.firestore.GroupSyncFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.PersonalEventFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.PersonalEventTypesFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.UserPathFirestore
@@ -39,6 +42,9 @@ val coreModule: Module = module {
     single { UserPrivateFirestore(get()) }
     single { UsernameFirestore(get()) }
     single { UserSyncFirestore(get()) }
+    single { GroupSyncFirestore(get()) }
+    single { GroupEventFirestore(get(), get()) }
+    single { GroupFirestore(get(), get()) }
     single { PersonalEventFirestore(get(), get(), get()) }
     single { PersonalEventTypesFirestore(get(), get(), get()) }
     factory { UserDocumentMapper() }
