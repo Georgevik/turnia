@@ -45,7 +45,7 @@ val coreModule: Module = module {
     single { Firebase.firestore }
     single { Firebase.functions }
     single { UserProfileFunction(get()) }
-    single { UserPathFirestore(get(), get()) }
+    single { UserPathFirestore(get(), get(), get()) }
     single { UserPrivateFirestore(get()) }
     single { UsernameFirestore(get()) }
     single { UserSyncFirestore(get(), get()) }

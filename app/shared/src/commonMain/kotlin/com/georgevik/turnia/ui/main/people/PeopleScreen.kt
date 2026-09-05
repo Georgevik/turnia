@@ -26,7 +26,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.georgevik.turnia.navigation.LocalNavigator
 import com.georgevik.turnia.navigation.main.routes.ExternalCalendarData
@@ -52,11 +51,6 @@ fun PeopleScreen(viewModel: PeopleViewModel = koinViewModel()) {
     val navigator = LocalNavigator.current
     val snackbar = LocalSnackbar.current
     val success = state as? PeopleUi.Success
-
-    LifecycleResumeEffect(Unit) {
-        viewModel.refresh()
-        onPauseOrDispose { }
-    }
 
     success?.userMessage?.let { message ->
         val text = stringResource(Res.string.people_load_error)

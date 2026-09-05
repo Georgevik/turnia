@@ -3,54 +3,52 @@ package com.georgevik.turnia.ui.main.people
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.georgevik.turnia.core.domain.repository.UserRepository
-import com.georgevik.turnia.core.system.fold
+import com.georgevik.turnia.core.system.onFailure
+import com.georgevik.turnia.core.system.valueOrEmpty
 import com.georgevik.turnia.ui.main.people.model.ColleagueRowUi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 
-class PeopleViewModel(private val userRepository: UserRepository) : ViewModel() {
+class PeopleViewModel(userRepository: UserRepository) : ViewModel() {
 
-    // The unfiltered list: the search narrows a copy of it, never the state it just produced.
-    private var allColleagues: List<ColleagueRowUi> = emptyList()
-
-    private val _uiState = MutableStateFlow<PeopleUi>(PeopleUi.Loading)
-    val uiState: StateFlow<PeopleUi> = _uiState.asStateFlow()
-
-    init {
-        refresh()
-    }
-
-    fun refresh() {
-        viewModelScope.launch {
-            userRepository.getCalendarsSharedWithMe().fold(
-                onSuccess = { profiles ->
-                    allColleagues = profiles.map {
-                        ColleagueRowUi(id = it.id, name = it.name, username = it.username)
-                    }
-                    _uiState.value = PeopleUi.Success(colleagues = allColleagues)
-                },
-                onFailure = {
-                    _uiState.value = PeopleUi.Success(userMessage = PeopleMessage.LoadFailed)
-                },
-            )
+    private val query = MutableStateFlow("")
+    private val userMessage = MutableStateFlow<PeopleMessage?>(null)
+    private val colleagues = userRepository.getCalendarsSharedWithMe()
+        .onEach { outcome -> outcome.onFailure { userMessage.value = PeopleMessage.LoadFailed } }
+        .map { outcome ->
+            outcome.valueOrEmpty().map { ColleagueRowUi(it.id, it.name, it.username) }
         }
-    }
 
-    fun searchBy(query: String) = updateSuccess { state ->
-        state.copy(
-            query = query,
-            colleagues = allColleagues.filter { it.matches(query) },
+    val uiState: StateFlow<PeopleUi> =
+        combine(query, userMessage, colleagues) { query, message, colleagues ->
+            PeopleUi.Success(
+                query = query,
+                colleagues = colleagues.filter { it.matches(query) },
+                userMessage = message,
+            )
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT),
+            initialValue = PeopleUi.Loading,
         )
+
+    fun searchBy(value: String) {
+        query.value = value
     }
 
-    fun userMessageShown() = updateSuccess { it.copy(userMessage = null) }
+    fun userMessageShown() {
+        userMessage.value = null
+    }
 
     private fun ColleagueRowUi.matches(query: String) =
         name.contains(query, ignoreCase = true) || username.contains(query, ignoreCase = true)
 
-    private fun updateSuccess(block: (PeopleUi.Success) -> PeopleUi.Success) =
-        _uiState.update { state -> if (state is PeopleUi.Success) block(state) else state }
+    private companion object {
+        const val SUBSCRIPTION_TIMEOUT = 5_000L
+    }
 }

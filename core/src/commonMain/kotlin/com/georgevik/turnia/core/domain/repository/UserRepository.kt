@@ -16,7 +16,7 @@ interface UserRepository {
     val loggedUserFlow: Flow<User>
     suspend fun signOut()
 
-    suspend fun getCalendarsSharedWithMe(): Outcome<List<UserProfile>, Unit>
+    fun getCalendarsSharedWithMe(): Flow<Outcome<List<UserProfile>, Unit>>
 
     suspend fun updateProfile(name: String, username: String): Outcome<Unit, UsernameError>
 

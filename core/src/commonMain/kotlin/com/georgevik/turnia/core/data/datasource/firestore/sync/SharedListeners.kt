@@ -3,6 +3,7 @@ package com.georgevik.turnia.core.data.datasource.firestore.sync
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.shareIn
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
@@ -26,7 +27,10 @@ class SharedListeners<K, V>(
             val current = listeners.load()
             current[key]?.let { return it }
 
-            val shared = listener().shareIn(
+            // Assigned before anything can collect: `WhileSubscribed` attaches nothing until the
+            // first subscriber arrives.
+            var self: Flow<V>? = null
+            val shared = listener().onCompletion { forget(key, self) }.shareIn(
                 scope = scope,
                 started = SharingStarted.WhileSubscribed(
                     stopTimeoutMillis = keepAlive.inWholeMilliseconds,
@@ -37,8 +41,23 @@ class SharedListeners<K, V>(
                 replay = 1,
             )
 
+            self = shared
+
             // Nothing is attached until somebody collects, so losing this race costs nothing.
             if (listeners.compareAndSet(current, current + (key to shared))) return shared
+        }
+    }
+
+    /**
+     * A flow that stopped is worth nothing to the next collector: the listener detached when the
+     * last one left, and one that completed on an error would answer every future subscriber with
+     * silence. Dropping it here is what makes the entry a live listener rather than a leak.
+     */
+    private fun forget(key: K, shared: Flow<V>?) {
+        while (true) {
+            val current = listeners.load()
+            if (current[key] !== shared) return
+            if (listeners.compareAndSet(current, current - key)) return
         }
     }
 

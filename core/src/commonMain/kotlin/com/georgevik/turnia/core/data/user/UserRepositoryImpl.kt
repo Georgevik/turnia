@@ -52,7 +52,8 @@ class UserRepositoryImpl(
     private val _userSession = MutableStateFlow<UserSession>(UserSession.Loading)
     override val userSession: StateFlow<UserSession> = _userSession.asStateFlow()
 
-    override val loggedUserFlow: Flow<User> = _userSession.filterIsInstance(UserSession.Authenticated::class).map { it.user }
+    override val loggedUserFlow: Flow<User> =
+        _userSession.filterIsInstance(UserSession.Authenticated::class).map { it.user }
 
     override val loggedUser: User? get() = (_userSession.value as? UserSession.Authenticated)?.user
 
@@ -104,12 +105,12 @@ class UserRepositoryImpl(
         }
     }
 
-    override suspend fun getCalendarsSharedWithMe(): Outcome<List<UserProfile>, Unit> {
-        val uid = loggedUser?.id ?: return Unit.toFailure()
-
-        return remoteProfiles.fetchCalendarsSharedWithMe(uid)
-            .mapError { error -> Logger.e(TAG, "Failed load shared calendars: $error") }
-    }
+    override fun getCalendarsSharedWithMe(): Flow<Outcome<List<UserProfile>, Unit>> =
+        loggedUserFlow
+            .flatMapLatest { user -> remoteProfiles.fetchCalendarsSharedWithMe(user.id) }
+            .map { outcome ->
+                outcome.mapError { Logger.e(TAG, "Failed load shared calendars: $it") }
+            }
 
     override suspend fun updateProfile(
         name: String,
