@@ -202,6 +202,10 @@
     <string name="groups_empty_title">Ningún grupo por aquí</string>
     <string name="groups_empty_body">Crea uno y que los turnos dejen de vivir en un chat de WhatsApp.</string>
     <string name="groups_load_error">No hemos podido cargar tus grupos.</string>
+    <string name="admin_groups_title">Grupos que administras</string>
+    <string name="admin_groups_caption">Solo salen los grupos de los que eres admin. Toca uno para editarlo.</string>
+    <string name="admin_groups_empty_title">Ningún grupo a tu cargo</string>
+    <string name="admin_groups_empty_body">Crea uno y empieza a organizar los turnos con tus compañeros.</string>
     <string name="groups_join_title">¿Tienes un código de invitación?</string>
     <string name="groups_join_banner_subtitle">Únete a un grupo con el código de un compañero.</string>
     <string name="groups_join_body">Únete al grupo de tu unidad con el código que te haya pasado un compañero.</string>

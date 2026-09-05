@@ -18,7 +18,7 @@ import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.group_member_count
 
 @Composable
-fun GroupCard(group: GroupRowUi, onClick: () -> Unit) {
+fun GroupCard(group: GroupRowUi, showAdminBadge: Boolean = true, onClick: () -> Unit) {
     TListItem(
         title = group.name,
         subtitle = pluralStringResource(
@@ -33,7 +33,7 @@ fun GroupCard(group: GroupRowUi, onClick: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                if (group.isAdmin) AdminBadge()
+                if (group.isAdmin && showAdminBadge) AdminBadge()
                 Chevron()
             }
         },
