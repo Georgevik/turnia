@@ -17,6 +17,8 @@ import com.georgevik.turnia.core.domain.model.GroupError
 import com.georgevik.turnia.core.domain.model.GroupEvent
 import com.georgevik.turnia.core.domain.model.GroupEventType
 import com.georgevik.turnia.core.domain.model.GroupId
+import com.georgevik.turnia.core.domain.model.JoinGroupError
+import com.georgevik.turnia.core.domain.model.JoinGroupStatus
 import com.georgevik.turnia.core.domain.model.JoinRequest
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.domain.repository.GroupRepository
@@ -124,6 +126,9 @@ class GroupRepositoryImpl(
         groupId: GroupId,
         userId: UserId,
     ): Outcome<Unit, GroupError> = groupMembershipFunction.acceptJoinRequest(groupId, userId)
+
+    override suspend fun requestToJoinGroup(code: String): Outcome<JoinGroupStatus, JoinGroupError> =
+        groupMembershipFunction.requestToJoinGroup(code)
 
     override suspend fun rejectJoinRequest(
         groupId: GroupId,

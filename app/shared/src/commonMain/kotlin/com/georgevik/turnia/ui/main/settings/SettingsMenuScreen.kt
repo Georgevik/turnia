@@ -70,7 +70,7 @@ fun SettingsMenuScreen(vm: SettingsMenuViewModel = koinViewModel()) {
             .fillMaxSize()
             .safeContentPadding()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 24.dp),
+            .padding(vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Row(
@@ -106,11 +106,6 @@ fun SettingsMenuScreen(vm: SettingsMenuViewModel = koinViewModel()) {
                         color = MaterialTheme.colorScheme.primary,
                     )
                 }
-                Text(
-                    text = details?.email.orEmpty(),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
             }
         }
 

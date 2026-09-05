@@ -2,31 +2,28 @@ package com.georgevik.turnia.ui.main.groups
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.GroupAdd
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -37,22 +34,34 @@ import com.georgevik.turnia.navigation.main.routes.ExternalCalendarData
 import com.georgevik.turnia.navigation.main.routes.MainRoute
 import com.georgevik.turnia.navigation.root.routes.RootRoute
 import com.georgevik.turnia.ui.main.groups.components.GroupCard
+import com.georgevik.turnia.ui.main.groups.components.JoinGroupBanner
+import com.georgevik.turnia.ui.main.groups.components.JoinGroupSheet
+import com.georgevik.turnia.ui.main.groups.model.GroupRowUi
 import com.georgevik.turnia.ui.main.system.EmptyState
+import com.georgevik.turnia.ui.main.system.ScreenHeader
 import com.georgevik.turnia.ui.system.LocalSnackbar
-import com.georgevik.turnia.ui.system.toErrorSnackbar
+import com.georgevik.turnia.ui.system.TurniaSnackbarVisual
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.group_detail_create
 import turnia.app.shared.generated.resources.groups_empty_body
 import turnia.app.shared.generated.resources.groups_empty_title
+import turnia.app.shared.generated.resources.groups_join_already_member
+import turnia.app.shared.generated.resources.groups_join_code_not_found
+import turnia.app.shared.generated.resources.groups_join_error
+import turnia.app.shared.generated.resources.groups_join_invitation_expired
+import turnia.app.shared.generated.resources.groups_join_invitation_inactive
+import turnia.app.shared.generated.resources.groups_join_joined
+import turnia.app.shared.generated.resources.groups_join_requested
 import turnia.app.shared.generated.resources.groups_load_error
-import turnia.app.shared.generated.resources.groups_search_hint
+import turnia.app.shared.generated.resources.groups_title
 
 /**
  * "Grupos" tab: the groups this user belongs to. Tapping one opens its calendar, and the group
  * itself — where an admin edits it — hangs off the info button in that calendar's title bar.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GroupsScreen(viewModel: GroupsViewModel = koinViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -61,77 +70,138 @@ fun GroupsScreen(viewModel: GroupsViewModel = koinViewModel()) {
     val rootNavigator = LocalRootNavigator.current
     val snackbar = LocalSnackbar.current
     val success = state as? GroupsUi.Success
+    var joinSheetOpen by rememberSaveable { mutableStateOf(false) }
+    val joinSheetState = rememberModalBottomSheetState()
 
     success?.userMessage?.let { message ->
-        val text = stringResource(Res.string.groups_load_error)
+        val visual = TurniaSnackbarVisual(message.text(), isError = message.isError)
         LaunchedEffect(message) {
-            snackbar.showSnackbar(text.toErrorSnackbar())
-            viewModel.userMessageShown()
+            // The sheet would cover the snackbar, and the answer to the code is the whole point of
+            // the round trip. A rejected code survives in the field for the next attempt.
+            if (message != GroupsMessage.LoadFailed) joinSheetOpen = false
+            snackbar.showSnackbar(visual)
+            viewModel.hideSnackbar()
         }
     }
 
     Scaffold(
         floatingActionButton = {
+            // The empty state offers creating a group itself, so the button would be a second one.
             if (success?.groups?.isNotEmpty() == true) {
-                ExtendedFloatingActionButton(
-                    text = { Text(stringResource(Res.string.group_detail_create)) },
-                    icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                FloatingActionButton(
                     onClick = { rootNavigator.goTo(RootRoute.GroupDetailKey(groupId = "")) },
-                )
+                ) { Icon(Icons.Default.Add, contentDescription = null) }
             }
         },
     ) { innerPadding ->
-        val content = Modifier
-            .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            ScreenHeader(
+                title = stringResource(Res.string.groups_title),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+            )
 
-        when (val current = state) {
-            GroupsUi.Loading -> Box(content, contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-
-            is GroupsUi.Success -> if (current.groups.isEmpty() && current.query.isBlank()) {
-                // The empty state offers the action itself, so the button would be a second one.
-                EmptyState(
-                    icon = Icons.Default.GroupAdd,
-                    title = stringResource(Res.string.groups_empty_title),
-                    body = stringResource(Res.string.groups_empty_body),
-                    action = stringResource(Res.string.group_detail_create),
-                    onAction = { rootNavigator.goTo(RootRoute.GroupDetailKey(groupId = "")) },
-                    modifier = content,
-                )
-            } else {
-                LazyColumn(
-                    modifier = content.padding(innerPadding),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+            when (val current = state) {
+                GroupsUi.Loading -> Box(
+                    Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
                 ) {
-                    item(key = "search") {
-                        OutlinedTextField(
-                            value = current.query,
-                            onValueChange = viewModel::searchBy,
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            shape = RoundedCornerShape(16.dp),
-                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                            placeholder = { Text(stringResource(Res.string.groups_search_hint)) },
-                        )
-                    }
+                    CircularProgressIndicator()
+                }
 
-                    items(current.groups, key = { it.id.value }) { group ->
-                        GroupCard(
-                            group = group,
-                            onClick = {
-                                navigator.goTo(
-                                    MainRoute.ExternalCalendar(
-                                        ExternalCalendarData.Group(group.id.value, group.name)
-                                    )
-                                )
+                is GroupsUi.Success -> {
+                    JoinGroupBanner(
+                        onClick = { joinSheetOpen = true },
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                    )
+
+                    if (current.groups.isEmpty()) {
+                        EmptyState(
+                            icon = Icons.Default.GroupAdd,
+                            title = stringResource(Res.string.groups_empty_title),
+                            body = stringResource(Res.string.groups_empty_body),
+                            action = stringResource(Res.string.group_detail_create),
+                            onAction = {
+                                rootNavigator.goTo(RootRoute.GroupDetailKey(groupId = ""))
                             },
+                            modifier = Modifier.fillMaxSize(),
                         )
+                    } else {
+                        GroupList(current.groups)
                     }
                 }
             }
         }
     }
+
+    if (joinSheetOpen && success != null) {
+        ModalBottomSheet(
+            onDismissRequest = { joinSheetOpen = false },
+            sheetState = joinSheetState,
+        ) {
+            JoinGroupSheet(
+                code = success.joinCode,
+                inProgress = success.joinInProgress,
+                onCodeChanged = viewModel::joinCodeChanged,
+                onSubmit = viewModel::requestToJoin,
+            )
+        }
+    }
 }
+
+@Composable
+private fun GroupList(groups: List<GroupRowUi>) {
+    val navigator = LocalNavigator.current
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        items(groups, key = { it.id.value }) { group ->
+            GroupCard(
+                group = group,
+                onClick = {
+                    val route = MainRoute.ExternalCalendar(
+                        ExternalCalendarData.Group(
+                            id = group.id.value,
+                            name = group.name
+                        )
+                    )
+                    navigator.goTo(route)
+                },
+            )
+        }
+    }
+
+}
+
+@Composable
+private fun GroupsMessage.text(): String = stringResource(
+    when (this) {
+        GroupsMessage.LoadFailed -> Res.string.groups_load_error
+        GroupsMessage.Joined -> Res.string.groups_join_joined
+        GroupsMessage.JoinRequested -> Res.string.groups_join_requested
+        GroupsMessage.AlreadyMember -> Res.string.groups_join_already_member
+        GroupsMessage.JoinCodeNotFound -> Res.string.groups_join_code_not_found
+        GroupsMessage.JoinInvitationInactive -> Res.string.groups_join_invitation_inactive
+        GroupsMessage.JoinInvitationExpired -> Res.string.groups_join_invitation_expired
+        GroupsMessage.JoinFailed -> Res.string.groups_join_error
+    }
+)
+
+private val GroupsMessage.isError: Boolean
+    get() = when (this) {
+        GroupsMessage.Joined,
+        GroupsMessage.JoinRequested,
+        GroupsMessage.AlreadyMember -> false
+
+        GroupsMessage.LoadFailed,
+        GroupsMessage.JoinCodeNotFound,
+        GroupsMessage.JoinInvitationInactive,
+        GroupsMessage.JoinInvitationExpired,
+        GroupsMessage.JoinFailed -> true
+    }

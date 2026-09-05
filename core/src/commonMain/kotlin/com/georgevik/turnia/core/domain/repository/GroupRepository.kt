@@ -7,6 +7,8 @@ import com.georgevik.turnia.core.domain.model.GroupError
 import com.georgevik.turnia.core.domain.model.GroupEvent
 import com.georgevik.turnia.core.domain.model.GroupEventType
 import com.georgevik.turnia.core.domain.model.GroupId
+import com.georgevik.turnia.core.domain.model.JoinGroupError
+import com.georgevik.turnia.core.domain.model.JoinGroupStatus
 import com.georgevik.turnia.core.domain.model.JoinRequest
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.system.Outcome
@@ -52,6 +54,9 @@ interface GroupRepository {
     suspend fun getJoinRequests(groupId: GroupId): Outcome<List<JoinRequest>, GroupError>
 
     suspend fun acceptJoinRequest(groupId: GroupId, userId: UserId): Outcome<Unit, GroupError>
+
+    /** Asks to join with an invitation code; auto-approving invitations join on the spot. */
+    suspend fun requestToJoinGroup(code: String): Outcome<JoinGroupStatus, JoinGroupError>
 
     suspend fun rejectJoinRequest(groupId: GroupId, userId: UserId): Outcome<Unit, GroupError>
 

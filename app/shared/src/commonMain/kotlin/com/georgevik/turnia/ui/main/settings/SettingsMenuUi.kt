@@ -6,7 +6,6 @@ data class SettingsMenuUi(
     data class UserDetails(
         val displayName: String,
         val username: String,
-        val email: String,
         val isPremium: Boolean,
     )
 }

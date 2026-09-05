@@ -7,7 +7,6 @@ sealed interface PeopleUi {
     data object Loading : PeopleUi
 
     data class Success(
-        val query: String = "",
         val colleagues: List<ColleagueRowUi> = emptyList(),
         val userMessage: PeopleMessage? = null,
     ) : PeopleUi

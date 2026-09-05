@@ -30,7 +30,6 @@ class SettingsMenuViewModel(private val userRepository: UserRepository) : ViewMo
                             userDetails = SettingsMenuUi.UserDetails(
                                 displayName = session.user.displayName.orEmpty(),
                                 username = session.user.username,
-                                email = session.user.email.orEmpty(),
                                 isPremium = session.user.membership == Membership.PREMIUM,
                             )
                         )

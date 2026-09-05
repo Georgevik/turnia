@@ -196,14 +196,24 @@
 
     <string name="group_admin_badge">ADMIN</string>
     <string name="people_title">Personas</string>
-    <string name="people_search_hint">Buscar personas...</string>
     <string name="people_empty_title">Aquí no hay nadie todavía</string>
     <string name="people_empty_body">Pide a un compañero que comparta su calendario contigo. Funciona bastante mejor que preguntarle «¿tú libras el sábado?» a las once de la noche.</string>
     <string name="groups_title">Grupos</string>
-    <string name="groups_search_hint">Buscar grupos...</string>
     <string name="groups_empty_title">Ningún grupo por aquí</string>
     <string name="groups_empty_body">Crea uno y que los turnos dejen de vivir en un chat de WhatsApp.</string>
     <string name="groups_load_error">No hemos podido cargar tus grupos.</string>
+    <string name="groups_join_title">¿Tienes un código de invitación?</string>
+    <string name="groups_join_banner_subtitle">Únete a un grupo con el código de un compañero.</string>
+    <string name="groups_join_body">Únete al grupo de tu unidad con el código que te haya pasado un compañero.</string>
+    <string name="groups_join_hint">Código</string>
+    <string name="groups_join_action">Enviar</string>
+    <string name="groups_join_requested">Petición enviada. Un admin del grupo tiene que aceptarla.</string>
+    <string name="groups_join_joined">¡Dentro! Ya formas parte del grupo.</string>
+    <string name="groups_join_already_member">Ya estás en ese grupo.</string>
+    <string name="groups_join_code_not_found">Ese código no existe.</string>
+    <string name="groups_join_invitation_inactive">Esa invitación ya no está activa.</string>
+    <string name="groups_join_invitation_expired">Esa invitación ha caducado.</string>
+    <string name="groups_join_error">No hemos podido enviar la petición.</string>
     <string name="people_load_error">No hemos podido cargar quién comparte su calendario contigo.</string>
 
     <!-- Share calendar -->

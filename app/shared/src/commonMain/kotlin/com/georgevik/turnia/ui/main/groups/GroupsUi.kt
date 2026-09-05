@@ -7,10 +7,20 @@ sealed interface GroupsUi {
     data object Loading : GroupsUi
 
     data class Success(
-        val query: String = "",
         val groups: List<GroupRowUi> = emptyList(),
+        val joinCode: String = "",
+        val joinInProgress: Boolean = false,
         val userMessage: GroupsMessage? = null,
     ) : GroupsUi
 }
 
-enum class GroupsMessage { LoadFailed }
+enum class GroupsMessage {
+    LoadFailed,
+    Joined,
+    JoinRequested,
+    AlreadyMember,
+    JoinCodeNotFound,
+    JoinInvitationInactive,
+    JoinInvitationExpired,
+    JoinFailed,
+}

@@ -16,8 +16,8 @@ import kotlinx.coroutines.flow.stateIn
 
 class PeopleViewModel(userRepository: UserRepository) : ViewModel() {
 
-    private val query = MutableStateFlow("")
     private val userMessage = MutableStateFlow<PeopleMessage?>(null)
+
     private val colleagues = userRepository.getCalendarsSharedWithMe()
         .onEach { outcome -> outcome.onFailure { userMessage.value = PeopleMessage.LoadFailed } }
         .map { outcome ->
@@ -25,28 +25,17 @@ class PeopleViewModel(userRepository: UserRepository) : ViewModel() {
         }
 
     val uiState: StateFlow<PeopleUi> =
-        combine(query, userMessage, colleagues) { query, message, colleagues ->
-            PeopleUi.Success(
-                query = query,
-                colleagues = colleagues.filter { it.matches(query) },
-                userMessage = message,
-            )
+        combine(userMessage, colleagues) { message, colleagues ->
+            PeopleUi.Success(colleagues = colleagues, userMessage = message)
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT),
             initialValue = PeopleUi.Loading,
         )
 
-    fun searchBy(value: String) {
-        query.value = value
-    }
-
     fun userMessageShown() {
         userMessage.value = null
     }
-
-    private fun ColleagueRowUi.matches(query: String) =
-        name.contains(query, ignoreCase = true) || username.contains(query, ignoreCase = true)
 
     private companion object {
         const val SUBSCRIPTION_TIMEOUT = 5_000L
