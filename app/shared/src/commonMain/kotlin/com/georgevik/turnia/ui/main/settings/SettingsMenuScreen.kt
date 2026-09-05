@@ -18,7 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Event
-import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.Card
@@ -146,7 +146,7 @@ fun SettingsMenuScreen(vm: SettingsMenuViewModel = koinViewModel()) {
         ProfileRow(Icons.Default.Event, stringResource(Res.string.profile_my_events)) {
             rootNavigator.goTo(RootRoute.PersonalEventTypesKey)
         }
-        ProfileRow(Icons.Default.Group, stringResource(Res.string.groups_title)) {
+        ProfileRow(Icons.Default.Groups, stringResource(Res.string.groups_title)) {
             navigator.goTo(MainRoute.GroupsTab)
         }
         ProfileRow(Icons.AutoMirrored.Filled.Logout, stringResource(Res.string.profile_logout)) {
