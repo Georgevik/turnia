@@ -167,6 +167,28 @@ own field**, so the two timestamps never overwrite each other.
 
 **Access**: written by the owner; read by the owner and by UIDs in `calendarSharedWith`.
 
+### `users/{uid}/revokedGroups/{groupId}`
+
+What is left of a group the user was removed from. They can no longer read `groups/{groupId}` — it holds
+the member roster and the invitation code, and Firestore has no field-level access — so the little they
+still need to render their leftover events is copied here, on a document only they can read.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | The group's name at the moment access was revoked. |
+| `groupEventTypes` | array&lt;map&gt; | **Only the types their remaining events actually use**, same shape as the group's own (`id`, `name`, `acronym`, `description`, `startTime`, `endTime`). |
+| `revokedAt` | timestamp | When access was revoked. |
+
+**Deliberately a frozen snapshot, not a live copy.** Nothing keeps it in step with the group afterwards:
+a departed member should not go on tracking a roster they left, and a type renamed after they went is not
+a change they are entitled to see. It exists only so their own past shifts still render with a name.
+
+A user with no leftover events gets no document here — and no `revokedUids` entry either. There is nothing
+left of them in the group, so there is nothing to keep.
+
+**Access**: read by the owner; **never written by any client** — only `leaveGroup` / `removeMember` create
+it, and the rejoin path deletes it.
+
 ---
 
 ## `groups/{groupId}`
@@ -174,8 +196,9 @@ own field**, so the two timestamps never overwrite each other.
 | Field | Type | Description |
 |-------|------|-------------|
 | `name` | string | Group name. |
-| `memberUids` | string[] | Every member. The **single source of truth** for membership — written only by `acceptJoinRequest`. |
-| `members` | map&lt;uid, {`name`, `username`}&gt; | Who those uids are. Denormalized on purpose: a calendar shows who covers each shift constantly, and `users/{uid}` is unreadable between group mates, so the alternative is a query against `usernames` every time. Here it costs **no read at all** — it arrives with the group. |
+| `memberUids` | string[] | Every member. The **single source of truth** for membership — written only by `acceptJoinRequest`, `leaveGroup` and `removeMember`. |
+| `revokedUids` | string[] | Former members who still hold events here. They read **only the events assigned to them** and never the group document itself. A uid is in `memberUids` **xor** `revokedUids`, never both; someone who left with no events is in neither. Written only by `leaveGroup` / `removeMember`, and cleared when they rejoin. |
+| `members` | map&lt;uid, {`name`, `username`}&gt; | Who those uids are — **`memberUids` only**; a revoked uid is dropped from here, so the calendar renders their leftover shifts without a name and the UI labels them as a former member. Denormalized on purpose: a calendar shows who covers each shift constantly, and `users/{uid}` is unreadable between group mates, so the alternative is a query against `usernames` every time. Here it costs **no read at all** — it arrives with the group. |
 | `adminUids` | string[] | UIDs with admin role. |
 | `groupEventTypes` | array&lt;map&gt; | Event type templates — see below. |
 | `invitation` | map | The group's single invitation — see below. |
@@ -205,9 +228,14 @@ own field**, so the two timestamps never overwrite each other.
 **Access**: readable by the UIDs in `memberUids` — read straight off the document, with no lookup, which is
 what lets **"my groups" be one query**: `memberUids array-contains {myUid}` returns exactly the documents the
 rule allows, and each one already carries its event types. `create` by any signed-in user, who becomes the
-sole member and admin; `update`/`delete` by admins, with `memberUids` and `adminUids` immutable from the
-client — only `acceptJoinRequest` grows them, with an `arrayUnion` so two admins accepting at once do not
-overwrite each other.
+sole member and admin; `update`/`delete` by admins, with `memberUids`, `adminUids` and `revokedUids`
+immutable from the client — only `acceptJoinRequest` grows membership, with an `arrayUnion` so two admins
+accepting at once do not overwrite each other, and only `leaveGroup` / `removeMember` withdraw it.
+
+**A revoked user cannot read this document at all.** It carries the member roster and the invitation code,
+and Firestore has no field-level access, so the alternative to locking them out is handing every removed
+member a live feed of the group. What they need instead — the group's name and the event types their own
+events use — is snapshotted for them in `users/{uid}/revokedGroups/{groupId}`.
 
 ### `groups/{groupId}/joinRequests/{uid}`
 
@@ -239,12 +267,18 @@ the document.
 | `updateAt` | timestamp \| null | Last change, written in the same commit as the month's sync marker. |
 | `history` | array&lt;map&gt; | The swap chain, in order — see below. |
 
-**Access**: readable by any member; `create` by the member for themselves (`ownerId == assigneeId == auth.uid`);
+**Access**: readable by any member, and by a **revoked** user for the events where
+`assigneeId == their uid` — on a `list` that term is what forces their query to carry the matching
+`assigneeId ==` filter, so the constraint is the rule rather than the client's good manners.
+`create` by the member for themselves (`ownerId == assigneeId == auth.uid`) and never by a revoked user;
 `update` by the assignee or an admin, with `ownerId`, `assigneeId` and `history` immutable from the client.
 **`delete` only by the creator while they still hold it** (`ownerId == assigneeId == auth.uid`) — once a shift
 has been handed to someone else it is theirs to cover, and giving it back means putting it up for swap, not
 deleting it. Taking is done by
 the `takeEvent` Cloud Function, the only writer that changes `assigneeId` or appends to `history`.
+A revoked user may still soft-delete an event they created *and* still hold; because deletes are soft
+(below) that arrives as an `update`, and their branch of the rule is narrowed to the `isDeleted` and
+`updateAt` keys alone.
 
 **Deletes are soft.** A removed document is invisible to a "what changed since" query, so nothing would
 carry a newer timestamp for the other members to notice the event is gone. The scheduled retention
@@ -267,7 +301,9 @@ before reading any event.
 One document answers both questions a calendar asks on opening: *have the types changed?* and *which
 months have?* The read is debounced, so opening a group costs **one** read when nothing moved.
 
-**Access**: read and write by any member — any member's event write moves the month every member reads.
+**Access**: read and write by any member — any member's event write moves the month every member reads —
+and by a revoked user, who reads it to tell whether their cache is behind and writes it in the same batch
+as a soft delete. The document holds nothing but timestamps.
 
 A member joining, leaving or renaming themselves moves `group`, since that is the document their name
 lives on.
@@ -341,6 +377,12 @@ Firestore keeps only a **recent window** of events; older events are purged and 
   no mirror, and a transfer changes `assigneeId` instead of moving the document.
 - **Membership lives on the group document** (`memberUids`), so a group's calendar and its event types are
   reachable in one query and the rules need no lookup to authorize a member.
+- **A uid is in `memberUids` xor `revokedUids`, never both**, and `members` mirrors `memberUids` alone.
+  Someone removed with no events left behind is in neither list.
+- **A revoked user reads only events where `assigneeId` is their own uid, and never the group document.**
+  Their event types come from the `users/{uid}/revokedGroups/{groupId}` snapshot, not from the group.
+- **Withdrawing membership is a Cloud Function**: `leaveGroup` (yourself) or `removeMember` (an admin).
+  The client never writes `memberUids`, `members` or `revokedUids`.
 - **History is append-only** and lives alongside the event; on transfer `takeEvent` copies it forward to the new assignee.
 - **A deleted event is deleted** — there is no cancelled/deleted state.
 - **Group event docs are readable by every group member** — never put private data (e.g. notes) on them.

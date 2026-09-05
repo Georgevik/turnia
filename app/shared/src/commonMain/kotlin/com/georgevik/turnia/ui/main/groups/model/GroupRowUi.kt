@@ -8,4 +8,6 @@ data class GroupRowUi(
     val members: Int,
     /** Only an admin can edit the group and accept the people asking to join it. */
     val isAdmin: Boolean,
+    /** They left, or were removed, and only their own leftover shifts are still visible. */
+    val isRevoked: Boolean = false,
 )

@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.PersonRemove
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -66,6 +67,7 @@ import com.georgevik.turnia.ui.group.detail.model.GroupMemberUi
 import com.georgevik.turnia.ui.group.detail.model.GroupTypeRowUi
 import com.georgevik.turnia.ui.group.detail.model.JoinRequestUi
 import com.georgevik.turnia.ui.system.LocalSnackbar
+import com.georgevik.turnia.ui.system.components.ConfirmationDialog
 import com.georgevik.turnia.ui.system.components.AcronymBadge
 import com.georgevik.turnia.ui.system.components.AdminBadge
 import com.georgevik.turnia.ui.system.components.Avatar
@@ -91,7 +93,13 @@ import turnia.app.shared.generated.resources.group_detail_code_hidden
 import turnia.app.shared.generated.resources.group_detail_code_regenerate
 import turnia.app.shared.generated.resources.group_detail_error_load
 import turnia.app.shared.generated.resources.group_detail_error_not_found
+import turnia.app.shared.generated.resources.dialog_cancel
+import turnia.app.shared.generated.resources.group_detail_error_remove_member
 import turnia.app.shared.generated.resources.group_detail_error_request
+import turnia.app.shared.generated.resources.group_detail_member_remove
+import turnia.app.shared.generated.resources.group_detail_member_remove_confirm
+import turnia.app.shared.generated.resources.group_detail_member_remove_message
+import turnia.app.shared.generated.resources.group_detail_member_remove_title
 import turnia.app.shared.generated.resources.group_detail_error_save
 import turnia.app.shared.generated.resources.group_detail_field_invitation
 import turnia.app.shared.generated.resources.group_detail_field_name
@@ -124,6 +132,7 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
     val snackbar = LocalSnackbar.current
 
     var membersSheetOpen by remember { mutableStateOf(false) }
+    var pendingRemoval by remember { mutableStateOf<GroupMemberUi?>(null) }
     val sheetState = rememberModalBottomSheetState()
 
     LifecycleResumeEffect(Unit) {
@@ -228,8 +237,32 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
             onDismissRequest = { membersSheetOpen = false },
             sheetState = sheetState,
         ) {
-            MembersSheet(members = success.members)
+            MembersSheet(
+                members = success.members,
+                // Admins only, and never another admin: removing one is a demotion, which does
+                // not exist. That also covers the admin looking at their own row — they leave
+                // through the group's calendar instead.
+                canRemove = success.form.editable,
+                onRemove = { pendingRemoval = it },
+            )
         }
+    }
+
+    pendingRemoval?.let { member ->
+        ConfirmationDialog(
+            title = stringResource(
+                Res.string.group_detail_member_remove_title,
+                member.name.ifBlank { member.username },
+            ),
+            message = stringResource(Res.string.group_detail_member_remove_message),
+            confirmText = stringResource(Res.string.group_detail_member_remove_confirm),
+            dismissText = stringResource(Res.string.dialog_cancel),
+            onConfirm = {
+                pendingRemoval = null
+                viewModel.onRemoveMember(member.id)
+            },
+            onDismissRequest = { pendingRemoval = null },
+        )
     }
 }
 
@@ -537,7 +570,11 @@ private fun MembersSection(memberCount: Int, onClick: () -> Unit) {
 }
 
 @Composable
-private fun MembersSheet(members: List<GroupMemberUi>) {
+private fun MembersSheet(
+    members: List<GroupMemberUi>,
+    canRemove: Boolean,
+    onRemove: (GroupMemberUi) -> Unit,
+) {
     LazyColumn(
         contentPadding = PaddingValues(
             start = 20.dp,
@@ -565,7 +602,21 @@ private fun MembersSheet(members: List<GroupMemberUi>) {
                         icon = Icons.Default.Person,
                     )
                 },
-                trailing = { if (member.isAdmin) AdminBadge() },
+                trailing = {
+                    if (member.isAdmin) {
+                        AdminBadge()
+                    } else if (canRemove) {
+                        IconButton(onClick = { onRemove(member) }) {
+                            Icon(
+                                imageVector = Icons.Default.PersonRemove,
+                                contentDescription = stringResource(
+                                    Res.string.group_detail_member_remove
+                                ),
+                                tint = MaterialTheme.colorScheme.error,
+                            )
+                        }
+                    }
+                },
             )
         }
     }
@@ -658,5 +709,6 @@ private fun GroupDetailMessage.message(): String = stringResource(
     when (this) {
         GroupDetailMessage.SaveFailed -> Res.string.group_detail_error_save
         GroupDetailMessage.RequestFailed -> Res.string.group_detail_error_request
+        GroupDetailMessage.RemoveMemberFailed -> Res.string.group_detail_error_remove_member
     }
 )

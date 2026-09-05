@@ -11,6 +11,11 @@ data class Group(
     val autoApprove: Boolean,
     val membersCanSeeCode: Boolean,
     val isAdmin: Boolean,
+    /**
+     * The user left this group, or an admin removed them, and they still hold events in it. They
+     * see only their own, only the types those use, and can add nothing more.
+     */
+    val isRevoked: Boolean = false,
 )
 
 data class GroupMember(

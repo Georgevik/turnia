@@ -4,6 +4,7 @@ import com.georgevik.turnia.core.data.config.AppConfigRepositoryImpl
 import com.georgevik.turnia.core.data.datasource.firestore.GroupEventFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.GroupFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.GroupJoinRequestFirestore
+import com.georgevik.turnia.core.data.datasource.firestore.RevokedGroupFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.GroupSyncFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.PersonalEventFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.PersonalEventTypesFirestore
@@ -53,6 +54,7 @@ val coreModule: Module = module {
     single { GroupEventFirestore(get(), get()) }
     single { GroupFirestore(get(), get(), get()) }
     single { GroupJoinRequestFirestore(get()) }
+    single { RevokedGroupFirestore(get(), get()) }
     single { GroupMembershipFunction(get()) }
     single { PersonalEventFirestore(get(), get(), get()) }
     single { PersonalEventTypesFirestore(get(), get(), get(),get()) }
@@ -64,6 +66,8 @@ val coreModule: Module = module {
     single { UserProvisioner(get(), get(), get(), get()) }
     single<UserRepository> { UserRepositoryImpl(Firebase.auth, get(), get(), get(), get(), get(), get(), get()) }
     single<AppConfigRepository> { AppConfigRepositoryImpl() }
-    single<GroupRepository> { GroupRepositoryImpl(get(), get(), get(), get(), get(), get(), get()) }
+    single<GroupRepository> {
+        GroupRepositoryImpl(get(), get(), get(), get(), get(), get(), get(), get())
+    }
     single<PersonalEventRepository> { PersonalEventRepositoryImpl(get(), get(), get(), get()) }
 }

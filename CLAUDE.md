@@ -46,6 +46,11 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
 - A user can define their own **personal event types** and add **personal events** (no group), each colored by its type.
 - **Colors**: a group event type has no color; each user picks a color per group event type, shared by all their events of that type. Personal event types carry their own color.
 - A user can belong to **several groups** and can invite another user to view **their entire calendar** (crossing groups).
+- A user can **leave** a group, and an **admin** can **remove** a member. Either way, if they still hold events
+  there they become **revoked**: moved from `memberUids` to `revokedUids`, dropped from `members`, and left
+  able to see only their own events and only the event types those events use. They can no longer create
+  events in that group. Someone with no events is simply removed, with no `revokedUids` entry.
+- The **last admin** of a group with other members cannot leave it, and an admin cannot remove another admin.
 
 ## Monetization — pricing and ads/premium business rules redacted from this repository's history; see CLAUDE.local.md.
 ## Data retention & local cache
@@ -74,6 +79,7 @@ Firebase must **not** accumulate every past event forever. The backend keeps onl
   | `Group` | Belongs to a group. | `Shared`, `Team` |
   | `EventSource` | **Where an event comes from** (`GROUP` \| `PERSONAL`) — an axis, not a template. Field name: `source`. | `type` (that word is taken by `EventType`) |
   | `swap` | Offering an event so another member takes it. `GroupEvent.onSwap` = offered right now; `GroupEventType.swappable` = the type allows it at all. | `sale`, `trade`, `sell` (`onSale` is dead) |
+| `revoked` | A former member who still holds events in the group, so they keep read access to **their own**. Field: `groups/{g}.revokedUids`; domain flag: `Group.isRevoked`. | `removed`, `kicked`, `banned`, `inactive`, `archived` |
 
 - **Comments** — do **not** add a comment to every file, function or header. Comments belong only on **non-obvious, non-logic** code (a business rule, a workaround, a subtle invariant, a "why"). A comment that restates what the code already says is redundant — omit it.
 
@@ -223,6 +229,10 @@ Read Server: 14 ReadCache: 61 Writes: 3
 - A group's calendar is one query over its own `events` collection, filtered by `yearMonth`.
 - Membership is a field of the group: `isMember(g) = auth.uid in groups/{g}.memberUids`, and reading the group
   itself needs no lookup at all.
+- **read** a revoked user's events: `isRevoked(g) && resource.data.assigneeId == auth.uid`. On a `list`
+  that term is what forces their query to carry the matching `assigneeId ==` filter — the restriction is
+  the rule, not the client's good behaviour. A revoked user cannot read `groups/{g}` at all, since it
+  carries the member roster and the invitation code and Firestore hides no fields.
 
 ## Sensitive points (do not overlook)
 
