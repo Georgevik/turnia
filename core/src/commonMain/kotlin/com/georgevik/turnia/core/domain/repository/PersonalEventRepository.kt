@@ -25,9 +25,5 @@ interface PersonalEventRepository {
 
     suspend fun deleteEventType(typeId: EventTypeId): Outcome<Unit, Unit>
 
-    fun getEvents(
-        uid: UserId,
-        date: LocalDate,
-        monthDelta: Int = 1
-    ): Flow<Outcome<List<PersonalEvent>, Unit>>
+    fun getEvents(uid: UserId, date: LocalDate, monthDelta: Int = 1): Flow<List<PersonalEvent>>
 }

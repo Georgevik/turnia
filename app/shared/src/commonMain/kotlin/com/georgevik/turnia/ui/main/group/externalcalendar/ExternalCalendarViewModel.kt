@@ -71,9 +71,7 @@ class ExternalCalendarViewModel(
 
                 is ExternalCalendarData.Personal ->
                     personalRepository.getEvents(UserId(data.id), date, monthDelta = 2)
-                        .map { outcome ->
-                            outcome.valueOrEmpty().map { event -> event.toUi(removable = false) }
-                        }
+                        .map { events -> events.map { event -> event.toUi(removable = false) } }
             }
 
             events.map { list -> list.groupBy { event -> event.date } }

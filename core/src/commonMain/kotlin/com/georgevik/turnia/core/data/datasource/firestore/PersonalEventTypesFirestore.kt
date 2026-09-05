@@ -53,14 +53,14 @@ class PersonalEventTypesFirestore(
             val serverUpdatedAt =
                 sync.personalEventTypesUpdatedAt.toInstantOrNull() ?: return@mapNotNull null
 
-            val settled = cacheUpdatedAt == null || serverUpdatedAt <= cacheUpdatedAt
+            val settled = cacheUpdatedAt != null && cacheUpdatedAt >= serverUpdatedAt
             if (settled) {
                 return@mapNotNull known.toDomain()
             }
 
             val changed = queryEventTypes(
                 uid,
-                cacheUpdatedAt.toTimestamp(),
+                cacheUpdatedAt?.toTimestamp(),
                 Source.SERVER
             ).associateBy { it.id }.toMutableMap()
 
@@ -107,8 +107,9 @@ class PersonalEventTypesFirestore(
     private suspend fun queryEventTypes(
         uid: UserId, sinceUpdateAt: Timestamp?, source: Source
     ): List<DocHolder<PersonalEventTypeDocument>> {
+        val since = sinceUpdateAt ?: Timestamp(0, 0)
         val snapshot = firestore.collection(PATH_PERSONAL_TYPES(uid.value)).where {
-            sinceUpdateAt?.let { PersonalEventTypeDocument.FIELD_UPDATE_AT greaterThan it }
+            PersonalEventTypeDocument.FIELD_UPDATE_AT greaterThan since
         }.get(source).trackData(TAG)
 
         Logger.i(

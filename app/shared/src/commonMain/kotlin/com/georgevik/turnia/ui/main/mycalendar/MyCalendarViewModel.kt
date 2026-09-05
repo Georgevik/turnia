@@ -9,7 +9,6 @@ import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
 import com.georgevik.turnia.core.domain.repository.UserRepository
-import com.georgevik.turnia.core.system.valueOrNull
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import com.georgevik.turnia.ui.components.calendar.model.toUi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -68,7 +67,7 @@ class MyCalendarViewModel(
         personalRepository.getEvents(userId, date, monthDelta = 2),
         groupRepository.getEventsByUser(userId, date, monthDelta = 2),
     ) { personal, group ->
-        mapToUiState(userId, group, personal.valueOrNull().orEmpty())
+        mapToUiState(userId, group, personal)
     }
 
     private fun mapToUiState(

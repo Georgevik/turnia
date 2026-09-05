@@ -70,17 +70,17 @@ class PersonalEventRepositoryImpl(
         uid: UserId,
         date: LocalDate,
         monthDelta: Int
-    ): Flow<Outcome<List<PersonalEvent>, Unit>> = combine(
+    ): Flow<List<PersonalEvent>> = combine(
         getAllEventTypes(uid), personalEventFirestore.get(
             uid,
             from = date.minus(monthDelta, DateTimeUnit.MONTH).toInstant(),
             until = date.plus(monthDelta, DateTimeUnit.MONTH).toInstant(),
         )
-    ) { types, outcome ->
-        val documents = outcome.valueOrNull() ?: return@combine Unit.toFailure()
+    ) { types, eventsDocs ->
+        val eventList = eventsDocs.valueOrNull() ?: return@combine emptyList()
 
         val typesMap = types.associateBy { it.id }
-        documents.mapNotNull { personalEventMapper.map(it, typesMap) }.toSuccess()
+        eventList.mapNotNull { personalEventMapper.map(it, typesMap) }
     }
 
     private fun getAllEventTypes(uid: UserId): Flow<List<PersonalEventType>> =
