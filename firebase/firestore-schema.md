@@ -51,6 +51,10 @@ Everything on a calendar is an **event** (there is no separate "shift" term). Tw
 (`users/{uid}.groupEventTypeColors`), and all their events of that type share it.
 `personalEventType` carries its own `color`.
 
+A **group** does carry one (`groups/{groupId}.color`): unlike a type's, it is the admin's pick and
+every member sees the same accent. A group saved before the field existed has none, and the client
+derives its accent from the group id instead.
+
 ---
 
 ## `users/{uid}`
@@ -201,6 +205,7 @@ still need to render their leftover events is copied here, on a document only th
 | Field | Type | Description |
 |-------|------|-------------|
 | `name` | string | The group's name at the moment access was revoked. |
+| `color` | string \| null | The group's accent at that same moment. |
 | `groupEventTypes` | array&lt;map&gt; | **Only the types their remaining events actually use**, same shape as the group's own (`id`, `name`, `acronym`, `description`, `startTime`, `endTime`). |
 | `revokedAt` | timestamp | When access was revoked. |
 | `isDeleted` | boolean | Soft delete — set when they rejoin. |
@@ -233,6 +238,7 @@ it, and the rejoin path soft-deletes it.
 | Field | Type | Description |
 |-------|------|-------------|
 | `name` | string | Group name. |
+| `color` | string \| null | Accent color (`#RRGGBB`), picked by an admin and shared by every member. Null on groups saved before the field existed. |
 | `memberUids` | string[] | Every member. The **single source of truth** for membership — written only by `acceptJoinRequest`, `leaveGroup` and `removeMember`. |
 | `revokedUids` | string[] | Former members who still hold events here. They read **only the events assigned to them** and never the group document itself. A uid is in `memberUids` **xor** `revokedUids`, never both; someone who left with no events is in neither. Written only by `leaveGroup` / `removeMember`, and cleared when they rejoin. |
 | `members` | map&lt;uid, {`name`, `username`}&gt; | Who those uids are — **`memberUids` only**; a revoked uid is dropped from here, so the calendar renders their leftover shifts without a name and the UI labels them as a former member. Denormalized on purpose: a calendar shows who covers each shift constantly, and `users/{uid}` is unreadable between group mates, so the alternative is a query against `usernames` every time. Here it costs **no read at all** — it arrives with the group. |
@@ -438,7 +444,7 @@ Firestore keeps only a **recent window** of events; older events are purged and 
   server — a notification has to render while the app is not running — and every message carries a
   `type` in its data payload (`join_requested`, `join_accepted`, `calendar_shared`, `event_on_swap`,
   `event_taken`) so a tap can be routed.
-- **Colors**: `groupEventType` has no color (user's `groupEventTypeColors` decides it); `personalEventType` carries its own.
+- **Colors**: `groupEventType` has no color (the user's `groupEventTypeColors` decides it); `personalEventType` and `group` carry their own — a group's is the admin's pick and is the same for every member.
 - **Group-wide event queries are bounded to a ≤ 3-month `date` range** (collection-group on `event`, filtered by `groupId`).
 - **Cross-group shared calendars** are served on demand by the `getSharedCalendar` Cloud Function
   (collection-group on `event` filtered by `assigneeId` + date range); nothing is mirrored.

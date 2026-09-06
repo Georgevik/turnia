@@ -1,5 +1,6 @@
 package com.georgevik.turnia.ui.group.detail
 
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.georgevik.turnia.core.domain.model.Group
@@ -20,8 +21,11 @@ import com.georgevik.turnia.ui.group.detail.model.GroupDetailUi.GroupForm
 import com.georgevik.turnia.ui.group.detail.model.GroupMemberUi
 import com.georgevik.turnia.ui.group.detail.model.GroupTypeRowUi
 import com.georgevik.turnia.ui.group.detail.model.JoinRequestUi
+import com.georgevik.turnia.ui.system.createUuid
 import com.georgevik.turnia.ui.system.entityColor
 import com.georgevik.turnia.ui.system.toComposeColorOr
+import com.georgevik.turnia.ui.system.toComposeColorOrNull
+import com.georgevik.turnia.ui.system.toHex
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -97,6 +101,8 @@ class GroupDetailViewModel(
 
     fun onNameChanged(name: String) = updateForm { it.copy(name = name) }
 
+    fun onPickColor(color: Color) = updateForm { it.copy(color = color) }
+
     fun onAutoApproveChanged(autoApprove: Boolean) = updateForm {
         it.copy(autoApprove = autoApprove)
     }
@@ -118,12 +124,14 @@ class GroupDetailViewModel(
         val name = form.name.trim()
         val group = loadedGroup?.copy(
             name = name,
+            color = form.color.toHex(),
             invitationCode = form.invitationCode.orEmpty(),
             autoApprove = form.autoApprove,
             membersCanSeeCode = form.membersCanSeeCode,
         ) ?: Group(
             id = GroupId(""),
             name = name,
+            color = form.color.toHex(),
             types = emptyList(),
             members = emptyList(),
             memberCount = 1,
@@ -204,6 +212,7 @@ class GroupDetailViewModel(
         form = GroupForm(
             groupId = GroupId(""),
             name = "",
+            color = entityColor(createUuid()),
             memberCount = 1,
             invitationCode = groupRepository.createInvitationCode(),
             autoApprove = false,
@@ -220,6 +229,7 @@ class GroupDetailViewModel(
         form = GroupForm(
             groupId = id,
             name = name,
+            color = color?.toComposeColorOrNull() ?: entityColor(id.value),
             memberCount = memberCount,
             invitationCode = invitationCode,
             autoApprove = autoApprove,

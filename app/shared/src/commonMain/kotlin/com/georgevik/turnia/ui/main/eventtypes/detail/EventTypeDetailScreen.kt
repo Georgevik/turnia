@@ -42,7 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.georgevik.turnia.navigation.LocalNavigator
 import com.georgevik.turnia.ui.components.daydetail.components.EventTypeChip
-import com.georgevik.turnia.ui.main.eventtypes.components.ColorSwatchPicker
+import com.georgevik.turnia.ui.system.components.ColorSwatchPicker
 import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeDetailUi
 import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeDetailUi.EventTypeForm
 import com.georgevik.turnia.ui.main.eventtypes.detail.model.EventTypeDetailUi.FormErrors

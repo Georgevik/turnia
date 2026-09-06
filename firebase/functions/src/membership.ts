@@ -44,8 +44,8 @@ export function clearRevokedGroup(
  *
  * They can no longer read the group document itself, which carries the member roster and the
  * invitation code, so the little they still need to render those events is snapshotted onto
- * `users/{uid}/revokedGroups/{groupId}` — the group's name, and only the event types their leftover
- * events actually use.
+ * `users/{uid}/revokedGroups/{groupId}` — the group's name and colour, and only the event types
+ * their leftover events actually use.
  *
  * Someone who leaves nothing behind is worth no tombstone at all: they are dropped from `memberUids`
  * and `members` and that is the end of it, with no `revokedUids` entry and no snapshot.
@@ -73,6 +73,7 @@ async function revoke(db: Firestore, groupId: string, uid: string) {
 
     batch.set(db.doc(`users/${uid}/revokedGroups/${groupId}`), {
       name: group.get("name") ?? "",
+      color: group.get("color") ?? null,
       groupEventTypes,
       revokedAt: FieldValue.serverTimestamp(),
       isDeleted: false,

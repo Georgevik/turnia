@@ -27,6 +27,8 @@ sealed interface GroupDetailUi {
     data class GroupForm(
         val groupId: GroupId,
         val name: String,
+        /** The group's accent, the same for every member: only an admin changes it. */
+        val color: Color,
         val memberCount: Int,
         /** Null when the admin keeps the code to themselves. */
         val invitationCode: String?,

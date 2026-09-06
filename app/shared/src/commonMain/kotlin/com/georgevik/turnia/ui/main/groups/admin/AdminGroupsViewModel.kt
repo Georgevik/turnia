@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.ui.main.groups.model.GroupRowUi
+import com.georgevik.turnia.ui.system.entityColor
+import com.georgevik.turnia.ui.system.toComposeColorOrNull
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -18,6 +20,7 @@ class AdminGroupsViewModel(groupRepository: GroupRepository) : ViewModel() {
                     GroupRowUi(
                         id = it.id,
                         name = it.name,
+                        color = it.color?.toComposeColorOrNull() ?: entityColor(it.id.value),
                         members = it.memberCount,
                         isAdmin = true,
                     )

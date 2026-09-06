@@ -7,6 +7,8 @@ import com.georgevik.turnia.core.domain.model.JoinGroupStatus
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.system.fold
 import com.georgevik.turnia.ui.main.groups.model.GroupRowUi
+import com.georgevik.turnia.ui.system.entityColor
+import com.georgevik.turnia.ui.system.toComposeColorOrNull
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,6 +29,7 @@ class GroupsViewModel(
                     GroupRowUi(
                         id = it.id,
                         name = it.name,
+                        color = it.color?.toComposeColorOrNull() ?: entityColor(it.id.value),
                         members = it.memberCount,
                         isAdmin = it.isAdmin,
                         isRevoked = it.isRevoked,
