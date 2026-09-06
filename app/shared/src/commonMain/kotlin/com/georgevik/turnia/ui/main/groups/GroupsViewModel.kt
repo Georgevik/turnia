@@ -2,13 +2,13 @@ package com.georgevik.turnia.ui.main.groups
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.georgevik.turnia.core.domain.model.GroupId
 import com.georgevik.turnia.core.domain.model.JoinGroupError
 import com.georgevik.turnia.core.domain.model.JoinGroupStatus
 import com.georgevik.turnia.core.domain.model.JoinRequestStatus
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.system.fold
 import com.georgevik.turnia.ui.main.groups.model.GroupRowUi
+import com.georgevik.turnia.ui.main.groups.model.GroupsFilter
 import com.georgevik.turnia.ui.main.groups.model.JoinRequestRowUi
 import com.georgevik.turnia.ui.system.entityColor
 import com.georgevik.turnia.ui.system.toComposeColorOrNull
@@ -60,12 +60,14 @@ class GroupsViewModel(
             ) { requestsUi, groupsUi ->
                 _uiState.update { state ->
                     val current = state as? GroupsUi.Success ?: GroupsUi.Success()
-                    current.copy(groups = groupsUi, requests = requestsUi)
+                    current.withRequests(requestsUi).copy(groups = groupsUi)
                 }
 
             }.collect {}
         }
     }
+
+    fun filterSelected(filter: GroupsFilter) = updateSuccess { it.copy(filter = filter) }
 
     fun joinCodeChanged(code: String) =
         updateSuccess { it.copy(joinCode = code.uppercase()) }
@@ -98,14 +100,6 @@ class GroupsViewModel(
         }
     }
 
-    fun dismissRequest(groupId: GroupId) {
-        viewModelScope.launch {
-            updateSuccess { state ->
-                state.copy(requests = state.requests.filterNot { it.groupId == groupId })
-            }
-        }
-    }
-
     fun hideSnackbar() = updateSuccess { it.copy(userMessage = null) }
 
     private fun JoinGroupStatus.toMessage() = when (this) {
@@ -120,6 +114,12 @@ class GroupsViewModel(
         JoinGroupError.InvitationExpired -> GroupsMessage.JoinInvitationExpired
         JoinGroupError.RequestFailed -> GroupsMessage.JoinFailed
     }
+
+    private fun GroupsUi.Success.withRequests(requests: List<JoinRequestRowUi>) = copy(
+        requests = requests,
+        filter = if (filter == GroupsFilter.PENDING && requests.isEmpty()) GroupsFilter.ALL
+        else filter,
+    )
 
     private fun updateSuccess(block: (GroupsUi.Success) -> GroupsUi.Success) =
         _uiState.update { state -> if (state is GroupsUi.Success) block(state) else state }
