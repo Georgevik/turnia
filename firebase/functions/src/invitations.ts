@@ -10,7 +10,8 @@ import { requireFields, requireUid } from "./requests";
  *
  * With `invitation.autoApprove` the code is the door: the requester is added to the group here and
  * now. Otherwise this creates a pending `groups/{groupId}/joinRequests/{uid}` doc that an admin
- * accepts with `acceptJoinRequest`. The client never writes `memberUids` directly.
+ * answers with `acceptJoinRequest` / `rejectJoinRequest`. The client never writes `memberUids`
+ * directly.
  *
  * Request data: `{ code: string }`
  * Returns: `{ groupId: string, status: "already_member" | "joined" | "requested" }`
@@ -75,10 +76,24 @@ export const requestToJoinGroup = onCall(async (request) => {
     return { groupId: groupDoc.id, status: "joined" as const };
   }
 
-  await groupDoc.ref.collection("joinRequests").doc(uid).set({
+  // The request and the requester's pointer to it in one commit: the pointer list is the only way
+  // they can find this document again — the rules let them read it by id, and no query can express
+  // that — so a pointer without a request, or a request nobody can reach, is worse than neither.
+  // `set` and not `create`: asking again after a rejection flips that receipt back to pending.
+  const batch = db.batch();
+  batch.set(groupDoc.ref.collection("joinRequests").doc(uid), {
     ...profile,
+    groupName: groupDoc.get("name") ?? "",
+    status: "pending",
+    respondedAt: null,
     requestedAt: FieldValue.serverTimestamp(),
   });
+  batch.set(
+    db.doc(`users/${uid}/private/joinRequests`),
+    { groupIds: FieldValue.arrayUnion(groupDoc.id) },
+    { merge: true },
+  );
+  await batch.commit();
   // After the write: the request is what the admins are being told about, and a push about one
   // that failed to save would send them to an approval screen with nothing on it.
   await notifyJoinRequested(groupDoc, profile);
@@ -87,8 +102,12 @@ export const requestToJoinGroup = onCall(async (request) => {
 });
 
 /**
- * Accepts a pending join request. Admin-only: adds the requester to the group's
- * `memberUids` and removes the request atomically.
+ * Accepts a pending join request. Admin-only: adds the requester to the group's `memberUids` and
+ * answers the request atomically.
+ *
+ * The request document is answered rather than deleted. It is the only thing the requester can read
+ * to learn the outcome — they cannot query for it, and a deleted document says nothing — so it stays
+ * as a receipt until their app acknowledges it.
  *
  * Request data: `{ groupId: string, uid: string }`
  * Returns: `{ groupId: string, uid: string, status: "accepted" }`
@@ -135,10 +154,44 @@ export const acceptJoinRequest = onCall(async (request) => {
     { group: FieldValue.serverTimestamp() },
     { merge: true },
   );
-  batch.delete(requestRef);
+  batch.update(requestRef, { status: "accepted", respondedAt: FieldValue.serverTimestamp() });
   await batch.commit();
 
   await notifyJoinAccepted(groupId, group.get("name") ?? "", uid);
 
   return { groupId, uid, status: "accepted" as const };
+});
+
+/**
+ * Rejects a pending join request. Admin-only, and the mirror image of `acceptJoinRequest` minus
+ * everything about the group: nothing joins, so neither the group document nor its sync marker
+ * moves.
+ *
+ * Server-only because `status` is frozen against every client by the rules, admins included. It used
+ * to be the admin deleting the request document, which answered it by destroying the only thing that
+ * could carry the answer.
+ *
+ * Request data: `{ groupId: string, uid: string }`
+ * Returns: `{ groupId: string, uid: string, status: "rejected" }`
+ */
+export const rejectJoinRequest = onCall(async (request) => {
+  const adminUid = requireUid(request);
+  const { groupId, uid } = requireFields(request, "groupId", "uid");
+
+  const db = getFirestore();
+  const group = await db.doc(`groups/${groupId}`).get();
+  const adminUids = (group.get("adminUids") as string[] | undefined) ?? [];
+  if (!adminUids.includes(adminUid)) {
+    throw TurniaError.RejectRequestNotAdmin;
+  }
+
+  const requestRef = db.doc(`groups/${groupId}/joinRequests/${uid}`);
+  const requestSnap = await requestRef.get();
+  if (!requestSnap.exists) {
+    throw TurniaError.RejectRequestNotFound;
+  }
+
+  await requestRef.update({ status: "rejected", respondedAt: FieldValue.serverTimestamp() });
+
+  return { groupId, uid, status: "rejected" as const };
 });

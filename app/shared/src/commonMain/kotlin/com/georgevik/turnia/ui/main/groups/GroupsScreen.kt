@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.georgevik.turnia.core.domain.model.GroupId
 import com.georgevik.turnia.navigation.LocalNavigator
 import com.georgevik.turnia.navigation.LocalRootNavigator
 import com.georgevik.turnia.navigation.main.routes.ExternalCalendarData
@@ -33,7 +34,9 @@ import com.georgevik.turnia.navigation.root.routes.RootRoute
 import com.georgevik.turnia.ui.main.groups.components.GroupCard
 import com.georgevik.turnia.ui.main.groups.components.GroupsFabMenu
 import com.georgevik.turnia.ui.main.groups.components.JoinGroupSheet
+import com.georgevik.turnia.ui.main.groups.components.JoinRequestCard
 import com.georgevik.turnia.ui.main.groups.model.GroupRowUi
+import com.georgevik.turnia.ui.main.groups.model.JoinRequestRowUi
 import com.georgevik.turnia.ui.main.system.EmptyState
 import com.georgevik.turnia.ui.main.system.ScreenHeader
 import com.georgevik.turnia.ui.system.LocalSnackbar
@@ -52,6 +55,7 @@ import turnia.app.shared.generated.resources.groups_join_invitation_inactive
 import turnia.app.shared.generated.resources.groups_join_joined
 import turnia.app.shared.generated.resources.groups_join_requested
 import turnia.app.shared.generated.resources.groups_load_error
+import turnia.app.shared.generated.resources.groups_request_dismiss_error
 import turnia.app.shared.generated.resources.groups_title
 
 /**
@@ -109,7 +113,9 @@ fun GroupsScreen(viewModel: GroupsViewModel = koinViewModel()) {
                 }
 
                 is GroupsUi.Success -> {
-                    if (current.groups.isEmpty()) {
+                    // A request outstanding is not an empty screen: it is the one thing the user
+                    // is waiting on, and the empty state would cover it.
+                    if (current.groups.isEmpty() && current.requests.isEmpty()) {
                         EmptyState(
                             icon = Icons.Default.GroupAdd,
                             title = stringResource(Res.string.groups_empty_title),
@@ -121,7 +127,11 @@ fun GroupsScreen(viewModel: GroupsViewModel = koinViewModel()) {
                             modifier = Modifier.fillMaxSize(),
                         )
                     } else {
-                        GroupList(current.groups)
+                        GroupList(
+                            groups = current.groups,
+                            requests = current.requests,
+                            onDismissRequest = viewModel::dismissRequest,
+                        )
                     }
                 }
             }
@@ -144,7 +154,11 @@ fun GroupsScreen(viewModel: GroupsViewModel = koinViewModel()) {
 }
 
 @Composable
-private fun GroupList(groups: List<GroupRowUi>) {
+private fun GroupList(
+    groups: List<GroupRowUi>,
+    requests: List<JoinRequestRowUi>,
+    onDismissRequest: (GroupId) -> Unit,
+) {
     val navigator = LocalNavigator.current
 
     LazyColumn(
@@ -152,6 +166,15 @@ private fun GroupList(groups: List<GroupRowUi>) {
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        // Above the groups: these are the ones the user is still waiting on, and a rejected one
+        // stays until they dismiss it because nothing else will ever tell them.
+        items(requests, key = { "request-${it.groupId.value}" }) { request ->
+            JoinRequestCard(
+                request = request,
+                onDismiss = { onDismissRequest(request.groupId) },
+            )
+        }
+
         items(groups, key = { it.id.value }) { group ->
             GroupCard(
                 group = group,
@@ -181,6 +204,7 @@ private fun GroupsMessage.text(): String = stringResource(
         GroupsMessage.JoinInvitationInactive -> Res.string.groups_join_invitation_inactive
         GroupsMessage.JoinInvitationExpired -> Res.string.groups_join_invitation_expired
         GroupsMessage.JoinFailed -> Res.string.groups_join_error
+        GroupsMessage.RequestDismissFailed -> Res.string.groups_request_dismiss_error
     }
 )
 
@@ -194,5 +218,6 @@ private val GroupsMessage.isError: Boolean
         GroupsMessage.JoinCodeNotFound,
         GroupsMessage.JoinInvitationInactive,
         GroupsMessage.JoinInvitationExpired,
-        GroupsMessage.JoinFailed -> true
+        GroupsMessage.JoinFailed,
+        GroupsMessage.RequestDismissFailed -> true
     }

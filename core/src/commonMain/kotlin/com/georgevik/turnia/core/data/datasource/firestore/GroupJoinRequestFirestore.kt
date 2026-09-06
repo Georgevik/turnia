@@ -15,21 +15,42 @@ import dev.gitlive.firebase.firestore.FirebaseFirestore
 /**
  * Interacts with Firestore: `groups/{groupId}/joinRequests`
  *
- * Only an admin can read them, and only `requestToJoinGroup` creates them; the client deletes one
- * to reject it, while accepting goes through the `acceptJoinRequest` function.
+ * Only `requestToJoinGroup` creates them and only `acceptJoinRequest` / `rejectJoinRequest` answer
+ * them. An answered request stays behind as a receipt for the requester, who is also the only one
+ * who may delete it — to cancel a pending request, or to acknowledge an answered one.
  */
 class GroupJoinRequestFirestore(private val firestore: FirebaseFirestore) {
 
-    suspend fun get(
+    /**
+     * What an admin has to answer. Filtered server-side: an answered request lingers until its
+     * requester acknowledges it, and it is not waiting on anybody here.
+     */
+    suspend fun getPending(
         groupId: GroupId,
     ): Outcome<List<DocHolder<JoinRequestDocument>>, GenericFirestoreError> =
         outcomeCatching(TAG, { GenericFirestoreError(it) }) {
-            val snapshot = requests(groupId).get().trackData(TAG)
-            Logger.d(TAG, "Join requests: ${snapshot.documents.size}")
+            val snapshot = requests(groupId)
+                .where { JoinRequestDocument.FIELD_STATUS equalTo JoinRequestDocument.STATUS_PENDING }
+                .get()
+                .trackData(TAG)
+            Logger.d(TAG, "Pending join requests: ${snapshot.documents.size}")
 
             snapshot.documents.map {
                 DocHolder(id = it.reference.id, doc = it.data(JoinRequestDocument.serializer()))
             }
+        }
+
+    /** The caller's own request in a group, which they may read by id and by id alone. */
+    suspend fun fetch(
+        groupId: GroupId,
+        userId: UserId,
+    ): Outcome<JoinRequestDocument?, GenericFirestoreError> =
+        outcomeCatching(TAG, { GenericFirestoreError(it) }) {
+            val snapshot = requests(groupId).document(userId.value).get().trackData(TAG)
+            Logger.d(TAG, "Fetch join request from cache: ${snapshot.metadata.isFromCache}")
+
+            if (!snapshot.exists) null
+            else snapshot.data(JoinRequestDocument.serializer())
         }
 
     suspend fun delete(groupId: GroupId, userId: UserId): Outcome<Unit, GenericFirestoreError> =
