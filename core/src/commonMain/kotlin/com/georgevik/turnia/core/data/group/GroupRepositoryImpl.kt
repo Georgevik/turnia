@@ -3,6 +3,7 @@ package com.georgevik.turnia.core.data.group
 import com.georgevik.turnia.core.data.datasource.firestore.GroupEventFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.GroupFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.GroupJoinRequestFirestore
+import com.georgevik.turnia.core.data.datasource.firestore.RevokedGroupFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.UserPathFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.doc.DocHolder
 import com.georgevik.turnia.core.data.datasource.firestore.doc.GroupDocument
@@ -39,6 +40,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.DateTimeUnit
@@ -52,18 +54,28 @@ class GroupRepositoryImpl(
     private val groupFirestore: GroupFirestore,
     private val groupEventFirestore: GroupEventFirestore,
     private val groupJoinRequestFirestore: GroupJoinRequestFirestore,
+    private val revokedGroupFirestore: RevokedGroupFirestore,
     private val groupMembershipFunction: GroupMembershipFunction,
     private val userPathFirestore: UserPathFirestore,
     private val groupMapper: GroupMapper,
 ) : GroupRepository {
 
+    /**
+     * The groups the user belongs to, plus the ones they were removed from while still holding
+     * events. The second kind comes from the user's own snapshots, not from `groups`: a revoked
+     * user cannot read that document any more.
+     */
     override fun getGroups(): Flow<List<Group>> =
         userRepository.loggedUserFlow.flatMapLatest { user ->
             val userId = user.id
             val colors = typeColors(userId)
 
-            groupFirestore.observeMyGroups(userId).map { holders ->
-                holders.map { groupMapper.map(it, userId, colors) }
+            combine(
+                groupFirestore.observeMyGroups(userId),
+                revokedGroupFirestore.observe(userId),
+            ) { mine, revoked ->
+                mine.map { groupMapper.map(it, userId, colors) } +
+                        revoked.map { groupMapper.map(it, colors) }
             }
         }
 
@@ -84,6 +96,7 @@ class GroupRepositoryImpl(
         val groupId = if (isNew) GroupId(createId()) else group.id
         val memberUids = current?.doc?.memberUids ?: listOf(userId.value)
         val adminUids = current?.doc?.adminUids ?: listOf(userId.value)
+        val revokedUids = current?.doc?.revokedUids.orEmpty()
         // The creator is a member from the start, so their name has to be here too: the calendar
         // reads it off the group and nothing else would ever add it.
         val members = current?.doc?.members ?: mapOf(
@@ -94,9 +107,12 @@ class GroupRepositoryImpl(
         )
 
         val invitationCode = group.invitationCode ?: createInvitationCode()
-        val document =
-            groupMapper.map(group.copy(invitationCode = invitationCode), memberUids, adminUids)
-                .copy(members = members)
+        val document = groupMapper.map(
+            group.copy(invitationCode = invitationCode),
+            memberUids,
+            adminUids,
+            revokedUids,
+        ).copy(members = members)
 
         val saved = if (isNew) groupFirestore.create(groupId, document)
         else groupFirestore.update(groupId, document)
@@ -129,6 +145,14 @@ class GroupRepositoryImpl(
 
     override suspend fun requestToJoinGroup(code: String): Outcome<JoinGroupStatus, JoinGroupError> =
         groupMembershipFunction.requestToJoinGroup(code)
+
+    override suspend fun leaveGroup(groupId: GroupId): Outcome<Unit, GroupError> =
+        groupMembershipFunction.leaveGroup(groupId)
+
+    override suspend fun removeMember(
+        groupId: GroupId,
+        userId: UserId,
+    ): Outcome<Unit, GroupError> = groupMembershipFunction.removeMember(groupId, userId)
 
     override suspend fun rejectJoinRequest(
         groupId: GroupId,
@@ -167,8 +191,19 @@ class GroupRepositoryImpl(
     }
 
     override suspend fun addEvent(event: GroupEvent) {
+        // Checked here to fail before the write; the security rules refuse it anyway, which is what
+        // actually keeps someone who left a group from adding to its calendar.
+        val userId = userRepository.loggedUser?.id
+        if (userId != null && isRevoked(userId, event.groupId)) {
+            Logger.w(TAG, "A revoked member cannot add events to the group")
+            return
+        }
+
         groupEventFirestore.set(event.groupId, event.id, groupMapper.map(event))
     }
+
+    private suspend fun isRevoked(userId: UserId, groupId: GroupId): Boolean =
+        revokedGroupFirestore.observe(userId).first().any { it.id == groupId.value }
 
     override suspend fun deleteEvent(
         groupId: GroupId,
@@ -201,16 +236,27 @@ class GroupRepositoryImpl(
         val userId = user.id
         val colors = typeColors(userId)
 
-        groupFirestore.observe(groupId).flatMapLatest { holder ->
-            if (holder == null) flowOf(Unit.toFailure())
-            else eventsOf(holder, userId, colors, date, monthDelta).map { it.toSuccess() }
+        // A revoked user cannot read the group document, so the group they see is their own
+        // snapshot of it; falling through to `observe` would only earn a permission error.
+        revokedGroupFirestore.observe(userId).flatMapLatest { revoked ->
+            val snapshot = revoked.find { it.id == groupId.value }
+            if (snapshot != null) {
+                val group = groupMapper.map(snapshot, colors)
+                eventsOf(group, emptyMap(), userId, date, monthDelta).map { it.toSuccess() }
+            } else {
+                groupFirestore.observe(groupId).flatMapLatest { holder ->
+                    if (holder == null) flowOf(Unit.toFailure())
+                    else eventsOf(holder, userId, colors, date, monthDelta).map { it.toSuccess() }
+                }
+            }
         }
     }
 
     /**
-     * The user's own shifts across every group they belong to. One pass over the groups the "my
-     * groups" query already returns — each carries its types and its members, so nothing else has
-     * to be read to render them.
+     * The user's own shifts across every group. One pass over the groups [getGroups] already
+     * returns — each carries its types and its members, so nothing else has to be read to render
+     * them — and that includes the groups they were removed from: the shifts they still hold are
+     * theirs to cover, so they belong on their calendar.
      */
     override fun getEventsByUser(
         userId: UserId,
@@ -223,17 +269,15 @@ class GroupRepositoryImpl(
             return@flow
         }
 
-        val colors = typeColors(viewer)
-
         // Following the groups too: joining one, or an admin renaming a type, reaches the calendar
         // without a reload — the shifts are drawn from the group as much as from the events.
         emitAll(
-            groupFirestore.observeMyGroups(viewer).flatMapLatest { groups ->
+            getGroups().flatMapLatest { groups ->
                 if (groups.isEmpty()) return@flatMapLatest flowOf(emptyList())
 
                 // Combined, so a group answering from cache paints while another is on the wire.
-                val perGroup = groups.map { holder ->
-                    eventsOf(holder, viewer, colors, date, monthDelta)
+                val perGroup = groups.map { group ->
+                    eventsOf(group, group.memberNames(), viewer, date, monthDelta)
                 }
                 combine(perGroup) { events ->
                     events.toList().flatten()
@@ -243,6 +287,10 @@ class GroupRepositoryImpl(
         )
     }
 
+    /** The copy of the members' names the group carries, so rendering one costs no read. */
+    private fun Group.memberNames(): Map<String, String> =
+        members.associate { member -> member.id.value to member.name }
+
     /** Cached events first, then the merged ones when a month turned out to be behind. */
     private fun eventsOf(
         holder: DocHolder<GroupDocument>,
@@ -250,17 +298,29 @@ class GroupRepositoryImpl(
         colors: Map<String, String>,
         date: LocalDate,
         monthDelta: Int,
-    ): Flow<List<GroupEvent>> {
-        val group = groupMapper.map(holder, viewer, colors)
-        val memberNames = holder.doc.members.mapValues { (_, member) -> member.name }
+    ): Flow<List<GroupEvent>> = eventsOf(
+        group = groupMapper.map(holder, viewer, colors),
+        memberNames = holder.doc.members.mapValues { (_, member) -> member.name },
+        viewer = viewer,
+        date = date,
+        monthDelta = monthDelta,
+    )
 
-        return groupEventFirestore.get(
-            group.id,
-            from = date.minus(monthDelta, DateTimeUnit.MONTH).toInstant(),
-            until = date.plus(monthDelta, DateTimeUnit.MONTH).toInstant(),
-        ).map { outcome ->
-            outcome.valueOrNull().orEmpty().mapNotNull { groupMapper.map(it, group, memberNames) }
-        }
+    private fun eventsOf(
+        group: Group,
+        memberNames: Map<String, String>,
+        viewer: UserId,
+        date: LocalDate,
+        monthDelta: Int,
+    ): Flow<List<GroupEvent>> = groupEventFirestore.get(
+        group.id,
+        from = date.minus(monthDelta, DateTimeUnit.MONTH).toInstant(),
+        until = date.plus(monthDelta, DateTimeUnit.MONTH).toInstant(),
+        // Not an optimisation: the rules only let a revoked user read the events assigned to them,
+        // and they prove it from the query's filters, so without this the read is refused.
+        assigneeId = viewer.takeIf { group.isRevoked },
+    ).map { outcome ->
+        outcome.valueOrNull().orEmpty().mapNotNull { groupMapper.map(it, group, memberNames) }
     }
 
     /** From the cache: the colours are the user's own picks, and every group screen asks. */

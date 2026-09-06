@@ -56,7 +56,17 @@ export const getSharedCalendar = onCall(async (request) => {
 
   // Group events, one query per group the owner belongs to. A collection-group query is no longer
   // possible — nor needed — now that each group keeps its events in its own collection.
-  const ownerGroups = await db.collection("groups").where("memberUids", "array-contains", ownerUid).get();
+  //
+  // Groups they were removed from count too: their leftover shifts are still on the calendar they
+  // share, and dropping them here would make those days silently look free. Two queries rather than
+  // one `or`, because Firestore allows a single `array-contains` per query.
+  const [memberOf, revokedFrom] = await Promise.all([
+    db.collection("groups").where("memberUids", "array-contains", ownerUid).get(),
+    db.collection("groups").where("revokedUids", "array-contains", ownerUid).get(),
+  ]);
+  const revokedGroupIds = new Set(revokedFrom.docs.map((group) => group.id));
+  const ownerGroups = { docs: [...memberOf.docs, ...revokedFrom.docs] };
+
   const groupEventsPerGroup = await Promise.all(
     ownerGroups.docs.map(async (group) => {
       const snap = await group.ref
@@ -100,10 +110,20 @@ export const getSharedCalendar = onCall(async (request) => {
 
   const groupEventTypeColors = (ownerDoc.get("groupEventTypeColors") as Record<string, string> | undefined) ?? {};
 
-  // The groups were already read to find the events; their types came along with them.
+  // The groups were already read to find the events; their types came along with them. A group the
+  // owner was revoked from gives up only the types their own returned events use — the same
+  // narrowing the `revokedGroups` snapshot applies, so sharing a calendar is not a way around it.
   const groupEventTypes: Record<string, unknown> = {};
   ownerGroups.docs.forEach((group) => {
-    groupEventTypes[group.id] = group.get("groupEventTypes") ?? [];
+    const types = (group.get("groupEventTypes") as Record<string, unknown>[]) ?? [];
+    if (!revokedGroupIds.has(group.id)) {
+      groupEventTypes[group.id] = types;
+      return;
+    }
+    const usedTypeIds = new Set(
+      groupEvents.filter((event) => event.groupId === group.id).map((event) => event.groupEventTypeId)
+    );
+    groupEventTypes[group.id] = types.filter((type) => usedTypeIds.has(type.id as string));
   });
 
   return { groupEvents, personalEvents, personalEventTypes, groupEventTypeColors, groupEventTypes };

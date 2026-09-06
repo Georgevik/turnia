@@ -27,6 +27,7 @@ class GroupsViewModel(private val groupRepository: GroupRepository) : ViewModel(
                         name = it.name,
                         members = it.memberCount,
                         isAdmin = it.isAdmin,
+                        isRevoked = it.isRevoked,
                     )
                 }
 

@@ -34,11 +34,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.georgevik.turnia.ui.components.calendar.diagonalHatch
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
+import com.georgevik.turnia.ui.components.calendar.model.EventSource
 import com.georgevik.turnia.ui.components.calendar.model.TransferHolderUi
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.event_assigned_to
 import turnia.app.shared.generated.resources.event_holder_me
+import turnia.app.shared.generated.resources.group_member_former
 import turnia.app.shared.generated.resources.event_remove
 import turnia.app.shared.generated.resources.event_status_on_swap
 
@@ -129,7 +131,12 @@ fun DayEventRow(
                         }
                     }
 
-                    val showAssignee = event.assigneeIsMe || event.assigneeName.isNotBlank()
+                    // A group event always names who covers it. A blank name means the person
+                    // was removed from the group: their shift stays, but they are no longer in
+                    // the roster it is read from.
+                    val isGroupEvent = event.source == EventSource.GROUP
+                    val showAssignee =
+                        event.assigneeIsMe || event.assigneeName.isNotBlank() || isGroupEvent
                     if (event.onSwap || showAssignee) {
                         Spacer(Modifier.height(8.dp))
                         Row(
@@ -139,10 +146,12 @@ fun DayEventRow(
                         ) {
                             if (event.onSwap) SwapChip()
                             if (showAssignee) {
-                                val assignee = if (event.assigneeIsMe) {
-                                    stringResource(Res.string.event_holder_me)
-                                } else {
-                                    event.assigneeName
+                                val assignee = when {
+                                    event.assigneeIsMe ->
+                                        stringResource(Res.string.event_holder_me)
+
+                                    event.assigneeName.isNotBlank() -> event.assigneeName
+                                    else -> stringResource(Res.string.group_member_former)
                                 }
                                 AssignedToChip(name = assignee)
                             }
@@ -184,7 +193,11 @@ private fun TransferTrail(chain: List<TransferHolderUi>) {
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            val name = if (holder.isMe) stringResource(Res.string.event_holder_me) else holder.name
+            val name = when {
+                holder.isMe -> stringResource(Res.string.event_holder_me)
+                holder.name.isNotBlank() -> holder.name
+                else -> stringResource(Res.string.group_member_former)
+            }
             HolderPill(name = name, highlighted = index == chain.lastIndex)
         }
     }

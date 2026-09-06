@@ -121,10 +121,13 @@ class DayDetailSheetViewModel(
         personalTypes: List<PersonalEventType>,
         groups: List<Group>,
     ): List<EventTypeSectionUi> {
+        // A group the user was removed from still shows its leftover events, but offers no types
+        // to add: they are out of it, and the security rules refuse the write anyway.
+        val addableGroups = groups.filterNot { it.isRevoked }
         val visibleGroups = when (addMode) {
             DayAddMode.Disabled -> return emptyList()
-            is DayAddMode.GroupOnly -> groups.filter { it.id == addMode.groupId }
-            DayAddMode.Full -> groups
+            is DayAddMode.GroupOnly -> addableGroups.filter { it.id == addMode.groupId }
+            DayAddMode.Full -> addableGroups
         }
         val personalSection = when (addMode) {
             DayAddMode.Full -> listOf(

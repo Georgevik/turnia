@@ -20,6 +20,11 @@ service cloud.firestore {
     function isAdmin(groupId) {
       return isSignedIn() && request.auth.uid in groupData(groupId).get('adminUids', []);
     }
+    // A former member who still holds events here: they read their own events and nothing else,
+    // not even the group document, which carries the member roster and the invitation code.
+    function isRevoked(groupId) {
+      return isSignedIn() && request.auth.uid in groupData(groupId).get('revokedUids', []);
+    }
     // `.get(field, [])` and not `.data.calendarSharedWith`: reading a field a document does not
     // have raises an error, which denies the whole request instead of just this branch.
     function ownerOrShared(uid) {
@@ -67,6 +72,13 @@ service cloud.firestore {
         allow read: if ownerOrShared(uid);
         allow write: if isSignedIn() && request.auth.uid == uid;
       }
+      // Groups the user was removed from, with the event types their leftover events use. It is
+      // what lets them render those events without reading the group document they lost access to,
+      // so only leaveGroup / removeMember may write it.
+      match /revokedGroups/{groupId} {
+        allow read: if isSignedIn() && request.auth.uid == uid;
+        allow write: if false;
+      }
 
     }
 
@@ -89,39 +101,56 @@ service cloud.firestore {
       allow create: if isSignedIn() &&
         request.resource.data.get('memberUids', []) == [request.auth.uid] &&
         request.resource.data.get('adminUids', []) == [request.auth.uid];
-      // Membership is granted by the acceptJoinRequest Cloud Function, never by a client.
+      // Membership is granted by the acceptJoinRequest Cloud Function and withdrawn by
+      // leaveGroup / removeMember, never by a client.
       allow update: if isAdmin(groupId) &&
         request.resource.data.get('memberUids', []) == resource.data.get('memberUids', []) &&
-        request.resource.data.get('adminUids', []) == resource.data.get('adminUids', []);
+        request.resource.data.get('adminUids', []) == resource.data.get('adminUids', []) &&
+        request.resource.data.get('revokedUids', []) == resource.data.get('revokedUids', []);
       allow delete: if isAdmin(groupId);
 
       // Group events live in one collection per group, not one per member: a group's calendar is
       // a single query, and a transfer changes `assigneeId` instead of moving the document.
       match /events/{eventId} {
-        allow read: if isMember(groupId);
+        // A revoked user keeps only what is still assigned to them. On a `list` the
+        // `resource.data.assigneeId` term is what forces their query to carry the matching
+        // `assigneeId ==` filter; without it Firestore denies the whole query.
+        allow read: if isMember(groupId) ||
+          (isRevoked(groupId) && resource.data.assigneeId == request.auth.uid);
         allow create: if isMember(groupId) &&
           request.resource.data.ownerId == request.auth.uid &&
           request.resource.data.assigneeId == request.auth.uid;
         // ownerId is the creator forever, assigneeId only changes through takeEvent, and the
         // history only grows there too — frozen here, it cannot be rewritten by anyone but the
         // function, which is a firmer append-only than a subcollection of member-writable entries.
-        allow update: if isMember(groupId) &&
+        // A revoked user gets the second branch only: deleting is a soft delete, so it arrives
+        // here as an update, and theirs is narrowed to flipping `isDeleted` on an event they
+        // created and still hold.
+        allow update: if (isMember(groupId) &&
           (resource.data.assigneeId == request.auth.uid || isAdmin(groupId)) &&
           request.resource.data.ownerId == resource.data.ownerId &&
           request.resource.data.assigneeId == resource.data.assigneeId &&
-          request.resource.data.get('history', []) == resource.data.get('history', []);
+          request.resource.data.get('history', []) == resource.data.get('history', []))
+          || (isRevoked(groupId) &&
+          resource.data.ownerId == request.auth.uid &&
+          resource.data.assigneeId == request.auth.uid &&
+          request.resource.data.get('isDeleted', false) == true &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['isDeleted', 'updateAt']));
         // Only the creator, and only while they still hold it: once a shift has been handed to
         // someone else it is theirs to cover, and deleting it out from under them is not the
         // creator's call. Giving it back is putting it up for swap, not deleting it.
-        allow delete: if isMember(groupId) &&
+        allow delete: if (isMember(groupId) || isRevoked(groupId)) &&
           resource.data.ownerId == request.auth.uid &&
           resource.data.assigneeId == request.auth.uid;
       }
 
       // When each month of the group's calendar last changed: any member's write moves it.
+      // A revoked user is in here too: they read it to tell whether their cache is behind, and
+      // their soft delete commits the month's marker in the same batch. It holds only timestamps.
       match /sync/{docId} {
-        allow read: if isMember(groupId);
-        allow write: if isMember(groupId);
+        allow read: if isMember(groupId) || isRevoked(groupId);
+        allow write: if isMember(groupId) || isRevoked(groupId);
       }
 
       // Join requests: created only by requestToJoinGroup (Cloud Function).

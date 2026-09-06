@@ -9,6 +9,7 @@ import com.georgevik.turnia.core.data.datasource.firestore.errors.GenericFiresto
 import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.EventId
 import com.georgevik.turnia.core.domain.model.GroupId
+import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.outcomeCatching
 import com.georgevik.turnia.core.system.toFailure
@@ -37,14 +38,21 @@ class GroupEventFirestore(
     private val firestore: FirebaseFirestore,
     private val groupSyncFirestore: GroupSyncFirestore,
 ) {
+    /**
+     * [assigneeId] narrows the query to one person's events. A revoked user has to pass it: the
+     * security rules only let them read the events assigned to them, and on a `list` Firestore
+     * proves that from the query's own filters, so an unfiltered read is denied outright.
+     */
     fun get(
         groupId: GroupId,
         from: Instant,
-        until: Instant
+        until: Instant,
+        assigneeId: UserId? = null,
     ): Flow<Outcome<List<DocHolder<GroupEventDocument>>, GenericFirestoreError>> =
         flow<Outcome<List<DocHolder<GroupEventDocument>>, GenericFirestoreError>> {
             val months = YearMonthRange(from.toYearMonth(), until.toYearMonth())
-            val cachedEvents = queryEvents(groupId, months.associateWith { null }, Source.CACHE)
+            val cachedEvents =
+                queryEvents(groupId, months.associateWith { null }, Source.CACHE, assigneeId)
             emit(cachedEvents.filterNot { it.doc.isDeleted }.toSuccess())
 
             var known = cachedEvents
@@ -63,7 +71,8 @@ class GroupEventFirestore(
                     val serverEvents = queryEvents(
                         groupId,
                         staleMonths.mapValues { (_, updatedAt) -> updatedAt?.toTimestamp() },
-                        Source.SERVER
+                        Source.SERVER,
+                        assigneeId,
                     ).associateBy { it.id }.toMutableMap()
 
                     val merged = known.map { cached -> serverEvents.remove(cached.id) ?: cached }
@@ -116,7 +125,8 @@ class GroupEventFirestore(
     private suspend fun queryEvents(
         groupId: GroupId,
         months: Map<YearMonth, Timestamp?>,
-        source: Source
+        source: Source,
+        assigneeId: UserId?,
     ): List<DocHolder<GroupEventDocument>> {
         if (months.isEmpty()) return emptyList()
 
@@ -129,7 +139,14 @@ class GroupEventFirestore(
                 if (changed == null) inMonth else inMonth and changed
             }
 
-            any(*clauses.toTypedArray())
+            val inMonths = any(*clauses.toTypedArray())
+            val mine = assigneeId?.let { GroupEventDocument.FIELD_ASSIGNEE_ID equalTo it.value }
+
+            when {
+                mine == null -> inMonths
+                inMonths == null -> mine
+                else -> mine and inMonths
+            }
         }.get(source).trackData(TAG)
 
         Logger.d(

@@ -67,4 +67,4 @@ data class JoinRequestUi(
 
 enum class GroupDetailScreenError { NotFound, LoadFailed }
 
-enum class GroupDetailMessage { SaveFailed, RequestFailed }
+enum class GroupDetailMessage { SaveFailed, RequestFailed, RemoveMemberFailed }

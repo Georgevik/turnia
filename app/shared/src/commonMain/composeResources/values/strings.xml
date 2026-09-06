@@ -123,6 +123,22 @@
     <string name="group_detail_request_reject">Rechazar</string>
     <string name="group_detail_error_request">No hemos podido responder a la solicitud. Inténtalo de nuevo.</string>
     <string name="group_detail_error_save">No se ha podido guardar el grupo. Inténtalo de nuevo.</string>
+    <string name="group_detail_member_remove">Sacar del grupo</string>
+    <string name="group_detail_member_remove_title">¿Sacar a %1$s del grupo?</string>
+    <string name="group_detail_member_remove_message">Dejará de ver el calendario del grupo. Los turnos que tenga asignados se quedan y solo los verá esa persona.</string>
+    <string name="group_detail_member_remove_confirm">Sacar del grupo</string>
+    <string name="group_detail_error_remove_member">No hemos podido sacar a esa persona del grupo.</string>
+
+    <!-- Leaving a group -->
+    <string name="group_member_former">Antiguo miembro</string>
+    <string name="group_revoked_badge">HAS SALIDO</string>
+    <string name="group_revoked_banner">Ya no estás en este grupo. Solo ves los turnos que tenías asignados.</string>
+    <string name="group_leave_action">Salir del grupo</string>
+    <string name="group_leave_title">¿Salir del grupo?</string>
+    <string name="group_leave_message">Dejarás de ver el calendario del grupo. Los turnos que tengas asignados se quedan y solo los verás tú.</string>
+    <string name="group_leave_confirm">Salir</string>
+    <string name="group_leave_error">No hemos podido sacarte del grupo.</string>
+    <string name="group_leave_last_admin_error">Eres el único admin. Antes de salir, el grupo necesita a alguien que lo administre.</string>
 
     <!-- Event types: detail (edit color / manage) -->
     <string name="event_types_edit">Editar eventos</string>
