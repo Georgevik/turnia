@@ -82,7 +82,15 @@ Readable and writable **only by the owner**.
 | `email` | string | Account email. |
 | `fcmTokens` | string[] | FCM device tokens for push, one per device the account is signed in on. |
 | `notificationsEnabled` | boolean | The in-app notification switch. Absent means enabled. |
+| `updateAt` | timestamp | Server timestamp of the last write. What a reader compares the `private` sync marker against. |
 
+> This document is read once per session — to decide whether the device should register for push — so
+> it follows the same rule as the events: the cache answers, and the `private` field of
+> `users/{uid}/sync/updates` says whether anything moved since. Every write here therefore commits the
+> document and that marker **in the same batch** and stamps `updateAt`; a write that skipped either
+> would leave the document looking permanently older than the marker and cost a server read on every
+> launch from then on.
+>
 > `fcmTokens` is only ever written with `arrayUnion` / `arrayRemove`: a phone and a tablet signed into
 > the same account both belong in it, and a write of the whole list would erase whichever device
 > saved last. The client adds its token when a session starts and removes it on sign-out; the server
@@ -104,12 +112,19 @@ The groups this user has asked to join and not yet seen an answer from. Written 
 | Field | Type | Description |
 |-------|------|-------------|
 | `groupIds` | string[] | Groups with a request from this user whose answer they have not acknowledged. |
+| `updateAt` | timestamp | Server timestamp of the last write. What a reader compares the `private` sync marker against. |
 
 > **This list is the only way a requester can find their own requests.** The rules let them read
 > `groups/{groupId}/joinRequests/{uid}` by document id and by nothing else: a `collectionGroup` list
 > cannot express "the document whose id is my uid", and the admin branch of the same rule needs a
 > `get()` that a collection-group query cannot evaluate. So the pointer has to be stored, and it has
 > to be stored where the requester can read it without belonging to the group.
+
+> Because the requester reads this list through the `private` marker on `users/{uid}/sync/updates`,
+> **every writer has to move that marker** — the Cloud Functions included. `requestToJoinGroup` and
+> `deleteGroup` go through `writeJoinRequestPointer` for exactly that reason: it writes the id, the
+> `updateAt` and the marker in one go, and a pointer written without the marker is one the requester
+> never sees.
 
 > Unlike `subscription` it stays under the owner-writable wildcard, because both sides write it: the
 > server adds an id, the owner removes it. Nothing is at stake in the array — it holds ids to
@@ -220,10 +235,21 @@ what it already cached to decide whether it has to query the server at all.
 | `personalEventsUpdatedAt` | timestamp \| null | Last write to `personalEvents` (server timestamp). |
 | `personalEventTypesUpdatedAt` | timestamp \| null | Last write to `personalEventTypes` (server timestamp). |
 | `revokedGroups` | timestamp \| null | Last write to `revokedGroups` — a revocation or a rejoin. Moved **only** by `leaveGroup` / `removeMember` / the rejoin path, never by a client. |
+| `private` | timestamp \| null | Last write to the `private` subcollection: `account` and `joinRequests`. |
 
 Every timestamp is written with a **server timestamp**, so readers on other devices compare against the same
 clock. A missing document (or field) means that part has never been written. Each writer merges **only its
 own field**, so the two timestamps never overwrite each other.
+
+`private` gates two documents that are read once per session — `account`, to decide whether the device
+should register for push, and `joinRequests`, to show a requester the answer to their request. Both are
+written from **both sides**: the owner's app and the Cloud Functions. So every writer has to move this
+marker, the server included — `writeJoinRequestPointer` in `functions/src/users.ts` exists to make that
+impossible to forget. A document written without moving the marker is one the reader never sees.
+
+`private/subscription` is **not** covered by it: only the receipt-verification Cloud Function writes that
+document, and gating it behind a marker the client also moves would keep an expired subscription looking
+valid. The day that function bumps `private` too, `subscription` can join.
 
 **Access**: written by the owner; read by the owner and by UIDs in `calendarSharedWith`.
 
