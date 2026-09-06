@@ -6,13 +6,26 @@ import { requireFields, requireUid } from "./requests";
 /** Mirrors `isValidUsername` in the app: 3-20 of a-z, 0-9, `_` or `.`. */
 const USERNAME_PATTERN = /^[a-z0-9_.]{3,20}$/;
 
+/** One device to push to, kept next to its owner so a dead token can be pruned from the right list. */
+export type PushTarget = { uid: string; token: string };
+
 /**
+ * Every device registered by the given users.
+ *
  * Push tokens live under `users/{uid}/private`, unreadable to anyone but their owner — the public
- * user document carries nothing but the name.
+ * user document carries nothing but the name. One `getAll` rather than a read per uid: a group of
+ * twenty admins is still a single round trip.
  */
-export async function fcmTokensOf(uid: string): Promise<string[]> {
-  const account = await getFirestore().doc(`users/${uid}/private/account`).get();
-  return (account.get("fcmTokens") as string[] | undefined) ?? [];
+export async function pushTargetsOf(uids: string[]): Promise<PushTarget[]> {
+  if (uids.length === 0) return [];
+
+  const db = getFirestore();
+  const accounts = await db.getAll(...uids.map((uid) => db.doc(`users/${uid}/private/account`)));
+
+  return accounts.flatMap((account, index) => {
+    const tokens = (account.get("fcmTokens") as string[] | undefined) ?? [];
+    return tokens.map((token) => ({ uid: uids[index], token }));
+  });
 }
 
 /**

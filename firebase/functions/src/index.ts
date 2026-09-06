@@ -21,8 +21,10 @@ export { takeEvent } from "./events";
 // Renames a user everywhere their name is copied: the client may not write it itself.
 export { updateProfile } from "./users";
 
-// Notifies members when an event is put up for swap.
-export { onEventPutOnSwap } from "./notifications";
+// Push. `onEventPutOnSwap` and `onCalendarShared` react to writes a client makes directly; the
+// join-request notifications are sent inline by the callables in `invitations.ts`, which already
+// hold everything they need.
+export { onEventPutOnSwap, onCalendarShared } from "./notifications";
 
 // On-demand aggregation of another user's full calendar (cross-group).
 export { getSharedCalendar } from "./sharedCalendar";

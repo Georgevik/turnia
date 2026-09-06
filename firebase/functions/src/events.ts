@@ -1,7 +1,6 @@
 import { onCall } from "firebase-functions/v2/https";
 import { FieldValue, Timestamp, getFirestore } from "firebase-admin/firestore";
-import { getMessaging } from "firebase-admin/messaging";
-import { fcmTokensOf } from "./users";
+import { notifyEventTaken } from "./notifications";
 import { TurniaError } from "./errors";
 import { requireFields, requireUid } from "./requests";
 
@@ -69,14 +68,7 @@ export const takeEvent = onCall(async (request) => {
     return assigneeId;
   });
 
-  const tokens = await fcmTokensOf(fromUid);
-  if (tokens.length > 0) {
-    await getMessaging().sendEachForMulticast({
-      tokens,
-      notification: { title: "Turnia", body: "Your shift was taken." },
-      data: { groupId, eventId },
-    });
-  }
+  await notifyEventTaken(groupId, eventId, fromUid);
 
   return { groupId, eventId, assigneeId: taker, status: "taken" as const };
 });

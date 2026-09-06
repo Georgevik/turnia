@@ -1,6 +1,7 @@
 import { onCall } from "firebase-functions/v2/https";
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import { clearRevokedGroup } from "./membership";
+import { notifyJoinAccepted, notifyJoinRequested } from "./notifications";
 import { TurniaError } from "./errors";
 import { requireFields, requireUid } from "./requests";
 
@@ -78,6 +79,9 @@ export const requestToJoinGroup = onCall(async (request) => {
     ...profile,
     requestedAt: FieldValue.serverTimestamp(),
   });
+  // After the write: the request is what the admins are being told about, and a push about one
+  // that failed to save would send them to an approval screen with nothing on it.
+  await notifyJoinRequested(groupDoc, profile);
 
   return { groupId: groupDoc.id, status: "requested" as const };
 });
@@ -133,6 +137,8 @@ export const acceptJoinRequest = onCall(async (request) => {
   );
   batch.delete(requestRef);
   await batch.commit();
+
+  await notifyJoinAccepted(groupId, group.get("name") ?? "", uid);
 
   return { groupId, uid, status: "accepted" as const };
 });
