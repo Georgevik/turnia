@@ -190,22 +190,33 @@ Firestore bills **per document**: one read for every document the server returns
 | `.get()` on a query | chain `.trackData(TAG)` onto the snapshot |
 | `.get()` on a document | chain `.trackData(TAG)` — a document that does not exist still costs a read |
 | `set` / `updateFields` / `delete` | `trackWrite(TAG)` on the line **after** the call |
+| `httpsCallable(NAME)` on a Cloud Function | `trackFunction(NAME)` on the line **before** the call |
 
-`TAG` is the reporting class's own log tag: usage is counted per class, so the audit says **who** spent the reads and not only how many.
+`TAG` is the reporting class's own log tag: usage is counted per class, so the audit says **who** spent the reads and not only how many. Function calls are the exception — they are counted per callable.
 
 Two rules that are easy to get wrong:
 
 - **`trackWrite` goes after the write, never before.** Inside `outcomeCatching { }` that means a call which threw never gets counted — a write rejected by the security rules is not billed, and counting it hides real failures behind plausible numbers.
 - **A write has no cache variant.** It is billed even offline; the charge simply lands when the device syncs. Only reads can be free.
 
+- **`trackFunction` goes *before* the call**, which is the opposite rule and has the opposite reason: a callable is billed the moment it reaches Google, refusals included, so counting it afterwards would hide exactly the failures worth seeing. What a function then spends on its own reads and writes never reaches this audit — it happens server-side with admin privileges — so one `Calls: 1` can stand for a dozen documents.
+
+- **`trackFunction` takes the callable's name, not `TAG`.** It is the only reporter that does not key on the calling class: what costs money is the function, and `GroupMembershipFunction` alone calls four of them.
+
 The audit logs under the `FirestoreAudit` tag. A billed call — a server read or any write — prints the running totals and then the breakdown per class; a cache hit only counts, at `debug`, so the noisy line is the one that costs money.
 
+The two bills are printed apart, because they are priced in different units — Firestore per document,
+a callable per invocation — and a class only appears in the block where it actually spends:
+
 ```
-FirestoreAudit: UsernameFirestore: 1 write(s)
-Read Server: 14 ReadCache: 61 Writes: 3
+FirestoreAudit: GroupFunction - FUNCTION CALL
+Firestore  Read Server: 14 ReadCache: 61 Writes: 3
     PersonalEventFirestore -> Read Server: 11 ReadCache: 58 Writes: 0
     UserPathFirestore -> Read Server: 3 ReadCache: 3 Writes: 2
     UsernameFirestore -> Read Server: 0 ReadCache: 0 Writes: 1
+Functions  Calls: 3
+    deleteGroup -> Calls: 1
+    requestToJoinGroup -> Calls: 2
 ```
 
 ## Traceability

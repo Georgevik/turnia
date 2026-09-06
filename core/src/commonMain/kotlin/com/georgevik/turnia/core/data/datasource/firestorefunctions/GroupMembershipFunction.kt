@@ -1,5 +1,6 @@
 package com.georgevik.turnia.core.data.datasource.firestorefunctions
 
+import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackFunction
 import com.georgevik.turnia.core.data.datasource.firestorefunctions.requests.AcceptJoinRequest
 import com.georgevik.turnia.core.data.datasource.firestorefunctions.requests.LeaveGroupRequest
 import com.georgevik.turnia.core.data.datasource.firestorefunctions.requests.RemoveMemberRequest
@@ -27,6 +28,7 @@ class GroupMembershipFunction(private val functions: FirebaseFunctions) {
     ): Outcome<Unit, GroupError> =
         outcomeCatching(TAG, { GroupError.SaveFailed }) {
             Logger.i(TAG, "Accept join request")
+            trackFunction(FUNCTION_ACCEPT_JOIN_REQUEST)
             functions.httpsCallable(FUNCTION_ACCEPT_JOIN_REQUEST)(
                 AcceptJoinRequest(groupId = groupId.value, uid = userId.value)
             )
@@ -35,6 +37,7 @@ class GroupMembershipFunction(private val functions: FirebaseFunctions) {
     suspend fun requestToJoinGroup(code: String): Outcome<JoinGroupStatus, JoinGroupError> =
         outcomeCatching(TAG, { throwable -> throwable.toJoinGroupError() }) {
             Logger.i(TAG, "Request to join group")
+            trackFunction(FUNCTION_REQUEST_TO_JOIN_GROUP)
             val result = functions.httpsCallable(FUNCTION_REQUEST_TO_JOIN_GROUP)(
                 RequestToJoinGroup(code = code)
             )
@@ -49,14 +52,17 @@ class GroupMembershipFunction(private val functions: FirebaseFunctions) {
     suspend fun leaveGroup(groupId: GroupId): Outcome<Unit, GroupError> =
         outcomeCatching(TAG, { throwable -> throwable.toGroupError() }) {
             Logger.i(TAG, "Leave group")
+            trackFunction(FUNCTION_LEAVE_GROUP)
             functions.httpsCallable(FUNCTION_LEAVE_GROUP)(
                 LeaveGroupRequest(groupId = groupId.value)
             )
         }
+    
 
     suspend fun removeMember(groupId: GroupId, userId: UserId): Outcome<Unit, GroupError> =
         outcomeCatching(TAG, { throwable -> throwable.toGroupError() }) {
             Logger.i(TAG, "Remove member")
+            trackFunction(FUNCTION_REMOVE_MEMBER)
             functions.httpsCallable(FUNCTION_REMOVE_MEMBER)(
                 RemoveMemberRequest(groupId = groupId.value, uid = userId.value)
             )

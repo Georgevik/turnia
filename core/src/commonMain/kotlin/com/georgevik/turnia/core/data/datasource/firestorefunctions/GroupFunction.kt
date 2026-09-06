@@ -1,5 +1,6 @@
 package com.georgevik.turnia.core.data.datasource.firestorefunctions
 
+import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackFunction
 import com.georgevik.turnia.core.data.datasource.firestorefunctions.requests.DeleteGroupRequest
 import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.GroupError
@@ -17,6 +18,7 @@ class GroupFunction(private val functions: FirebaseFunctions) {
     suspend fun deleteGroup(groupId: GroupId): Outcome<Unit, GroupError> =
         outcomeCatching(TAG, { throwable -> throwable.toGroupError() }) {
             Logger.i(TAG, "Delete group")
+            trackFunction(FUNCTION_DELETE_GROUP)
             functions.httpsCallable(FUNCTION_DELETE_GROUP)(
                 DeleteGroupRequest(groupId = groupId.value)
             )

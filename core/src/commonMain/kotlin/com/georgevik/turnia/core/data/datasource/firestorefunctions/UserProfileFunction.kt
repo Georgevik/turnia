@@ -1,5 +1,6 @@
 package com.georgevik.turnia.core.data.datasource.firestorefunctions
 
+import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackFunction
 import com.georgevik.turnia.core.data.datasource.firestorefunctions.requests.UpdateProfileRequest
 import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.UsernameError
@@ -17,6 +18,7 @@ class UserProfileFunction(
     suspend fun updateProfile(name: String, username: String): Outcome<Unit, UsernameError> =
         outcomeCatching(TAG, { throwable -> throwable.toProfileError() }) {
             Logger.i(TAG, "Update profile")
+            trackFunction(FUNCTION_UPDATE_PROFILE)
             functions.httpsCallable(FUNCTION_UPDATE_PROFILE)(
                 UpdateProfileRequest(name = name, username = username)
             )
