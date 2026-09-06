@@ -69,13 +69,7 @@ interface GroupRepository {
      * Reads their pointer list and then each request it names: a requester may read their own
      * request by id, and there is no query that can do the same.
      */
-    suspend fun getMyJoinRequests(): Outcome<List<MyJoinRequest>, GroupError>
-
-    /**
-     * Forgets a request whose outcome the user has seen, or one they are withdrawing while it is
-     * still pending. Deletes the request and the pointer to it.
-     */
-    suspend fun acknowledgeJoinRequest(groupId: GroupId): Outcome<Unit, GroupError>
+    suspend fun getMyJoinRequests(): Flow<List<MyJoinRequest>>
 
     /**
      * Leaves the group. Events the user still holds stay behind and they keep read access to those

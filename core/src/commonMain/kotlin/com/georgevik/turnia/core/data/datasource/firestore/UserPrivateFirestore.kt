@@ -18,6 +18,10 @@ import dev.gitlive.firebase.firestore.FieldValue
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Source
 import dev.gitlive.firebase.firestore.Timestamp
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -74,19 +78,44 @@ class UserPrivateFirestore(
             AccountPatch(fcmTokens = FieldValue.arrayRemove(token)),
         )
 
-    suspend fun fetchJoinRequests(uid: UserId): Outcome<List<String>, UserProfileError> =
-        outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
-            val snapshot = document(uid, DOCUMENT_JOIN_REQUESTS).get().trackData(TAG)
-            Logger.d(TAG, "Fetch join requests from cache: ${snapshot.metadata.isFromCache}")
-
-            if (!snapshot.exists) emptyList()
-            else snapshot.data(UserJoinRequestsDocument.serializer()).groupIds
+    fun fetchJoinRequests(uid: UserId): Flow<List<String>> = flow {
+        var cacheDoc: UserJoinRequestsDocument? = null
+        try {
+            val snapshot = document(DOCUMENT_JOIN_REQUESTS, uid).get(Source.CACHE).trackData(TAG)
+            cacheDoc = if (snapshot.exists) {
+                snapshot.data(UserJoinRequestsDocument.serializer())
+            } else null
+        } catch (exception: Exception) {
+            Logger.e(TAG, "Failed to read the join requests", exception)
         }
+
+
+        emit(cacheDoc?.groupIds.orEmpty())
+
+        emitAll(
+            userSyncFirestore.observe(uid).mapNotNull { sync ->
+                val cacheUpdateAt = cacheDoc?.updateAt?.toInstantOrNull()
+                val syncUpdateAt =
+                    sync.privateUpdatedAt?.toInstantOrNull() ?: return@mapNotNull null
+
+                if (cacheUpdateAt != null && cacheUpdateAt >= syncUpdateAt) {
+                    return@mapNotNull null
+                }
+
+                val serverSnapshot = document(DOCUMENT_JOIN_REQUESTS, uid).get(Source.SERVER)
+                val serverDoc: UserJoinRequestsDocument? = if (serverSnapshot.exists) {
+                    serverSnapshot.data(UserJoinRequestsDocument.serializer())
+                } else null
+
+                cacheDoc = serverDoc
+                cacheDoc?.groupIds.orEmpty()
+            })
+    }
 
     suspend fun removeJoinRequest(uid: UserId, groupId: String): Outcome<Unit, UserProfileError> =
         outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
             Logger.i(TAG, "Drop the join request pointer")
-            document(uid, DOCUMENT_JOIN_REQUESTS).set(
+            document(DOCUMENT_JOIN_REQUESTS, uid).set(
                 mapOf(UserJoinRequestsDocument.FIELD_GROUP_IDS to FieldValue.arrayRemove(groupId)),
                 merge = true,
             )
@@ -94,14 +123,12 @@ class UserPrivateFirestore(
         }
 
     suspend fun setNotificationsEnabled(
-        uid: UserId,
-        enabled: Boolean
-    ): Outcome<Unit, UserProfileError> =
-        patchAccount(
-            uid,
-            "Set notifications enabled: $enabled",
-            AccountPatch(notificationsEnabled = enabled),
-        )
+        uid: UserId, enabled: Boolean
+    ): Outcome<Unit, UserProfileError> = patchAccount(
+        uid,
+        "Set notifications enabled: $enabled",
+        AccountPatch(notificationsEnabled = enabled),
+    )
 
     /**
      * Merges [patch] into `private/account` and bumps the sync marker in the same commit.
@@ -110,27 +137,26 @@ class UserPrivateFirestore(
         uid: UserId,
         log: String,
         patch: AccountPatch,
-    ): Outcome<Unit, UserProfileError> =
-        outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
-            Logger.i(TAG, log)
+    ): Outcome<Unit, UserProfileError> = outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
+        Logger.i(TAG, log)
 
-            val batch = firestore.batch()
-            // Without defaults, so the fields the patch does not carry are not encoded at all.
-            batch.set(
-                document(DOCUMENT_ACCOUNT, uid),
-                patch.copy(updateAt = Timestamp.ServerTimestamp),
-                merge = true,
-            ) { encodeDefaults = false }
-            val syncWrite = userSyncFirestore.writePrivate(batch, uid)
-            batch.commit()
-            trackWrite(TAG)
-            syncWrite.committed()
-        }
+        val batch = firestore.batch()
+        // Without defaults, so the fields the patch does not carry are not encoded at all.
+        batch.set(
+            document(DOCUMENT_ACCOUNT, uid),
+            patch.copy(updateAt = Timestamp.ServerTimestamp),
+            merge = true,
+        ) { encodeDefaults = false }
+        val syncWrite = userSyncFirestore.writePrivate(batch, uid)
+        batch.commit()
+        trackWrite(TAG)
+        syncWrite.committed()
+    }
 
     private suspend fun isSettled(uid: UserId, cached: UserPrivateDocument): Boolean {
-        val serverUpdatedAt = userSyncFirestore.get(uid).valueOrNull()?.privateUpdatedAt
-            .toInstantOrNull()
-            ?: return true
+        val serverUpdatedAt =
+            userSyncFirestore.get(uid).valueOrNull()?.privateUpdatedAt.toInstantOrNull()
+                ?: return true
 
         val cacheUpdatedAt = cached.updateAt.toInstantOrNull() ?: return false
         return cacheUpdatedAt >= serverUpdatedAt
@@ -138,8 +164,7 @@ class UserPrivateFirestore(
 
     /** A document the cache does not have makes the read fail rather than come back empty. */
     private suspend fun cachedAccount(uid: UserId): UserPrivateDocument? = try {
-        document(DOCUMENT_ACCOUNT, uid).get(Source.CACHE).trackData(TAG)
-            .takeIf { it.exists }
+        document(DOCUMENT_ACCOUNT, uid).get(Source.CACHE).trackData(TAG).takeIf { it.exists }
             ?.data(UserPrivateDocument.serializer())
     } catch (exception: Exception) {
         Logger.d(TAG, "The private account is not cached yet: ${exception.message}")
@@ -153,8 +178,7 @@ class UserPrivateFirestore(
     private data class AccountPatch(
         @SerialName(UserPrivateDocument.FIELD_EMAIL) val email: String? = null,
         @SerialName(UserPrivateDocument.FIELD_FCM_TOKENS) val fcmTokens: FieldValue? = null,
-        @SerialName(UserPrivateDocument.FIELD_NOTIFICATIONS_ENABLED)
-        val notificationsEnabled: Boolean? = null,
+        @SerialName(UserPrivateDocument.FIELD_NOTIFICATIONS_ENABLED) val notificationsEnabled: Boolean? = null,
         @SerialName(UserPrivateDocument.FIELD_UPDATE_AT) val updateAt: BaseTimestamp? = null,
     )
 

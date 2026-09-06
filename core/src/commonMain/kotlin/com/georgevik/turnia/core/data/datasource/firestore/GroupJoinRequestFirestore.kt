@@ -5,12 +5,14 @@ import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackWrite
 import com.georgevik.turnia.core.data.datasource.firestore.doc.DocHolder
 import com.georgevik.turnia.core.data.datasource.firestore.doc.JoinRequestDocument
 import com.georgevik.turnia.core.data.datasource.firestore.errors.GenericFirestoreError
+import com.georgevik.turnia.core.data.datasource.firestore.sync.DebouncedReads
 import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.GroupId
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.outcomeCatching
 import dev.gitlive.firebase.firestore.FirebaseFirestore
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Interacts with Firestore: `groups/{groupId}/joinRequests`
@@ -20,6 +22,8 @@ import dev.gitlive.firebase.firestore.FirebaseFirestore
  * who may delete it — to cancel a pending request, or to acknowledge an answered one.
  */
 class GroupJoinRequestFirestore(private val firestore: FirebaseFirestore) {
+
+    private val cachedResponse = DebouncedReads<String, JoinRequestDocument>(window = 10.seconds)
 
     /**
      * What an admin has to answer. Filtered server-side: an answered request lingers until its
@@ -41,16 +45,23 @@ class GroupJoinRequestFirestore(private val firestore: FirebaseFirestore) {
         }
 
     /** The caller's own request in a group, which they may read by id and by id alone. */
-    suspend fun fetch(
+    suspend fun observe(
         groupId: GroupId,
         userId: UserId,
     ): Outcome<JoinRequestDocument?, GenericFirestoreError> =
         outcomeCatching(TAG, { GenericFirestoreError(it) }) {
+            val cachedId = "$groupId $userId"
+            cachedResponse.cached(cachedId)?.let {  return@outcomeCatching it }
+
             val snapshot = requests(groupId).document(userId.value).get().trackData(TAG)
             Logger.d(TAG, "Fetch join request from cache: ${snapshot.metadata.isFromCache}")
 
-            if (!snapshot.exists) null
+            val joinRequest = if (!snapshot.exists) null
             else snapshot.data(JoinRequestDocument.serializer())
+
+            joinRequest?.also {
+                cachedResponse.remember(cachedId, it)
+            }
         }
 
     suspend fun delete(groupId: GroupId, userId: UserId): Outcome<Unit, GenericFirestoreError> =

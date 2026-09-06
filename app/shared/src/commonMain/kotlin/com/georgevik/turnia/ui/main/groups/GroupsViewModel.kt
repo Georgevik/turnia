@@ -8,7 +8,6 @@ import com.georgevik.turnia.core.domain.model.JoinGroupStatus
 import com.georgevik.turnia.core.domain.model.JoinRequestStatus
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.system.fold
-import com.georgevik.turnia.core.system.valueOrEmpty
 import com.georgevik.turnia.ui.main.groups.model.GroupRowUi
 import com.georgevik.turnia.ui.main.groups.model.JoinRequestRowUi
 import com.georgevik.turnia.ui.system.entityColor
@@ -16,6 +15,8 @@ import com.georgevik.turnia.ui.system.toComposeColorOrNull
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -28,29 +29,41 @@ class GroupsViewModel(
 
     init {
         viewModelScope.launch {
-            var first = true
-            groupRepository.getGroups().collect { groups ->
-                val rows = groups.map {
-                    GroupRowUi(
-                        id = it.id,
-                        name = it.name,
-                        color = it.color?.toComposeColorOrNull() ?: entityColor(it.id.value),
-                        members = it.memberCount,
-                        isAdmin = it.isAdmin,
-                        isRevoked = it.isRevoked,
-                    )
+            combine(
+                groupRepository.getMyJoinRequests()
+                    .map { requests ->
+                        requests
+                            .mapNotNull { request ->
+                                when (request.status) {
+                                    JoinRequestStatus.REJECTED -> null
+                                    JoinRequestStatus.ACCEPTED -> null
+                                    JoinRequestStatus.PENDING -> JoinRequestRowUi(
+                                        groupId = request.groupId,
+                                        groupName = request.groupName,
+                                        isPending = true,
+                                    )
+                                }
+                            }
+                    },
+                groupRepository.getGroups().map { groups ->
+                    groups.map {
+                        GroupRowUi(
+                            id = it.id,
+                            name = it.name,
+                            color = it.color?.toComposeColorOrNull() ?: entityColor(it.id.value),
+                            members = it.memberCount,
+                            isAdmin = it.isAdmin,
+                            isRevoked = it.isRevoked,
+                        )
+                    }
                 }
-
+            ) { requestsUi, groupsUi ->
                 _uiState.update { state ->
                     val current = state as? GroupsUi.Success ?: GroupsUi.Success()
-                    current.copy(groups = rows)
+                    current.copy(groups = groupsUi, requests = requestsUi)
                 }
 
-                if (first || requests().isNotEmpty()) {
-                    first = false
-                    loadRequests()
-                }
-            }
+            }.collect {}
         }
     }
 
@@ -72,7 +85,6 @@ class GroupsViewModel(
                             userMessage = status.toMessage(),
                         )
                     }
-                    if (status == JoinGroupStatus.Requested) loadRequests()
                 },
                 onFailure = { error ->
                     updateSuccess {
@@ -91,38 +103,10 @@ class GroupsViewModel(
             updateSuccess { state ->
                 state.copy(requests = state.requests.filterNot { it.groupId == groupId })
             }
-
-            groupRepository.acknowledgeJoinRequest(groupId).fold(
-                onSuccess = { },
-                onFailure = {
-                    updateSuccess { it.copy(userMessage = GroupsMessage.RequestDismissFailed) }
-                    loadRequests()
-                },
-            )
         }
     }
 
     fun hideSnackbar() = updateSuccess { it.copy(userMessage = null) }
-
-    private suspend fun loadRequests() {
-        val requests = groupRepository.getMyJoinRequests().valueOrEmpty()
-        requests.filter { it.status == JoinRequestStatus.ACCEPTED }
-            .forEach { groupRepository.acknowledgeJoinRequest(it.groupId) }
-
-        val rows = requests.mapNotNull { request ->
-            when (request.status) {
-                JoinRequestStatus.ACCEPTED -> null
-                else -> JoinRequestRowUi(
-                    groupId = request.groupId,
-                    groupName = request.groupName,
-                    isPending = request.status == JoinRequestStatus.PENDING,
-                )
-            }
-        }
-        updateSuccess { it.copy(requests = rows) }
-    }
-
-    private fun requests() = (_uiState.value as? GroupsUi.Success)?.requests.orEmpty()
 
     private fun JoinGroupStatus.toMessage() = when (this) {
         JoinGroupStatus.Joined -> GroupsMessage.Joined

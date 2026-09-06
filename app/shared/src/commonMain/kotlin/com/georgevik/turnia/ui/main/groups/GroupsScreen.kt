@@ -25,7 +25,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.georgevik.turnia.core.domain.model.GroupId
 import com.georgevik.turnia.navigation.LocalNavigator
 import com.georgevik.turnia.navigation.LocalRootNavigator
 import com.georgevik.turnia.navigation.main.routes.ExternalCalendarData
@@ -130,7 +129,6 @@ fun GroupsScreen(viewModel: GroupsViewModel = koinViewModel()) {
                         GroupList(
                             groups = current.groups,
                             requests = current.requests,
-                            onDismissRequest = viewModel::dismissRequest,
                         )
                     }
                 }
@@ -157,7 +155,6 @@ fun GroupsScreen(viewModel: GroupsViewModel = koinViewModel()) {
 private fun GroupList(
     groups: List<GroupRowUi>,
     requests: List<JoinRequestRowUi>,
-    onDismissRequest: (GroupId) -> Unit,
 ) {
     val navigator = LocalNavigator.current
 
@@ -169,10 +166,7 @@ private fun GroupList(
         // Above the groups: these are the ones the user is still waiting on, and a rejected one
         // stays until they dismiss it because nothing else will ever tell them.
         items(requests, key = { "request-${it.groupId.value}" }) { request ->
-            JoinRequestCard(
-                request = request,
-                onDismiss = { onDismissRequest(request.groupId) },
-            )
+            JoinRequestCard(request = request)
         }
 
         items(groups, key = { it.id.value }) { group ->
