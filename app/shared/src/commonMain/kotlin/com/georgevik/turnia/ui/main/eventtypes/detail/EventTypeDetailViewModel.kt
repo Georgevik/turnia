@@ -91,7 +91,7 @@ class EventTypeDetailViewModel(
             groupRepository.getGroup(groupId).valueOrNull()
                 ?: return EventTypeScreenError.GroupNotFound.toFailure()
 
-        return group.types.find { it.id == typeId }?.toUi()?.toSuccess()
+        return group.types.find { it.id == typeId }?.toUi(editable = group.isAdmin)?.toSuccess()
             ?: EventTypeScreenError.GroupEventNotFound.toFailure()
     }
 
@@ -170,9 +170,11 @@ class EventTypeDetailViewModel(
         when (key) {
             is EventTypeDetailData.EditPersonal -> savePersonal(EventTypeId(key.typeId), form)
             EventTypeDetailData.NewPersonal -> savePersonal(EventTypeId(createId()), form)
-            is EventTypeDetailData.NewGroup -> saveGroupType(GroupId(key.groupId), form)
+            is EventTypeDetailData.NewGroup ->
+                saveGroupType(GroupId(key.groupId), EventTypeId(createId()), form, isNew = true)
+
             is EventTypeDetailData.EditGroup ->
-                updateSuccess { it.copy(toastError = EventTypeToastError.NotImplemented) }
+                saveGroupType(GroupId(key.groupId), EventTypeId(key.typeId), form, isNew = false)
         }
     }
 
@@ -211,21 +213,22 @@ class EventTypeDetailViewModel(
         }
     }
 
-    private fun saveGroupType(groupId: GroupId, form: EventTypeForm) {
-        val typeId = EventTypeId(createId())
+    private fun saveGroupType(
+        groupId: GroupId,
+        typeId: EventTypeId,
+        form: EventTypeForm,
+        isNew: Boolean,
+    ) {
         val type = GroupEventType(
             id = typeId,
             groupId = groupId,
-            // The type does not store the group's name; the mapper drops it on the way out.
             groupName = "",
             name = form.name.trim(),
             acronym = form.acronym.trim(),
             description = form.description.trim().ifBlank { null },
             startTime = form.startTime.toTimeOrNull(),
             endTime = form.endTime.toTimeOrNull(),
-            // A type nobody can offer for swap defeats the point of the group; the screen has no
-            // switch for it yet.
-            swappable = true,
+            swappable = form.swappable ?: true,
             colorHex = "",
             userColor = null,
         )
@@ -235,9 +238,7 @@ class EventTypeDetailViewModel(
 
             groupRepository.saveEventType(groupId, type).fold(
                 onSuccess = {
-                    // The colour is the author's own pick, not the type's: it is saved apart, and
-                    // a group type nobody coloured still renders.
-                    groupRepository.saveTypeColor(groupId, typeId, form.color.toHex())
+                    if (isNew) groupRepository.saveTypeColor(groupId, typeId, form.color.toHex())
                     updateSuccess { it.copy(saveButtonLoading = false, isSaved = true) }
                 },
                 onFailure = {
@@ -264,16 +265,18 @@ class EventTypeDetailViewModel(
         swappable = false,
     )
 
-    private fun GroupEventType.toUi() = EventTypeForm(
+    private fun GroupEventType.toUi(editable: Boolean) = EventTypeForm(
         typeId = id,
-        fieldsEditable = false,
+        fieldsEditable = editable,
         name = name,
         acronym = acronym.orEmpty(),
         description = description.orEmpty(),
-        startTime = startTime.orEmpty(),
-        endTime = endTime.orEmpty(),
+        startTime = startTime.orEmpty().toTimeInput(),
+        endTime = endTime.orEmpty().toTimeInput(),
         color = color.toComposeColorOr(entityColor(id.value)),
-        swappable = false,
+        // El valor real, no `false`: la pantalla no lo muestra, pero guardar tiene que devolverlo
+        // tal cual en lugar de apagar el intercambio de un tipo por haberlo editado.
+        swappable = swappable,
     )
 
 
@@ -290,7 +293,7 @@ class EventTypeDetailViewModel(
             startTime = "",
             endTime = "",
             color = entityColor(createUuid()),
-            swappable = false,
+            swappable = null,
         )
     }
 
