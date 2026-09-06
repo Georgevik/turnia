@@ -54,6 +54,7 @@ class GroupMapper {
             autoApprove = invitation.autoApprove,
             membersCanSeeCode = invitation.membersCanSeeCode,
             isAdmin = isAdmin,
+            color = doc.color,
         )
     }
 
@@ -78,6 +79,7 @@ class GroupMapper {
             autoApprove = false,
             membersCanSeeCode = false,
             isAdmin = false,
+            color = doc.color,
             isRevoked = true,
         )
     }
@@ -89,6 +91,7 @@ class GroupMapper {
         revokedUids: List<String>,
     ) = GroupDocument(
         name = group.name,
+        color = group.color,
         memberUids = memberUids,
         revokedUids = revokedUids,
         adminUids = adminUids,

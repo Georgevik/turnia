@@ -16,6 +16,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class GroupDocument(
     @SerialName("name") val name: String,
+    @SerialName("color") val color: String? = null,
     @SerialName(FIELD_MEMBER_UIDS) val memberUids: List<String> = emptyList(),
     // Former members who still hold events here: they read only their own, and never this document.
     @SerialName(FIELD_REVOKED_UIDS) val revokedUids: List<String> = emptyList(),

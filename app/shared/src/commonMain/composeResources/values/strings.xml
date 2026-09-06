@@ -100,6 +100,7 @@
     <string name="group_detail_field_name">Nombre del grupo</string>
     <string name="group_detail_field_members">Miembros</string>
     <string name="group_detail_field_invitation">Código de invitación</string>
+    <string name="group_detail_section_color">Color</string>
     <string name="group_detail_section_types">Tipos de evento</string>
     <string name="group_detail_types_add">Añadir tipo de evento</string>
     <string name="group_detail_types_empty">Este grupo todavía no tiene tipos de evento.</string>
@@ -162,7 +163,6 @@
     <string name="event_type_swap_allowed">Intercambio permitido</string>
     <string name="event_type_swap_not_allowed">Intercambio no permitido</string>
     <string name="event_type_group_readonly">Solo el administrador del grupo puede editar estos campos. Tú puedes cambiar el color.</string>
-    <string name="event_type_color_selected">Color seleccionado</string>
     <string name="event_type_save">Guardar</string>
     <string name="event_type_not_set">—</string>
     <string name="event_type_error_required">Este campo es obligatorio.</string>
@@ -184,6 +184,7 @@
 
     <!-- Components -->
     <string name="time_field_hint">HH:mm</string>
+    <string name="color_selected">Color seleccionado</string>
 
     <!-- Dialogs -->
     <string name="dialog_cancel">Cancelar</string>

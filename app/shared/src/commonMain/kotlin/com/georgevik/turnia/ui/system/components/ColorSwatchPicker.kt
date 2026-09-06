@@ -1,4 +1,4 @@
-package com.georgevik.turnia.ui.main.eventtypes.components
+package com.georgevik.turnia.ui.system.components
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -21,15 +21,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import com.georgevik.turnia.ui.system.EntityPalette
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
-import turnia.app.shared.generated.resources.event_type_color_selected
+import turnia.app.shared.generated.resources.color_selected
 
-/**
- * Shows every [EntityPalette] color as a selectable circle. The currently selected
- * color is marked with a check. Selecting one calls [onPick].
- */
 @Composable
 fun ColorSwatchPicker(
     colors: List<Color>,
@@ -37,7 +32,7 @@ fun ColorSwatchPicker(
     onPick: (Color) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val selectedLabel = stringResource(Res.string.event_type_color_selected)
+    val selectedLabel = stringResource(Res.string.color_selected)
     FlowRow(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(12.dp),

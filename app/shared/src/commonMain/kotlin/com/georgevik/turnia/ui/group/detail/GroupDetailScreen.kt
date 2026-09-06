@@ -50,6 +50,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -66,12 +67,14 @@ import com.georgevik.turnia.ui.group.detail.model.GroupDetailUi
 import com.georgevik.turnia.ui.group.detail.model.GroupMemberUi
 import com.georgevik.turnia.ui.group.detail.model.GroupTypeRowUi
 import com.georgevik.turnia.ui.group.detail.model.JoinRequestUi
+import com.georgevik.turnia.ui.system.EntityPalette
 import com.georgevik.turnia.ui.system.LocalSnackbar
 import com.georgevik.turnia.ui.system.components.AcronymBadge
 import com.georgevik.turnia.ui.system.components.AdminBadge
 import com.georgevik.turnia.ui.system.components.Avatar
 import com.georgevik.turnia.ui.system.components.Chevron
 import com.georgevik.turnia.ui.system.components.ConfirmationDialog
+import com.georgevik.turnia.ui.system.components.ColorSwatchPicker
 import com.georgevik.turnia.ui.system.components.TFieldLabel
 import com.georgevik.turnia.ui.system.components.TListItem
 import com.georgevik.turnia.ui.system.components.TReadOnlyField
@@ -110,6 +113,7 @@ import turnia.app.shared.generated.resources.group_detail_request_accept
 import turnia.app.shared.generated.resources.group_detail_request_reject
 import turnia.app.shared.generated.resources.group_detail_requests_title
 import turnia.app.shared.generated.resources.group_detail_save
+import turnia.app.shared.generated.resources.group_detail_section_color
 import turnia.app.shared.generated.resources.group_detail_section_invitation
 import turnia.app.shared.generated.resources.group_detail_section_members
 import turnia.app.shared.generated.resources.group_detail_section_types
@@ -132,7 +136,6 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
     val snackbar = LocalSnackbar.current
 
     var membersSheetOpen by remember { mutableStateOf(false) }
-    // The member a long press opened the action list for, and the two confirmations those lead to.
     var memberActions by remember { mutableStateOf<GroupMemberUi?>(null) }
     var pendingRemoval by remember { mutableStateOf<GroupMemberUi?>(null) }
     val sheetState = rememberModalBottomSheetState()
@@ -204,6 +207,7 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
                     modifier = contentModifier.padding(20.dp),
                     state = state,
                     onNameChanged = viewModel::onNameChanged,
+                    onPickColor = viewModel::onPickColor,
                     onAutoApproveChanged = viewModel::onAutoApproveChanged,
                     onMembersCanSeeCodeChanged = viewModel::onMembersCanSeeCodeChanged,
                     onRegenerateCode = viewModel::onRegenerateCode,
@@ -275,7 +279,6 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
             onDismissRequest = { pendingRemoval = null },
         )
     }
-
 }
 
 @Composable
@@ -283,6 +286,7 @@ private fun GroupDetailContent(
     modifier: Modifier = Modifier,
     state: GroupDetailUi.Success,
     onNameChanged: (String) -> Unit,
+    onPickColor: (Color) -> Unit,
     onAutoApproveChanged: (Boolean) -> Unit,
     onMembersCanSeeCodeChanged: (Boolean) -> Unit,
     onRegenerateCode: () -> Unit,
@@ -301,7 +305,7 @@ private fun GroupDetailContent(
     ) {
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             Avatar(
-                background = entityColor(form.groupId.value.ifBlank { form.name }),
+                background = form.color,
                 icon = Icons.Default.Groups,
                 size = 72.dp,
             )
@@ -318,6 +322,19 @@ private fun GroupDetailContent(
             )
         } else {
             TReadOnlyField(stringResource(Res.string.group_detail_field_name), form.name)
+        }
+
+        // The colour is the group's, so it goes with the rest of what only an admin may change.
+        if (form.editable) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                TFieldLabel(stringResource(Res.string.group_detail_section_color))
+                ColorSwatchPicker(
+                    colors = EntityPalette,
+                    selected = form.color,
+                    onPick = onPickColor,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
 
         // Somebody is waiting at the door: it goes first, before anything an admin might browse.

@@ -44,7 +44,7 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
 - A user can **delete their own** event; an **admin** can delete any group event. Deleting removes it (there is no cancelled state).
 - **Personal events** can carry notes (on the event); group event docs are shared with all members, so they hold no private notes.
 - A user can define their own **personal event types** and add **personal events** (no group), each colored by its type.
-- **Colors**: a group event type has no color; each user picks a color per group event type, shared by all their events of that type. Personal event types carry their own color.
+- **Colors**: a group event type has no color; each user picks a color per group event type, shared by all their events of that type. Personal event types carry their own color. A **group** does carry its own color: an admin picks it and every member sees the same one; a group saved without one falls back to a color derived from its id.
 - A user can belong to **several groups** and can invite another user to view **their entire calendar** (crossing groups).
 - A user can **leave** a group, and an **admin** can **remove** a member. Either way, if they still hold events
   there they become **revoked**: moved from `memberUids` to `revokedUids`, dropped from `members`, and left

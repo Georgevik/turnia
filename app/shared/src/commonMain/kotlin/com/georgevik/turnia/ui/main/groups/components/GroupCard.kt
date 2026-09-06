@@ -35,7 +35,7 @@ fun GroupCard(group: GroupRowUi, showAdminBadge: Boolean = true, onClick: () -> 
             pluralStringResource(Res.plurals.group_member_count, group.members, group.members)
         },
         onClick = onClick,
-        leading = { Avatar(background = entityColor(group.id.value), icon = Icons.Default.Groups) },
+        leading = { Avatar(background = group.color, icon = Icons.Default.Groups) },
         trailing = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -57,6 +57,7 @@ private fun GroupCardPreview() {
             group = GroupRowUi(
                 id = GroupId("1"),
                 name = "Group Name",
+                color = entityColor("1"),
                 members = 5,
                 isAdmin = true,
             ),
