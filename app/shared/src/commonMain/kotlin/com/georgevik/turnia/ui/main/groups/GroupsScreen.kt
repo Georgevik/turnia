@@ -32,9 +32,11 @@ import com.georgevik.turnia.navigation.main.routes.MainRoute
 import com.georgevik.turnia.navigation.root.routes.RootRoute
 import com.georgevik.turnia.ui.main.groups.components.GroupCard
 import com.georgevik.turnia.ui.main.groups.components.GroupsFabMenu
+import com.georgevik.turnia.ui.main.groups.components.GroupsFilterChips
 import com.georgevik.turnia.ui.main.groups.components.JoinGroupSheet
 import com.georgevik.turnia.ui.main.groups.components.JoinRequestCard
 import com.georgevik.turnia.ui.main.groups.model.GroupRowUi
+import com.georgevik.turnia.ui.main.groups.model.GroupsFilter
 import com.georgevik.turnia.ui.main.groups.model.JoinRequestRowUi
 import com.georgevik.turnia.ui.main.system.EmptyState
 import com.georgevik.turnia.ui.main.system.ScreenHeader
@@ -46,6 +48,8 @@ import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.group_detail_create
 import turnia.app.shared.generated.resources.groups_empty_body
 import turnia.app.shared.generated.resources.groups_empty_title
+import turnia.app.shared.generated.resources.groups_filter_mine_empty_body
+import turnia.app.shared.generated.resources.groups_filter_mine_empty_title
 import turnia.app.shared.generated.resources.groups_join_already_member
 import turnia.app.shared.generated.resources.groups_join_code_not_found
 import turnia.app.shared.generated.resources.groups_join_error
@@ -126,10 +130,25 @@ fun GroupsScreen(viewModel: GroupsViewModel = koinViewModel()) {
                             modifier = Modifier.fillMaxSize(),
                         )
                     } else {
-                        GroupList(
-                            groups = current.groups,
-                            requests = current.requests,
+                        GroupsFilterChips(
+                            selected = current.filter,
+                            pendingCount = current.requests.size,
+                            onSelected = viewModel::filterSelected,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                         )
+
+                        val groups = current.groups
+                            .takeIf { current.filter != GroupsFilter.PENDING }
+                            .orEmpty()
+                        val requests = current.requests
+                            .takeIf { current.filter != GroupsFilter.MINE }
+                            .orEmpty()
+
+                        if (groups.isEmpty() && requests.isEmpty()) {
+                            NoGroupsYet()
+                        } else {
+                            GroupList(groups = groups, requests = requests)
+                        }
                     }
                 }
             }
@@ -163,12 +182,6 @@ private fun GroupList(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        // Above the groups: these are the ones the user is still waiting on, and a rejected one
-        // stays until they dismiss it because nothing else will ever tell them.
-        items(requests, key = { "request-${it.groupId.value}" }) { request ->
-            JoinRequestCard(request = request)
-        }
-
         items(groups, key = { it.id.value }) { group ->
             GroupCard(
                 group = group,
@@ -183,9 +196,21 @@ private fun GroupList(
                 },
             )
         }
-    }
 
+        items(requests, key = { "request-${it.groupId.value}" }) { request ->
+            JoinRequestCard(request = request)
+        }
+    }
 }
+
+/** Only "Tus grupos" can come up empty: the pending chip is gone once there is nothing pending. */
+@Composable
+private fun NoGroupsYet() = EmptyState(
+    icon = Icons.Default.GroupAdd,
+    title = stringResource(Res.string.groups_filter_mine_empty_title),
+    body = stringResource(Res.string.groups_filter_mine_empty_body),
+    modifier = Modifier.fillMaxSize(),
+)
 
 @Composable
 private fun GroupsMessage.text(): String = stringResource(

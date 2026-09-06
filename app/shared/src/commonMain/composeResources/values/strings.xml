@@ -231,6 +231,11 @@
     <string name="groups_empty_title">Ningún grupo por aquí</string>
     <string name="groups_empty_body">Crea uno y que los turnos dejen de vivir en un chat de WhatsApp.</string>
     <string name="groups_load_error">No hemos podido cargar tus grupos.</string>
+    <string name="groups_filter_all">Todos</string>
+    <string name="groups_filter_mine">Tus grupos</string>
+    <string name="groups_filter_pending">Pendientes (%d)</string>
+    <string name="groups_filter_mine_empty_title">Ningún grupo todavía</string>
+    <string name="groups_filter_mine_empty_body">En cuanto un admin acepte tu petición, el grupo saldrá aquí.</string>
     <string name="admin_groups_title">Grupos que administras</string>
     <string name="admin_groups_caption">Solo salen los grupos de los que eres admin. Toca uno para editarlo.</string>
     <string name="admin_groups_empty_title">Ningún grupo a tu cargo</string>
