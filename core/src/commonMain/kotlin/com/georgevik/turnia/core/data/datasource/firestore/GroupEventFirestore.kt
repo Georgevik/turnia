@@ -99,7 +99,7 @@ class GroupEventFirestore(
             val syncWrite =
                 groupSyncFirestore.writeEvents(batch, groupId, YearMonth.parse(event.yearMonth))
             batch.commit()
-            trackWrite(TAG)
+            trackWrite(TAG, "setEvent")
             syncWrite.committed()
         }
 
@@ -118,7 +118,7 @@ class GroupEventFirestore(
             }
             val syncWrite = groupSyncFirestore.writeEvents(batch, groupId, eventDate.yearMonth)
             batch.commit()
-            trackWrite(TAG)
+            trackWrite(TAG, "deleteEvent")
             syncWrite.committed()
         }
 
@@ -147,7 +147,7 @@ class GroupEventFirestore(
                 inMonths == null -> mine
                 else -> mine and inMonths
             }
-        }.get(source).trackData(TAG)
+        }.get(source).trackData(TAG, "events($source)")
 
         Logger.d(
             TAG,

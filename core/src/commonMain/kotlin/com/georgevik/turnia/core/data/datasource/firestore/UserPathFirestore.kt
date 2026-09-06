@@ -45,7 +45,7 @@ class UserPathFirestore(
 
     suspend fun fetch(uid: UserId): Outcome<UserProfile, UserProfileError> =
         outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
-            val snapshot = queryUserDocument(uid).get().trackData(TAG)
+            val snapshot = queryUserDocument(uid).get().trackData(TAG, "fetchProfile")
             Logger.d(TAG, "Fetch user from cache: ${snapshot.metadata.isFromCache}")
 
             if (!snapshot.exists) return Outcome.Failure(UserProfileError.NotFound)
@@ -59,7 +59,7 @@ class UserPathFirestore(
 
     private fun observeUserDoc(uid: UserId): Flow<UserDocument> =
         queryUserDocument(uid).snapshots.map { snapshot ->
-            snapshot.trackData(TAG)
+            snapshot.trackData(TAG, "userDoc(snapshots)")
             if (!snapshot.exists) UserDocument("")
             else snapshot.data(UserDocument.serializer())
         }
@@ -70,7 +70,7 @@ class UserPathFirestore(
 
     suspend fun getUserDocument(uid: UserId): Outcome<UserDocument, UserProfileError> =
         outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
-            val snapshot = queryUserDocument(uid).get().trackData(TAG)
+            val snapshot = queryUserDocument(uid).get().trackData(TAG, "userDoc")
             if (!snapshot.exists) return Outcome.Failure(UserProfileError.NotFound)
 
             snapshot.data(UserDocument.serializer())
@@ -88,7 +88,7 @@ class UserPathFirestore(
                 return@outcomeCatching it.data(UserDocument.serializer())
             }
 
-            val snapshot = queryUserDocument(uid).get(Source.SERVER).trackData(TAG)
+            val snapshot = queryUserDocument(uid).get(Source.SERVER).trackData(TAG, "userDoc(server)")
             if (!snapshot.exists) return Outcome.Failure(UserProfileError.NotFound)
 
             snapshot.data(UserDocument.serializer())
@@ -96,7 +96,7 @@ class UserPathFirestore(
 
     /** A document the cache does not have makes the read fail rather than come back empty. */
     private suspend fun cachedUserDocument(uid: UserId): DocumentSnapshot? = try {
-        queryUserDocument(uid).get(Source.CACHE).trackData(TAG).takeIf { it.exists }
+        queryUserDocument(uid).get(Source.CACHE).trackData(TAG, "userDoc(cache)").takeIf { it.exists }
     } catch (exception: Exception) {
         Logger.d(TAG, "The user document is not cached yet: ${exception.message}")
         null
@@ -111,7 +111,7 @@ class UserPathFirestore(
             queryUserDocument(uid).updateFields {
                 UserDocument.FIELD_CALENDAR_SHARED_WITH to FieldValue.arrayUnion(granteeUid.value)
             }
-            trackWrite(TAG)
+            trackWrite(TAG, "grantCalendarAccess")
         }
 
     suspend fun revokeCalendarAccess(
@@ -123,7 +123,7 @@ class UserPathFirestore(
             queryUserDocument(uid).updateFields {
                 UserDocument.FIELD_CALENDAR_SHARED_WITH to FieldValue.arrayRemove(granteeUid.value)
             }
-            trackWrite(TAG)
+            trackWrite(TAG, "revokeCalendarAccess")
         }
 
     suspend fun updateTypeColor(
@@ -136,21 +136,21 @@ class UserPathFirestore(
             Logger.i(TAG, "Update group event type colour")
             val key = UserDocument.typeColorKey(groupId.value, typeId.value)
             queryUserDocument(uid).updateFields { "${UserDocument.FIELD_TYPE_COLORS}.$key" to color }
-            trackWrite(TAG)
+            trackWrite(TAG, "updateTypeColor")
         }
 
     suspend fun updateUsername(uid: UserId, username: String): Outcome<Unit, UserProfileError> =
         outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
             Logger.i(TAG, "Update username")
             queryUserDocument(uid).updateFields { UserDocument.FIELD_USERNAME to username }
-            trackWrite(TAG)
+            trackWrite(TAG, "updateUsername")
         }
 
     suspend fun update(uid: UserId, userPatched: UserDocument): Outcome<Unit, UserProfileError> =
         outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
             Logger.i(TAG, "Update user document")
             queryUserDocument(uid).set(userPatched)
-            trackWrite(TAG)
+            trackWrite(TAG, "updateUserDoc")
         }
 
     private fun queryUserDocument(uid: UserId) =
@@ -161,7 +161,7 @@ class UserPathFirestore(
             .where { UserDocument.FIELD_CALENDAR_SHARED_WITH contains uid.value }
             .snapshots
             .map { snapshot ->
-                snapshot.trackData(TAG)
+                snapshot.trackData(TAG, "calendarsSharedWithMe(snapshots)")
                 snapshot.documents.map { mapper.map(it) }.toSuccess()
             }
             .distinctUntilChanged()

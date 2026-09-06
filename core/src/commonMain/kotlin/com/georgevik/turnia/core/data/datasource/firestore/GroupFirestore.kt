@@ -86,7 +86,7 @@ class GroupFirestore(
             .where { GroupDocument.FIELD_MEMBER_UIDS contains userId.value }
             .snapshots
             .map { snapshot ->
-                snapshot.trackData(TAG)
+                snapshot.trackData(TAG, "myGroups(snapshots)")
                 Logger.d(TAG, "Groups of the user: ${snapshot.documents.size}")
 
                 snapshot.documents.map {
@@ -103,7 +103,7 @@ class GroupFirestore(
             Logger.d(TAG, "Create group document")
 
             groupDocument(groupId).set(group)
-            trackWrite(TAG)
+            trackWrite(TAG, "createGroup")
         }
 
     suspend fun update(groupId: GroupId, group: GroupDocument): Outcome<Unit, GenericFirestoreError> =
@@ -116,12 +116,12 @@ class GroupFirestore(
             batch.set(groupDocument(groupId), group)
             val syncWrite = groupSyncFirestore.writeGroup(batch, groupId)
             batch.commit()
-            trackWrite(TAG)
+            trackWrite(TAG, "updateGroup")
             syncWrite.committed()
         }
 
     private suspend fun queryGroup(groupId: GroupId, source: Source): DocHolder<GroupDocument>? {
-        val snapshot = groupDocument(groupId).get(source).trackData(TAG)
+        val snapshot = groupDocument(groupId).get(source).trackData(TAG, "groupDoc($source)")
         Logger.d(TAG, "Group document. Source: $source. Exists: ${snapshot.exists}")
 
         if (!snapshot.exists) return null

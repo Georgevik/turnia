@@ -45,7 +45,7 @@ class UserSyncFirestore(
 
     private fun snapshots(uid: UserId): Flow<UserSyncDocument> = syncDocument(uid).snapshots
         .map { snapshot ->
-            snapshot.trackData(TAG)
+            snapshot.trackData(TAG, "sync(snapshots)")
             if (!snapshot.exists) UserSyncDocument()
             else snapshot.data(UserSyncDocument.serializer())
         }
@@ -66,6 +66,7 @@ class UserSyncFirestore(
         }
 
     fun writePersonalEvents(batch: WriteBatch, uid: UserId, yearMonth: YearMonth) = write(
+        "writePersonalEvents",
         batch,
         uid,
         UserSyncDocument(
@@ -75,23 +76,36 @@ class UserSyncFirestore(
         ),
     )
 
-    fun writePersonalEventTypes(batch: WriteBatch, uid: UserId) =
-        write(batch, uid, UserSyncDocument(personalEventTypesUpdatedAt = Timestamp.ServerTimestamp))
+    fun writePersonalEventTypes(batch: WriteBatch, uid: UserId) = write(
+        "writePersonalEventTypes",
+        batch,
+        uid,
+        UserSyncDocument(personalEventTypesUpdatedAt = Timestamp.ServerTimestamp),
+    )
 
-    fun writePrivate(batch: WriteBatch, uid: UserId) =
-        write(batch, uid, UserSyncDocument(privateUpdatedAt = Timestamp.ServerTimestamp))
+    fun writePrivate(batch: WriteBatch, uid: UserId) = write(
+        "writePrivate",
+        batch,
+        uid,
+        UserSyncDocument(privateUpdatedAt = Timestamp.ServerTimestamp),
+    )
 
-    private fun write(batch: WriteBatch, uid: UserId, patch: UserSyncDocument): PendingWrite {
+    private fun write(
+        operation: String,
+        batch: WriteBatch,
+        uid: UserId,
+        patch: UserSyncDocument,
+    ): PendingWrite {
         Logger.d(TAG, "Update sync updates")
         // Without defaults, so the fields the patch does not carry are not encoded at all.
         batch.set(syncDocument(uid), patch, merge = true) { encodeDefaults = false }
         recentReads.forget(uid)
 
-        return PendingWrite { trackWrite(TAG) }
+        return PendingWrite { trackWrite(TAG, operation) }
     }
 
     private suspend fun fetch(uid: UserId): UserSyncDocument {
-        val snapshot = syncDocument(uid).get().trackData(TAG)
+        val snapshot = syncDocument(uid).get().trackData(TAG, "sync")
         Logger.d(TAG, "Sync updates. Cached: ${snapshot.metadata.isFromCache}")
 
         // A user who has never written anything has no sync document: nothing to catch up with.

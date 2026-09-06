@@ -43,7 +43,7 @@ class GroupSyncFirestore(
     private fun snapshots(groupId: GroupId): Flow<GroupSyncDocument> =
         syncDocument(groupId).snapshots
         .map { snapshot ->
-            snapshot.trackData(TAG)
+            snapshot.trackData(TAG, "sync(snapshots)")
             if (!snapshot.exists) GroupSyncDocument()
             else snapshot.data(GroupSyncDocument.serializer())
         }
@@ -60,7 +60,7 @@ class GroupSyncFirestore(
                 return@outcomeCatching it
             }
 
-            val snapshot = syncDocument(groupId).get().trackData(TAG)
+            val snapshot = syncDocument(groupId).get().trackData(TAG, "sync")
             Logger.d(TAG, "Sync updates. Cached: ${snapshot.metadata.isFromCache}")
 
             // A group nobody has written to has no sync document: nothing to catch up with.
@@ -72,6 +72,7 @@ class GroupSyncFirestore(
         }
 
     fun writeEvents(batch: WriteBatch, groupId: GroupId, yearMonth: YearMonth) = write(
+        "writeEvents",
         batch,
         groupId,
         GroupSyncDocument(
@@ -80,15 +81,20 @@ class GroupSyncFirestore(
     )
 
     fun writeGroup(batch: WriteBatch, groupId: GroupId) =
-        write(batch, groupId, GroupSyncDocument(groupUpdatedAt = Timestamp.ServerTimestamp))
+        write("writeGroup", batch, groupId, GroupSyncDocument(groupUpdatedAt = Timestamp.ServerTimestamp))
 
-    private fun write(batch: WriteBatch, groupId: GroupId, patch: GroupSyncDocument): PendingWrite {
+    private fun write(
+        operation: String,
+        batch: WriteBatch,
+        groupId: GroupId,
+        patch: GroupSyncDocument,
+    ): PendingWrite {
         Logger.d(TAG, "Update group sync updates")
         // Merging derives its field mask from the leaves, so only this marker is written.
         batch.set(syncDocument(groupId), patch, merge = true) { encodeDefaults = false }
         recentReads.forget(groupId)
 
-        return PendingWrite { trackWrite(TAG) }
+        return PendingWrite { trackWrite(TAG, operation) }
     }
 
     private fun syncDocument(groupId: GroupId) =

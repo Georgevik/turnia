@@ -91,7 +91,7 @@ class PersonalEventFirestore(
             val syncWrite =
                 userSyncFirestore.writePersonalEvents(batch, uid, event.date.toYearMonth())
             batch.commit()
-            trackWrite(TAG)
+            trackWrite(TAG, "setEvent")
             syncWrite.committed()
         }
 
@@ -113,7 +113,7 @@ class PersonalEventFirestore(
             }
             val syncWrite = userSyncFirestore.writePersonalEvents(batch, uid, eventDate.yearMonth)
             batch.commit()
-            trackWrite(TAG)
+            trackWrite(TAG, "updateNotes")
             syncWrite.committed()
         }
 
@@ -134,7 +134,7 @@ class PersonalEventFirestore(
             }
             val syncWrite = userSyncFirestore.writePersonalEvents(batch, uid, eventDate.yearMonth)
             batch.commit()
-            trackWrite(TAG)
+            trackWrite(TAG, "deleteEvent")
             syncWrite.committed()
         }
 
@@ -155,7 +155,7 @@ class PersonalEventFirestore(
             }
 
             any(*clauses.toTypedArray())
-        }.get(source).trackData(TAG)
+        }.get(source).trackData(TAG, "events($source)")
 
         Logger.d(
             TAG,

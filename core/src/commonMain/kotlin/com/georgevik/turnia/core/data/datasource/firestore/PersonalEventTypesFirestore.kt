@@ -83,7 +83,7 @@ class PersonalEventTypesFirestore(
         )
         val syncWrite = userSyncFirestore.writePersonalEventTypes(batch, uid)
         batch.commit()
-        trackWrite(TAG)
+        trackWrite(TAG, "setEventType")
         syncWrite.committed()
     }
 
@@ -100,7 +100,7 @@ class PersonalEventTypesFirestore(
             }
             val syncWrite = userSyncFirestore.writePersonalEventTypes(batch, uid)
             batch.commit()
-            trackWrite(TAG)
+            trackWrite(TAG, "deleteEventType")
             syncWrite.committed()
         }
 
@@ -110,7 +110,7 @@ class PersonalEventTypesFirestore(
         val since = sinceUpdateAt ?: Timestamp(0, 0)
         val snapshot = firestore.collection(PATH_PERSONAL_TYPES(uid.value)).where {
             PersonalEventTypeDocument.FIELD_UPDATE_AT greaterThan since
-        }.get(source).trackData(TAG)
+        }.get(source).trackData(TAG, "eventTypes($source)")
 
         Logger.i(
             TAG,

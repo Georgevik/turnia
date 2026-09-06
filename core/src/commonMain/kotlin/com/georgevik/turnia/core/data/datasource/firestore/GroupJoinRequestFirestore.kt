@@ -36,7 +36,7 @@ class GroupJoinRequestFirestore(private val firestore: FirebaseFirestore) {
             val snapshot = requests(groupId)
                 .where { JoinRequestDocument.FIELD_STATUS equalTo JoinRequestDocument.STATUS_PENDING }
                 .get()
-                .trackData(TAG)
+                .trackData(TAG, "pendingRequests")
             Logger.d(TAG, "Pending join requests: ${snapshot.documents.size}")
 
             snapshot.documents.map {
@@ -53,7 +53,7 @@ class GroupJoinRequestFirestore(private val firestore: FirebaseFirestore) {
             val cachedId = "$groupId $userId"
             cachedResponse.cached(cachedId)?.let {  return@outcomeCatching it }
 
-            val snapshot = requests(groupId).document(userId.value).get().trackData(TAG)
+            val snapshot = requests(groupId).document(userId.value).get().trackData(TAG, "myRequest")
             Logger.d(TAG, "Fetch join request from cache: ${snapshot.metadata.isFromCache}")
 
             val joinRequest = if (!snapshot.exists) null
@@ -69,7 +69,7 @@ class GroupJoinRequestFirestore(private val firestore: FirebaseFirestore) {
             Logger.d(TAG, "Delete join request")
 
             requests(groupId).document(userId.value).delete()
-            trackWrite(TAG)
+            trackWrite(TAG, "deleteRequest")
         }
 
     private fun requests(groupId: GroupId) =

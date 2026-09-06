@@ -41,7 +41,7 @@ class UserPrivateFirestore(
                 return@outcomeCatching cached
             }
 
-            val snapshot = document(DOCUMENT_ACCOUNT, uid).get(Source.SERVER).trackData(TAG)
+            val snapshot = document(DOCUMENT_ACCOUNT, uid).get(Source.SERVER).trackData(TAG, "account(server)")
             Logger.i(TAG, "Private account read from the server")
 
             if (!snapshot.exists) null
@@ -50,7 +50,7 @@ class UserPrivateFirestore(
 
     suspend fun fetchSubscription(uid: UserId): Outcome<SubscriptionDocument?, UserProfileError> =
         outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
-            val snapshot = document(DOCUMENT_SUBSCRIPTION, uid).get().trackData(TAG)
+            val snapshot = document(DOCUMENT_SUBSCRIPTION, uid).get().trackData(TAG, "subscription")
             Logger.d(TAG, "Fetch subscription from cache: ${snapshot.metadata.isFromCache}")
 
             if (!snapshot.exists) null
@@ -81,7 +81,7 @@ class UserPrivateFirestore(
     fun fetchJoinRequests(uid: UserId): Flow<List<String>> = flow {
         var cacheDoc: UserJoinRequestsDocument? = null
         try {
-            val snapshot = document(DOCUMENT_JOIN_REQUESTS, uid).get(Source.CACHE).trackData(TAG)
+            val snapshot = document(DOCUMENT_JOIN_REQUESTS, uid).get(Source.CACHE).trackData(TAG, "joinRequests(cache)")
             cacheDoc = if (snapshot.exists) {
                 snapshot.data(UserJoinRequestsDocument.serializer())
             } else null
@@ -103,7 +103,7 @@ class UserPrivateFirestore(
                 }
 
                 val serverSnapshot =
-                    document(DOCUMENT_JOIN_REQUESTS, uid).get(Source.SERVER).trackData(TAG)
+                    document(DOCUMENT_JOIN_REQUESTS, uid).get(Source.SERVER).trackData(TAG, "joinRequests(server)")
                 val serverDoc: UserJoinRequestsDocument? = if (serverSnapshot.exists) {
                     serverSnapshot.data(UserJoinRequestsDocument.serializer())
                 } else null
@@ -128,7 +128,7 @@ class UserPrivateFirestore(
             )
             val syncWrite = userSyncFirestore.writePrivate(batch, uid)
             batch.commit()
-            trackWrite(TAG)
+            trackWrite(TAG, "removeJoinRequest")
             syncWrite.committed()
         }
 
@@ -159,7 +159,7 @@ class UserPrivateFirestore(
         ) { encodeDefaults = false }
         val syncWrite = userSyncFirestore.writePrivate(batch, uid)
         batch.commit()
-        trackWrite(TAG)
+        trackWrite(TAG, "patchAccount")
         syncWrite.committed()
     }
 
@@ -174,7 +174,7 @@ class UserPrivateFirestore(
 
     /** A document the cache does not have makes the read fail rather than come back empty. */
     private suspend fun cachedAccount(uid: UserId): UserPrivateDocument? = try {
-        document(DOCUMENT_ACCOUNT, uid).get(Source.CACHE).trackData(TAG).takeIf { it.exists }
+        document(DOCUMENT_ACCOUNT, uid).get(Source.CACHE).trackData(TAG, "account(cache)").takeIf { it.exists }
             ?.data(UserPrivateDocument.serializer())
     } catch (exception: Exception) {
         Logger.d(TAG, "The private account is not cached yet: ${exception.message}")

@@ -191,12 +191,14 @@ Firestore bills **per document**: one read for every document the server returns
 
 | Call | How to report it |
 |------|------------------|
-| `.get()` on a query | chain `.trackData(TAG)` onto the snapshot |
-| `.get()` on a document | chain `.trackData(TAG)` — a document that does not exist still costs a read |
-| `set` / `updateFields` / `delete` | `trackWrite(TAG)` on the line **after** the call |
+| `.get()` on a query | chain `.trackData(TAG, "operation")` onto the snapshot |
+| `.get()` on a document | chain `.trackData(TAG, "operation")` — a document that does not exist still costs a read |
+| `set` / `updateFields` / `delete` | `trackWrite(TAG, "operation")` on the line **after** the call |
 | `httpsCallable(NAME)` on a Cloud Function | `trackFunction(NAME)` on the line **before** the call |
 
-`TAG` is the reporting class's own log tag: usage is counted per class, so the audit says **who** spent the reads and not only how many. Function calls are the exception — they are counted per callable.
+`TAG` is the reporting class's own log tag, and `operation` names the **call inside it**: usage is counted per class *and per query*, so the audit says who spent the reads, how many, and through which of that class's calls — the only one of the three you can act on. Function calls are the exception: they are counted per callable, which is already both.
+
+The operation is a **key**, so it has to be short and stable. `"events(SERVER)"` is a good name — the source is worth splitting out, since it is exactly the cache/server distinction the audit exists to show. Anything built from an id (`"group-$groupId"`) is not: it would give every group its own line and drown the summary. Where one private helper serves several public writers — `UserSyncFirestore.write`, which backs `writePersonalEvents`, `writePersonalEventTypes` and `writePrivate` — the name is passed in by the caller, because the helper is not the thing you would go and change.
 
 Two rules that are easy to get wrong:
 
@@ -212,12 +214,21 @@ The audit logs under the `FirestoreAudit` tag. A billed call — a server read o
 The two bills are printed apart, because they are priced in different units — Firestore per document,
 a callable per invocation — and a class only appears in the block where it actually spends:
 
+Under Firestore each class then breaks down into its own calls, ordered by what they cost the server.
+Functions do not break down: the callable's name is already the whole answer.
+
 ```
 FirestoreAudit: GroupFunction - FUNCTION CALL
 Firestore  Read Server: 14 ReadCache: 61 Writes: 3
     PersonalEventFirestore -> Read Server: 11 ReadCache: 58 Writes: 0
+        · events(SERVER) -> Read Server: 11 ReadCache: 0 Writes: 0
+        · events(CACHE) -> Read Server: 0 ReadCache: 58 Writes: 0
     UserPathFirestore -> Read Server: 3 ReadCache: 3 Writes: 2
+        · fetchProfile -> Read Server: 3 ReadCache: 0 Writes: 0
+        · userDoc(snapshots) -> Read Server: 0 ReadCache: 3 Writes: 0
+        · updateTypeColor -> Read Server: 0 ReadCache: 0 Writes: 2
     UsernameFirestore -> Read Server: 0 ReadCache: 0 Writes: 1
+        · claim -> Read Server: 0 ReadCache: 0 Writes: 1
 Functions  Calls: 3
     deleteGroup -> Calls: 1
     requestToJoinGroup -> Calls: 2

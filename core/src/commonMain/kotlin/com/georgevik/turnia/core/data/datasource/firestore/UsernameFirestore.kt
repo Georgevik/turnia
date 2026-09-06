@@ -29,7 +29,7 @@ class UsernameFirestore(private val firestore: FirebaseFirestore) {
             Logger.i(TAG, "Claim username")
             firestore.collection(PATH_USERNAMES).document(username)
                 .set(UsernameDocument(username = username, uid = uid.value, name = name))
-            trackWrite(TAG)
+            trackWrite(TAG, "claim")
         }
 
     suspend fun findByUids(uids: List<UserId>): Outcome<List<UserProfile>, UsernameError> =
@@ -37,7 +37,7 @@ class UsernameFirestore(private val firestore: FirebaseFirestore) {
             uids.chunked(UID_QUERY_CHUNK).flatMap { chunk ->
                 val snapshot = firestore.collection(PATH_USERNAMES)
                     .where { UsernameDocument.FIELD_UID inArray chunk.map { it.value } }
-                    .get().trackData(TAG)
+                    .get().trackData(TAG, "findByUids")
                 Logger.d(TAG, "Resolved ${snapshot.documents.size} of ${chunk.size} uids")
 
                 snapshot.documents.map { it.data(UsernameDocument.serializer()).toProfile() }
@@ -57,7 +57,7 @@ class UsernameFirestore(private val firestore: FirebaseFirestore) {
                             (UsernameDocument.FIELD_USERNAME lessThanOrEqualTo prefix + '￿')
                 }
                 .limit(limit)
-                .get().trackData(TAG)
+                .get().trackData(TAG, "search")
             Logger.d(TAG, "Username search '$prefix': ${snapshot.documents.size} results")
 
             snapshot.documents.map { it.data(UsernameDocument.serializer()).toProfile() }
