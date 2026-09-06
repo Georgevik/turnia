@@ -99,7 +99,7 @@ val coreModule: Module = module {
     single<NotificationRepository> { NotificationRepositoryImpl() }
     single<GroupRepository> {
         GroupRepositoryImpl(
-            get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()
+            get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()
         )
     }
     single<PersonalEventRepository> { PersonalEventRepositoryImpl(get(), get(), get(), get()) }

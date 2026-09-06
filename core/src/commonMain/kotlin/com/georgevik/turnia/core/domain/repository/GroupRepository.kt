@@ -10,6 +10,7 @@ import com.georgevik.turnia.core.domain.model.GroupId
 import com.georgevik.turnia.core.domain.model.JoinGroupError
 import com.georgevik.turnia.core.domain.model.JoinGroupStatus
 import com.georgevik.turnia.core.domain.model.JoinRequest
+import com.georgevik.turnia.core.domain.model.MyJoinRequest
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.system.Outcome
 import kotlinx.coroutines.flow.Flow
@@ -61,6 +62,20 @@ interface GroupRepository {
     suspend fun requestToJoinGroup(code: String): Outcome<JoinGroupStatus, JoinGroupError>
 
     suspend fun rejectJoinRequest(groupId: GroupId, userId: UserId): Outcome<Unit, GroupError>
+
+    /**
+     * The logged user's own requests, pending and answered alike.
+     *
+     * Reads their pointer list and then each request it names: a requester may read their own
+     * request by id, and there is no query that can do the same.
+     */
+    suspend fun getMyJoinRequests(): Outcome<List<MyJoinRequest>, GroupError>
+
+    /**
+     * Forgets a request whose outcome the user has seen, or one they are withdrawing while it is
+     * still pending. Deletes the request and the pointer to it.
+     */
+    suspend fun acknowledgeJoinRequest(groupId: GroupId): Outcome<Unit, GroupError>
 
     /**
      * Leaves the group. Events the user still holds stay behind and they keep read access to those

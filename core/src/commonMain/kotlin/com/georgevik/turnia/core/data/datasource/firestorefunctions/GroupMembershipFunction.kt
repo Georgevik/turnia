@@ -3,6 +3,7 @@ package com.georgevik.turnia.core.data.datasource.firestorefunctions
 import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackFunction
 import com.georgevik.turnia.core.data.datasource.firestorefunctions.requests.AcceptJoinRequest
 import com.georgevik.turnia.core.data.datasource.firestorefunctions.requests.LeaveGroupRequest
+import com.georgevik.turnia.core.data.datasource.firestorefunctions.requests.RejectJoinRequest
 import com.georgevik.turnia.core.data.datasource.firestorefunctions.requests.RemoveMemberRequest
 import com.georgevik.turnia.core.data.datasource.firestorefunctions.requests.RequestToJoinGroup
 import com.georgevik.turnia.core.data.datasource.firestorefunctions.responses.JoinGroupResponse
@@ -18,7 +19,8 @@ import dev.gitlive.firebase.functions.FirebaseFunctions
 
 /**
  * Calls the membership functions: membership is never written by a client, neither granted
- * (`requestToJoinGroup` / `acceptJoinRequest`) nor withdrawn (`leaveGroup` / `removeMember`).
+ * (`requestToJoinGroup` / `acceptJoinRequest`) nor withdrawn (`leaveGroup` / `removeMember`), and a
+ * join request is never answered by one either (`rejectJoinRequest`).
  */
 class GroupMembershipFunction(private val functions: FirebaseFunctions) {
 
@@ -31,6 +33,23 @@ class GroupMembershipFunction(private val functions: FirebaseFunctions) {
             trackFunction(FUNCTION_ACCEPT_JOIN_REQUEST)
             functions.httpsCallable(FUNCTION_ACCEPT_JOIN_REQUEST)(
                 AcceptJoinRequest(groupId = groupId.value, uid = userId.value)
+            )
+        }
+
+    /**
+     * A function and not the delete it used to be: `status` is frozen against every client, and
+     * deleting the request would answer it by destroying the only thing the requester can read to
+     * learn the answer.
+     */
+    suspend fun rejectJoinRequest(
+        groupId: GroupId,
+        userId: UserId,
+    ): Outcome<Unit, GroupError> =
+        outcomeCatching(TAG, { GroupError.SaveFailed }) {
+            Logger.i(TAG, "Reject join request")
+            trackFunction(FUNCTION_REJECT_JOIN_REQUEST)
+            functions.httpsCallable(FUNCTION_REJECT_JOIN_REQUEST)(
+                RejectJoinRequest(groupId = groupId.value, uid = userId.value)
             )
         }
 
@@ -98,6 +117,7 @@ class GroupMembershipFunction(private val functions: FirebaseFunctions) {
     companion object {
         private const val TAG = "GroupMembershipFunction"
         private const val FUNCTION_ACCEPT_JOIN_REQUEST = "acceptJoinRequest"
+        private const val FUNCTION_REJECT_JOIN_REQUEST = "rejectJoinRequest"
         private const val FUNCTION_REQUEST_TO_JOIN_GROUP = "requestToJoinGroup"
         private const val FUNCTION_LEAVE_GROUP = "leaveGroup"
         private const val FUNCTION_REMOVE_MEMBER = "removeMember"

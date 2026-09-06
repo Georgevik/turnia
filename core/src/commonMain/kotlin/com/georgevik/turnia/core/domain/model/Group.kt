@@ -32,3 +32,11 @@ data class JoinRequest(
     val name: String,
     val username: String,
 )
+
+data class MyJoinRequest(
+    val groupId: GroupId,
+    val groupName: String,
+    val status: JoinRequestStatus,
+)
+
+enum class JoinRequestStatus { PENDING, ACCEPTED, REJECTED }

@@ -45,9 +45,11 @@ service cloud.firestore {
         request.resource.data.get('username', '') == resource.data.get('username', '');
       allow delete: if isSignedIn() && request.auth.uid == uid;
 
-      // Email, FCM tokens and entitlement: never readable by anyone else.
+      // Email, FCM tokens, pending join requests and entitlement: never readable by anyone else.
       // `allow` rules are additive, so the wildcard has to exclude `subscription` explicitly —
-      // otherwise it would grant the write that the rule below denies.
+      // otherwise it would grant the write that the rule below denies. `joinRequests` deliberately
+      // stays under the wildcard: the server adds a pointer, the owner removes it once they have
+      // seen the outcome, and the array holds nothing but ids to documents guarded by their own rule.
       match /private/{docId} {
         allow read: if isSignedIn() && request.auth.uid == uid;
         allow write: if isSignedIn() && request.auth.uid == uid && docId != 'subscription';
@@ -155,11 +157,14 @@ service cloud.firestore {
         allow write: if isMember(groupId) || isRevoked(groupId);
       }
 
-      // Join requests: created only by requestToJoinGroup (Cloud Function).
+      // Join requests: created only by requestToJoinGroup, answered only by acceptJoinRequest /
+      // rejectJoinRequest. An answered request stays as a receipt — it is the only thing the
+      // requester can read to learn the outcome — so deleting it is theirs alone: an admin deleting
+      // one would answer it without leaving an answer behind.
       match /joinRequests/{requestUid} {
         allow read: if isAdmin(groupId) || (isSignedIn() && request.auth.uid == requestUid);
         allow create: if false;
-        allow delete: if isAdmin(groupId) || (isSignedIn() && request.auth.uid == requestUid);
+        allow delete: if isSignedIn() && request.auth.uid == requestUid;
         allow update: if false;
       }
     }

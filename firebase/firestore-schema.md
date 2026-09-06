@@ -96,6 +96,26 @@ Readable and writable **only by the owner**.
 > It is not the **system** permission either, which only the OS can answer for: a user who denied
 > notifications to the app sees this switch on and still gets nothing.
 
+### `users/{uid}/private/joinRequests`
+
+The groups this user has asked to join and not yet seen an answer from. Written by
+`requestToJoinGroup`; the owner removes an id once their app has shown the outcome.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `groupIds` | string[] | Groups with a request from this user whose answer they have not acknowledged. |
+
+> **This list is the only way a requester can find their own requests.** The rules let them read
+> `groups/{groupId}/joinRequests/{uid}` by document id and by nothing else: a `collectionGroup` list
+> cannot express "the document whose id is my uid", and the admin branch of the same rule needs a
+> `get()` that a collection-group query cannot evaluate. So the pointer has to be stored, and it has
+> to be stored where the requester can read it without belonging to the group.
+
+> Unlike `subscription` it stays under the owner-writable wildcard, because both sides write it: the
+> server adds an id, the owner removes it. Nothing is at stake in the array — it holds ids to
+> documents that are each guarded by their own rule — and `requestToJoinGroup` is still the only
+> thing that can create the request an id points at.
+
 ### `users/{uid}/private/subscription`
 
 Premium entitlement. Readable only by the owner; **the client can never write it** — the document is
@@ -115,7 +135,9 @@ receipt. An absent document means the free tier.
 
 **Access**: `users/{uid}` is readable by the owner and by UIDs in `calendarSharedWith`, and writable only by
 the owner. `users/{uid}/private/**` is readable and writable only by the owner, except
-`private/subscription`, which the owner may read but never write.
+`private/subscription`, which the owner may read but never write. `private/joinRequests` is written by
+both the owner and the server, and the wildcard covers that: the server adds a pointer, the owner
+removes it.
 
 **Listing the calendars shared with me** — the grant lives on the **granter's** document, so the list is a
 query over `users` filtered by `calendarSharedWith array-contains {myUid}`, not a field of my own document.
@@ -295,15 +317,33 @@ events use — is snapshotted for them in `users/{uid}/revokedGroups/{groupId}`.
 
 ### `groups/{groupId}/joinRequests/{uid}`
 
-A pending request to join, created after validating the invitation code. Document ID is the requester's UID.
+A request to join, created after validating the invitation code. Document ID is the requester's UID.
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `name` | string | Requester's display name, copied so an admin can render the request without reading `users/{uid}`, which they cannot. |
 | `username` | string | Requester's username, copied for the same reason. |
+| `groupName` | string | The group's name, copied for the mirror-image reason: a requester who was rejected never became a member, so `groups/{groupId}` is unreadable to them and there is no group to name. |
+| `status` | string | `pending` \| `accepted` \| `rejected`. |
 | `requestedAt` | timestamp | When the request was made. |
+| `respondedAt` | timestamp \| null | When an admin answered; `null` while pending. |
 
-**Access**: created only by `requestToJoinGroup`; readable by admins and by the requester; deletable by an admin (reject) or the requester (cancel).
+**An answered request stays behind as a receipt.** Deleting it on acceptance would be the tidier
+write, but it is the only thing the requester can read to learn what happened — they cannot query for
+it, and a rejection sends no push — so it survives until their app acknowledges it and deletes both
+the request and its pointer in `users/{uid}/private/joinRequests`. The cost is a small document per
+unacknowledged outcome; `deleteGroup` sweeps them with the rest of the group.
+
+`requestToJoinGroup` writes with `set` rather than `create`, so asking again after a rejection flips
+that receipt back to `pending`.
+
+**Queries**: an admin's approval list is `status == "pending"` — a single-field equality filter with no
+`orderBy`, covered by the automatic index. Without it the answered receipts would show up as work.
+
+**Access**: created only by `requestToJoinGroup` and answered only by `acceptJoinRequest` /
+`rejectJoinRequest` — `status` is frozen against every client. Readable by admins and by the
+requester; **deletable only by the requester**, to cancel a pending request or acknowledge an answered
+one. An admin deleting one would answer it without leaving an answer behind.
 
 ### `groups/{groupId}/events/{eventId}`
 
@@ -443,7 +483,8 @@ Firestore keeps only a **recent window** of events; older events are purged and 
 - **A deleted event is deleted** — there is no cancelled/deleted state.
 - **Group event docs are readable by every group member** — never put private data (e.g. notes) on them.
   Personal events are private to the owner and their shared users, so their `notes` live on the event doc.
-- **Joining a group is two steps**: `requestToJoinGroup` then `acceptJoinRequest` (admin). The client never writes `memberUids`.
+- **Joining a group is two steps**: `requestToJoinGroup` then `acceptJoinRequest` / `rejectJoinRequest` (admin). The client never writes `memberUids`, and never answers a request either — `status` is server-only.
+- **A requester finds their own requests through `users/{uid}/private/joinRequests`**, never a query: the rules authorize `groups/{g}/joinRequests/{uid}` by document id, which no collection-group list can filter on.
 - **A group is deleted server-side, and only when empty**: `deleteGroup` (admin-only) refuses while anybody
   else is still a member, then `recursiveDelete`s the document with its subcollections and tombstones the
   snapshot of every revoked user who was still holding one. Firestore does not cascade, so a client delete

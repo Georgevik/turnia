@@ -7,6 +7,7 @@ import com.georgevik.turnia.core.data.datasource.firestore.doc.GroupEventDocumen
 import com.georgevik.turnia.core.data.datasource.firestore.doc.GroupEventTypeDocument
 import com.georgevik.turnia.core.data.datasource.firestore.doc.InvitationDocument
 import com.georgevik.turnia.core.data.datasource.firestore.doc.JoinRequestDocument
+import com.georgevik.turnia.core.data.datasource.firestore.doc.JoinRequestStatusDocument
 import com.georgevik.turnia.core.data.datasource.firestore.doc.RevokedGroupDocument
 import com.georgevik.turnia.core.data.datasource.firestore.doc.UserDocument
 import com.georgevik.turnia.core.domain.model.EventHistoryEntry
@@ -18,6 +19,8 @@ import com.georgevik.turnia.core.domain.model.GroupEventType
 import com.georgevik.turnia.core.domain.model.GroupId
 import com.georgevik.turnia.core.domain.model.GroupMember
 import com.georgevik.turnia.core.domain.model.JoinRequest
+import com.georgevik.turnia.core.domain.model.JoinRequestStatus
+import com.georgevik.turnia.core.domain.model.MyJoinRequest
 import com.georgevik.turnia.core.domain.model.UserId
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.yearMonth
@@ -107,6 +110,16 @@ class GroupMapper {
         userId = UserId(holder.id),
         name = holder.doc.name,
         username = holder.doc.username,
+    )
+
+    fun map(groupId: GroupId, doc: JoinRequestDocument) = MyJoinRequest(
+        groupId = groupId,
+        groupName = doc.groupName,
+        status = when (doc.status) {
+            JoinRequestStatusDocument.PENDING -> JoinRequestStatus.PENDING
+            JoinRequestStatusDocument.ACCEPTED -> JoinRequestStatus.ACCEPTED
+            JoinRequestStatusDocument.REJECTED -> JoinRequestStatus.REJECTED
+        },
     )
 
     fun map(

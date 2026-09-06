@@ -5,6 +5,7 @@ import com.georgevik.turnia.core.data.datasource.firestore.GroupFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.GroupJoinRequestFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.RevokedGroupFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.UserPathFirestore
+import com.georgevik.turnia.core.data.datasource.firestore.UserPrivateFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.doc.DocHolder
 import com.georgevik.turnia.core.data.datasource.firestore.doc.GroupDocument
 import com.georgevik.turnia.core.data.datasource.firestore.doc.GroupMemberDocument
@@ -22,6 +23,7 @@ import com.georgevik.turnia.core.domain.model.GroupId
 import com.georgevik.turnia.core.domain.model.JoinGroupError
 import com.georgevik.turnia.core.domain.model.JoinGroupStatus
 import com.georgevik.turnia.core.domain.model.JoinRequest
+import com.georgevik.turnia.core.domain.model.MyJoinRequest
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.domain.repository.AppConfigRepository
 import com.georgevik.turnia.core.domain.repository.GroupRepository
@@ -31,6 +33,7 @@ import com.georgevik.turnia.core.system.createId
 import com.georgevik.turnia.core.system.errorOrNull
 import com.georgevik.turnia.core.system.map
 import com.georgevik.turnia.core.system.mapError
+import com.georgevik.turnia.core.system.onSuccess
 import com.georgevik.turnia.core.system.toFailure
 import com.georgevik.turnia.core.system.toInstant
 import com.georgevik.turnia.core.system.toSuccess
@@ -57,6 +60,7 @@ class GroupRepositoryImpl(
     private val groupFirestore: GroupFirestore,
     private val groupEventFirestore: GroupEventFirestore,
     private val groupJoinRequestFirestore: GroupJoinRequestFirestore,
+    private val userPrivateFirestore: UserPrivateFirestore,
     private val revokedGroupFirestore: RevokedGroupFirestore,
     private val groupMembershipFunction: GroupMembershipFunction,
     private val groupFunction: GroupFunction,
@@ -134,7 +138,7 @@ class GroupRepositoryImpl(
     }
 
     override suspend fun getJoinRequests(groupId: GroupId): Outcome<List<JoinRequest>, GroupError> =
-        groupJoinRequestFirestore.get(groupId)
+        groupJoinRequestFirestore.getPending(groupId)
             .map { requests -> requests.map(groupMapper::map) }
             .mapError { error ->
                 Logger.e(TAG, "Failed to read the join requests: $error")
@@ -163,11 +167,45 @@ class GroupRepositoryImpl(
     override suspend fun rejectJoinRequest(
         groupId: GroupId,
         userId: UserId,
-    ): Outcome<Unit, GroupError> = groupJoinRequestFirestore.delete(groupId, userId)
-        .mapError { error ->
-            Logger.e(TAG, "Failed to reject the join request: $error")
-            GroupError.SaveFailed
-        }
+    ): Outcome<Unit, GroupError> = groupMembershipFunction.rejectJoinRequest(groupId, userId)
+
+    /**
+     * One read for the pointer list and one per request it names. A pointer to a request that is no
+     * longer there — the group was deleted, or another device already acknowledged it — is dropped
+     * instead of reported: nothing else prunes the list.
+     */
+    override suspend fun getMyJoinRequests(): Outcome<List<MyJoinRequest>, GroupError> {
+        val userId = userRepository.loggedUser?.id ?: return GroupError.LoadFailed.toFailure()
+
+        val groupIds = userPrivateFirestore.fetchJoinRequests(userId).valueOrNull()
+            ?: run {
+                Logger.e(TAG, "Failed to read the join request pointers")
+                return GroupError.LoadFailed.toFailure()
+            }
+
+        return groupIds.mapNotNull { groupId ->
+            val doc = groupJoinRequestFirestore.fetch(GroupId(groupId), userId).valueOrNull()
+            if (doc == null) {
+                userPrivateFirestore.removeJoinRequest(userId, groupId)
+                null
+            } else {
+                groupMapper.map(GroupId(groupId), doc)
+            }
+        }.toSuccess()
+    }
+
+    override suspend fun acknowledgeJoinRequest(groupId: GroupId): Outcome<Unit, GroupError> {
+        val userId = userRepository.loggedUser?.id ?: return GroupError.SaveFailed.toFailure()
+
+        // The pointer only once the request is actually gone: dropped first, it would strand a
+        // request nothing can reach, whereas one left behind finds nothing and prunes itself.
+        return groupJoinRequestFirestore.delete(groupId, userId)
+            .mapError { error ->
+                Logger.e(TAG, "Failed to delete the join request: $error")
+                GroupError.SaveFailed
+            }
+            .onSuccess { userPrivateFirestore.removeJoinRequest(userId, groupId.value) }
+    }
 
     override suspend fun saveEventType(
         groupId: GroupId,

@@ -3,6 +3,7 @@ package com.georgevik.turnia.core.data.datasource.firestore
 import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackData
 import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackWrite
 import com.georgevik.turnia.core.data.datasource.firestore.doc.SubscriptionDocument
+import com.georgevik.turnia.core.data.datasource.firestore.doc.UserJoinRequestsDocument
 import com.georgevik.turnia.core.data.datasource.firestore.doc.UserPrivateDocument
 import com.georgevik.turnia.core.data.datasource.firestore.errors.UserProfileError
 import com.georgevik.turnia.core.data.logger.Logger
@@ -73,6 +74,25 @@ class UserPrivateFirestore(
             AccountPatch(fcmTokens = FieldValue.arrayRemove(token)),
         )
 
+    suspend fun fetchJoinRequests(uid: UserId): Outcome<List<String>, UserProfileError> =
+        outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
+            val snapshot = document(uid, DOCUMENT_JOIN_REQUESTS).get().trackData(TAG)
+            Logger.d(TAG, "Fetch join requests from cache: ${snapshot.metadata.isFromCache}")
+
+            if (!snapshot.exists) emptyList()
+            else snapshot.data(UserJoinRequestsDocument.serializer()).groupIds
+        }
+
+    suspend fun removeJoinRequest(uid: UserId, groupId: String): Outcome<Unit, UserProfileError> =
+        outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
+            Logger.i(TAG, "Drop the join request pointer")
+            document(uid, DOCUMENT_JOIN_REQUESTS).set(
+                mapOf(UserJoinRequestsDocument.FIELD_GROUP_IDS to FieldValue.arrayRemove(groupId)),
+                merge = true,
+            )
+            trackWrite(TAG)
+        }
+
     suspend fun setNotificationsEnabled(
         uid: UserId,
         enabled: Boolean
@@ -142,6 +162,7 @@ class UserPrivateFirestore(
         private const val TAG = "UserPrivateFirestore"
         private const val DOCUMENT_ACCOUNT = "account"
         private const val DOCUMENT_SUBSCRIPTION = "subscription"
+        private const val DOCUMENT_JOIN_REQUESTS = "joinRequests"
         private fun PATH_PRIVATE(uid: String) = "users/${uid}/private"
     }
 }
