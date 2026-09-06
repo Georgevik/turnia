@@ -49,6 +49,13 @@
     <string name="event_add">Añadir evento</string>
     <string name="event_add_close">Cerrar</string>
     <string name="event_group_only_banner">Solo puedes añadir eventos definidos para este grupo.</string>
+    <string name="event_note_add">Añadir nota</string>
+    <string name="event_note_edit">Nota</string>
+    <string name="event_note_dialog_title">Nota</string>
+    <string name="event_note_hint">Escribe una nota para este evento</string>
+    <string name="event_note_save">Guardar</string>
+    <string name="event_note_cancel">Cancelar</string>
+    <string name="event_note_error">No se pudo guardar la nota</string>
     <string name="event_remove">Eliminar evento</string>
     <string name="event_remove_confirm_title">¿Eliminar evento?</string>
     <string name="event_remove_confirm_body">Esta acción no se puede deshacer.</string>

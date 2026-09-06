@@ -95,6 +95,28 @@ class PersonalEventFirestore(
             syncWrite.committed()
         }
 
+    suspend fun updateNotes(
+        uid: UserId,
+        eventId: EventId,
+        eventDate: LocalDate,
+        notes: String?,
+    ): Outcome<Unit, GenericFirestoreError> =
+        outcomeCatching(TAG, { GenericFirestoreError(it) }) {
+            Logger.d(TAG, "Update personal event notes")
+
+            val batch = firestore.batch()
+            batch.updateFields(
+                firestore.collection(PATH_EVENTS(uid.value)).document(eventId.value)
+            ) {
+                PersonalEventDocument.FIELD_NOTES to notes
+                PersonalEventDocument.FIELD_UPDATE_AT to Timestamp.ServerTimestamp
+            }
+            val syncWrite = userSyncFirestore.writePersonalEvents(batch, uid, eventDate.yearMonth)
+            batch.commit()
+            trackWrite(TAG)
+            syncWrite.committed()
+        }
+
     suspend fun delete(
         uid: UserId,
         eventId: EventId,

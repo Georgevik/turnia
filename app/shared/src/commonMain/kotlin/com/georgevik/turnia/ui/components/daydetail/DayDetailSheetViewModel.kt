@@ -12,6 +12,7 @@ import com.georgevik.turnia.core.domain.model.PersonalEventType
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
 import com.georgevik.turnia.core.domain.repository.UserRepository
+import com.georgevik.turnia.core.system.onFailure
 import com.georgevik.turnia.core.system.toInstant
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
 import com.georgevik.turnia.ui.components.calendar.model.EventSource
@@ -74,6 +75,23 @@ class DayDetailSheetViewModel(
         val ownerId = event.ownerId ?: return
         val assigneeId = event.assigneeId ?: return
         groupRepository.deleteEvent(groupId, event.id, event.date, ownerId, assigneeId)
+    }
+
+    private val _noteError = MutableStateFlow(false)
+    val noteError = _noteError.asStateFlow()
+
+    fun saveNotes(event: CalendarEventUi, notes: String) {
+        if (event.source != EventSource.PERSONAL) return
+
+        viewModelScope.launch {
+            personalRepository.saveNotes(event.id, event.date, notes).onFailure {
+                _noteError.value = true
+            }
+        }
+    }
+
+    fun noteErrorShown() {
+        _noteError.value = false
     }
 
     fun addEventOfType(eventTypeUi: EventTypeUi) {

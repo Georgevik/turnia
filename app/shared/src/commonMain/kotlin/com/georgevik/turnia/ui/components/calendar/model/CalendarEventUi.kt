@@ -4,8 +4,8 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import com.georgevik.turnia.core.domain.model.EventId
-import com.georgevik.turnia.core.domain.model.GroupId
 import com.georgevik.turnia.core.domain.model.GroupEvent
+import com.georgevik.turnia.core.domain.model.GroupId
 import com.georgevik.turnia.core.domain.model.PersonalEvent
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.system.toLocalDate
@@ -41,6 +41,8 @@ data class CalendarEventUi(
     val groupName: String?,
     val transferChain: List<TransferHolderUi>,
     val removable: Boolean,
+    val notes: String?,
+    val notesEditable: Boolean,
 ) {
     val gridLabel: String get() = acronym?.takeIf { it.isNotBlank() } ?: name
 
@@ -66,6 +68,8 @@ data class CalendarEventUi(
             groupName: String? = null,
             transferChain: List<TransferHolderUi> = emptyList(),
             removable: Boolean = false,
+            notes: String? = null,
+            notesEditable: Boolean = false,
         ): CalendarEventUi = CalendarEventUi(
             id = id,
             groupId = groupId,
@@ -86,6 +90,8 @@ data class CalendarEventUi(
             date = date,
             transferChain = transferChain,
             removable = removable,
+            notes = notes,
+            notesEditable = notesEditable,
         )
     }
 }
@@ -119,7 +125,10 @@ private fun GroupEvent.buildTransferChain(currentUserId: UserId?): List<Transfer
     }
 }
 
-fun PersonalEvent.toUi(removable: Boolean = false) = CalendarEventUi.create(
+fun PersonalEvent.toUi(
+    removable: Boolean = false,
+    notesEditable: Boolean = false,
+) = CalendarEventUi.create(
     id = id,
     groupId = null,
     ownerId = null,
@@ -130,4 +139,6 @@ fun PersonalEvent.toUi(removable: Boolean = false) = CalendarEventUi.create(
     date = date.toLocalDate(),
     background = type.color.toComposeColorOrNull() ?: Color.Unspecified,
     removable = removable,
+    notes = notes,
+    notesEditable = notesEditable,
 )

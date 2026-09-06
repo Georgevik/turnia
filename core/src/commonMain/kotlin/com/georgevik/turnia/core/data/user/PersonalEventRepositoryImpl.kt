@@ -49,6 +49,22 @@ class PersonalEventRepositoryImpl(
         personalEventFirestore.delete(uid, eventId, eventDate)
     }
 
+    override suspend fun saveNotes(
+        eventId: EventId,
+        eventDate: LocalDate,
+        notes: String?
+    ): Outcome<Unit, Unit> {
+        val uid = userRepository.loggedUser?.id ?: return Unit.toFailure()
+
+        personalEventFirestore.updateNotes(uid, eventId, eventDate, notes?.trim()?.ifBlank { null })
+            .errorOrNull()?.let { error ->
+                Logger.e(TAG, "Error saving personal event notes", error.error)
+                return Unit.toFailure()
+            }
+
+        return Unit.toSuccess()
+    }
+
     override suspend fun saveEventType(type: PersonalEventType): Outcome<Unit, Unit> {
         val userId = userRepository.loggedUser?.id ?: return Unit.toFailure()
         personalEventTypesFirestore.set(userId, type)

@@ -1,5 +1,6 @@
 package com.georgevik.turnia.ui.components.daydetail.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +17,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.NoteAdd
+import androidx.compose.material.icons.filled.StickyNote2
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,14 +43,17 @@ import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.event_assigned_to
 import turnia.app.shared.generated.resources.event_holder_me
-import turnia.app.shared.generated.resources.group_member_former
+import turnia.app.shared.generated.resources.event_note_add
+import turnia.app.shared.generated.resources.event_note_edit
 import turnia.app.shared.generated.resources.event_remove
 import turnia.app.shared.generated.resources.event_status_on_swap
+import turnia.app.shared.generated.resources.group_member_former
 
 @Composable
 fun DayEventRow(
     event: CalendarEventUi,
     onRemove: (() -> Unit)? = null,
+    onEditNotes: (() -> Unit)? = null,
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -171,9 +177,70 @@ fun DayEventRow(
                         Spacer(Modifier.height(12.dp).width(13.dp))
                         TransferTrail(chain = event.transferChain)
                     }
+
+                    // La nota se enseña siempre que exista, aunque no sea nuestra: en un calendario
+                    // compartido es del dueño del evento y se lee, no se toca.
+                    val notes = event.notes?.takeIf { it.isNotBlank() }
+                    if (notes != null) {
+                        Spacer(Modifier.height(10.dp))
+                        NoteBlock(notes = notes, onClick = onEditNotes)
+                    } else if (onEditNotes != null) {
+                        Spacer(Modifier.height(8.dp))
+                        AddNoteButton(onClick = onEditNotes)
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun NoteBlock(notes: String, onClick: (() -> Unit)?) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Default.StickyNote2,
+                contentDescription = stringResource(Res.string.event_note_edit),
+                modifier = Modifier.size(16.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = notes,
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        }
+    }
+}
+
+@Composable
+private fun AddNoteButton(onClick: () -> Unit) {
+    Row(
+        modifier = Modifier.clickable(onClick = onClick).padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Icon(
+            imageVector = Icons.Default.NoteAdd,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+            tint = MaterialTheme.colorScheme.primary,
+        )
+        Text(
+            text = stringResource(Res.string.event_note_add),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+        )
     }
 }
 

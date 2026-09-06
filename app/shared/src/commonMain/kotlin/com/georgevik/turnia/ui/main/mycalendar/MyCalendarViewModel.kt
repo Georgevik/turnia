@@ -82,7 +82,9 @@ class MyCalendarViewModel(
                 )
             }
             personalEvents.forEach { ev ->
-                getOrPut(ev.localDate) { mutableListOf() }.add(ev.toUi(removable = true))
+                getOrPut(ev.localDate) { mutableListOf() }.add(
+                    ev.toUi(removable = true, notesEditable = true)
+                )
             }
         }
 

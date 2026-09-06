@@ -21,6 +21,18 @@ interface PersonalEventRepository {
 
     suspend fun deleteEvent(eventId: EventId, eventDate: LocalDate)
 
+    /**
+     * Guarda la nota de un evento personal. En blanco la borra.
+     *
+     * Sólo eventos personales: el documento de un evento de grupo lo leen todos los miembros, así
+     * que no puede llevar nada privado (ver *No private fields on shared docs* en CLAUDE.md).
+     */
+    suspend fun saveNotes(
+        eventId: EventId,
+        eventDate: LocalDate,
+        notes: String?
+    ): Outcome<Unit, Unit>
+
     suspend fun saveEventType(type: PersonalEventType): Outcome<Unit, Unit>
 
     suspend fun deleteEventType(typeId: EventTypeId): Outcome<Unit, Unit>

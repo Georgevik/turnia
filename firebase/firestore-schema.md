@@ -220,7 +220,7 @@ An instance of a personal event type on a date. Notes live **on the event**, not
 |-------|------|-------------|
 | `personalEventTypeId` | string | References `personalEventTypes/{typeId}`. |
 | `date` | string | `YYYY-MM-DD`. |
-| `notes` | string \| null | Free-text notes for this event. |
+| `notes` | string \| null | Free-text notes for this event, written by the owner from the day sheet. Blank is stored as `null`. |
 
 **Access**: written by the owner; read by the owner and by UIDs in `calendarSharedWith`.
 
