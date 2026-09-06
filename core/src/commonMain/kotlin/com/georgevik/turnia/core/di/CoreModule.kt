@@ -37,13 +37,20 @@ import org.koin.core.module.Module
 import org.koin.dsl.module
 
 /**
+ * The region the callables are deployed to, next to Firestore. Naming it is not optional: the SDK
+ * calls `us-central1` when nothing says otherwise, and a function that lives elsewhere is simply
+ * not found there.
+ */
+private const val FUNCTIONS_REGION = "europe-southwest1"
+
+/**
  * Domain/data layer dependencies. It will grow as the Turnia domain does.
  */
 val coreModule: Module = module {
     // Outlives every screen: it carries the session and the cache subscriptions.
     single { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
     single { Firebase.firestore }
-    single { Firebase.functions }
+    single { Firebase.functions(FUNCTIONS_REGION) }
     single { UserProfileFunction(get()) }
     single { UserPathFirestore(get(), get(), get()) }
     single { UserPrivateFirestore(get()) }
@@ -55,14 +62,25 @@ val coreModule: Module = module {
     single { GroupJoinRequestFirestore(get()) }
     single { GroupMembershipFunction(get()) }
     single { PersonalEventFirestore(get(), get(), get()) }
-    single { PersonalEventTypesFirestore(get(), get(), get(),get()) }
+    single { PersonalEventTypesFirestore(get(), get(), get(), get()) }
     factory { UserDocumentMapper() }
     factory { UsernameFactory() }
     factory { PersonalEventMapper() }
     factory { PersonalEventTypeDocMapper() }
     factory { GroupMapper() }
     single { UserProvisioner(get(), get(), get(), get()) }
-    single<UserRepository> { UserRepositoryImpl(Firebase.auth, get(), get(), get(), get(), get(), get(), get()) }
+    single<UserRepository> {
+        UserRepositoryImpl(
+            Firebase.auth,
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get()
+        )
+    }
     single<AppConfigRepository> { AppConfigRepositoryImpl() }
     single<GroupRepository> { GroupRepositoryImpl(get(), get(), get(), get(), get(), get(), get()) }
     single<PersonalEventRepository> { PersonalEventRepositoryImpl(get(), get(), get(), get()) }

@@ -4,6 +4,25 @@ This document is the **authoritative description of the Firestore data model** f
 Keep it in sync with the code and with [`firestore.rules`](./firestore.rules) — whenever the
 database shape changes, update this file first.
 
+## Location
+
+The `(default)` database lives in **`europe-southwest1`** (Madrid), fixed when it was created and not
+changeable afterwards — moving it would mean a new database and a migration.
+
+Three things have to name that same region, and only one of them is optional:
+
+| What | Where | Why |
+|------|-------|-----|
+| The database | — | Set at creation. Immutable. |
+| `onEventPutOnSwap` | `setGlobalOptions` in [`functions/src/index.ts`](./functions/src/index.ts) | **Forced**: a Firestore trigger must be deployed in the database's region. |
+| The callables | the same `setGlobalOptions` | A choice, but they read Firestore on every request. |
+
+The **client has to name it too**, for the callables only: a v2 callable's URL contains its region
+(`https://europe-southwest1-<project>.cloudfunctions.net/...`), so `Firebase.functions(region)` in
+`CoreModule` is what keeps the app from calling `us-central1`, which is the SDK's default and where the
+functions used to live. Firestore needs nothing: it always talks to `firestore.googleapis.com` and the
+routing follows the project and database id, which is why its client API has no region parameter.
+
 ## Conventions
 
 - **IDs**: `{uid}` is the Firebase Auth UID. `{groupId}`, `{eventId}`, `{typeId}`, `{historyId}` are

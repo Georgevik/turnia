@@ -1,6 +1,12 @@
+import { setGlobalOptions } from "firebase-functions/v2";
 import { initializeApp } from "firebase-admin/app";
 
 initializeApp();
+
+// Where Firestore is. A trigger has no choice — it must live in the database's region — and a
+// callable that reads Firestore on every request should not be crossing an ocean to do it.
+// The client has to name the same region: `Firebase.functions(...)` defaults to us-central1.
+setGlobalOptions({ region: "europe-southwest1" });
 
 // Group membership: request to join (validates the invitation) and admin acceptance.
 export { requestToJoinGroup, acceptJoinRequest } from "./invitations";
