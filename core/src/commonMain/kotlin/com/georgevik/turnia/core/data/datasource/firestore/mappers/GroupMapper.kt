@@ -7,6 +7,7 @@ import com.georgevik.turnia.core.data.datasource.firestore.doc.GroupEventDocumen
 import com.georgevik.turnia.core.data.datasource.firestore.doc.GroupEventTypeDocument
 import com.georgevik.turnia.core.data.datasource.firestore.doc.InvitationDocument
 import com.georgevik.turnia.core.data.datasource.firestore.doc.JoinRequestDocument
+import com.georgevik.turnia.core.data.datasource.firestore.doc.RevokedGroupDocument
 import com.georgevik.turnia.core.data.datasource.firestore.doc.UserDocument
 import com.georgevik.turnia.core.domain.model.EventHistoryEntry
 import com.georgevik.turnia.core.domain.model.EventId
@@ -56,9 +57,40 @@ class GroupMapper {
         )
     }
 
-    fun map(group: Group, memberUids: List<String>, adminUids: List<String>) = GroupDocument(
+    /**
+     * The snapshot left behind when the user was removed, as a [Group] the calendar can render like
+     * any other. There is no roster and no invitation: what survives is the name and the types the
+     * user's own leftover events use.
+     */
+    fun map(holder: DocHolder<RevokedGroupDocument>, colors: Map<String, String>): Group {
+        val groupId = GroupId(holder.id)
+        val doc = holder.doc
+
+        return Group(
+            id = groupId,
+            name = doc.name,
+            types = doc.groupEventTypes.map { map(it, groupId, doc.name, colors) },
+            members = emptyList(),
+            memberCount = 0,
+            // Blank, the same as a code hidden from a member: a revoked user has no way in and
+            // nothing to hand out. Their snapshot does not carry the invitation either.
+            invitationCode = "",
+            autoApprove = false,
+            membersCanSeeCode = false,
+            isAdmin = false,
+            isRevoked = true,
+        )
+    }
+
+    fun map(
+        group: Group,
+        memberUids: List<String>,
+        adminUids: List<String>,
+        revokedUids: List<String>,
+    ) = GroupDocument(
         name = group.name,
         memberUids = memberUids,
+        revokedUids = revokedUids,
         adminUids = adminUids,
         groupEventTypes = group.types.map(::map),
         invitation = InvitationDocument(

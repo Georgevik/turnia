@@ -17,6 +17,8 @@ import kotlinx.serialization.Serializable
 data class GroupDocument(
     @SerialName("name") val name: String,
     @SerialName(FIELD_MEMBER_UIDS) val memberUids: List<String> = emptyList(),
+    // Former members who still hold events here: they read only their own, and never this document.
+    @SerialName(FIELD_REVOKED_UIDS) val revokedUids: List<String> = emptyList(),
     @SerialName("members") val members: Map<String, GroupMemberDocument> = emptyMap(),
     @SerialName("adminUids") val adminUids: List<String> = emptyList(),
     @SerialName("groupEventTypes") val groupEventTypes: List<GroupEventTypeDocument> = emptyList(),
@@ -28,6 +30,7 @@ data class GroupDocument(
 ) {
     companion object {
         const val FIELD_MEMBER_UIDS = "memberUids"
+        const val FIELD_REVOKED_UIDS = "revokedUids"
         const val FIELD_UPDATE_AT = "updateAt"
     }
 }

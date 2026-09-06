@@ -29,6 +29,7 @@ class GroupsViewModel(
                         name = it.name,
                         members = it.memberCount,
                         isAdmin = it.isAdmin,
+                        isRevoked = it.isRevoked,
                     )
                 }
 

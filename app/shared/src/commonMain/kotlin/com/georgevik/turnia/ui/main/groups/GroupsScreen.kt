@@ -9,12 +9,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.GroupAdd
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -34,7 +31,7 @@ import com.georgevik.turnia.navigation.main.routes.ExternalCalendarData
 import com.georgevik.turnia.navigation.main.routes.MainRoute
 import com.georgevik.turnia.navigation.root.routes.RootRoute
 import com.georgevik.turnia.ui.main.groups.components.GroupCard
-import com.georgevik.turnia.ui.main.groups.components.JoinGroupBanner
+import com.georgevik.turnia.ui.main.groups.components.GroupsFabMenu
 import com.georgevik.turnia.ui.main.groups.components.JoinGroupSheet
 import com.georgevik.turnia.ui.main.groups.model.GroupRowUi
 import com.georgevik.turnia.ui.main.system.EmptyState
@@ -65,7 +62,6 @@ import turnia.app.shared.generated.resources.groups_title
 @Composable
 fun GroupsScreen(viewModel: GroupsViewModel = koinViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val navigator = LocalNavigator.current
     // Group detail covers the whole screen, so it goes on the root stack, not this tab's.
     val rootNavigator = LocalRootNavigator.current
     val snackbar = LocalSnackbar.current
@@ -86,11 +82,11 @@ fun GroupsScreen(viewModel: GroupsViewModel = koinViewModel()) {
 
     Scaffold(
         floatingActionButton = {
-            // The empty state offers creating a group itself, so the button would be a second one.
-            if (success?.groups?.isNotEmpty() == true) {
-                FloatingActionButton(
-                    onClick = { rootNavigator.goTo(RootRoute.GroupDetailKey(groupId = "")) },
-                ) { Icon(Icons.Default.Add, contentDescription = null) }
+            if (success != null) {
+                GroupsFabMenu(
+                    onJoin = { joinSheetOpen = true },
+                    onCreate = { rootNavigator.goTo(RootRoute.GroupDetailKey(groupId = "")) },
+                )
             }
         },
     ) { innerPadding ->
@@ -113,11 +109,6 @@ fun GroupsScreen(viewModel: GroupsViewModel = koinViewModel()) {
                 }
 
                 is GroupsUi.Success -> {
-                    JoinGroupBanner(
-                        onClick = { joinSheetOpen = true },
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                    )
-
                     if (current.groups.isEmpty()) {
                         EmptyState(
                             icon = Icons.Default.GroupAdd,

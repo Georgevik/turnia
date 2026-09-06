@@ -24,6 +24,16 @@ export enum TurniaErrorCode {
   AcceptRequestMissingArgs = 1007,
   AcceptRequestNotAdmin = 1008,
   AcceptRequestNotFound = 1009,
+  LeaveGroupUnauthenticated = 1010,
+  LeaveGroupMissingArgs = 1011,
+  LeaveGroupNotMember = 1012,
+  LeaveGroupLastAdmin = 1013,
+  RemoveMemberUnauthenticated = 1014,
+  RemoveMemberMissingArgs = 1015,
+  RemoveMemberNotAdmin = 1016,
+  RemoveMemberSelf = 1017,
+  RemoveMemberIsAdmin = 1018,
+  RemoveMemberNotMember = 1019,
 
   // events
   TakeEventUnauthenticated = 3001,

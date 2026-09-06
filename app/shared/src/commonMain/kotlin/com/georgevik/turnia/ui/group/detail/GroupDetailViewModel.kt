@@ -158,6 +158,26 @@ class GroupDetailViewModel(
         groupRepository.rejectJoinRequest(groupId, userId)
     }
 
+    /**
+     * Removes a member. Whatever they still hold stays on the group's calendar — the shifts still
+     * need covering — and only they can see it from then on.
+     */
+    fun onRemoveMember(userId: UserId) {
+        viewModelScope.launch {
+            updateSuccess { state ->
+                state.copy(members = state.members.filterNot { it.id == userId })
+            }
+
+            groupRepository.removeMember(groupId, userId).fold(
+                onSuccess = { load(showLoading = false) },
+                onFailure = {
+                    updateSuccess { it.copy(userMessage = GroupDetailMessage.RemoveMemberFailed) }
+                    load(showLoading = false)
+                },
+            )
+        }
+    }
+
     /** The answered request leaves the list at once; the group is re-read for its new members. */
     private fun answerRequest(
         userId: UserId,
@@ -231,8 +251,10 @@ class GroupDetailViewModel(
 
     private fun GroupError.toScreenError() = when (this) {
         GroupError.NotFound -> GroupDetailScreenError.NotFound
+        // LastAdmin only comes back from leaving a group, which is not done from this screen.
         GroupError.LoadFailed,
-        GroupError.SaveFailed -> GroupDetailScreenError.LoadFailed
+        GroupError.SaveFailed,
+        GroupError.LastAdmin -> GroupDetailScreenError.LoadFailed
     }
 
     private fun updateForm(block: (GroupForm) -> GroupForm) =

@@ -62,6 +62,15 @@ interface GroupRepository {
 
     suspend fun rejectJoinRequest(groupId: GroupId, userId: UserId): Outcome<Unit, GroupError>
 
+    /**
+     * Leaves the group. Events the user still holds stay behind and they keep read access to those
+     * alone; the only admin of a group with members left in it is refused.
+     */
+    suspend fun leaveGroup(groupId: GroupId): Outcome<Unit, GroupError>
+
+    /** Removes a member, the same way [leaveGroup] does but decided by an admin. */
+    suspend fun removeMember(groupId: GroupId, userId: UserId): Outcome<Unit, GroupError>
+
     /** Adds the event type to the group, or replaces the one with the same id. Admins only. */
     suspend fun saveEventType(groupId: GroupId, type: GroupEventType): Outcome<Unit, GroupError>
 

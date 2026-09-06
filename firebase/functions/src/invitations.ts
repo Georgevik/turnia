@@ -1,5 +1,6 @@
 import { onCall } from "firebase-functions/v2/https";
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
+import { clearRevokedGroup } from "./membership";
 import {
   HttpErrorFailedPrecondition,
   HttpErrorInvalidArgument,
@@ -70,9 +71,12 @@ export const requestToJoinGroup = onCall(async (request) => {
     const batch = db.batch();
     batch.update(groupDoc.ref, {
       memberUids: FieldValue.arrayUnion(uid),
+      // Rejoining undoes a revocation: a uid is a member or revoked, never both.
+      revokedUids: FieldValue.arrayRemove(uid),
       [`members.${uid}`]: profile,
       updateAt: FieldValue.serverTimestamp(),
     });
+    clearRevokedGroup(db, batch, groupDoc, uid);
     batch.set(
       db.doc(`groups/${groupDoc.id}/sync/updates`),
       { group: FieldValue.serverTimestamp() },
@@ -133,12 +137,15 @@ export const acceptJoinRequest = onCall(async (request) => {
   const batch = db.batch();
   batch.update(groupRef, {
     memberUids: FieldValue.arrayUnion(uid),
+    // Rejoining undoes a revocation: a uid is a member or revoked, never both.
+    revokedUids: FieldValue.arrayRemove(uid),
     [`members.${uid}`]: {
       name: user.get("name") ?? "",
       username: user.get("username") ?? "",
     },
     updateAt: FieldValue.serverTimestamp(),
   });
+  clearRevokedGroup(db, batch, group, uid);
   // Same commit as the group, so both resolve to one instant and a reader's cache can settle.
   batch.set(
     db.doc(`groups/${groupId}/sync/updates`),
