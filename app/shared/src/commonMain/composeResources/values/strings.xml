@@ -241,6 +241,12 @@
     <string name="groups_join_invitation_inactive">Esa invitación ya no está activa.</string>
     <string name="groups_join_invitation_expired">Esa invitación ha caducado.</string>
     <string name="groups_join_error">No hemos podido enviar la petición.</string>
+    <string name="groups_request_pending">Esperando a que un admin acepte tu petición.</string>
+    <string name="groups_request_rejected">No han aceptado tu petición.</string>
+    <string name="groups_request_unknown_group">Grupo</string>
+    <string name="groups_request_cancel">Cancelar la petición</string>
+    <string name="groups_request_dismiss">Quitar de la lista</string>
+    <string name="groups_request_dismiss_error">No hemos podido quitar la petición.</string>
     <string name="people_load_error">No hemos podido cargar quién comparte su calendario contigo.</string>
 
     <!-- Share calendar -->
