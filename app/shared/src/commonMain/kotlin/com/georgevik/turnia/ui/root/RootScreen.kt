@@ -10,7 +10,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
+import com.georgevik.turnia.core.domain.model.PushDestination
 import com.georgevik.turnia.core.domain.model.UserSession
 import com.georgevik.turnia.navigation.LocalNavigator
 import com.georgevik.turnia.navigation.LocalRootNavigator
@@ -40,23 +43,10 @@ fun App(vm: RootViewModel = koinViewModel()) {
     // an app the user has not seen yet, and a refusal there is one the system will not ask again.
     if (userSession is UserSession.Authenticated) RequestNotificationPermission()
 
-    LaunchedEffect(userSession) {
-        if (backStack.lastOrNull() == RootRoute.SplashKey) return@LaunchedEffect
-        when (userSession) {
-            UserSession.Loading -> Unit
-            // Main may be covered by a full-screen destination, so look for it in the whole stack.
-            is UserSession.Authenticated -> if (RootRoute.MainKey !in backStack) {
-                backStack.clear()
-                backStack.add(RootRoute.MainKey)
-            }
+    val pendingDestination by vm.pendingDestination.collectAsStateWithLifecycle()
 
-            UserSession.Unauthenticated -> if (backStack.lastOrNull() != RootRoute.SignInKey) {
-                backStack.clear()
-                backStack.add(RootRoute.SignInKey)
-            }
-
-        }
-    }
+    handleNotificationTapped(pendingDestination, backStack, vm::destinationHandled)
+    handleLogoutSignal(userSession, backStack)
 
     TurniaTheme {
         val snackbarHostState = remember { SnackbarHostState() }
@@ -77,5 +67,46 @@ fun App(vm: RootViewModel = koinViewModel()) {
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun handleLogoutSignal(userSession: UserSession, backStack: NavBackStack<NavKey>) {
+    LaunchedEffect(userSession) {
+        if (backStack.lastOrNull() == RootRoute.SplashKey) return@LaunchedEffect
+        when (userSession) {
+            UserSession.Loading -> Unit
+            // Main may be covered by a full-screen destination, so look for it in the whole stack.
+            is UserSession.Authenticated -> if (RootRoute.MainKey !in backStack) {
+                backStack.clear()
+                backStack.add(RootRoute.MainKey)
+            }
+
+            UserSession.Unauthenticated -> if (backStack.lastOrNull() != RootRoute.SignInKey) {
+                backStack.clear()
+                backStack.add(RootRoute.SignInKey)
+            }
+
+        }
+    }
+}
+
+@Composable
+private fun handleNotificationTapped(
+    pendingDestination: PushDestination?,
+    backStack: NavBackStack<NavKey>,
+    processed: () -> Unit,
+) {
+    // A tapped notification
+    LaunchedEffect(pendingDestination, backStack.lastOrNull()) {
+        val destination = pendingDestination as? PushDestination.GroupDetail
+            ?: return@LaunchedEffect
+        // Cold start: the tap arrives long before the splash has decided where to send the user,
+        // and pushing a group over the splash would strand them there when it finishes.
+        if (RootRoute.MainKey !in backStack) return@LaunchedEffect
+
+        processed()
+        val key = RootRoute.GroupDetailKey(destination.groupId.value)
+        if (backStack.lastOrNull() != key) backStack.add(key)
     }
 }

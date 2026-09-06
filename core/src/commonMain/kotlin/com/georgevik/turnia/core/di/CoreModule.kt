@@ -21,6 +21,7 @@ import com.georgevik.turnia.core.data.datasource.firestorefunctions.GroupMembers
 import com.georgevik.turnia.core.data.datasource.firestorefunctions.UserProfileFunction
 import com.georgevik.turnia.core.data.group.GroupRepositoryImpl
 import com.georgevik.turnia.core.data.group.InvitationCodeFactory
+import com.georgevik.turnia.core.data.notification.NotificationRepositoryImpl
 import com.georgevik.turnia.core.data.user.PersonalEventRepositoryImpl
 import com.georgevik.turnia.core.data.user.UserProvisioner
 import com.georgevik.turnia.core.data.user.UserRepositoryImpl
@@ -28,6 +29,7 @@ import com.georgevik.turnia.core.data.user.delegate.FcmDelegateImpl
 import com.georgevik.turnia.core.domain.repository.AppConfigRepository
 import com.georgevik.turnia.core.domain.repository.FcmDelegate
 import com.georgevik.turnia.core.domain.repository.GroupRepository
+import com.georgevik.turnia.core.domain.repository.NotificationRepository
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
 import com.georgevik.turnia.core.domain.repository.UserRepository
 import com.georgevik.turnia.core.domain.username.UsernameFactory
@@ -94,6 +96,7 @@ val coreModule: Module = module {
         )
     }
     single<AppConfigRepository> { AppConfigRepositoryImpl() }
+    single<NotificationRepository> { NotificationRepositoryImpl() }
     single<GroupRepository> {
         GroupRepositoryImpl(
             get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()

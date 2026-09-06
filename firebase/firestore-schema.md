@@ -436,8 +436,18 @@ Firestore keeps only a **recent window** of events; older events are purged and 
 - **Taking an event offered for swap** is a `takeEvent` Cloud Function that verifies `onSwap == true` in a transaction and moves the event (a cross-member write).
 - **Push** is sent only from Cloud Functions, never from the client. The visible text is written by the
   server — a notification has to render while the app is not running — and every message carries a
-  `type` in its data payload (`join_requested`, `join_accepted`, `calendar_shared`, `event_on_swap`,
-  `event_taken`) so a tap can be routed.
+  `type` in its data payload so a tap can be routed:
+
+  | `type` | Sent to | Tapping it opens |
+  |--------|---------|------------------|
+  | `join_requested` | the group's admins | that group (`groupId` travels with it) |
+  | `join_accepted` | the requester | the Groups tab |
+  | `calendar_shared` | whoever was granted access | the People tab |
+  | `event_on_swap` | the other group members | nothing yet |
+  | `event_taken` | the member who offered it | nothing yet |
+
+  A `type` with no destination still opens the app; it just does not move it anywhere, which is also
+  what an older client does with a `type` it has never heard of.
 - **Colors**: `groupEventType` has no color (user's `groupEventTypeColors` decides it); `personalEventType` carries its own.
 - **Group-wide event queries are bounded to a ≤ 3-month `date` range** (collection-group on `event`, filtered by `groupId`).
 - **Cross-group shared calendars** are served on demand by the `getSharedCalendar` Cloud Function

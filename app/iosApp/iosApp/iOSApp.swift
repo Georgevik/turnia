@@ -34,6 +34,25 @@ class AppDelegate: NSObject, UIApplicationDelegate, MessagingDelegate,
     ) {
         completionHandler([.banner, .sound])
     }
+
+    /// The user tapped a notification. Also called on a cold start, once this delegate is set,
+    /// which is why the destination is held as state until the UI is there to act on it.
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
+        let userInfo = response.notification.request.content.userInfo
+        // Only the string entries: `aps` is a dictionary, and the shared code reads none of it.
+        let data = userInfo.reduce(into: [String: String]()) { result, entry in
+            if let key = entry.key as? String, let value = entry.value as? String {
+                result[key] = value
+            }
+        }
+
+        PushNavigationBridgeKt.onPushOpened(data: data)
+        completionHandler()
+    }
 }
 
 @main

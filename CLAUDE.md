@@ -171,6 +171,10 @@ Build one with `value.toSuccess()` / `error.toFailure()` — both work on any re
     **subscription receipt verification** (Play RTDN / App Store Server Notifications) and the
     **scheduled retention cleanup** (see *Data retention & local cache*).
   - **FCM** — push notifications.
+  - **Crashlytics** — crash reporting. Auto-initialized with the rest of Firebase; nothing calls it
+    to start it. It has no GitLive wrapper, so only the **Android** `Logger` reports through it
+    (breadcrumbs for every line, a non-fatal for every error carrying a throwable) — on iOS it
+    catches crashes on its own and hears nothing from shared code.
   - **Cloud Scheduler** — triggers the periodic retention cleanup of old events.
 - **GitLive Firebase Kotlin SDK** (`dev.gitlive:firebase-*`) — Firebase access from `commonMain`.
 - **Native FCM per platform** — push reception uses the native SDK on each platform (iOS involves APNs, `AppDelegate` and permissions).
@@ -252,6 +256,8 @@ Functions  Calls: 3
 3. **A username is a reservation, not a field** — `users/{uid}` is unreadable to a stranger, so a user is found through `usernames/{username}`, a public collection keyed by the handle. Uniqueness is enforced by Firestore's create-vs-update distinction in the rules, so **always claim the reservation before writing `users/{uid}.username`**, and release the previous one after. Search there is prefix-only; Firestore has no full-text search.
 4. **Joining a group is two steps via Cloud Functions** — `requestToJoinGroup` validates the code/expiration and creates a `joinRequests` doc; `acceptJoinRequest` (admin only) moves it to `members`. Do **not** let the client write directly to `members`.
 5. **Taking / push are server-only** — `takeEvent` reassigns the event in a transaction that verifies `onSwap` first; **push** is sent only from Cloud Functions, never from the client. The notification wording is written server-side, because a push has to render while the app is not running; the data payload carries a `type` for routing the tap. `users/{uid}/private/account.fcmTokens` is one entry per device, touched only through `arrayUnion` / `arrayRemove`, and the server prunes the tokens FCM reports as unregistered.
+
+   **A tapped notification is state, not an event.** The platform delivers the tap whenever it likes — on a cold start, long before the UI that has to act on it exists — so `NotificationRepository` holds the `PushDestination` until a screen says it has navigated, exactly as a `userMessage` is held until it has been shown. A `Channel` would drop precisely the cold-start case. The destinations are split by the back stack that owns them: `GroupDetail` is `RootScreen`'s, the tabs are `MainScreen`'s, and each consumes only its own.
 6. **Denormalized names have a keeper** — a group carries its members' names so the calendar costs no read to show them, and `onUserRenamed` is the only thing keeping those copies true. A document and the sync marker that gates it must be written in the **same commit**, or the marker is always the later of the two and no cache ever settles.
 7. **Premium entitlement is server-verified** — the client may *request* a purchase but must never mark itself premium. Only a Cloud Function that validated the store receipt (Play RTDN / App Store Server Notifications) writes `users/{uid}/private/subscription`; security rules forbid the client from setting it. Ad-hiding and premium gating must read the server-verified state, not a local flag.
 8. **Retention is destructive & only server-side** — the scheduled cleanup Cloud Function is the *only* thing that bulk-deletes events older than the 1-month window (events + `history`); clients must not. Before purging, the data must already be in each user's local cache, or old events (and their traceability chain) are lost. Sync into the local NoSQL cache before, not after, relying on the purge.
