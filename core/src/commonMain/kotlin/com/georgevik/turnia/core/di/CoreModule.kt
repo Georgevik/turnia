@@ -4,10 +4,10 @@ import com.georgevik.turnia.core.data.config.AppConfigRepositoryImpl
 import com.georgevik.turnia.core.data.datasource.firestore.GroupEventFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.GroupFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.GroupJoinRequestFirestore
-import com.georgevik.turnia.core.data.datasource.firestore.RevokedGroupFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.GroupSyncFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.PersonalEventFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.PersonalEventTypesFirestore
+import com.georgevik.turnia.core.data.datasource.firestore.RevokedGroupFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.UserPathFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.UserPrivateFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.UserSyncFirestore
@@ -16,6 +16,7 @@ import com.georgevik.turnia.core.data.datasource.firestore.mappers.GroupMapper
 import com.georgevik.turnia.core.data.datasource.firestore.mappers.PersonalEventMapper
 import com.georgevik.turnia.core.data.datasource.firestore.mappers.PersonalEventTypeDocMapper
 import com.georgevik.turnia.core.data.datasource.firestore.mappers.UserDocumentMapper
+import com.georgevik.turnia.core.data.datasource.firestorefunctions.GroupFunction
 import com.georgevik.turnia.core.data.datasource.firestorefunctions.GroupMembershipFunction
 import com.georgevik.turnia.core.data.datasource.firestorefunctions.UserProfileFunction
 import com.georgevik.turnia.core.data.group.GroupRepositoryImpl
@@ -64,6 +65,7 @@ val coreModule: Module = module {
     single { GroupJoinRequestFirestore(get()) }
     single { RevokedGroupFirestore(get(), get(), get()) }
     single { GroupMembershipFunction(get()) }
+    single { GroupFunction(get()) }
     single { PersonalEventFirestore(get(), get(), get()) }
     single { PersonalEventTypesFirestore(get(), get(), get(), get()) }
     factory { UserDocumentMapper() }
@@ -88,7 +90,7 @@ val coreModule: Module = module {
     single<AppConfigRepository> { AppConfigRepositoryImpl() }
     single<GroupRepository> {
         GroupRepositoryImpl(
-            get(), get(), get(), get(), get(), get(), get(), get(), get(), get()
+            get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()
         )
     }
     single<PersonalEventRepository> { PersonalEventRepositoryImpl(get(), get(), get(), get()) }

@@ -1,7 +1,8 @@
 package com.georgevik.turnia.ui.system.components
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,11 +32,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 @Composable
+@OptIn(ExperimentalFoundationApi::class)
 fun TListItem(
     title: String,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     onClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
     leading: @Composable (() -> Unit)? = null,
     trailing: @Composable (() -> Unit)? = null,
 ) {
@@ -46,7 +49,16 @@ fun TListItem(
         modifier = modifier
             .fillMaxWidth()
             .clip(shape)
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
+            .then(
+                if (onClick != null || onLongClick != null) {
+                    Modifier.combinedClickable(
+                        onClick = onClick ?: {},
+                        onLongClick = onLongClick,
+                    )
+                } else {
+                    Modifier
+                }
+            ),
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),

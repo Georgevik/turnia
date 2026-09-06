@@ -123,10 +123,10 @@
     <string name="group_detail_request_reject">Rechazar</string>
     <string name="group_detail_error_request">No hemos podido responder a la solicitud. Inténtalo de nuevo.</string>
     <string name="group_detail_error_save">No se ha podido guardar el grupo. Inténtalo de nuevo.</string>
-    <string name="group_detail_member_remove">Sacar del grupo</string>
+    <string name="group_detail_member_remove">Explulsar del grupo</string>
     <string name="group_detail_member_remove_title">¿Sacar a %1$s del grupo?</string>
     <string name="group_detail_member_remove_message">Dejará de ver el calendario del grupo. Los turnos que tenga asignados se quedan y solo los verá esa persona.</string>
-    <string name="group_detail_member_remove_confirm">Sacar del grupo</string>
+    <string name="group_detail_member_remove_confirm">Expulsar del grupo</string>
     <string name="group_detail_error_remove_member">No hemos podido sacar a esa persona del grupo.</string>
 
     <!-- Leaving a group -->
@@ -139,6 +139,12 @@
     <string name="group_leave_confirm">Salir</string>
     <string name="group_leave_error">No hemos podido sacarte del grupo.</string>
     <string name="group_leave_last_admin_error">Eres el único admin. Antes de salir, el grupo necesita a alguien que lo administre.</string>
+    <string name="group_delete_action">Eliminar grupo</string>
+    <string name="group_delete_title">¿Eliminar el grupo?</string>
+    <string name="group_delete_message">Se borrarán el grupo, sus tipos de turno y todos sus turnos. No se puede deshacer.</string>
+    <string name="group_delete_confirm">Eliminar</string>
+    <string name="group_delete_error">No hemos podido eliminar el grupo.</string>
+    <string name="group_delete_not_empty_error">Todavía queda gente en el grupo. Tienen que salir, o tienes que sacarlos, antes de eliminarlo.</string>
 
     <!-- Event types: detail (edit color / manage) -->
     <string name="event_types_edit">Editar eventos</string>

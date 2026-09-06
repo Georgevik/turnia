@@ -9,6 +9,7 @@ import {
 import {
   HttpErrorFailedPrecondition,
   HttpErrorInvalidArgument,
+  HttpErrorNotFound,
   HttpErrorPermissionDenied,
   HttpErrorUnauthenticated,
   TurniaErrorCode,
@@ -177,4 +178,75 @@ export const removeMember = onCall(async (request) => {
 
   const status = await revoke(db, groupId, uid);
   return { groupId, uid, status };
+});
+
+/**
+ * Deletes a group, once its admin is the only one left in it.
+ *
+ * Server-only, and not because of who is allowed to: a client deleting `groups/{groupId}` would
+ * delete one document and leave `events`, `sync` and `joinRequests` behind, since Firestore does
+ * not cascade into subcollections. Those orphans are unreachable — every rule that guards them
+ * looks the group up first — and still stored and billed. `recursiveDelete` is what actually
+ * empties the tree.
+ *
+ * The last-member condition is the whole safety story here: there is no undo, and nobody else can
+ * be surprised by it, because by the time it is allowed there is nobody else left. Anyone still in
+ * the group has to leave, or be removed, first.
+ *
+ * Request data: `{ groupId: string }`
+ * Returns: `{ groupId: string, status: "deleted" }`
+ */
+export const deleteGroup = onCall(async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    throw new HttpErrorUnauthenticated(TurniaErrorCode.DeleteGroupUnauthenticated, "Sign in required.");
+  }
+
+  const groupId = request.data?.groupId as string | undefined;
+  if (!groupId) {
+    throw new HttpErrorInvalidArgument(TurniaErrorCode.DeleteGroupMissingArgs, "Missing groupId.");
+  }
+
+  const db = getFirestore();
+  const groupRef = db.doc(`groups/${groupId}`);
+  const group = await groupRef.get();
+  if (!group.exists) {
+    throw new HttpErrorNotFound(TurniaErrorCode.DeleteGroupNotFound, "That group does not exist.");
+  }
+
+  const adminUids = (group.get("adminUids") as string[] | undefined) ?? [];
+  if (!adminUids.includes(uid)) {
+    throw new HttpErrorPermissionDenied(TurniaErrorCode.DeleteGroupNotAdmin, "Only a group admin can delete a group.");
+  }
+
+  const memberUids = (group.get("memberUids") as string[] | undefined) ?? [];
+  if (memberUids.some((member) => member !== uid)) {
+    throw new HttpErrorFailedPrecondition(
+      TurniaErrorCode.DeleteGroupNotEmpty,
+      "Everybody else has to leave the group before it can be deleted.",
+    );
+  }
+
+  // Someone removed earlier may still be holding a snapshot of this group to render the shifts
+  // they were left with. Those shifts go with the group, so the snapshot is tombstoned.
+  const revokedUids = (group.get("revokedUids") as string[] | undefined) ?? [];
+
+  // The group first: a tombstone written before a delete that then fails would take a group away
+  // from people it still exists for. The other way round they keep a stale, empty entry at worst.
+  await db.recursiveDelete(groupRef);
+
+  if (revokedUids.length > 0) {
+    const batch = db.batch();
+    for (const revokedUid of revokedUids) {
+      batch.set(
+        db.doc(`users/${revokedUid}/revokedGroups/${groupId}`),
+        { isDeleted: true, updateAt: FieldValue.serverTimestamp() },
+        { merge: true },
+      );
+      markRevokedGroupsUpdated(db, batch, revokedUid);
+    }
+    await batch.commit();
+  }
+
+  return { groupId, status: "deleted" as const };
 });

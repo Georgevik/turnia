@@ -71,6 +71,8 @@ interface GroupRepository {
     /** Removes a member, the same way [leaveGroup] does but decided by an admin. */
     suspend fun removeMember(groupId: GroupId, userId: UserId): Outcome<Unit, GroupError>
 
+    suspend fun deleteGroup(groupId: GroupId): Outcome<Unit, GroupError>
+
     /** Adds the event type to the group, or replaces the one with the same id. Admins only. */
     suspend fun saveEventType(groupId: GroupId, type: GroupEventType): Outcome<Unit, GroupError>
 

@@ -251,10 +251,10 @@ class GroupDetailViewModel(
 
     private fun GroupError.toScreenError() = when (this) {
         GroupError.NotFound -> GroupDetailScreenError.NotFound
-        // LastAdmin only comes back from leaving a group, which is not done from this screen.
         GroupError.LoadFailed,
         GroupError.SaveFailed,
-        GroupError.LastAdmin -> GroupDetailScreenError.LoadFailed
+        GroupError.LastAdmin,
+        GroupError.NotEmpty -> GroupDetailScreenError.LoadFailed
     }
 
     private fun updateForm(block: (GroupForm) -> GroupForm) =

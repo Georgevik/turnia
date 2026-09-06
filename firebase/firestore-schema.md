@@ -263,6 +263,10 @@ rule allows, and each one already carries its event types. `create` by any signe
 sole member and admin; `update`/`delete` by admins, with `memberUids`, `adminUids` and `revokedUids`
 immutable from the client — only `acceptJoinRequest` grows membership, with an `arrayUnion` so two admins
 accepting at once do not overwrite each other, and only `leaveGroup` / `removeMember` withdraw it.
+**`delete` is denied to every client**: removing this document does not cascade, so a client delete would
+leave `events`, `sync` and `joinRequests` orphaned — unreachable, since every rule guarding them looks the
+group up first, and still billed. The `deleteGroup` function is the only deleter, and it refuses until the
+admin is the last member standing.
 
 **A revoked user cannot read this document at all.** It carries the member roster and the invitation code,
 and Firestore has no field-level access, so the alternative to locking them out is handing every removed
@@ -420,6 +424,10 @@ Firestore keeps only a **recent window** of events; older events are purged and 
 - **Group event docs are readable by every group member** — never put private data (e.g. notes) on them.
   Personal events are private to the owner and their shared users, so their `notes` live on the event doc.
 - **Joining a group is two steps**: `requestToJoinGroup` then `acceptJoinRequest` (admin). The client never writes `memberUids`.
+- **A group is deleted server-side, and only when empty**: `deleteGroup` (admin-only) refuses while anybody
+  else is still a member, then `recursiveDelete`s the document with its subcollections and tombstones the
+  snapshot of every revoked user who was still holding one. Firestore does not cascade, so a client delete
+  would orphan them.
 - **Taking an event offered for swap** is a `takeEvent` Cloud Function that verifies `onSwap == true` in a transaction and moves the event (a cross-member write).
 - **Push** is sent only from Cloud Functions, never from the client.
 - **Colors**: `groupEventType` has no color (user's `groupEventTypeColors` decides it); `personalEventType` carries its own.

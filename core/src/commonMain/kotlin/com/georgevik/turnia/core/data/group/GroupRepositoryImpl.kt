@@ -9,6 +9,7 @@ import com.georgevik.turnia.core.data.datasource.firestore.doc.DocHolder
 import com.georgevik.turnia.core.data.datasource.firestore.doc.GroupDocument
 import com.georgevik.turnia.core.data.datasource.firestore.doc.GroupMemberDocument
 import com.georgevik.turnia.core.data.datasource.firestore.mappers.GroupMapper
+import com.georgevik.turnia.core.data.datasource.firestorefunctions.GroupFunction
 import com.georgevik.turnia.core.data.datasource.firestorefunctions.GroupMembershipFunction
 import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.EventId
@@ -38,9 +39,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.DateTimeUnit
@@ -58,6 +59,7 @@ class GroupRepositoryImpl(
     private val groupJoinRequestFirestore: GroupJoinRequestFirestore,
     private val revokedGroupFirestore: RevokedGroupFirestore,
     private val groupMembershipFunction: GroupMembershipFunction,
+    private val groupFunction: GroupFunction,
     private val userPathFirestore: UserPathFirestore,
     private val groupMapper: GroupMapper,
 ) : GroupRepository {
@@ -154,6 +156,9 @@ class GroupRepositoryImpl(
         groupId: GroupId,
         userId: UserId,
     ): Outcome<Unit, GroupError> = groupMembershipFunction.removeMember(groupId, userId)
+
+    override suspend fun deleteGroup(groupId: GroupId): Outcome<Unit, GroupError> =
+        groupFunction.deleteGroup(groupId)
 
     override suspend fun rejectJoinRequest(
         groupId: GroupId,

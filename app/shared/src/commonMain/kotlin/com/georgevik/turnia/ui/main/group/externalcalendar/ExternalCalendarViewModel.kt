@@ -56,7 +56,12 @@ class ExternalCalendarViewModel(
             groupRepository.getGroups()
                 .onEach { groups ->
                     val group = groups.find { it.id.value == data.id }
-                    _uiState.update { it.copy(isRevoked = group?.isRevoked == true) }
+                    _uiState.update {
+                        it.copy(
+                            isRevoked = group?.isRevoked == true,
+                            isAdmin = group?.isAdmin == true,
+                        )
+                    }
                 }
                 .launchIn(viewModelScope)
         }
@@ -79,7 +84,26 @@ class ExternalCalendarViewModel(
         }
     }
 
+
+    fun onDeleteGroup() {
+        val groupId = (data as? ExternalCalendarData.Group)?.id ?: return
+
+        viewModelScope.launch {
+            groupRepository.deleteGroup(GroupId(groupId)).fold(
+                onSuccess = { _uiState.update { it.copy(hasLeft = true) } },
+                onFailure = { error ->
+                    _uiState.update { it.copy(userMessage = error.toDeleteMessage()) }
+                },
+            )
+        }
+    }
+
     fun userMessageShown() = _uiState.update { it.copy(userMessage = null) }
+
+    private fun GroupError.toDeleteMessage() = when (this) {
+        GroupError.NotEmpty -> GroupCalendarMessage.DeleteNotEmpty
+        else -> GroupCalendarMessage.DeleteFailed
+    }
 
     private fun GroupError.toLeaveMessage() = when (this) {
         GroupError.LastAdmin -> GroupCalendarMessage.LeaveLastAdmin
@@ -124,8 +148,10 @@ data class GroupCalendarUi(
     val loading: Boolean = true,
     /** The user was removed from this group: the leftover events show, nothing can be added. */
     val isRevoked: Boolean = false,
+    /** Only an admin is offered the group's destructive actions. */
+    val isAdmin: Boolean = false,
     val hasLeft: Boolean = false,
     val userMessage: GroupCalendarMessage? = null,
 )
 
-enum class GroupCalendarMessage { LeaveFailed, LeaveLastAdmin }
+enum class GroupCalendarMessage { LeaveFailed, LeaveLastAdmin, DeleteFailed, DeleteNotEmpty }

@@ -34,6 +34,11 @@ export enum TurniaErrorCode {
   RemoveMemberSelf = 1017,
   RemoveMemberIsAdmin = 1018,
   RemoveMemberNotMember = 1019,
+  DeleteGroupUnauthenticated = 1020,
+  DeleteGroupMissingArgs = 1021,
+  DeleteGroupNotFound = 1022,
+  DeleteGroupNotAdmin = 1023,
+  DeleteGroupNotEmpty = 1024,
 
   // events
   TakeEventUnauthenticated = 3001,

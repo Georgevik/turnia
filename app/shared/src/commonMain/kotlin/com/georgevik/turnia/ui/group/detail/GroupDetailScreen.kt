@@ -67,11 +67,11 @@ import com.georgevik.turnia.ui.group.detail.model.GroupMemberUi
 import com.georgevik.turnia.ui.group.detail.model.GroupTypeRowUi
 import com.georgevik.turnia.ui.group.detail.model.JoinRequestUi
 import com.georgevik.turnia.ui.system.LocalSnackbar
-import com.georgevik.turnia.ui.system.components.ConfirmationDialog
 import com.georgevik.turnia.ui.system.components.AcronymBadge
 import com.georgevik.turnia.ui.system.components.AdminBadge
 import com.georgevik.turnia.ui.system.components.Avatar
 import com.georgevik.turnia.ui.system.components.Chevron
+import com.georgevik.turnia.ui.system.components.ConfirmationDialog
 import com.georgevik.turnia.ui.system.components.TFieldLabel
 import com.georgevik.turnia.ui.system.components.TListItem
 import com.georgevik.turnia.ui.system.components.TReadOnlyField
@@ -83,6 +83,7 @@ import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.calendar_back
+import turnia.app.shared.generated.resources.dialog_cancel
 import turnia.app.shared.generated.resources.event_type_field_end
 import turnia.app.shared.generated.resources.event_type_field_start
 import turnia.app.shared.generated.resources.group_detail_auto_approve
@@ -93,16 +94,15 @@ import turnia.app.shared.generated.resources.group_detail_code_hidden
 import turnia.app.shared.generated.resources.group_detail_code_regenerate
 import turnia.app.shared.generated.resources.group_detail_error_load
 import turnia.app.shared.generated.resources.group_detail_error_not_found
-import turnia.app.shared.generated.resources.dialog_cancel
 import turnia.app.shared.generated.resources.group_detail_error_remove_member
 import turnia.app.shared.generated.resources.group_detail_error_request
+import turnia.app.shared.generated.resources.group_detail_error_save
+import turnia.app.shared.generated.resources.group_detail_field_invitation
+import turnia.app.shared.generated.resources.group_detail_field_name
 import turnia.app.shared.generated.resources.group_detail_member_remove
 import turnia.app.shared.generated.resources.group_detail_member_remove_confirm
 import turnia.app.shared.generated.resources.group_detail_member_remove_message
 import turnia.app.shared.generated.resources.group_detail_member_remove_title
-import turnia.app.shared.generated.resources.group_detail_error_save
-import turnia.app.shared.generated.resources.group_detail_field_invitation
-import turnia.app.shared.generated.resources.group_detail_field_name
 import turnia.app.shared.generated.resources.group_detail_members_can_see_code
 import turnia.app.shared.generated.resources.group_detail_members_sheet_title
 import turnia.app.shared.generated.resources.group_detail_readonly
@@ -132,6 +132,8 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
     val snackbar = LocalSnackbar.current
 
     var membersSheetOpen by remember { mutableStateOf(false) }
+    // The member a long press opened the action list for, and the two confirmations those lead to.
+    var memberActions by remember { mutableStateOf<GroupMemberUi?>(null) }
     var pendingRemoval by remember { mutableStateOf<GroupMemberUi?>(null) }
     val sheetState = rememberModalBottomSheetState()
 
@@ -239,11 +241,20 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
         ) {
             MembersSheet(
                 members = success.members,
-                // Admins only, and never another admin: removing one is a demotion, which does
-                // not exist. That also covers the admin looking at their own row — they leave
-                // through the group's calendar instead.
-                canRemove = success.form.editable,
-                onRemove = { pendingRemoval = it },
+                canManage = success.form.editable,
+                onMemberLongPress = { memberActions = it },
+            )
+        }
+    }
+
+    memberActions?.let { member ->
+        ModalBottomSheet(onDismissRequest = { memberActions = null }) {
+            MemberActionsSheet(
+                member = member,
+                onRemove = {
+                    memberActions = null
+                    pendingRemoval = member
+                },
             )
         }
     }
@@ -264,6 +275,7 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
             onDismissRequest = { pendingRemoval = null },
         )
     }
+
 }
 
 @Composable
@@ -571,8 +583,8 @@ private fun MembersSection(memberCount: Int, onClick: () -> Unit) {
 @Composable
 private fun MembersSheet(
     members: List<GroupMemberUi>,
-    canRemove: Boolean,
-    onRemove: (GroupMemberUi) -> Unit,
+    canManage: Boolean,
+    onMemberLongPress: (GroupMemberUi) -> Unit,
 ) {
     LazyColumn(
         contentPadding = PaddingValues(
@@ -592,32 +604,51 @@ private fun MembersSheet(
         }
 
         items(members, key = { it.id.value }) { member ->
+            val manageable = canManage && !member.isAdmin
+
             TListItem(
                 title = member.name.ifBlank { member.username },
                 subtitle = "@${member.username}".takeIf { member.username.isNotBlank() },
+                onLongClick = { onMemberLongPress(member) }.takeIf { manageable },
                 leading = {
                     Avatar(
                         background = entityColor(member.id.value),
                         icon = Icons.Default.Person,
                     )
                 },
-                trailing = {
-                    if (member.isAdmin) {
-                        AdminBadge()
-                    } else if (canRemove) {
-                        IconButton(onClick = { onRemove(member) }) {
-                            Icon(
-                                imageVector = Icons.Default.PersonRemove,
-                                contentDescription = stringResource(
-                                    Res.string.group_detail_member_remove
-                                ),
-                                tint = MaterialTheme.colorScheme.error,
-                            )
-                        }
-                    }
-                },
+                trailing = { if (member.isAdmin) AdminBadge() },
             )
         }
+    }
+}
+
+@Composable
+private fun MemberActionsSheet(
+    member: GroupMemberUi,
+    onRemove: () -> Unit,
+) {
+    Column(
+        modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 32.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = member.name.ifBlank { member.username },
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(bottom = 8.dp),
+        )
+
+        TListItem(
+            title = stringResource(Res.string.group_detail_member_remove),
+            onClick = onRemove,
+            leading = {
+                Icon(
+                    imageVector = Icons.Default.PersonRemove,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                )
+            },
+        )
     }
 }
 

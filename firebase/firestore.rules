@@ -107,7 +107,9 @@ service cloud.firestore {
         request.resource.data.get('memberUids', []) == resource.data.get('memberUids', []) &&
         request.resource.data.get('adminUids', []) == resource.data.get('adminUids', []) &&
         request.resource.data.get('revokedUids', []) == resource.data.get('revokedUids', []);
-      allow delete: if isAdmin(groupId);
+      // Deleting from the client would remove this document and orphan `events`, `sync` and
+      // `joinRequests`: Firestore does not cascade. The `deleteGroup` function is the only deleter.
+      allow delete: if false;
 
       // Group events live in one collection per group, not one per member: a group's calendar is
       // a single query, and a transfer changes `assigneeId` instead of moving the document.
