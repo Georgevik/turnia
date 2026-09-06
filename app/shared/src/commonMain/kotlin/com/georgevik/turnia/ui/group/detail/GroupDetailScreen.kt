@@ -73,8 +73,8 @@ import com.georgevik.turnia.ui.system.components.AcronymBadge
 import com.georgevik.turnia.ui.system.components.AdminBadge
 import com.georgevik.turnia.ui.system.components.Avatar
 import com.georgevik.turnia.ui.system.components.Chevron
-import com.georgevik.turnia.ui.system.components.ConfirmationDialog
 import com.georgevik.turnia.ui.system.components.ColorSwatchPicker
+import com.georgevik.turnia.ui.system.components.ConfirmationDialog
 import com.georgevik.turnia.ui.system.components.TFieldLabel
 import com.georgevik.turnia.ui.system.components.TListItem
 import com.georgevik.turnia.ui.system.components.TReadOnlyField
@@ -475,17 +475,19 @@ private fun InvitationSection(
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         TFieldLabel(stringResource(Res.string.group_detail_section_invitation))
 
-        ToggleRow(
-            title = stringResource(Res.string.group_detail_auto_approve),
-            subtitle = if (form.autoApprove) {
-                stringResource(Res.string.group_detail_auto_approve_on)
-            } else {
-                stringResource(Res.string.group_detail_auto_approve_off)
-            },
-            checked = form.autoApprove,
-            enabled = form.editable,
-            onCheckedChange = onAutoApproveChanged,
-        )
+        if (form.editable) {
+            ToggleRow(
+                title = stringResource(Res.string.group_detail_auto_approve),
+                subtitle = if (form.autoApprove) {
+                    stringResource(Res.string.group_detail_auto_approve_on)
+                } else {
+                    stringResource(Res.string.group_detail_auto_approve_off)
+                },
+                checked = form.autoApprove,
+                enabled = true,
+                onCheckedChange = onAutoApproveChanged,
+            )
+        }
 
         val invitationCode = form.invitationCode
         if (!invitationCode.isNullOrBlank()) {
