@@ -4,7 +4,7 @@ import { clearRevokedGroup } from "./membership";
 import { notifyJoinAccepted, notifyJoinRequested } from "./notifications";
 import { TurniaError } from "./errors";
 import { requireFields, requireUid } from "./requests";
-import { writeJoinRequestPointer } from "./users";
+import { markPrivateUpdated, writeJoinRequestPointer } from "./users";
 
 /**
  * Requests to join a group by validating its (single) invitation code.
@@ -152,6 +152,7 @@ export const acceptJoinRequest = onCall(async (request) => {
     { merge: true },
   );
   batch.update(requestRef, { status: "accepted", respondedAt: FieldValue.serverTimestamp() });
+  markPrivateUpdated(db, batch, uid);
   await batch.commit();
 
   await notifyJoinAccepted(groupId, group.get("name") ?? "", uid);
@@ -188,7 +189,10 @@ export const rejectJoinRequest = onCall(async (request) => {
     throw TurniaError.RejectRequestNotFound;
   }
 
-  await requestRef.update({ status: "rejected", respondedAt: FieldValue.serverTimestamp() });
+  const batch = db.batch();
+  batch.update(requestRef, { status: "rejected", respondedAt: FieldValue.serverTimestamp() });
+  markPrivateUpdated(db, batch, uid);
+  await batch.commit();
 
   return { groupId, uid, status: "rejected" as const };
 });

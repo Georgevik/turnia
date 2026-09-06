@@ -24,6 +24,17 @@ export function writeJoinRequestPointer(
     { groupIds, updateAt: FieldValue.serverTimestamp() },
     { merge: true },
   );
+  markPrivateUpdated(db, batch, uid);
+}
+
+/**
+ * Tells a user's app that something under their `private` subcollection has moved.
+ *
+ * Answering a join request is the case that is easy to miss: the pointer list does not change, so
+ * nothing about it looks like a write to the requester — but their app reads the request's `status`
+ * through this marker, and without moving it they go on being told they are still waiting.
+ */
+export function markPrivateUpdated(db: Firestore, batch: WriteBatch, uid: string) {
   batch.set(
     db.doc(`users/${uid}/sync/updates`),
     { private: FieldValue.serverTimestamp() },
