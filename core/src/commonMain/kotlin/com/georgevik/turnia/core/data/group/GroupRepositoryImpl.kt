@@ -75,12 +75,13 @@ class GroupRepositoryImpl(
     override fun getGroups(): Flow<List<Group>> =
         userRepository.loggedUserFlow.flatMapLatest { user ->
             val userId = user.id
-            val colors = typeColors(userId)
 
             combine(
                 groupFirestore.observeMyGroups(userId),
                 revokedGroupFirestore.observe(userId),
-            ) { mine, revoked ->
+                userPathFirestore.observe(userId)
+            ) { mine, revoked, userData ->
+                val colors = userData.groupEventTypeColors
                 mine.map { groupMapper.map(it, userId, colors) } +
                         revoked.map { groupMapper.map(it, colors) }
             }
@@ -214,9 +215,10 @@ class GroupRepositoryImpl(
         val userId = userRepository.loggedUser?.id
             ?: return Result.failure(IllegalStateException("No signed-in user"))
 
-        return userPathFirestore.updateTypeColor(userId, groupId, typeId, color).errorOrNull()
-            ?.let { Result.failure(IllegalStateException("Failed to save the colour: $it")) }
-            ?: Result.success(Unit)
+        userPathFirestore.updateTypeColor(userId, groupId, typeId, color).errorOrNull()
+            ?.let { return Result.failure(IllegalStateException("Failed to save the colour: $it")) }
+
+        return Result.success(Unit)
     }
 
     override suspend fun addEvent(event: GroupEvent) {
@@ -263,19 +265,23 @@ class GroupRepositoryImpl(
         monthDelta: Int,
     ): Flow<Outcome<List<GroupEvent>, Unit>> = userRepository.loggedUserFlow.flatMapLatest { user ->
         val userId = user.id
-        val colors = typeColors(userId)
-
-        // A revoked user cannot read the group document, so the group they see is their own
-        // snapshot of it; falling through to `observe` would only earn a permission error.
-        revokedGroupFirestore.observe(userId).flatMapLatest { revoked ->
-            val snapshot = revoked.find { it.id == groupId.value }
-            if (snapshot != null) {
-                val group = groupMapper.map(snapshot, colors)
-                eventsOf(group, emptyMap(), userId, date, monthDelta).map { it.toSuccess() }
-            } else {
-                groupFirestore.observe(groupId).flatMapLatest { holder ->
-                    if (holder == null) flowOf(Unit.toFailure())
-                    else eventsOf(holder, userId, colors, date, monthDelta).map { it.toSuccess() }
+        userPathFirestore.observe(userId).map { it.groupEventTypeColors }.flatMapLatest { colors ->
+            revokedGroupFirestore.observe(userId).flatMapLatest { revoked ->
+                val snapshot = revoked.find { it.id == groupId.value }
+                if (snapshot != null) {
+                    val group = groupMapper.map(snapshot, colors)
+                    eventsOf(group, emptyMap(), userId, date, monthDelta).map { it.toSuccess() }
+                } else {
+                    groupFirestore.observe(groupId).flatMapLatest { holder ->
+                        if (holder == null) flowOf(Unit.toFailure())
+                        else eventsOf(
+                            holder,
+                            userId,
+                            colors,
+                            date,
+                            monthDelta
+                        ).map { it.toSuccess() }
+                    }
                 }
             }
         }

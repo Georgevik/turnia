@@ -36,6 +36,8 @@ class UserPathFirestore(
     private val mapper: UserDocumentMapper,
     scope: CoroutineScope
 ) {
+    private val listeners = SharedListeners<UserId, UserDocument>(scope, keepAlive = 10.minutes)
+
     // Held long past the screen that asks for it: a listener bills its result set again on every
     // re-attach, and nothing while it stays attached and nobody grants a calendar.
     private val calendarSharedWithMe =
@@ -43,7 +45,7 @@ class UserPathFirestore(
 
     suspend fun fetch(uid: UserId): Outcome<UserProfile, UserProfileError> =
         outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
-            val snapshot = firestore.collection(PATH_USER).document(uid.value).get().trackData(TAG)
+            val snapshot = queryUserDocument(uid).get().trackData(TAG)
             Logger.d(TAG, "Fetch user from cache: ${snapshot.metadata.isFromCache}")
 
             if (!snapshot.exists) return Outcome.Failure(UserProfileError.NotFound)
@@ -53,14 +55,26 @@ class UserPathFirestore(
     fun fetchCalendarsSharedWithMe(uid: UserId): Flow<CalendarsSharedWithMe> =
         calendarSharedWithMe.shared(uid) { queryCalendarSharedWith(uid) }
 
+    fun observe(uid: UserId): Flow<UserDocument> = listeners.shared(uid) { observeUserDoc(uid) }
+
+    private fun observeUserDoc(uid: UserId): Flow<UserDocument> =
+        queryUserDocument(uid).snapshots.map { snapshot ->
+            snapshot.trackData(TAG)
+            if (!snapshot.exists) UserDocument("")
+            else snapshot.data(UserDocument.serializer())
+        }
+            .distinctUntilChanged()
+            .catch { throwable ->
+                Logger.e(TAG, "Sync updates listener failed", throwable)
+            }
+
     suspend fun getUserDocument(uid: UserId): Outcome<UserDocument, UserProfileError> =
         outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
-            val snapshot = firestore.collection(PATH_USER).document(uid.value).get().trackData(TAG)
+            val snapshot = queryUserDocument(uid).get().trackData(TAG)
             if (!snapshot.exists) return Outcome.Failure(UserProfileError.NotFound)
 
             snapshot.data(UserDocument.serializer())
         }
-
     /**
      * The user's own document, from the cache whenever it is there.
      *
@@ -94,7 +108,7 @@ class UserPathFirestore(
     ): Outcome<Unit, UserProfileError> =
         outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
             Logger.i(TAG, "Grant calendar access")
-            firestore.collection(PATH_USER).document(uid.value).updateFields {
+            queryUserDocument(uid).updateFields {
                 UserDocument.FIELD_CALENDAR_SHARED_WITH to FieldValue.arrayUnion(granteeUid.value)
             }
             trackWrite(TAG)
@@ -106,7 +120,7 @@ class UserPathFirestore(
     ): Outcome<Unit, UserProfileError> =
         outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
             Logger.i(TAG, "Revoke calendar access")
-            firestore.collection(PATH_USER).document(uid.value).updateFields {
+            queryUserDocument(uid).updateFields {
                 UserDocument.FIELD_CALENDAR_SHARED_WITH to FieldValue.arrayRemove(granteeUid.value)
             }
             trackWrite(TAG)
@@ -121,25 +135,21 @@ class UserPathFirestore(
         outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
             Logger.i(TAG, "Update group event type colour")
             val key = UserDocument.typeColorKey(groupId.value, typeId.value)
-            firestore.collection(PATH_USER).document(uid.value).updateFields {
-                "${UserDocument.FIELD_TYPE_COLORS}.$key" to color
-            }
+            queryUserDocument(uid).updateFields { "${UserDocument.FIELD_TYPE_COLORS}.$key" to color }
             trackWrite(TAG)
         }
 
     suspend fun updateUsername(uid: UserId, username: String): Outcome<Unit, UserProfileError> =
         outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
             Logger.i(TAG, "Update username")
-            firestore.collection(PATH_USER).document(uid.value).updateFields {
-                UserDocument.FIELD_USERNAME to username
-            }
+            queryUserDocument(uid).updateFields { UserDocument.FIELD_USERNAME to username }
             trackWrite(TAG)
         }
 
     suspend fun update(uid: UserId, userPatched: UserDocument): Outcome<Unit, UserProfileError> =
         outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
             Logger.i(TAG, "Update user document")
-            firestore.collection(PATH_USER).document(uid.value).set(userPatched)
+            queryUserDocument(uid).set(userPatched)
             trackWrite(TAG)
         }
 
