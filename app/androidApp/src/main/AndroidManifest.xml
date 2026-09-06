@@ -14,8 +14,12 @@
             android:roundIcon="@mipmap/ic_launcher_foreground_round"
             android:supportsRtl="true"
             android:theme="@style/Theme.App.Starting">
+        <!-- singleTop: tapping a notification while the app is already open has to reach the
+             activity that is running, through onNewIntent, instead of starting a second one on
+             top of it. -->
         <activity
                 android:exported="true"
+                android:launchMode="singleTop"
                 android:name=".MainActivity"
                 android:screenOrientation="portrait">
             <intent-filter>

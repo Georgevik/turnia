@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.googleServices)
+    alias(libs.plugins.crashlytics)
 }
 
 kotlin {
@@ -20,6 +21,7 @@ dependencies {
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.koin.android)
     implementation(libs.firebase.messaging.android)
+    implementation(libs.firebase.crashlytics)
 
     implementation(libs.compose.uiToolingPreview)
     debugImplementation(libs.compose.uiTooling)

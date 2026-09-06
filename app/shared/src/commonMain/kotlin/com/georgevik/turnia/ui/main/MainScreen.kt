@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.entryProvider
+import com.georgevik.turnia.core.domain.model.PushDestination
 import com.georgevik.turnia.navigation.LocalNavigator
 import com.georgevik.turnia.navigation.TurniaNavDisplay
 import com.georgevik.turnia.navigation.main.MainNavigator
@@ -91,6 +92,11 @@ fun MainScreen(viewModel: MainViewModel = koinViewModel()) {
         }
     }
 
+    // The tab a tapped notification asks for. `GroupDetail` is not here: it lives on the root back
+    // stack, above this screen, and RootScreen is what puts it there.
+    val pendingDestination by viewModel.pendingDestination.collectAsStateWithLifecycle()
+    handleNotificationTapped(pendingDestination, viewModel::destinationHandled, navigator)
+
     CompositionLocalProvider(
         LocalNavigator provides navigator,
         LocalSnackbar provides snackbarHostState,
@@ -127,5 +133,23 @@ fun MainScreen(viewModel: MainViewModel = koinViewModel()) {
                 modifier = Modifier.padding(innerPadding),
             )
         }
+    }
+}
+
+@Composable
+private fun handleNotificationTapped(
+    pendingDestination: PushDestination?,
+    notifHandled : () -> Unit,
+    navigator: MainNavigator
+) {
+    LaunchedEffect(pendingDestination) {
+        val tab = when (pendingDestination) {
+            PushDestination.Groups -> MainRoute.GroupsTab
+            PushDestination.People -> MainRoute.PeopleTab
+            else -> return@LaunchedEffect
+        }
+
+        notifHandled()
+        navigator.goTo(tab)
     }
 }

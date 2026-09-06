@@ -95,6 +95,19 @@ class UserPrivateFirestore(
             trackWrite(TAG)
         }
 
+    suspend fun setNotificationsEnabled(
+        uid: UserId,
+        enabled: Boolean
+    ): Outcome<Unit, UserProfileError> =
+        outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
+            Logger.i(TAG, "Set notifications enabled: $enabled")
+            document(uid, DOCUMENT_ACCOUNT).set(
+                mapOf(UserPrivateDocument.FIELD_NOTIFICATIONS_ENABLED to enabled),
+                merge = true,
+            )
+            trackWrite(TAG)
+        }
+
     private fun document(uid: UserId, documentId: String) =
         firestore.collection(PATH_PRIVATE(uid.value)).document(documentId)
 

@@ -40,6 +40,9 @@ kotlin {
         }
         androidMain.dependencies {
             api(project.dependencies.platform(libs.firebase.bom))
+            // The Logger reports through it. GitLive wraps no Crashlytics, so this is the native
+            // SDK and Android-only: the iOS Logger writes to NSLog and nothing else.
+            implementation(libs.firebase.crashlytics)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

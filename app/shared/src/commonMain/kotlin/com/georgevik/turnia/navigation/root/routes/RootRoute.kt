@@ -33,4 +33,7 @@ sealed interface RootRoute : NavKey {
     @Serializable
     data object AdminGroupsKey : RootRoute
 
+    @Serializable
+    data object NotificationsKey : RootRoute
+
 }

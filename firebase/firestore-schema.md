@@ -81,11 +81,20 @@ Readable and writable **only by the owner**.
 |-------|------|-------------|
 | `email` | string | Account email. |
 | `fcmTokens` | string[] | FCM device tokens for push, one per device the account is signed in on. |
+| `notificationsEnabled` | boolean | The in-app notification switch. Absent means enabled. |
 
 > `fcmTokens` is only ever written with `arrayUnion` / `arrayRemove`: a phone and a tablet signed into
 > the same account both belong in it, and a write of the whole list would erase whichever device
 > saved last. The client adds its token when a session starts and removes it on sign-out; the server
 > drops the ones FCM reports as unregistered when it tries to send.
+>
+> `notificationsEnabled` is the switch in Settings, and it is per **account**, not per device: it says
+> the user does not want to be interrupted, which is not a statement about which phone was in hand.
+> Turning it off also takes that device's token out of `fcmTokens`, so nothing is sent rather than
+> sent and discarded — the flag is what the client reads on the next launch to know not to register
+> again. Nothing on the server reads it; an empty `fcmTokens` is already the whole story there.
+> It is not the **system** permission either, which only the OS can answer for: a user who denied
+> notifications to the app sees this switch on and still gets nothing.
 
 ### `users/{uid}/private/joinRequests`
 
@@ -483,9 +492,19 @@ Firestore keeps only a **recent window** of events; older events are purged and 
 - **Taking an event offered for swap** is a `takeEvent` Cloud Function that verifies `onSwap == true` in a transaction and moves the event (a cross-member write).
 - **Push** is sent only from Cloud Functions, never from the client. The visible text is written by the
   server — a notification has to render while the app is not running — and every message carries a
-  `type` in its data payload (`join_requested`, `join_accepted`, `calendar_shared`, `event_on_swap`,
-  `event_taken`) so a tap can be routed.
-- **Colors**: `groupEventType` has no color (the user's `groupEventTypeColors` decides it); `personalEventType` and `group` carry their own — a group's is the admin's pick and is the same for every member.
+  `type` in its data payload so a tap can be routed:
+
+  | `type` | Sent to | Tapping it opens |
+  |--------|---------|------------------|
+  | `join_requested` | the group's admins | that group (`groupId` travels with it) |
+  | `join_accepted` | the requester | the Groups tab |
+  | `calendar_shared` | whoever was granted access | the People tab |
+  | `event_on_swap` | the other group members | nothing yet |
+  | `event_taken` | the member who offered it | nothing yet |
+
+  A `type` with no destination still opens the app; it just does not move it anywhere, which is also
+  what an older client does with a `type` it has never heard of.
+- **Colors**: `groupEventType` has no color (user's `groupEventTypeColors` decides it); `personalEventType`and `group` carry their own — a group's is the admin's pick and is the same for every member..
 - **Group-wide event queries are bounded to a ≤ 3-month `date` range** (collection-group on `event`, filtered by `groupId`).
 - **Cross-group shared calendars** are served on demand by the `getSharedCalendar` Cloud Function
   (collection-group on `event` filtered by `assigneeId` + date range); nothing is mirrored.

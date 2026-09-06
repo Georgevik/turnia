@@ -19,6 +19,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.Card
@@ -50,6 +51,7 @@ import turnia.app.shared.generated.resources.profile_logout_dialog_message
 import turnia.app.shared.generated.resources.profile_logout_dialog_title
 import turnia.app.shared.generated.resources.profile_my_events
 import turnia.app.shared.generated.resources.settings_my_profile
+import turnia.app.shared.generated.resources.settings_notifications
 
 /**
  * "Perfil" tab — a draft account screen: the signed-in user header plus entry
@@ -145,6 +147,12 @@ fun SettingsMenuScreen(vm: SettingsMenuViewModel = koinViewModel()) {
         }
         ProfileRow(Icons.Default.Groups, stringResource(Res.string.groups_title)) {
             rootNavigator.goTo(RootRoute.AdminGroupsKey)
+        }
+        ProfileRow(
+            Icons.Default.Notifications,
+            stringResource(Res.string.settings_notifications),
+        ) {
+            rootNavigator.goTo(RootRoute.NotificationsKey)
         }
         ProfileRow(Icons.AutoMirrored.Filled.Logout, stringResource(Res.string.profile_logout)) {
             showLogoutDialog = true
