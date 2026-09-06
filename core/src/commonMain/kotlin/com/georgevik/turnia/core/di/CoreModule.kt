@@ -96,7 +96,7 @@ val coreModule: Module = module {
     single<AppConfigRepository> { AppConfigRepositoryImpl() }
     single<GroupRepository> {
         GroupRepositoryImpl(
-            get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()
+            get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()
         )
     }
     single<PersonalEventRepository> { PersonalEventRepositoryImpl(get(), get(), get(), get()) }

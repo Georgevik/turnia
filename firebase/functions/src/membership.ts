@@ -198,11 +198,16 @@ export const deleteGroup = onCall(async (request) => {
   // they were left with. Those shifts go with the group, so the snapshot is tombstoned.
   const revokedUids = (group.get("revokedUids") as string[] | undefined) ?? [];
 
+  // Anyone still waiting to be let in keeps a pointer to this group under their own private
+  // document, and `recursiveDelete` cannot reach it: it is not under the group. Read them while
+  // the requests still exist.
+  const requests = await groupRef.collection("joinRequests").get();
+
   // The group first: a tombstone written before a delete that then fails would take a group away
   // from people it still exists for. The other way round they keep a stale, empty entry at worst.
   await db.recursiveDelete(groupRef);
 
-  if (revokedUids.length > 0) {
+  if (revokedUids.length > 0 || !requests.empty) {
     const batch = db.batch();
     for (const revokedUid of revokedUids) {
       batch.set(
@@ -211,6 +216,13 @@ export const deleteGroup = onCall(async (request) => {
         { merge: true },
       );
       markRevokedGroupsUpdated(db, batch, revokedUid);
+    }
+    for (const requestDoc of requests.docs) {
+      batch.set(
+        db.doc(`users/${requestDoc.id}/private/joinRequests`),
+        { groupIds: FieldValue.arrayRemove(groupId) },
+        { merge: true },
+      );
     }
     await batch.commit();
   }

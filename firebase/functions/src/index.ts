@@ -8,8 +8,8 @@ initializeApp();
 // The client has to name the same region: `Firebase.functions(...)` defaults to us-central1.
 setGlobalOptions({ region: "europe-southwest1" });
 
-// Group membership: request to join (validates the invitation) and admin acceptance.
-export { requestToJoinGroup, acceptJoinRequest } from "./invitations";
+// Group membership: request to join (validates the invitation) and the admin's answer.
+export { requestToJoinGroup, acceptJoinRequest, rejectJoinRequest } from "./invitations";
 
 // Withdrawing membership: leaving yourself, or an admin removing someone. Whoever still holds
 // events keeps read access to their own through `revokedUids`.
