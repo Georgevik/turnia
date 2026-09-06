@@ -102,7 +102,8 @@ class UserPrivateFirestore(
                     return@mapNotNull null
                 }
 
-                val serverSnapshot = document(DOCUMENT_JOIN_REQUESTS, uid).get(Source.SERVER)
+                val serverSnapshot =
+                    document(DOCUMENT_JOIN_REQUESTS, uid).get(Source.SERVER).trackData(TAG)
                 val serverDoc: UserJoinRequestsDocument? = if (serverSnapshot.exists) {
                     serverSnapshot.data(UserJoinRequestsDocument.serializer())
                 } else null
@@ -115,11 +116,20 @@ class UserPrivateFirestore(
     suspend fun removeJoinRequest(uid: UserId, groupId: String): Outcome<Unit, UserProfileError> =
         outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
             Logger.i(TAG, "Drop the join request pointer")
-            document(DOCUMENT_JOIN_REQUESTS, uid).set(
-                mapOf(UserJoinRequestsDocument.FIELD_GROUP_IDS to FieldValue.arrayRemove(groupId)),
+
+            val batch = firestore.batch()
+            batch.set(
+                document(DOCUMENT_JOIN_REQUESTS, uid),
+                mapOf(
+                    UserJoinRequestsDocument.FIELD_GROUP_IDS to FieldValue.arrayRemove(groupId),
+                    UserJoinRequestsDocument.FIELD_UPDATE_AT to FieldValue.serverTimestamp,
+                ),
                 merge = true,
             )
+            val syncWrite = userSyncFirestore.writePrivate(batch, uid)
+            batch.commit()
             trackWrite(TAG)
+            syncWrite.committed()
         }
 
     suspend fun setNotificationsEnabled(

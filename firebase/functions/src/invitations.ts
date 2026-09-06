@@ -4,6 +4,7 @@ import { clearRevokedGroup } from "./membership";
 import { notifyJoinAccepted, notifyJoinRequested } from "./notifications";
 import { TurniaError } from "./errors";
 import { requireFields, requireUid } from "./requests";
+import { writeJoinRequestPointer } from "./users";
 
 /**
  * Requests to join a group by validating its (single) invitation code.
@@ -88,11 +89,7 @@ export const requestToJoinGroup = onCall(async (request) => {
     respondedAt: null,
     requestedAt: FieldValue.serverTimestamp(),
   });
-  batch.set(
-    db.doc(`users/${uid}/private/joinRequests`),
-    { groupIds: FieldValue.arrayUnion(groupDoc.id) },
-    { merge: true },
-  );
+  writeJoinRequestPointer(db, batch, uid, FieldValue.arrayUnion(groupDoc.id));
   await batch.commit();
   // After the write: the request is what the admins are being told about, and a push about one
   // that failed to save would send them to an approval screen with nothing on it.

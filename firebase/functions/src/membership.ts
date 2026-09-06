@@ -8,6 +8,7 @@ import {
 } from "firebase-admin/firestore";
 import { TurniaError } from "./errors";
 import { requireFields, requireUid } from "./requests";
+import { writeJoinRequestPointer } from "./users";
 
 function markRevokedGroupsUpdated(db: Firestore, batch: WriteBatch, uid: string) {
   batch.set(
@@ -218,11 +219,7 @@ export const deleteGroup = onCall(async (request) => {
       markRevokedGroupsUpdated(db, batch, revokedUid);
     }
     for (const requestDoc of requests.docs) {
-      batch.set(
-        db.doc(`users/${requestDoc.id}/private/joinRequests`),
-        { groupIds: FieldValue.arrayRemove(groupId) },
-        { merge: true },
-      );
+      writeJoinRequestPointer(db, batch, requestDoc.id, FieldValue.arrayRemove(groupId));
     }
     await batch.commit();
   }

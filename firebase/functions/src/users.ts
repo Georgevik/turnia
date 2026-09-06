@@ -1,7 +1,35 @@
 import { onCall } from "firebase-functions/v2/https";
-import { FieldValue, getFirestore } from "firebase-admin/firestore";
+import { FieldValue, Firestore, WriteBatch, getFirestore } from "firebase-admin/firestore";
 import { TurniaError } from "./errors";
 import { requireFields, requireUid } from "./requests";
+
+/**
+ * Points a requester at a join request of theirs, on their own private document.
+ *
+ * Three writes that must never travel apart: the pointer itself, the `updateAt` a reader compares
+ * against, and the `private` marker on their sync document. The client reads this pointer through
+ * that marker — it is how it learns the request exists at all — so a pointer written without moving
+ * the marker is a pointer nobody ever sees.
+ *
+ * @param groupIds an `arrayUnion` to add the pointer, an `arrayRemove` to drop it.
+ */
+export function writeJoinRequestPointer(
+  db: Firestore,
+  batch: WriteBatch,
+  uid: string,
+  groupIds: FieldValue,
+) {
+  batch.set(
+    db.doc(`users/${uid}/private/joinRequests`),
+    { groupIds, updateAt: FieldValue.serverTimestamp() },
+    { merge: true },
+  );
+  batch.set(
+    db.doc(`users/${uid}/sync/updates`),
+    { private: FieldValue.serverTimestamp() },
+    { merge: true },
+  );
+}
 
 /** Mirrors `isValidUsername` in the app: 3-20 of a-z, 0-9, `_` or `.`. */
 const USERNAME_PATTERN = /^[a-z0-9_.]{3,20}$/;
