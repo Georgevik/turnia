@@ -186,6 +186,40 @@ class GroupDetailViewModel(
         }
     }
 
+    fun onLeaveGroup() = closeGroup(
+        action = { groupRepository.leaveGroup(groupId) },
+        message = { error ->
+            if (error == GroupError.LastAdmin) GroupDetailMessage.LeaveLastAdmin
+            else GroupDetailMessage.LeaveFailed
+        },
+    )
+
+    fun onDeleteGroup() = closeGroup(
+        action = { groupRepository.deleteGroup(groupId) },
+        message = { error ->
+            if (error == GroupError.NotEmpty) GroupDetailMessage.DeleteNotEmpty
+            else GroupDetailMessage.DeleteFailed
+        },
+    )
+
+    private fun closeGroup(
+        action: suspend () -> Outcome<Unit, GroupError>,
+        message: (GroupError) -> GroupDetailMessage,
+    ) {
+        if (groupId.value.isBlank()) return
+
+        viewModelScope.launch {
+            updateSuccess { it.copy(saving = true) }
+
+            action().fold(
+                onSuccess = { updateSuccess { it.copy(saving = false, hasLeft = true) } },
+                onFailure = { error ->
+                    updateSuccess { it.copy(saving = false, userMessage = message(error)) }
+                },
+            )
+        }
+    }
+
     /** The answered request leaves the list at once; the group is re-read for its new members. */
     private fun answerRequest(
         userId: UserId,

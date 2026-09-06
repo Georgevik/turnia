@@ -20,6 +20,7 @@ sealed interface GroupDetailUi {
         val isNew: Boolean,
         val saving: Boolean = false,
         val isSaved: Boolean = false,
+        val hasLeft: Boolean = false,
         val userMessage: GroupDetailMessage? = null,
     ) : GroupDetailUi
 
@@ -69,4 +70,12 @@ data class JoinRequestUi(
 
 enum class GroupDetailScreenError { NotFound, LoadFailed }
 
-enum class GroupDetailMessage { SaveFailed, RequestFailed, RemoveMemberFailed }
+enum class GroupDetailMessage {
+    SaveFailed,
+    RequestFailed,
+    RemoveMemberFailed,
+    LeaveFailed,
+    LeaveLastAdmin,
+    DeleteFailed,
+    DeleteNotEmpty,
+}

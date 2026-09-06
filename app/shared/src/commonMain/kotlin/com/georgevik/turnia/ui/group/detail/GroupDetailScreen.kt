@@ -16,10 +16,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
@@ -89,6 +91,12 @@ import turnia.app.shared.generated.resources.calendar_back
 import turnia.app.shared.generated.resources.dialog_cancel
 import turnia.app.shared.generated.resources.event_type_field_end
 import turnia.app.shared.generated.resources.event_type_field_start
+import turnia.app.shared.generated.resources.group_delete_action
+import turnia.app.shared.generated.resources.group_delete_confirm
+import turnia.app.shared.generated.resources.group_delete_error
+import turnia.app.shared.generated.resources.group_delete_message
+import turnia.app.shared.generated.resources.group_delete_not_empty_error
+import turnia.app.shared.generated.resources.group_delete_title
 import turnia.app.shared.generated.resources.group_detail_auto_approve
 import turnia.app.shared.generated.resources.group_detail_auto_approve_off
 import turnia.app.shared.generated.resources.group_detail_auto_approve_on
@@ -121,6 +129,12 @@ import turnia.app.shared.generated.resources.group_detail_title_new
 import turnia.app.shared.generated.resources.group_detail_types_add
 import turnia.app.shared.generated.resources.group_detail_types_empty
 import turnia.app.shared.generated.resources.group_detail_types_new_hint
+import turnia.app.shared.generated.resources.group_leave_action
+import turnia.app.shared.generated.resources.group_leave_confirm
+import turnia.app.shared.generated.resources.group_leave_error
+import turnia.app.shared.generated.resources.group_leave_last_admin_error
+import turnia.app.shared.generated.resources.group_leave_message
+import turnia.app.shared.generated.resources.group_leave_title
 import turnia.app.shared.generated.resources.group_member_count
 
 /**
@@ -138,6 +152,8 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
     var membersSheetOpen by remember { mutableStateOf(false) }
     var memberActions by remember { mutableStateOf<GroupMemberUi?>(null) }
     var pendingRemoval by remember { mutableStateOf<GroupMemberUi?>(null) }
+    var leaveRequested by remember { mutableStateOf(false) }
+    var deleteRequested by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
 
     LifecycleResumeEffect(Unit) {
@@ -165,6 +181,17 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                             contentDescription = stringResource(Res.string.calendar_back),
+                        )
+                    }
+                },
+                actions = {
+                    val state = uiState
+                    if (state is GroupDetailUi.Success && !state.isNew) {
+                        GroupExitAction(
+                            isAdmin = state.form.editable,
+                            enabled = !state.saving,
+                            onLeave = { leaveRequested = true },
+                            onDelete = { deleteRequested = true },
                         )
                     }
                 },
@@ -199,8 +226,11 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
                         viewModel.userMessageShown()
                     }
                 }
-                LaunchedEffect(state.isSaved) {
-                    if (state.isSaved) navigator.goBack()
+                LaunchedEffect(state.isSaved, state.hasLeft) {
+                    when {
+                        state.hasLeft -> navigator.popToRoot()
+                        state.isSaved -> navigator.goBack()
+                    }
                 }
 
                 GroupDetailContent(
@@ -277,6 +307,61 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
                 viewModel.onRemoveMember(member.id)
             },
             onDismissRequest = { pendingRemoval = null },
+        )
+    }
+
+    if (leaveRequested) {
+        ConfirmationDialog(
+            title = stringResource(Res.string.group_leave_title),
+            message = stringResource(Res.string.group_leave_message),
+            confirmText = stringResource(Res.string.group_leave_confirm),
+            dismissText = stringResource(Res.string.dialog_cancel),
+            onConfirm = {
+                leaveRequested = false
+                viewModel.onLeaveGroup()
+            },
+            onDismissRequest = { leaveRequested = false },
+        )
+    }
+
+    if (deleteRequested && success != null) {
+        val canDelete = success.form.memberCount <= 1
+        ConfirmationDialog(
+            title = stringResource(Res.string.group_delete_title),
+            message = stringResource(
+                if (canDelete) Res.string.group_delete_message
+                else Res.string.group_delete_not_empty_error
+            ),
+            confirmText = stringResource(Res.string.group_delete_confirm),
+            dismissText = stringResource(Res.string.dialog_cancel),
+            confirmEnabled = canDelete,
+            onConfirm = {
+                deleteRequested = false
+                viewModel.onDeleteGroup()
+            },
+            onDismissRequest = { deleteRequested = false },
+        )
+    }
+}
+
+@Composable
+private fun GroupExitAction(
+    isAdmin: Boolean,
+    enabled: Boolean,
+    onLeave: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    IconButton(onClick = if (isAdmin) onDelete else onLeave, enabled = enabled) {
+        Icon(
+            imageVector = if (isAdmin) {
+                Icons.Default.DeleteOutline
+            } else {
+                Icons.AutoMirrored.Filled.Logout
+            },
+            contentDescription = stringResource(
+                if (isAdmin) Res.string.group_delete_action else Res.string.group_leave_action
+            ),
+            tint = MaterialTheme.colorScheme.error,
         )
     }
 }
@@ -759,5 +844,9 @@ private fun GroupDetailMessage.message(): String = stringResource(
         GroupDetailMessage.SaveFailed -> Res.string.group_detail_error_save
         GroupDetailMessage.RequestFailed -> Res.string.group_detail_error_request
         GroupDetailMessage.RemoveMemberFailed -> Res.string.group_detail_error_remove_member
+        GroupDetailMessage.LeaveFailed -> Res.string.group_leave_error
+        GroupDetailMessage.LeaveLastAdmin -> Res.string.group_leave_last_admin_error
+        GroupDetailMessage.DeleteFailed -> Res.string.group_delete_error
+        GroupDetailMessage.DeleteNotEmpty -> Res.string.group_delete_not_empty_error
     }
 )

@@ -13,13 +13,14 @@ fun ConfirmationDialog(
     dismissText: String,
     onConfirm: () -> Unit,
     onDismissRequest: () -> Unit,
+    confirmEnabled: Boolean = true,
 ) {
     AlertDialog(
         onDismissRequest = onDismissRequest,
         title = { Text(title) },
         text = { Text(message) },
         confirmButton = {
-            TextButton(onClick = onConfirm) { Text(confirmText) }
+            TextButton(onClick = onConfirm, enabled = confirmEnabled) { Text(confirmText) }
         },
         dismissButton = {
             TextButton(onClick = onDismissRequest) { Text(dismissText) }

@@ -23,4 +23,10 @@ class MainNavigator(private val state: MainNavigationState) : Navigator {
             currentStack.removeLastOrNull()
         }
     }
+
+    override fun popToRoot() {
+        state.backStacks.values.forEach { stack ->
+            while (stack.size > 1) stack.removeLastOrNull()
+        }
+    }
 }

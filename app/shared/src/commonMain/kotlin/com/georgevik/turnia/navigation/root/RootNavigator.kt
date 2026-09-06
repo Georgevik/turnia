@@ -16,4 +16,8 @@ class RootNavigator(private val backStack: NavBackStack<NavKey>) : Navigator {
     override fun goBack() {
         if (backStack.size > 1) backStack.removeLastOrNull()
     }
+
+    override fun popToRoot() {
+        while (backStack.size > 1) backStack.removeLastOrNull()
+    }
 }
