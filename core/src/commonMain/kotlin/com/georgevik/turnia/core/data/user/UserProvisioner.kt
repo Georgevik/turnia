@@ -4,7 +4,6 @@ import com.georgevik.turnia.core.data.datasource.firestore.UserPathFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.UserPrivateFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.UsernameFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.doc.UserDocument
-import com.georgevik.turnia.core.data.datasource.firestore.doc.UserPrivateDocument
 import com.georgevik.turnia.core.data.datasource.firestore.errors.UserProfileError
 import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.UserId
@@ -32,12 +31,7 @@ class UserProvisioner(
         val userId = UserId(firebaseUser.uid)
         Logger.w(TAG, "Empty users/${firebaseUser.uid}. New user")
 
-        remotePrivate.updateAccount(
-            userId, UserPrivateDocument(
-                email = firebaseUser.email.orEmpty(),
-                fcmTokens = emptyList(),
-            )
-        ).errorOrNull()?.let { error ->
+        remotePrivate.createAccount(userId, firebaseUser.email.orEmpty()).errorOrNull()?.let { error ->
             Logger.e(TAG, "Could not create the private account: $error")
         }
 

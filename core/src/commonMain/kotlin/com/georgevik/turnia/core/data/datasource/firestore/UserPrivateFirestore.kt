@@ -1,14 +1,15 @@
 package com.georgevik.turnia.core.data.datasource.firestore
 
+import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackData
+import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackWrite
 import com.georgevik.turnia.core.data.datasource.firestore.doc.SubscriptionDocument
 import com.georgevik.turnia.core.data.datasource.firestore.doc.UserPrivateDocument
 import com.georgevik.turnia.core.data.datasource.firestore.errors.UserProfileError
-import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackData
-import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackWrite
 import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.outcomeCatching
+import dev.gitlive.firebase.firestore.FieldValue
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 
 /**
@@ -39,13 +40,38 @@ class UserPrivateFirestore(
             else snapshot.data(SubscriptionDocument.serializer())
         }
 
-    suspend fun updateAccount(
-        uid: UserId,
-        account: UserPrivateDocument
-    ): Outcome<Unit, UserProfileError> =
-        outcomeCatching({ UserProfileError.LoadFailed(it) }) {
-            Logger.i(TAG, "Update private account document")
-            document(uid, DOCUMENT_ACCOUNT).set(account)
+    /**
+     * Seeds the private document for a brand-new account.
+     */
+    suspend fun createAccount(uid: UserId, email: String): Outcome<Unit, UserProfileError> =
+        outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
+            Logger.i(TAG, "Create private account document")
+            document(uid, DOCUMENT_ACCOUNT).set(
+                mapOf(UserPrivateDocument.FIELD_EMAIL to email),
+                merge = true,
+            )
+            trackWrite(TAG)
+        }
+
+    /**
+     * Registers this device for push.
+     */
+    suspend fun addFcmToken(uid: UserId, token: String): Outcome<Unit, UserProfileError> =
+        outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
+            Logger.i(TAG, "Register the push token")
+            document(uid, DOCUMENT_ACCOUNT).set(
+                mapOf(UserPrivateDocument.FIELD_FCM_TOKENS to FieldValue.arrayUnion(token)),
+                merge = true,
+            )
+            trackWrite(TAG)
+        }
+
+    suspend fun removeFcmToken(uid: UserId, token: String): Outcome<Unit, UserProfileError> =
+        outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
+            Logger.i(TAG, "Unregister the push token")
+            document(uid, DOCUMENT_ACCOUNT).updateFields {
+                UserPrivateDocument.FIELD_FCM_TOKENS to FieldValue.arrayRemove(token)
+            }
             trackWrite(TAG)
         }
 

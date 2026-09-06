@@ -9,7 +9,7 @@ import com.georgevik.turnia.core.system.Outcome
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
-interface UserRepository {
+interface UserRepository : FcmDelegate {
     val loggedUser: User?
     val userSession: StateFlow<UserSession>
 
@@ -27,4 +27,10 @@ interface UserRepository {
     suspend fun grantCalendarAccess(userId: UserId): Outcome<Unit, Unit>
 
     suspend fun revokeCalendarAccess(userId: UserId): Outcome<Unit, Unit>
+}
+
+interface FcmDelegate {
+    suspend fun registerFcmToken(uid: UserId)
+
+    suspend fun unregisterFcmToken(uid: UserId)
 }

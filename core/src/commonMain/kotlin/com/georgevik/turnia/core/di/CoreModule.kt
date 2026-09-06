@@ -24,7 +24,9 @@ import com.georgevik.turnia.core.data.group.InvitationCodeFactory
 import com.georgevik.turnia.core.data.user.PersonalEventRepositoryImpl
 import com.georgevik.turnia.core.data.user.UserProvisioner
 import com.georgevik.turnia.core.data.user.UserRepositoryImpl
+import com.georgevik.turnia.core.data.user.delegate.FcmDelegateImpl
 import com.georgevik.turnia.core.domain.repository.AppConfigRepository
+import com.georgevik.turnia.core.domain.repository.FcmDelegate
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
 import com.georgevik.turnia.core.domain.repository.UserRepository
@@ -33,6 +35,7 @@ import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
 import dev.gitlive.firebase.firestore.firestore
 import dev.gitlive.firebase.functions.functions
+import dev.gitlive.firebase.messaging.messaging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -54,6 +57,7 @@ val coreModule: Module = module {
     single { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
     single { Firebase.firestore }
     single { Firebase.functions(FUNCTIONS_REGION) }
+    single { Firebase.messaging }
     single { UserProfileFunction(get()) }
     single { UserPathFirestore(get(), get(), get()) }
     single { UserPrivateFirestore(get()) }
@@ -75,9 +79,11 @@ val coreModule: Module = module {
     factory { PersonalEventTypeDocMapper() }
     factory { GroupMapper() }
     single { UserProvisioner(get(), get(), get(), get()) }
+    single<FcmDelegate> { FcmDelegateImpl(get(), get()) }
     single<UserRepository> {
         UserRepositoryImpl(
             Firebase.auth,
+            get(),
             get(),
             get(),
             get(),

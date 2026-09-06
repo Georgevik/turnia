@@ -76,7 +76,12 @@ Readable and writable **only by the owner**.
 | Field | Type | Description |
 |-------|------|-------------|
 | `email` | string | Account email. |
-| `fcmTokens` | string[] | FCM device tokens for push. |
+| `fcmTokens` | string[] | FCM device tokens for push, one per device the account is signed in on. |
+
+> `fcmTokens` is only ever written with `arrayUnion` / `arrayRemove`: a phone and a tablet signed into
+> the same account both belong in it, and a write of the whole list would erase whichever device
+> saved last. The client adds its token when a session starts and removes it on sign-out; the server
+> drops the ones FCM reports as unregistered when it tries to send.
 
 ### `users/{uid}/private/subscription`
 
@@ -429,7 +434,10 @@ Firestore keeps only a **recent window** of events; older events are purged and 
   snapshot of every revoked user who was still holding one. Firestore does not cascade, so a client delete
   would orphan them.
 - **Taking an event offered for swap** is a `takeEvent` Cloud Function that verifies `onSwap == true` in a transaction and moves the event (a cross-member write).
-- **Push** is sent only from Cloud Functions, never from the client.
+- **Push** is sent only from Cloud Functions, never from the client. The visible text is written by the
+  server — a notification has to render while the app is not running — and every message carries a
+  `type` in its data payload (`join_requested`, `join_accepted`, `calendar_shared`, `event_on_swap`,
+  `event_taken`) so a tap can be routed.
 - **Colors**: `groupEventType` has no color (user's `groupEventTypeColors` decides it); `personalEventType` carries its own.
 - **Group-wide event queries are bounded to a ≤ 3-month `date` range** (collection-group on `event`, filtered by `groupId`).
 - **Cross-group shared calendars** are served on demand by the `getSharedCalendar` Cloud Function

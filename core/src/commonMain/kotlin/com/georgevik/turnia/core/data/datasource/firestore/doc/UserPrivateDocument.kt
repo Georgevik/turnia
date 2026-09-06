@@ -8,6 +8,11 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class UserPrivateDocument(
-    @SerialName("email") val email: String,
-    @SerialName("fcmTokens") val fcmTokens: List<String> = emptyList(),
-)
+    @SerialName(FIELD_EMAIL) val email: String,
+    @SerialName(FIELD_FCM_TOKENS) val fcmTokens: List<String> = emptyList(),
+) {
+    companion object {
+        const val FIELD_EMAIL = "email"
+        const val FIELD_FCM_TOKENS = "fcmTokens"
+    }
+}

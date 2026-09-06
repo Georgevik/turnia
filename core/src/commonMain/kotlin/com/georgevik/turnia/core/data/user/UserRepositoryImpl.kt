@@ -12,6 +12,7 @@ import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.domain.model.UserProfile
 import com.georgevik.turnia.core.domain.model.UserSession
 import com.georgevik.turnia.core.domain.model.UsernameError
+import com.georgevik.turnia.core.domain.repository.FcmDelegate
 import com.georgevik.turnia.core.domain.repository.UserRepository
 import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.errorOrNull
@@ -46,8 +47,9 @@ class UserRepositoryImpl(
     private val userProfileFunction: UserProfileFunction,
     private val userMapper: UserDocumentMapper,
     private val provisioner: UserProvisioner,
+    private val fcmDelegate: FcmDelegate,
     scope: CoroutineScope
-) : UserRepository {
+) : UserRepository, FcmDelegate by fcmDelegate {
 
     private val _userSession = MutableStateFlow<UserSession>(UserSession.Loading)
     override val userSession: StateFlow<UserSession> = _userSession.asStateFlow()
@@ -73,6 +75,10 @@ class UserRepositoryImpl(
         val userId = UserId(firebaseUser.uid)
         // Emit what auth already knows so the UI is never blocked on the profile read.
         emit(UserSession.Authenticated(userMapper.map(firebaseUser)))
+
+        // Every launch, not only the first: a token is rotated by the system without asking, and
+        // `arrayUnion` makes re-registering the one we already have cost nothing but the write.
+        registerFcmToken(userId)
 
         // Firestore's own offline persistence serves this from disk when there is no network.
         val remoteUserResult = remoteProfiles.fetch(userId)
@@ -165,6 +171,9 @@ class UserRepositoryImpl(
     }
 
     override suspend fun signOut() {
+        // Before `signOut`, while the uid is still known: afterwards there is no document to take
+        // this device's token out of, and it would keep receiving pushes for the account.
+        loggedUser?.id?.let { unregisterFcmToken(it) }
         auth.signOut()
     }
 

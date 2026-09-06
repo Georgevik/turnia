@@ -19,6 +19,7 @@ import com.georgevik.turnia.navigation.root.RootNavigator
 import com.georgevik.turnia.navigation.root.rootRouteSavedStateConfiguration
 import com.georgevik.turnia.navigation.root.routes.RootRoute
 import com.georgevik.turnia.ui.system.LocalSnackbar
+import com.georgevik.turnia.ui.system.RequestNotificationPermission
 import com.georgevik.turnia.ui.system.TurniaSnackbarHost
 import com.georgevik.turnia.ui.system.TurniaTheme
 import org.koin.compose.viewmodel.koinViewModel
@@ -34,6 +35,10 @@ import org.koin.compose.viewmodel.koinViewModel
 fun App(vm: RootViewModel = koinViewModel()) {
     val backStack = rememberNavBackStack(rootRouteSavedStateConfiguration, RootRoute.SplashKey)
     val userSession by vm.userSession.collectAsStateWithLifecycle(UserSession.Loading)
+
+    // Only once there is somebody to notify: asked on the sign-in screen it would be a dialog about
+    // an app the user has not seen yet, and a refusal there is one the system will not ask again.
+    if (userSession is UserSession.Authenticated) RequestNotificationPermission()
 
     LaunchedEffect(userSession) {
         if (backStack.lastOrNull() == RootRoute.SplashKey) return@LaunchedEffect

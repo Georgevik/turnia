@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.YearMonth
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -38,7 +39,7 @@ class UserSyncFirestore(
 ) {
 
     private val recentReads = DebouncedReads<UserId, UserSyncDocument>(debounce)
-    private val listeners = SharedListeners<UserId, UserSyncDocument>(scope)
+    private val listeners = SharedListeners<UserId, UserSyncDocument>(scope, keepAlive = 10.minutes)
 
     fun observe(uid: UserId): Flow<UserSyncDocument> = listeners.shared(uid) { snapshots(uid) }
 

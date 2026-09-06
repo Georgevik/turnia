@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The status bar draws a notification icon as a silhouette: only the alpha channel survives,
+     which is why this is the launcher glyph in flat white and without its background. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+  <group android:scaleX="0.85"
+      android:scaleY="0.85"
+      android:translateX="4.86"
+      android:translateY="8.10">
+
+      <path
+          android:fillColor="#FFFFFF"
+          android:pathData="M83.608,23.352C80.377,24.885 77.174,25.351 69.728,25.351C66.224,25.351 60.475,25.214 56.943,25.077C53.411,24.913 47.115,24.748 42.981,24.721C36.630,24.694 35.151,24.748 33.618,25.132C28.389,26.473 24.365,29.950 22.668,34.549C21.600,37.478 22.011,44.240 23.270,44.240C23.434,44.240 24.009,43.939 24.584,43.583C27.185,41.941 30.579,40.572 33.810,39.833C34.713,39.614 41.092,39.449 52.152,39.313C68.578,39.148 69.208,39.121 71.452,38.519C75.422,37.451 78.078,35.973 80.788,33.290C82.513,31.592 83.416,30.443 84.128,29.046C85.579,26.117 86.400,22.887 85.770,22.531C85.633,22.476 84.675,22.832 83.608,23.352Z" />
+      <path
+          android:fillColor="#FFFFFF"
+          android:pathData="M58.367,42.625C52.070,43.529 47.306,46.951 45.746,51.687C45.226,53.220 43.474,64.910 41.475,79.912C40.955,83.881 40.900,84.976 41.174,85.250C41.448,85.524 41.913,85.524 43.693,85.168C49.004,84.183 53.548,80.651 55.930,75.723C56.614,74.300 57.381,72.438 57.600,71.617C58.503,68.414 62.829,43.364 62.610,42.762C62.418,42.269 61.186,42.242 58.367,42.625Z" />
+  </group>
+</vector>
