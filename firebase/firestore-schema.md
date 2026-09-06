@@ -77,11 +77,20 @@ Readable and writable **only by the owner**.
 |-------|------|-------------|
 | `email` | string | Account email. |
 | `fcmTokens` | string[] | FCM device tokens for push, one per device the account is signed in on. |
+| `notificationsEnabled` | boolean | The in-app notification switch. Absent means enabled. |
 
 > `fcmTokens` is only ever written with `arrayUnion` / `arrayRemove`: a phone and a tablet signed into
 > the same account both belong in it, and a write of the whole list would erase whichever device
 > saved last. The client adds its token when a session starts and removes it on sign-out; the server
 > drops the ones FCM reports as unregistered when it tries to send.
+>
+> `notificationsEnabled` is the switch in Settings, and it is per **account**, not per device: it says
+> the user does not want to be interrupted, which is not a statement about which phone was in hand.
+> Turning it off also takes that device's token out of `fcmTokens`, so nothing is sent rather than
+> sent and discarded — the flag is what the client reads on the next launch to know not to register
+> again. Nothing on the server reads it; an empty `fcmTokens` is already the whole story there.
+> It is not the **system** permission either, which only the OS can answer for: a user who denied
+> notifications to the app sees this switch on and still gets nothing.
 
 ### `users/{uid}/private/subscription`
 

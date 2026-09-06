@@ -199,6 +199,12 @@
     <!-- My profile -->
     <string name="profile_title">Mi perfil</string>
     <string name="settings_my_profile">Mi perfil</string>
+    <string name="settings_notifications">Notificaciones</string>
+    <string name="notifications_title">Notificaciones</string>
+    <string name="notifications_enable">Recibir notificaciones</string>
+    <string name="notifications_enable_description">Avisos de solicitudes de grupo y calendarios compartidos</string>
+    <string name="notifications_system_hint">Si las desactivaste en los ajustes del sistema, no recibirás avisos aunque esta opción esté activada.</string>
+    <string name="notifications_save_error">No se pudo guardar el ajuste de notificaciones</string>
     <string name="profile_field_name">Nombre</string>
     <string name="profile_field_username">Nombre de usuario</string>
     <string name="profile_field_email">Correo</string>

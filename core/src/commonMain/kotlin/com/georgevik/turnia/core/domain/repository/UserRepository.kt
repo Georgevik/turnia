@@ -30,7 +30,11 @@ interface UserRepository : FcmDelegate {
 }
 
 interface FcmDelegate {
+    val notificationsEnabled: StateFlow<Boolean>
+
     suspend fun registerFcmToken(uid: UserId)
 
     suspend fun unregisterFcmToken(uid: UserId)
+
+    suspend fun setNotificationsEnabled(uid: UserId, enabled: Boolean): Outcome<Unit, Unit>
 }
