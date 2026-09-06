@@ -54,7 +54,7 @@ val coreModule: Module = module {
     single { GroupEventFirestore(get(), get()) }
     single { GroupFirestore(get(), get(), get()) }
     single { GroupJoinRequestFirestore(get()) }
-    single { RevokedGroupFirestore(get(), get()) }
+    single { RevokedGroupFirestore(get(), get(), get()) }
     single { GroupMembershipFunction(get()) }
     single { PersonalEventFirestore(get(), get(), get()) }
     single { PersonalEventTypesFirestore(get(), get(), get(),get()) }

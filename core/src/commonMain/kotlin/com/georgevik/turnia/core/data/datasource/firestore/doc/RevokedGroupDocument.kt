@@ -19,4 +19,11 @@ data class RevokedGroupDocument(
     @SerialName("name") val name: String,
     @SerialName("groupEventTypes") val groupEventTypes: List<GroupEventTypeDocument> = emptyList(),
     @SerialName("revokedAt") val revokedAt: BaseTimestamp? = null,
-)
+    @SerialName(FIELD_IS_DELETED) val isDeleted: Boolean = false,
+    @SerialName(FIELD_UPDATE_AT) val updateAt: BaseTimestamp? = null,
+) {
+    companion object {
+        const val FIELD_IS_DELETED = "isDeleted"
+        const val FIELD_UPDATE_AT = "updateAt"
+    }
+}

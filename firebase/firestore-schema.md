@@ -160,6 +160,7 @@ what it already cached to decide whether it has to query the server at all.
 |-------|------|-------------|
 | `personalEventsUpdatedAt` | timestamp \| null | Last write to `personalEvents` (server timestamp). |
 | `personalEventTypesUpdatedAt` | timestamp \| null | Last write to `personalEventTypes` (server timestamp). |
+| `revokedGroups` | timestamp \| null | Last write to `revokedGroups` — a revocation or a rejoin. Moved **only** by `leaveGroup` / `removeMember` / the rejoin path, never by a client. |
 
 Every timestamp is written with a **server timestamp**, so readers on other devices compare against the same
 clock. A missing document (or field) means that part has never been written. Each writer merges **only its
@@ -178,6 +179,8 @@ still need to render their leftover events is copied here, on a document only th
 | `name` | string | The group's name at the moment access was revoked. |
 | `groupEventTypes` | array&lt;map&gt; | **Only the types their remaining events actually use**, same shape as the group's own (`id`, `name`, `acronym`, `description`, `startTime`, `endTime`). |
 | `revokedAt` | timestamp | When access was revoked. |
+| `isDeleted` | boolean | Soft delete — set when they rejoin. |
+| `updateAt` | timestamp | Last change, written in the same commit as `users/{uid}/sync/updates.revokedGroups`. |
 
 **Deliberately a frozen snapshot, not a live copy.** Nothing keeps it in step with the group afterwards:
 a departed member should not go on tracking a roster they left, and a type renamed after they went is not
@@ -186,8 +189,18 @@ a change they are entitled to see. It exists only so their own past shifts still
 A user with no leftover events gets no document here — and no `revokedUids` entry either. There is nothing
 left of them in the group, so there is nothing to keep.
 
+**Rejoining soft-deletes it**, like everywhere else: a removed document carries no timestamp and appears in
+no `updateAt >` query, so a reader that already cached the snapshot would go on offering a group they belong
+to again. `revokedUids` on the group is the existence test for the tombstone — the rejoin paths already hold
+the group document, and a uid is in there exactly when the snapshot was written — so a plain join leaves
+nothing behind.
+
+**Queries**: read cache-first, then `updateAt >` the newest cached document, and only when
+`users/{uid}/sync/updates.revokedGroups` is newer than that. Being revoked is rare; a live listener would
+spend a read per document to learn nothing almost every time.
+
 **Access**: read by the owner; **never written by any client** — only `leaveGroup` / `removeMember` create
-it, and the rejoin path deletes it.
+it, and the rejoin path soft-deletes it.
 
 ---
 

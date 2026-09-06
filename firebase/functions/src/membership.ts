@@ -1,5 +1,11 @@
 import { onCall } from "firebase-functions/v2/https";
-import { FieldValue, Firestore, getFirestore } from "firebase-admin/firestore";
+import {
+  DocumentSnapshot,
+  FieldValue,
+  Firestore,
+  WriteBatch,
+  getFirestore,
+} from "firebase-admin/firestore";
 import {
   HttpErrorFailedPrecondition,
   HttpErrorInvalidArgument,
@@ -7,6 +13,31 @@ import {
   HttpErrorUnauthenticated,
   TurniaErrorCode,
 } from "./errors";
+
+function markRevokedGroupsUpdated(db: Firestore, batch: WriteBatch, uid: string) {
+  batch.set(
+    db.doc(`users/${uid}/sync/updates`),
+    { revokedGroups: FieldValue.serverTimestamp() },
+    { merge: true },
+  );
+}
+
+export function clearRevokedGroup(
+  db: Firestore,
+  batch: WriteBatch,
+  group: DocumentSnapshot,
+  uid: string,
+) {
+  const revokedUids = (group.get("revokedUids") as string[] | undefined) ?? [];
+  if (!revokedUids.includes(uid)) return;
+
+  batch.set(
+    db.doc(`users/${uid}/revokedGroups/${group.id}`),
+    { isDeleted: true, updateAt: FieldValue.serverTimestamp() },
+    { merge: true },
+  );
+  markRevokedGroupsUpdated(db, batch, uid);
+}
 
 /**
  * Withdraws someone's membership, keeping whatever they still have to cover.
@@ -49,7 +80,10 @@ async function revoke(db: Firestore, groupId: string, uid: string) {
       name: group.get("name") ?? "",
       groupEventTypes,
       revokedAt: FieldValue.serverTimestamp(),
+      isDeleted: false,
+      updateAt: FieldValue.serverTimestamp(),
     });
+    markRevokedGroupsUpdated(db, batch, uid);
   }
 
   // Same commit as the group, so both resolve to one instant and a reader's cache can settle.
