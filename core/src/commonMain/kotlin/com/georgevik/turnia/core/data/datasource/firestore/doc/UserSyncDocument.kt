@@ -10,4 +10,5 @@ data class UserSyncDocument(
     @SerialName("personalEvents") val personalEventsUpdatedAt: Map<YearMonth, EventSyncUpdateAt> = emptyMap(),
     @SerialName("personalEventTypesUpdatedAt") val personalEventTypesUpdatedAt: BaseTimestamp? = null,
     @SerialName("revokedGroups") val revokedGroupsUpdatedAt: BaseTimestamp? = null,
+    @SerialName("private") val privateUpdatedAt: BaseTimestamp? = null,
 )

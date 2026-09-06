@@ -62,7 +62,7 @@ val coreModule: Module = module {
     single { Firebase.messaging }
     single { UserProfileFunction(get()) }
     single { UserPathFirestore(get(), get(), get()) }
-    single { UserPrivateFirestore(get()) }
+    single { UserPrivateFirestore(get(), get()) }
     single { UsernameFirestore(get()) }
     single { UserSyncFirestore(get(), get()) }
     single { GroupSyncFirestore(get(), get()) }

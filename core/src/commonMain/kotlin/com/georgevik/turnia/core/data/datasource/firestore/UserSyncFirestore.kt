@@ -78,6 +78,9 @@ class UserSyncFirestore(
     fun writePersonalEventTypes(batch: WriteBatch, uid: UserId) =
         write(batch, uid, UserSyncDocument(personalEventTypesUpdatedAt = Timestamp.ServerTimestamp))
 
+    fun writePrivate(batch: WriteBatch, uid: UserId) =
+        write(batch, uid, UserSyncDocument(privateUpdatedAt = Timestamp.ServerTimestamp))
+
     private fun write(batch: WriteBatch, uid: UserId, patch: UserSyncDocument): PendingWrite {
         Logger.d(TAG, "Update sync updates")
         // Without defaults, so the fields the patch does not carry are not encoded at all.

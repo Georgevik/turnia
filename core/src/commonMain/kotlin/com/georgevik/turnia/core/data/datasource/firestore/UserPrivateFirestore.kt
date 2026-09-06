@@ -9,31 +9,43 @@ import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.outcomeCatching
+import com.georgevik.turnia.core.system.toInstantOrNull
+import com.georgevik.turnia.core.system.valueOrNull
+import dev.gitlive.firebase.firestore.BaseTimestamp
+import dev.gitlive.firebase.firestore.DocumentReference
 import dev.gitlive.firebase.firestore.FieldValue
 import dev.gitlive.firebase.firestore.FirebaseFirestore
+import dev.gitlive.firebase.firestore.Source
+import dev.gitlive.firebase.firestore.Timestamp
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 /**
  * Interacts with Firestore: `users/{uid}/private`
- *
- * Everything the owner alone may see. `subscription` lives in its own document because the client
- * may read it but never write it — only the receipt-verification Cloud Function does.
  */
 class UserPrivateFirestore(
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val userSyncFirestore: UserSyncFirestore,
 ) {
 
     suspend fun fetchAccount(uid: UserId): Outcome<UserPrivateDocument?, UserProfileError> =
-        outcomeCatching({ UserProfileError.LoadFailed(it) }) {
-            val snapshot = document(uid, DOCUMENT_ACCOUNT).get().trackData(TAG)
-            Logger.d(TAG, "Fetch private account from cache: ${snapshot.metadata.isFromCache}")
+        outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
+            val cached = cachedAccount(uid)
+            if (cached != null && isSettled(uid, cached)) {
+                Logger.d(TAG, "Private account is settled, no read")
+                return@outcomeCatching cached
+            }
+
+            val snapshot = document(DOCUMENT_ACCOUNT, uid).get(Source.SERVER).trackData(TAG)
+            Logger.i(TAG, "Private account read from the server")
 
             if (!snapshot.exists) null
             else snapshot.data(UserPrivateDocument.serializer())
         }
 
     suspend fun fetchSubscription(uid: UserId): Outcome<SubscriptionDocument?, UserProfileError> =
-        outcomeCatching({ UserProfileError.LoadFailed(it) }) {
-            val snapshot = document(uid, DOCUMENT_SUBSCRIPTION).get().trackData(TAG)
+        outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
+            val snapshot = document(DOCUMENT_SUBSCRIPTION, uid).get().trackData(TAG)
             Logger.d(TAG, "Fetch subscription from cache: ${snapshot.metadata.isFromCache}")
 
             if (!snapshot.exists) null
@@ -44,52 +56,87 @@ class UserPrivateFirestore(
      * Seeds the private document for a brand-new account.
      */
     suspend fun createAccount(uid: UserId, email: String): Outcome<Unit, UserProfileError> =
-        outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
-            Logger.i(TAG, "Create private account document")
-            document(uid, DOCUMENT_ACCOUNT).set(
-                mapOf(UserPrivateDocument.FIELD_EMAIL to email),
-                merge = true,
-            )
-            trackWrite(TAG)
-        }
+        patchAccount(uid, "Create private account document", AccountPatch(email = email))
 
-    /**
-     * Registers this device for push.
-     */
+    /** Registers this device for push. */
     suspend fun addFcmToken(uid: UserId, token: String): Outcome<Unit, UserProfileError> =
-        outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
-            Logger.i(TAG, "Register the push token")
-            document(uid, DOCUMENT_ACCOUNT).set(
-                mapOf(UserPrivateDocument.FIELD_FCM_TOKENS to FieldValue.arrayUnion(token)),
-                merge = true,
-            )
-            trackWrite(TAG)
-        }
+        patchAccount(
+            uid,
+            "Register the push token",
+            AccountPatch(fcmTokens = FieldValue.arrayUnion(token)),
+        )
 
     suspend fun removeFcmToken(uid: UserId, token: String): Outcome<Unit, UserProfileError> =
-        outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
-            Logger.i(TAG, "Unregister the push token")
-            document(uid, DOCUMENT_ACCOUNT).updateFields {
-                UserPrivateDocument.FIELD_FCM_TOKENS to FieldValue.arrayRemove(token)
-            }
-            trackWrite(TAG)
-        }
+        patchAccount(
+            uid,
+            "Unregister the push token",
+            AccountPatch(fcmTokens = FieldValue.arrayRemove(token)),
+        )
 
     suspend fun setNotificationsEnabled(
         uid: UserId,
         enabled: Boolean
     ): Outcome<Unit, UserProfileError> =
+        patchAccount(
+            uid,
+            "Set notifications enabled: $enabled",
+            AccountPatch(notificationsEnabled = enabled),
+        )
+
+    /**
+     * Merges [patch] into `private/account` and bumps the sync marker in the same commit.
+     */
+    private suspend fun patchAccount(
+        uid: UserId,
+        log: String,
+        patch: AccountPatch,
+    ): Outcome<Unit, UserProfileError> =
         outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
-            Logger.i(TAG, "Set notifications enabled: $enabled")
-            document(uid, DOCUMENT_ACCOUNT).set(
-                mapOf(UserPrivateDocument.FIELD_NOTIFICATIONS_ENABLED to enabled),
+            Logger.i(TAG, log)
+
+            val batch = firestore.batch()
+            // Without defaults, so the fields the patch does not carry are not encoded at all.
+            batch.set(
+                document(DOCUMENT_ACCOUNT, uid),
+                patch.copy(updateAt = Timestamp.ServerTimestamp),
                 merge = true,
-            )
+            ) { encodeDefaults = false }
+            val syncWrite = userSyncFirestore.writePrivate(batch, uid)
+            batch.commit()
             trackWrite(TAG)
+            syncWrite.committed()
         }
 
-    private fun document(uid: UserId, documentId: String) =
+    private suspend fun isSettled(uid: UserId, cached: UserPrivateDocument): Boolean {
+        val serverUpdatedAt = userSyncFirestore.get(uid).valueOrNull()?.privateUpdatedAt
+            .toInstantOrNull()
+            ?: return true
+
+        val cacheUpdatedAt = cached.updateAt.toInstantOrNull() ?: return false
+        return cacheUpdatedAt >= serverUpdatedAt
+    }
+
+    /** A document the cache does not have makes the read fail rather than come back empty. */
+    private suspend fun cachedAccount(uid: UserId): UserPrivateDocument? = try {
+        document(DOCUMENT_ACCOUNT, uid).get(Source.CACHE).trackData(TAG)
+            .takeIf { it.exists }
+            ?.data(UserPrivateDocument.serializer())
+    } catch (exception: Exception) {
+        Logger.d(TAG, "The private account is not cached yet: ${exception.message}")
+        null
+    }
+
+    private fun document(documentId: String, uid: UserId): DocumentReference =
         firestore.collection(PATH_PRIVATE(uid.value)).document(documentId)
+
+    @Serializable
+    private data class AccountPatch(
+        @SerialName(UserPrivateDocument.FIELD_EMAIL) val email: String? = null,
+        @SerialName(UserPrivateDocument.FIELD_FCM_TOKENS) val fcmTokens: FieldValue? = null,
+        @SerialName(UserPrivateDocument.FIELD_NOTIFICATIONS_ENABLED)
+        val notificationsEnabled: Boolean? = null,
+        @SerialName(UserPrivateDocument.FIELD_UPDATE_AT) val updateAt: BaseTimestamp? = null,
+    )
 
     companion object {
         private const val TAG = "UserPrivateFirestore"
