@@ -2,14 +2,8 @@ import { onCall } from "firebase-functions/v2/https";
 import { FieldValue, Timestamp, getFirestore } from "firebase-admin/firestore";
 import { getMessaging } from "firebase-admin/messaging";
 import { fcmTokensOf } from "./users";
-import {
-  HttpErrorFailedPrecondition,
-  HttpErrorInvalidArgument,
-  HttpErrorNotFound,
-  HttpErrorPermissionDenied,
-  HttpErrorUnauthenticated,
-  TurniaErrorCode,
-} from "./errors";
+import { TurniaError } from "./errors";
+import { requireFields, requireUid } from "./requests";
 
 /**
  * Takes a group event offered for swap — the one write a member may not do themselves, since it
@@ -24,22 +18,14 @@ import {
  * Returns: `{ groupId, eventId, assigneeId, status: "taken" }`
  */
 export const takeEvent = onCall(async (request) => {
-  const taker = request.auth?.uid;
-  if (!taker) {
-    throw new HttpErrorUnauthenticated(TurniaErrorCode.TakeEventUnauthenticated, "Sign in required.");
-  }
-
-  const groupId = request.data?.groupId as string | undefined;
-  const eventId = request.data?.eventId as string | undefined;
-  if (!groupId || !eventId) {
-    throw new HttpErrorInvalidArgument(TurniaErrorCode.TakeEventMissingArgs, "Missing groupId or eventId.");
-  }
+  const taker = requireUid(request);
+  const { groupId, eventId } = requireFields(request, "groupId", "eventId");
 
   const db = getFirestore();
   const group = await db.doc(`groups/${groupId}`).get();
   const memberUids = (group.get("memberUids") as string[] | undefined) ?? [];
   if (!memberUids.includes(taker)) {
-    throw new HttpErrorPermissionDenied(TurniaErrorCode.TakeEventNotMember, "You are not a member of this group.");
+    throw TurniaError.TakeEventNotMember;
   }
 
   const eventRef = db.doc(`groups/${groupId}/events/${eventId}`);
@@ -48,15 +34,15 @@ export const takeEvent = onCall(async (request) => {
   const fromUid = await db.runTransaction(async (tx) => {
     const snap = await tx.get(eventRef);
     if (!snap.exists) {
-      throw new HttpErrorNotFound(TurniaErrorCode.TakeEventNotFound, "Event not found.");
+      throw TurniaError.TakeEventNotFound;
     }
     if (snap.get("onSwap") !== true) {
-      throw new HttpErrorFailedPrecondition(TurniaErrorCode.TakeEventNotOnSwap, "Event is not offered for swap.");
+      throw TurniaError.TakeEventNotOnSwap;
     }
 
     const assigneeId = snap.get("assigneeId") as string;
     if (assigneeId === taker) {
-      throw new HttpErrorFailedPrecondition(TurniaErrorCode.TakeEventSelf, "You already hold this event.");
+      throw TurniaError.TakeEventSelf;
     }
 
     // The chain lives on the event, so it travels with it and costs no read to show. A server

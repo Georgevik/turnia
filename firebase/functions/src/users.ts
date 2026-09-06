@@ -1,11 +1,7 @@
 import { onCall } from "firebase-functions/v2/https";
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
-import {
-  HttpErrorFailedPrecondition,
-  HttpErrorInvalidArgument,
-  HttpErrorUnauthenticated,
-  TurniaErrorCode,
-} from "./errors";
+import { TurniaError } from "./errors";
+import { requireFields, requireUid } from "./requests";
 
 /** Mirrors `isValidUsername` in the app: 3-20 of a-z, 0-9, `_` or `.`. */
 const USERNAME_PATTERN = /^[a-z0-9_.]{3,20}$/;
@@ -34,18 +30,12 @@ export async function fcmTokensOf(uid: string): Promise<string[]> {
  * Returns: `{ name, username, status: "updated" }`
  */
 export const updateProfile = onCall(async (request) => {
-  const uid = request.auth?.uid;
-  if (!uid) {
-    throw new HttpErrorUnauthenticated(TurniaErrorCode.UpdateProfileUnauthenticated, "Sign in required.");
-  }
-
-  const name = (request.data?.name as string | undefined)?.trim();
-  const username = (request.data?.username as string | undefined)?.trim().toLowerCase();
-  if (!name || !username) {
-    throw new HttpErrorInvalidArgument(TurniaErrorCode.UpdateProfileMissingArgs, "Missing name or username.");
-  }
+  const uid = requireUid(request);
+  const fields = requireFields(request, "name", "username");
+  const name = fields.name;
+  const username = fields.username.toLowerCase();
   if (!USERNAME_PATTERN.test(username)) {
-    throw new HttpErrorInvalidArgument(TurniaErrorCode.UpdateProfileUsernameInvalid, "Invalid username.");
+    throw TurniaError.UpdateProfileUsernameInvalid;
   }
 
   const db = getFirestore();
@@ -60,7 +50,7 @@ export const updateProfile = onCall(async (request) => {
     await db.runTransaction(async (tx) => {
       const reservation = await tx.get(reservationRef);
       if (reservation.exists && reservation.get("uid") !== uid) {
-        throw new HttpErrorFailedPrecondition(TurniaErrorCode.UpdateProfileUsernameTaken, "Username already taken.");
+        throw TurniaError.UpdateProfileUsernameTaken;
       }
       tx.set(reservationRef, { username, uid, name, updateAt: FieldValue.serverTimestamp() });
     });

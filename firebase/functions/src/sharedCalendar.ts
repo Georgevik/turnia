@@ -1,12 +1,7 @@
 import { onCall } from "firebase-functions/v2/https";
 import { getFirestore } from "firebase-admin/firestore";
-import {
-  HttpErrorFailedPrecondition,
-  HttpErrorInvalidArgument,
-  HttpErrorPermissionDenied,
-  HttpErrorUnauthenticated,
-  TurniaErrorCode,
-} from "./errors";
+import { TurniaError } from "./errors";
+import { requireFields, requireUid } from "./requests";
 
 const MAX_RANGE_DAYS = 92; // ~3 months
 
@@ -23,17 +18,8 @@ const MAX_RANGE_DAYS = 92; // ~3 months
  * Request data: `{ ownerUid: string, from: "YYYY-MM-DD", to: "YYYY-MM-DD" }`
  */
 export const getSharedCalendar = onCall(async (request) => {
-  const viewer = request.auth?.uid;
-  if (!viewer) {
-    throw new HttpErrorUnauthenticated(TurniaErrorCode.SharedCalendarUnauthenticated, "Sign in required.");
-  }
-
-  const ownerUid = request.data?.ownerUid as string | undefined;
-  const from = request.data?.from as string | undefined;
-  const to = request.data?.to as string | undefined;
-  if (!ownerUid || !from || !to) {
-    throw new HttpErrorInvalidArgument(TurniaErrorCode.SharedCalendarMissingArgs, "Missing ownerUid, from or to.");
-  }
+  const viewer = requireUid(request);
+  const { ownerUid, from, to } = requireFields(request, "ownerUid", "from", "to");
 
   const db = getFirestore();
   const ownerDoc = await db.doc(`users/${ownerUid}`).get();
@@ -43,7 +29,7 @@ export const getSharedCalendar = onCall(async (request) => {
   if (viewer !== ownerUid) {
     const sharedWith = (ownerDoc.get("calendarSharedWith") as string[] | undefined) ?? [];
     if (!sharedWith.includes(viewer)) {
-      throw new HttpErrorPermissionDenied(TurniaErrorCode.SharedCalendarNotShared, "This calendar is not shared with you.");
+      throw TurniaError.SharedCalendarNotShared;
     }
   }
 
@@ -51,7 +37,7 @@ export const getSharedCalendar = onCall(async (request) => {
   const fromMs = Date.parse(from);
   const toMs = Date.parse(to);
   if (isNaN(fromMs) || isNaN(toMs) || toMs < fromMs || (toMs - fromMs) / 86_400_000 > MAX_RANGE_DAYS) {
-    throw new HttpErrorFailedPrecondition(TurniaErrorCode.SharedCalendarRangeTooWide, "Date range must be within 3 months.");
+    throw TurniaError.SharedCalendarRangeTooWide;
   }
 
   // Group events, one query per group the owner belongs to. A collection-group query is no longer

@@ -1,14 +1,8 @@
 import { onCall } from "firebase-functions/v2/https";
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import { clearRevokedGroup } from "./membership";
-import {
-  HttpErrorFailedPrecondition,
-  HttpErrorInvalidArgument,
-  HttpErrorNotFound,
-  HttpErrorPermissionDenied,
-  HttpErrorUnauthenticated,
-  TurniaErrorCode,
-} from "./errors";
+import { TurniaError } from "./errors";
+import { requireFields, requireUid } from "./requests";
 
 /**
  * Requests to join a group by validating its (single) invitation code.
@@ -21,15 +15,8 @@ import {
  * Returns: `{ groupId: string, status: "already_member" | "joined" | "requested" }`
  */
 export const requestToJoinGroup = onCall(async (request) => {
-  const uid = request.auth?.uid;
-  if (!uid) {
-    throw new HttpErrorUnauthenticated(TurniaErrorCode.JoinRequestUnauthenticated, "Sign in required.");
-  }
-
-  const code = (request.data?.code as string | undefined)?.trim();
-  if (!code) {
-    throw new HttpErrorInvalidArgument(TurniaErrorCode.JoinRequestMissingCode, "Missing invitation code.");
-  }
+  const uid = requireUid(request);
+  const { code } = requireFields(request, "code");
 
   const db = getFirestore();
   const groups = await db
@@ -39,18 +26,18 @@ export const requestToJoinGroup = onCall(async (request) => {
     .get();
 
   if (groups.empty) {
-    throw new HttpErrorNotFound(TurniaErrorCode.JoinRequestInvitationNotFound, "Invalid invitation code.");
+    throw TurniaError.JoinRequestInvitationNotFound;
   }
 
   const groupDoc = groups.docs[0];
   const invitation = groupDoc.get("invitation") ?? {};
 
   if (invitation.active !== true) {
-    throw new HttpErrorFailedPrecondition(TurniaErrorCode.JoinRequestInvitationNotActive, "Invitation is not active.");
+    throw TurniaError.JoinRequestInvitationNotActive;
   }
   const expiresAt = invitation.expiresAt;
   if (expiresAt && typeof expiresAt.toMillis === "function" && expiresAt.toMillis() < Date.now()) {
-    throw new HttpErrorFailedPrecondition(TurniaErrorCode.JoinRequestInvitationExpired, "Invitation has expired.");
+    throw TurniaError.JoinRequestInvitationExpired;
   }
 
   const memberUids = (groupDoc.get("memberUids") as string[] | undefined) ?? [];
@@ -103,29 +90,21 @@ export const requestToJoinGroup = onCall(async (request) => {
  * Returns: `{ groupId: string, uid: string, status: "accepted" }`
  */
 export const acceptJoinRequest = onCall(async (request) => {
-  const adminUid = request.auth?.uid;
-  if (!adminUid) {
-    throw new HttpErrorUnauthenticated(TurniaErrorCode.AcceptRequestUnauthenticated, "Sign in required.");
-  }
-
-  const groupId = request.data?.groupId as string | undefined;
-  const uid = request.data?.uid as string | undefined;
-  if (!groupId || !uid) {
-    throw new HttpErrorInvalidArgument(TurniaErrorCode.AcceptRequestMissingArgs, "Missing groupId or uid.");
-  }
+  const adminUid = requireUid(request);
+  const { groupId, uid } = requireFields(request, "groupId", "uid");
 
   const db = getFirestore();
   const groupRef = db.doc(`groups/${groupId}`);
   const group = await groupRef.get();
   const adminUids = (group.get("adminUids") as string[] | undefined) ?? [];
   if (!adminUids.includes(adminUid)) {
-    throw new HttpErrorPermissionDenied(TurniaErrorCode.AcceptRequestNotAdmin, "Only a group admin can accept requests.");
+    throw TurniaError.AcceptRequestNotAdmin;
   }
 
   const requestRef = db.doc(`groups/${groupId}/joinRequests/${uid}`);
   const requestSnap = await requestRef.get();
   if (!requestSnap.exists) {
-    throw new HttpErrorNotFound(TurniaErrorCode.AcceptRequestNotFound, "No pending join request.");
+    throw TurniaError.AcceptRequestNotFound;
   }
 
   // The name travels with the membership: showing who covers a shift then costs no read at all.

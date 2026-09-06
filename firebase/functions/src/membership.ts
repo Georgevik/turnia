@@ -6,14 +6,8 @@ import {
   WriteBatch,
   getFirestore,
 } from "firebase-admin/firestore";
-import {
-  HttpErrorFailedPrecondition,
-  HttpErrorInvalidArgument,
-  HttpErrorNotFound,
-  HttpErrorPermissionDenied,
-  HttpErrorUnauthenticated,
-  TurniaErrorCode,
-} from "./errors";
+import { TurniaError } from "./errors";
+import { requireFields, requireUid } from "./requests";
 
 function markRevokedGroupsUpdated(db: Firestore, batch: WriteBatch, uid: string) {
   batch.set(
@@ -108,29 +102,19 @@ async function revoke(db: Firestore, groupId: string, uid: string) {
  * Returns: `{ groupId: string, status: "revoked" | "removed" }`
  */
 export const leaveGroup = onCall(async (request) => {
-  const uid = request.auth?.uid;
-  if (!uid) {
-    throw new HttpErrorUnauthenticated(TurniaErrorCode.LeaveGroupUnauthenticated, "Sign in required.");
-  }
-
-  const groupId = request.data?.groupId as string | undefined;
-  if (!groupId) {
-    throw new HttpErrorInvalidArgument(TurniaErrorCode.LeaveGroupMissingArgs, "Missing groupId.");
-  }
+  const uid = requireUid(request);
+  const { groupId } = requireFields(request, "groupId");
 
   const db = getFirestore();
   const group = await db.doc(`groups/${groupId}`).get();
   const memberUids = (group.get("memberUids") as string[] | undefined) ?? [];
   if (!memberUids.includes(uid)) {
-    throw new HttpErrorFailedPrecondition(TurniaErrorCode.LeaveGroupNotMember, "You are not a member of this group.");
+    throw TurniaError.LeaveGroupNotMember;
   }
 
   const adminUids = (group.get("adminUids") as string[] | undefined) ?? [];
   if (adminUids.length === 1 && adminUids[0] === uid && memberUids.length > 1) {
-    throw new HttpErrorFailedPrecondition(
-      TurniaErrorCode.LeaveGroupLastAdmin,
-      "The only admin cannot leave a group that still has members.",
-    );
+    throw TurniaError.LeaveGroupLastAdmin;
   }
 
   const status = await revoke(db, groupId, uid);
@@ -147,33 +131,25 @@ export const leaveGroup = onCall(async (request) => {
  * Returns: `{ groupId: string, uid: string, status: "revoked" | "removed" }`
  */
 export const removeMember = onCall(async (request) => {
-  const adminUid = request.auth?.uid;
-  if (!adminUid) {
-    throw new HttpErrorUnauthenticated(TurniaErrorCode.RemoveMemberUnauthenticated, "Sign in required.");
-  }
-
-  const groupId = request.data?.groupId as string | undefined;
-  const uid = request.data?.uid as string | undefined;
-  if (!groupId || !uid) {
-    throw new HttpErrorInvalidArgument(TurniaErrorCode.RemoveMemberMissingArgs, "Missing groupId or uid.");
-  }
+  const adminUid = requireUid(request);
+  const { groupId, uid } = requireFields(request, "groupId", "uid");
 
   const db = getFirestore();
   const group = await db.doc(`groups/${groupId}`).get();
   const adminUids = (group.get("adminUids") as string[] | undefined) ?? [];
   if (!adminUids.includes(adminUid)) {
-    throw new HttpErrorPermissionDenied(TurniaErrorCode.RemoveMemberNotAdmin, "Only a group admin can remove members.");
+    throw TurniaError.RemoveMemberNotAdmin;
   }
   if (uid === adminUid) {
-    throw new HttpErrorFailedPrecondition(TurniaErrorCode.RemoveMemberSelf, "Use leaveGroup to leave a group.");
+    throw TurniaError.RemoveMemberSelf;
   }
   if (adminUids.includes(uid)) {
-    throw new HttpErrorFailedPrecondition(TurniaErrorCode.RemoveMemberIsAdmin, "An admin cannot be removed.");
+    throw TurniaError.RemoveMemberIsAdmin;
   }
 
   const memberUids = (group.get("memberUids") as string[] | undefined) ?? [];
   if (!memberUids.includes(uid)) {
-    throw new HttpErrorFailedPrecondition(TurniaErrorCode.RemoveMemberNotMember, "That user is not a member of this group.");
+    throw TurniaError.RemoveMemberNotMember;
   }
 
   const status = await revoke(db, groupId, uid);
@@ -197,34 +173,24 @@ export const removeMember = onCall(async (request) => {
  * Returns: `{ groupId: string, status: "deleted" }`
  */
 export const deleteGroup = onCall(async (request) => {
-  const uid = request.auth?.uid;
-  if (!uid) {
-    throw new HttpErrorUnauthenticated(TurniaErrorCode.DeleteGroupUnauthenticated, "Sign in required.");
-  }
-
-  const groupId = request.data?.groupId as string | undefined;
-  if (!groupId) {
-    throw new HttpErrorInvalidArgument(TurniaErrorCode.DeleteGroupMissingArgs, "Missing groupId.");
-  }
+  const uid = requireUid(request);
+  const { groupId } = requireFields(request, "groupId");
 
   const db = getFirestore();
   const groupRef = db.doc(`groups/${groupId}`);
   const group = await groupRef.get();
   if (!group.exists) {
-    throw new HttpErrorNotFound(TurniaErrorCode.DeleteGroupNotFound, "That group does not exist.");
+    throw TurniaError.DeleteGroupNotFound;
   }
 
   const adminUids = (group.get("adminUids") as string[] | undefined) ?? [];
   if (!adminUids.includes(uid)) {
-    throw new HttpErrorPermissionDenied(TurniaErrorCode.DeleteGroupNotAdmin, "Only a group admin can delete a group.");
+    throw TurniaError.DeleteGroupNotAdmin;
   }
 
   const memberUids = (group.get("memberUids") as string[] | undefined) ?? [];
   if (memberUids.some((member) => member !== uid)) {
-    throw new HttpErrorFailedPrecondition(
-      TurniaErrorCode.DeleteGroupNotEmpty,
-      "Everybody else has to leave the group before it can be deleted.",
-    );
+    throw TurniaError.DeleteGroupNotEmpty;
   }
 
   // Someone removed earlier may still be holding a snapshot of this group to render the shifts
