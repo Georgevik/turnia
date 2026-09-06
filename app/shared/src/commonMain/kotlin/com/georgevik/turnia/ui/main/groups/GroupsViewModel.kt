@@ -13,7 +13,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class GroupsViewModel(private val groupRepository: GroupRepository) : ViewModel() {
+class GroupsViewModel(
+    private val groupRepository: GroupRepository,
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow<GroupsUi>(GroupsUi.Loading)
     val uiState: StateFlow<GroupsUi> = _uiState.asStateFlow()
@@ -38,7 +40,8 @@ class GroupsViewModel(private val groupRepository: GroupRepository) : ViewModel(
         }
     }
 
-    fun joinCodeChanged(code: String) = updateSuccess { it.copy(joinCode = code) }
+    fun joinCodeChanged(code: String) =
+        updateSuccess { it.copy(joinCode = code.uppercase()) }
 
     fun requestToJoin() {
         val code = (_uiState.value as? GroupsUi.Success)?.joinCode?.trim().orEmpty()
@@ -57,7 +60,12 @@ class GroupsViewModel(private val groupRepository: GroupRepository) : ViewModel(
                     }
                 },
                 onFailure = { error ->
-                    updateSuccess { it.copy(joinInProgress = false, userMessage = error.toMessage()) }
+                    updateSuccess {
+                        it.copy(
+                            joinInProgress = false,
+                            userMessage = error.toMessage()
+                        )
+                    }
                 },
             )
         }

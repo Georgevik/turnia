@@ -21,11 +21,11 @@ import com.georgevik.turnia.core.domain.model.JoinGroupError
 import com.georgevik.turnia.core.domain.model.JoinGroupStatus
 import com.georgevik.turnia.core.domain.model.JoinRequest
 import com.georgevik.turnia.core.domain.model.UserId
+import com.georgevik.turnia.core.domain.repository.AppConfigRepository
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.domain.repository.UserRepository
 import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.createId
-import com.georgevik.turnia.core.system.createInvitationCode
 import com.georgevik.turnia.core.system.errorOrNull
 import com.georgevik.turnia.core.system.map
 import com.georgevik.turnia.core.system.mapError
@@ -49,6 +49,8 @@ import kotlinx.datetime.plus
 @OptIn(ExperimentalCoroutinesApi::class)
 class GroupRepositoryImpl(
     private val userRepository: UserRepository,
+    private val appConfigRepository: AppConfigRepository,
+    private val invitationCodeFactory: InvitationCodeFactory,
     private val groupFirestore: GroupFirestore,
     private val groupEventFirestore: GroupEventFirestore,
     private val groupJoinRequestFirestore: GroupJoinRequestFirestore,
@@ -66,6 +68,9 @@ class GroupRepositoryImpl(
                 holders.map { groupMapper.map(it, userId, colors) }
             }
         }
+
+    override fun createInvitationCode(): String =
+        invitationCodeFactory.create(appConfigRepository.featureFlags.value.invitationCodeLength)
 
     override suspend fun getGroup(groupId: GroupId): Outcome<Group, GroupError> {
         val userId = userRepository.loggedUser?.id ?: return GroupError.NotFound.toFailure()
@@ -93,10 +98,13 @@ class GroupRepositoryImpl(
             )
         )
 
-        val invitationCode = group.invitationCode ?: createInvitationCode()
-        val document =
-            groupMapper.map(group.copy(invitationCode = invitationCode), memberUids, adminUids)
-                .copy(members = members)
+        // A group without a code is a group nobody can join. The screens mint one up front so the
+        // admin can read it before saving; this is what catches a group that arrived without.
+        val coded =
+            if (group.invitationCode.isBlank()) group.copy(invitationCode = createInvitationCode())
+            else group
+
+        val document = groupMapper.map(coded, memberUids, adminUids).copy(members = members)
 
         val saved = if (isNew) groupFirestore.create(groupId, document)
         else groupFirestore.update(groupId, document)
@@ -106,12 +114,7 @@ class GroupRepositoryImpl(
             return GroupError.NotFound.toFailure()
         }
 
-        return group.copy(
-            id = groupId,
-            invitationCode = invitationCode,
-            isAdmin = userId.value in adminUids
-        )
-            .toSuccess()
+        return coded.copy(id = groupId, isAdmin = userId.value in adminUids).toSuccess()
     }
 
     override suspend fun getJoinRequests(groupId: GroupId): Outcome<List<JoinRequest>, GroupError> =

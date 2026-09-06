@@ -18,6 +18,7 @@ import com.georgevik.turnia.core.data.datasource.firestore.mappers.UserDocumentM
 import com.georgevik.turnia.core.data.datasource.firestorefunctions.GroupMembershipFunction
 import com.georgevik.turnia.core.data.datasource.firestorefunctions.UserProfileFunction
 import com.georgevik.turnia.core.data.group.GroupRepositoryImpl
+import com.georgevik.turnia.core.data.group.InvitationCodeFactory
 import com.georgevik.turnia.core.data.user.PersonalEventRepositoryImpl
 import com.georgevik.turnia.core.data.user.UserProvisioner
 import com.georgevik.turnia.core.data.user.UserRepositoryImpl
@@ -65,6 +66,7 @@ val coreModule: Module = module {
     single { PersonalEventTypesFirestore(get(), get(), get(), get()) }
     factory { UserDocumentMapper() }
     factory { UsernameFactory() }
+    factory { InvitationCodeFactory() }
     factory { PersonalEventMapper() }
     factory { PersonalEventTypeDocMapper() }
     factory { GroupMapper() }
@@ -82,6 +84,8 @@ val coreModule: Module = module {
         )
     }
     single<AppConfigRepository> { AppConfigRepositoryImpl() }
-    single<GroupRepository> { GroupRepositoryImpl(get(), get(), get(), get(), get(), get(), get()) }
+    single<GroupRepository> {
+        GroupRepositoryImpl(get(), get(), get(), get(), get(), get(), get(), get(), get())
+    }
     single<PersonalEventRepository> { PersonalEventRepositoryImpl(get(), get(), get(), get()) }
 }

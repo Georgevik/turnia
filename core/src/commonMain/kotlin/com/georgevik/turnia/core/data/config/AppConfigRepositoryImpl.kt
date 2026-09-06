@@ -19,10 +19,7 @@ class AppConfigRepositoryImpl : AppConfigRepository {
 
     override suspend fun refreshFeatureFlags(): FeatureFlags {
         // No backend yet — return the mocked flags (all disabled).
-        val flags = FeatureFlags(
-            showSwapTab = false,
-            enableAds = false,
-        )
+        val flags = FeatureFlags.Default
         _featureFlags.value = flags
         Logger.d(TAG, "Feature flags downloaded (mock): $flags")
         return flags

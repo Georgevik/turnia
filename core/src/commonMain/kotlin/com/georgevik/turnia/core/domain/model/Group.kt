@@ -6,7 +6,7 @@ data class Group(
     val types: List<GroupEventType>,
     val members: List<GroupMember>,
     val memberCount: Int,
-    val invitationCode: String?,
+    val invitationCode: String,
     /** Whoever knows the code walks in; otherwise an admin has to accept the request. */
     val autoApprove: Boolean,
     val membersCanSeeCode: Boolean,

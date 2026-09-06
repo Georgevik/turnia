@@ -48,10 +48,10 @@ class GroupMapper {
             // The uids are the source of truth for membership; the names are a copy that a member
             // who joined before the group started keeping them may still be missing from.
             memberCount = doc.memberUids.size,
-            invitationCode = invitation?.code
-                ?.takeIf { isAdmin || invitation.membersCanSeeCode },
-            autoApprove = invitation?.autoApprove == true,
-            membersCanSeeCode = invitation?.membersCanSeeCode == true,
+            invitationCode = invitation.code
+                .takeIf { isAdmin || invitation.membersCanSeeCode }.orEmpty(),
+            autoApprove = invitation.autoApprove,
+            membersCanSeeCode = invitation.membersCanSeeCode,
             isAdmin = isAdmin,
         )
     }
@@ -61,13 +61,11 @@ class GroupMapper {
         memberUids = memberUids,
         adminUids = adminUids,
         groupEventTypes = group.types.map(::map),
-        invitation = group.invitationCode?.let {
-            InvitationDocument(
-                code = it,
-                autoApprove = group.autoApprove,
-                membersCanSeeCode = group.membersCanSeeCode,
-            )
-        },
+        invitation = InvitationDocument(
+            code = group.invitationCode,
+            autoApprove = group.autoApprove,
+            membersCanSeeCode = group.membersCanSeeCode,
+        ),
     )
 
     fun map(holder: DocHolder<JoinRequestDocument>) = JoinRequest(

@@ -11,7 +11,6 @@ import com.georgevik.turnia.core.domain.model.JoinRequest
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.system.Outcome
-import com.georgevik.turnia.core.system.createInvitationCode
 import com.georgevik.turnia.core.system.fold
 import com.georgevik.turnia.core.system.valueOrEmpty
 import com.georgevik.turnia.ui.group.detail.model.GroupDetailMessage
@@ -108,7 +107,7 @@ class GroupDetailViewModel(
 
     /** The new code only reaches the group when the form is saved. */
     fun onRegenerateCode() = updateForm {
-        it.copy(invitationCode = createInvitationCode(), codeChanged = true)
+        it.copy(invitationCode = groupRepository.createInvitationCode(), codeChanged = true)
     }
 
     fun onSave() {
@@ -119,7 +118,7 @@ class GroupDetailViewModel(
         val name = form.name.trim()
         val group = loadedGroup?.copy(
             name = name,
-            invitationCode = form.invitationCode,
+            invitationCode = form.invitationCode.orEmpty(),
             autoApprove = form.autoApprove,
             membersCanSeeCode = form.membersCanSeeCode,
         ) ?: Group(
@@ -128,7 +127,7 @@ class GroupDetailViewModel(
             types = emptyList(),
             members = emptyList(),
             memberCount = 1,
-            invitationCode = null,
+            invitationCode = form.invitationCode.orEmpty(),
             autoApprove = form.autoApprove,
             membersCanSeeCode = form.membersCanSeeCode,
             isAdmin = true,
@@ -186,7 +185,7 @@ class GroupDetailViewModel(
             groupId = GroupId(""),
             name = "",
             memberCount = 1,
-            invitationCode = null,
+            invitationCode = groupRepository.createInvitationCode(),
             autoApprove = false,
             membersCanSeeCode = false,
             editable = true,

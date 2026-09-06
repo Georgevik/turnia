@@ -20,6 +20,8 @@ interface GroupRepository {
     /** The user's groups, and again whenever one of them changes. */
     fun getGroups(): Flow<List<Group>>
 
+    fun createInvitationCode(): String
+
     suspend fun addEvent(event: GroupEvent)
 
     /** A shift is only deletable by whoever created it *and* still holds it. */

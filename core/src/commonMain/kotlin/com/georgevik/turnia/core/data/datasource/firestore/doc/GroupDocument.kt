@@ -20,8 +20,10 @@ data class GroupDocument(
     @SerialName("members") val members: Map<String, GroupMemberDocument> = emptyMap(),
     @SerialName("adminUids") val adminUids: List<String> = emptyList(),
     @SerialName("groupEventTypes") val groupEventTypes: List<GroupEventTypeDocument> = emptyList(),
-    @SerialName("invitation") val invitation: InvitationDocument? = null,
-    // Nullable: a write reads back with the server timestamp unresolved until it is acknowledged.
+    // Required, with no default: the code is the only way into a group, so a group without one
+    // cannot be joined by anybody and there is nothing sensible to stand in for it. A document
+    // written before that was true fails to deserialize, and the reader skips it.
+    @SerialName("invitation") val invitation: InvitationDocument,
     @SerialName(FIELD_UPDATE_AT) val updateAt: BaseTimestamp? = Timestamp.ServerTimestamp,
 ) {
     companion object {

@@ -425,11 +425,10 @@ private fun InvitationSection(
             onCheckedChange = onAutoApproveChanged,
         )
 
-        if (form.invitationCode != null) {
+        val invitationCode = form.invitationCode
+        if (!invitationCode.isNullOrBlank()) {
             InvitationCode(
-                code = form.invitationCode,
-                // Rotating the code is how an admin closes a door they left open by hand; with
-                // auto-approve on there is no door to close, the code is the group's front page.
+                code = invitationCode,
                 onRegenerate = onRegenerateCode.takeIf { form.editable && !form.autoApprove },
             )
             if (form.codeChanged) {
