@@ -15,7 +15,6 @@ import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.outcomeCatching
 import com.georgevik.turnia.core.system.toFailure
 import com.georgevik.turnia.core.system.toSuccess
-import dev.gitlive.firebase.firestore.DocumentSnapshot
 import dev.gitlive.firebase.firestore.FieldValue
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Source
@@ -84,7 +83,7 @@ class UserPathFirestore(
      */
     suspend fun getCachedUserDocument(uid: UserId): Outcome<UserDocument, UserProfileError> =
         outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
-            cachedUserDocument(uid)?.let {
+            queryUserDocument(uid).getCached(TAG, "userDoc(cache)")?.let {
                 return@outcomeCatching it.data(UserDocument.serializer())
             }
 
@@ -93,14 +92,6 @@ class UserPathFirestore(
 
             snapshot.data(UserDocument.serializer())
         }
-
-    /** A document the cache does not have makes the read fail rather than come back empty. */
-    private suspend fun cachedUserDocument(uid: UserId): DocumentSnapshot? = try {
-        queryUserDocument(uid).get(Source.CACHE).trackData(TAG, "userDoc(cache)").takeIf { it.exists }
-    } catch (exception: Exception) {
-        Logger.d(TAG, "The user document is not cached yet: ${exception.message}")
-        null
-    }
 
     suspend fun grantCalendarAccess(
         uid: UserId,

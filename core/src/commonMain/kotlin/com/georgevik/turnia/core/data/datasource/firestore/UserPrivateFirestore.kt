@@ -79,16 +79,9 @@ class UserPrivateFirestore(
         )
 
     fun fetchJoinRequests(uid: UserId): Flow<List<String>> = flow {
-        var cacheDoc: UserJoinRequestsDocument? = null
-        try {
-            val snapshot = document(DOCUMENT_JOIN_REQUESTS, uid).get(Source.CACHE).trackData(TAG, "joinRequests(cache)")
-            cacheDoc = if (snapshot.exists) {
-                snapshot.data(UserJoinRequestsDocument.serializer())
-            } else null
-        } catch (exception: Exception) {
-            Logger.e(TAG, "Failed to read the join requests", exception)
-        }
-
+        var cacheDoc: UserJoinRequestsDocument? =
+            document(DOCUMENT_JOIN_REQUESTS, uid).getCached(TAG, "joinRequests(cache)")
+                ?.data(UserJoinRequestsDocument.serializer())
 
         emit(cacheDoc?.groupIds.orEmpty())
 
@@ -172,14 +165,9 @@ class UserPrivateFirestore(
         return cacheUpdatedAt >= serverUpdatedAt
     }
 
-    /** A document the cache does not have makes the read fail rather than come back empty. */
-    private suspend fun cachedAccount(uid: UserId): UserPrivateDocument? = try {
-        document(DOCUMENT_ACCOUNT, uid).get(Source.CACHE).trackData(TAG, "account(cache)").takeIf { it.exists }
+    private suspend fun cachedAccount(uid: UserId): UserPrivateDocument? =
+        document(DOCUMENT_ACCOUNT, uid).getCached(TAG, "account(cache)")
             ?.data(UserPrivateDocument.serializer())
-    } catch (exception: Exception) {
-        Logger.d(TAG, "The private account is not cached yet: ${exception.message}")
-        null
-    }
 
     private fun document(documentId: String, uid: UserId): DocumentReference =
         firestore.collection(PATH_PRIVATE(uid.value)).document(documentId)

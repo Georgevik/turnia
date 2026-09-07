@@ -36,7 +36,7 @@ class GroupFirestore(
     private val userGroupsFlow = SharedListeners<UserId, List<DocHolder<GroupDocument>>>(scope)
 
     fun observe(groupId: GroupId): Flow<DocHolder<GroupDocument>?> = flow {
-        var known = queryGroup(groupId, Source.CACHE)
+        var known = cachedGroup(groupId)
         emit(known)
 
         var fetched = known != null
@@ -46,7 +46,7 @@ class GroupFirestore(
                     return@mapNotNull null
                 }
 
-                known = queryGroup(groupId, Source.SERVER)
+                known = serverGroup(groupId)
                 fetched = true
                 known
             }
@@ -59,16 +59,16 @@ class GroupFirestore(
     /** The best answer available now, for callers with nothing to keep up to date. */
     suspend fun get(groupId: GroupId): Outcome<DocHolder<GroupDocument>?, GenericFirestoreError> =
         outcomeCatching(TAG, { GenericFirestoreError(it) }) {
-            val cached = queryGroup(groupId, Source.CACHE)
+            val cached = cachedGroup(groupId)
 
             // Nothing cached: asking the sync document first would only add a read to a fetch that
             // is going to happen anyway.
-            if (cached == null) return@outcomeCatching queryGroup(groupId, Source.SERVER)
+            if (cached == null) return@outcomeCatching serverGroup(groupId)
 
             val serverUpdatedAt = groupSyncFirestore.get(groupId).valueOrNull()
                 ?.groupUpdatedAt.toInstantOrNull()
 
-            if (isStale(cached, serverUpdatedAt)) queryGroup(groupId, Source.SERVER) else cached
+            if (isStale(cached, serverUpdatedAt)) serverGroup(groupId) else cached
         }
 
     private fun isStale(cached: DocHolder<GroupDocument>?, serverUpdatedAt: Instant?): Boolean {
@@ -120,9 +120,15 @@ class GroupFirestore(
             syncWrite.committed()
         }
 
-    private suspend fun queryGroup(groupId: GroupId, source: Source): DocHolder<GroupDocument>? {
-        val snapshot = groupDocument(groupId).get(source).trackData(TAG, "groupDoc($source)")
-        Logger.d(TAG, "Group document. Source: $source. Exists: ${snapshot.exists}")
+    private suspend fun cachedGroup(groupId: GroupId): DocHolder<GroupDocument>? =
+        groupDocument(groupId).getCached(TAG, "groupDoc(CACHE)")?.let { snapshot ->
+            Logger.d(TAG, "Group document from the cache")
+            DocHolder(id = snapshot.reference.id, doc = snapshot.data(GroupDocument.serializer()))
+        }
+
+    private suspend fun serverGroup(groupId: GroupId): DocHolder<GroupDocument>? {
+        val snapshot = groupDocument(groupId).get(Source.SERVER).trackData(TAG, "groupDoc(SERVER)")
+        Logger.d(TAG, "Group document from the server. Exists: ${snapshot.exists}")
 
         if (!snapshot.exists) return null
         return DocHolder(
