@@ -187,8 +187,7 @@ class GroupMapper {
         startTime = doc.startTime,
         endTime = doc.endTime,
         swappable = doc.swappable,
-        // The stored type has no colour of its own: every member picks theirs.
-        colorHex = "",
+        officialColor = doc.color.orEmpty(),
         userColor = colors[UserDocument.typeColorKey(groupId.value, doc.id)],
     )
 
@@ -200,5 +199,6 @@ class GroupMapper {
         startTime = type.startTime,
         endTime = type.endTime,
         swappable = type.swappable,
+        color = type.officialColor.ifBlank { null },
     )
 }

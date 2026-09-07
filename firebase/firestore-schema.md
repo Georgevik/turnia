@@ -209,6 +209,11 @@ Reusable personal event templates the user defines.
 | `description` | string \| null | Optional details. |
 | `startTime` | string \| null | `HH:mm` or `null`. |
 | `endTime` | string \| null | `HH:mm` or `null`. |
+| `color` | string \| null | The type's **official** colour, picked by an admin; what every member sees by default. `null` in types created before it existed, which fall back to a colour derived from the `id`. |
+
+> A member may override it with their own in `users/{uid}.groupEventTypeColors`, keyed
+> `"{groupId}_{typeId}"`, and theirs wins. The member's colour never goes on this document:
+> `groups/{groupId}` is read by the whole group, and a personal preference has no business there.
 
 **Access**: written by the owner; read by the owner and by UIDs in `calendarSharedWith`.
 
@@ -303,7 +308,7 @@ it, and the rejoin path soft-deletes it.
 | `groupEventTypes` | array&lt;map&gt; | Event type templates — see below. |
 | `invitation` | map | The group's single invitation — see below. |
 
-**`groupEventTypes[]`** — each element (no color):
+**`groupEventTypes[]`** — each element:
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -312,6 +317,11 @@ it, and the rejoin path soft-deletes it.
 | `description` | string \| null | Optional details. |
 | `startTime` | string \| null | `HH:mm` or `null`. |
 | `endTime` | string \| null | `HH:mm` or `null`. |
+| `color` | string \| null | The type's **official** colour, picked by an admin; what every member sees by default. `null` in types created before it existed, which fall back to a colour derived from the `id`. |
+
+> A member may override it with their own in `users/{uid}.groupEventTypeColors`, keyed
+> `"{groupId}_{typeId}"`, and theirs wins. The member's colour never goes on this document:
+> `groups/{groupId}` is read by the whole group, and a personal preference has no business there.
 
 | `updateAt` | timestamp \| null | Last change, written in the same commit as the group's sync marker. |
 

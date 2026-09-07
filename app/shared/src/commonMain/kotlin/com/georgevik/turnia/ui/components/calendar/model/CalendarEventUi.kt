@@ -9,6 +9,7 @@ import com.georgevik.turnia.core.domain.model.GroupId
 import com.georgevik.turnia.core.domain.model.PersonalEvent
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.system.toLocalDate
+import com.georgevik.turnia.ui.system.entityColor
 import com.georgevik.turnia.ui.system.toComposeColorOrNull
 import kotlinx.datetime.LocalDate
 
@@ -109,7 +110,7 @@ fun GroupEvent.toUi(
     name = type.name,
     acronym = type.acronym,
     date = date,
-    background = colorHex.toComposeColorOrNull() ?: Color.Unspecified,
+    background = colorHex.toComposeColorOrNull() ?: entityColor(type.id.value),
     isOwner = ownerId == currentUserId,
     assigneeName = assigneeName,
     assigneeIsMe = assigneeId == currentUserId,

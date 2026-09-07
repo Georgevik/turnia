@@ -27,7 +27,7 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
 |---------|-------------|
 | **User** | Healthcare professional (nurse/doctor); can belong to several groups. |
 | **Group** | A team an admin creates; defines its own group event types. Members see the group's events. |
-| **Group event type** | An event template of a group (name, description, optional start/end time). **No color** — each user colors it themselves. |
+| **Group event type** | An event template of a group (name, description, optional start/end time). Carries the group's **official color**, picked by an admin; each user may override it with one of their own. |
 | **Group event** | Stored under its group (`groups/{groupId}/events`); has an `ownerId` (creator) and an `assigneeId` (who performs it). Can be offered for swap. |
 | **Personal event type** | A template a user defines for themselves (name, color, optional description/times). |
 | **Personal event** | An instance of a personal event type on a date; belongs to no group. |
@@ -44,7 +44,13 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
 - A user can **delete their own** event; an **admin** can delete any group event. Deleting removes it (there is no cancelled state).
 - **Personal events** can carry notes (on the event); group event docs are shared with all members, so they hold no private notes.
 - A user can define their own **personal event types** and add **personal events** (no group), each colored by its type.
-- **Colors**: a group event type has no color; each user picks a color per group event type, shared by all their events of that type. Personal event types carry their own color. A **group** does carry its own color: an admin picks it and every member sees the same one; a group saved without one falls back to a color derived from its id.
+- **Colors**: a group event type carries an **official color** an admin picks, which is what every
+  member sees by default — without it a shift would have no background at all until somebody chose
+  one. A member may then pick their **own** color for that type, in `users/{uid}.groupEventTypeColors`,
+  and theirs wins outright: the shift is painted in one colour, theirs. A type saved before the
+  official color existed falls back to one derived from its id — the same for everyone in the group.
+  Personal event types carry their own color and have no second one. A **group** also carries its own
+  color, with the same id-derived fallback.
 - A user can belong to **several groups** and can invite another user to view **their entire calendar** (crossing groups).
 - A user can **leave** a group, and an **admin** can **remove** a member. Either way, if they still hold events
   there they become **revoked**: moved from `memberUids` to `revokedUids`, dropped from `members`, and left

@@ -42,7 +42,12 @@ data class GroupMemberDocument(
     @SerialName("username") val username: String,
 )
 
-/** No color: each user picks their own per type in `users/{uid}.groupEventTypeColors`. */
+/**
+ * [color] es el color **oficial** del tipo: lo elige quien administra el grupo y lo ve todo el
+ * grupo. Es lo que hace que un turno tenga fondo sin que nadie haya elegido nada. Cada miembro
+ * puede pisarlo con el suyo en `users/{uid}.groupEventTypeColors`, y entonces el oficial sigue
+ * asomando en una esquina para que dos personas reconozcan el mismo turno.
+ */
 @Serializable
 data class GroupEventTypeDocument(
     @SerialName("id") val id: String,
@@ -52,6 +57,7 @@ data class GroupEventTypeDocument(
     @SerialName("startTime") val startTime: String? = null,
     @SerialName("endTime") val endTime: String? = null,
     @SerialName("swappable") val swappable: Boolean = true,
+    @SerialName("color") val color: String? = null,
 )
 
 /**
