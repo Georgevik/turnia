@@ -5,7 +5,9 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.georgevik.turnia.navigation.LocalNavigator
 import com.georgevik.turnia.navigation.LocalRootNavigator
+import com.georgevik.turnia.navigation.main.routes.MainRoute
 import com.georgevik.turnia.navigation.root.routes.RootRoute
 import com.georgevik.turnia.navigation.routes.EventTypeDetailData
 import com.georgevik.turnia.ui.components.calendar.CalendarViewer
@@ -23,7 +25,9 @@ import turnia.app.shared.generated.resources.share_calendar_action
 @Composable
 fun MyCalendarScreen(viewModel: MyCalendarViewModel = koinViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    // Group detail covers the whole screen, so it goes on the root stack, not this tab's.
+    val navigator = LocalNavigator.current
+    // The event type detail and the sharing screen cover the bottom bar, so they go on the root
+    // stack; the group detail is one of Main's own.
     val rootNavigator = LocalRootNavigator.current
 
     CalendarViewer(
@@ -31,7 +35,7 @@ fun MyCalendarScreen(viewModel: MyCalendarViewModel = koinViewModel()) {
         onMonthChanged = viewModel::onMonthChanged,
         addMode = DayAddMode.Full,
         onEditGroup = { groupId, _ ->
-            rootNavigator.goTo(RootRoute.GroupDetailKey(groupId))
+            navigator.goTo(MainRoute.GroupDetail(groupId))
         },
         onAddPersonalType = {
             rootNavigator.goTo(RootRoute.EventTypeDetailKey(EventTypeDetailData.NewPersonal))

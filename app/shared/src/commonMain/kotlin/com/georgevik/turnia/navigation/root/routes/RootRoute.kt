@@ -16,9 +16,6 @@ sealed interface RootRoute : NavKey {
     data object MainKey : RootRoute
 
     @Serializable
-    data class GroupDetailKey(val groupId: String) : RootRoute
-
-    @Serializable
     data class EventTypeDetailKey(val data: EventTypeDetailData) : RootRoute
 
     @Serializable
@@ -29,9 +26,6 @@ sealed interface RootRoute : NavKey {
 
     @Serializable
     data object ShareCalendarKey : RootRoute
-
-    @Serializable
-    data object AdminGroupsKey : RootRoute
 
     @Serializable
     data object NotificationsKey : RootRoute

@@ -61,6 +61,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.navigation.LocalNavigator
+import com.georgevik.turnia.navigation.LocalRootNavigator
 import com.georgevik.turnia.navigation.root.routes.RootRoute
 import com.georgevik.turnia.navigation.routes.EventTypeDetailData
 import com.georgevik.turnia.ui.group.detail.model.GroupDetailMessage
@@ -138,15 +139,16 @@ import turnia.app.shared.generated.resources.group_leave_title
 import turnia.app.shared.generated.resources.group_member_count
 
 /**
- * Group detail: view, edit or create a group, with its event types listed at the bottom. It is a
- * root-level destination, so it covers Main's bottom bar and pushes the event type detail onto the
- * root back stack.
+ * Group detail: view, edit or create a group, with its event types listed at the bottom. It sits on
+ * Main's tab stacks, so leaving or deleting the group can clear every one of them; the event type
+ * detail still covers the bottom bar and goes on the root stack.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigator = LocalNavigator.current
+    val rootNavigator = LocalRootNavigator.current
     val snackbar = LocalSnackbar.current
 
     var membersSheetOpen by remember { mutableStateOf(false) }
@@ -246,7 +248,7 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
                     onMembersClick = { membersSheetOpen = true },
                     onSave = viewModel::onSave,
                     onTypeClick = { row ->
-                        navigator.goTo(
+                        rootNavigator.goTo(
                             RootRoute.EventTypeDetailKey(
                                 EventTypeDetailData.EditGroup(
                                     typeId = row.typeId.value,
@@ -256,7 +258,7 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
                         )
                     },
                     onAddType = {
-                        navigator.goTo(
+                        rootNavigator.goTo(
                             RootRoute.EventTypeDetailKey(
                                 EventTypeDetailData.NewGroup(groupId = state.form.groupId.value)
                             )

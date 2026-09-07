@@ -32,12 +32,10 @@ private fun screenName(route: NavKey): String? = when (route) {
     RootRoute.SignInKey -> "sign_in"
     // Main is a host, not a screen: the tab underneath it reports instead.
     RootRoute.MainKey -> null
-    is RootRoute.GroupDetailKey -> "group_detail"
     is RootRoute.EventTypeDetailKey -> "event_type_detail"
     RootRoute.PersonalEventTypesKey -> "personal_event_types"
     RootRoute.MyProfileKey -> "my_profile"
     RootRoute.ShareCalendarKey -> "share_calendar"
-    RootRoute.AdminGroupsKey -> "admin_groups"
     RootRoute.NotificationsKey -> "notifications"
     MainRoute.CalendarTab -> "calendar"
     MainRoute.PeopleTab -> "people"
@@ -45,5 +43,7 @@ private fun screenName(route: NavKey): String? = when (route) {
     MainRoute.ChangesTab -> "changes"
     MainRoute.SettingsMenuTab -> "settings"
     is MainRoute.ExternalCalendar -> "external_calendar"
+    is MainRoute.GroupDetail -> "group_detail"
+    MainRoute.AdminGroups -> "admin_groups"
     else -> null
 }

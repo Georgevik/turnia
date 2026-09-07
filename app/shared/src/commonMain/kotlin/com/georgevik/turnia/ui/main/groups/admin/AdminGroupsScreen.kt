@@ -26,7 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.georgevik.turnia.navigation.LocalNavigator
-import com.georgevik.turnia.navigation.root.routes.RootRoute
+import com.georgevik.turnia.navigation.main.routes.MainRoute
 import com.georgevik.turnia.ui.main.groups.components.GroupCard
 import com.georgevik.turnia.ui.main.system.EmptyState
 import org.jetbrains.compose.resources.stringResource
@@ -78,7 +78,7 @@ fun AdminGroupsScreen(viewModel: AdminGroupsViewModel = koinViewModel()) {
                     title = stringResource(Res.string.admin_groups_empty_title),
                     body = stringResource(Res.string.admin_groups_empty_body),
                     action = stringResource(Res.string.group_detail_create),
-                    onAction = { navigator.goTo(RootRoute.GroupDetailKey(groupId = "")) },
+                    onAction = { navigator.goTo(MainRoute.GroupDetail(groupId = "")) },
                     modifier = content,
                 )
             } else {
@@ -102,7 +102,7 @@ fun AdminGroupsScreen(viewModel: AdminGroupsViewModel = koinViewModel()) {
                                 showAdminBadge = false,
                                 onClick = {
                                     navigator.goTo(
-                                        RootRoute.GroupDetailKey(groupId = group.id.value)
+                                        MainRoute.GroupDetail(groupId = group.id.value)
                                     )
                                 },
                             )

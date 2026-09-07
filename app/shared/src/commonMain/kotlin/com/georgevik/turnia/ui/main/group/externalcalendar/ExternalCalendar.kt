@@ -14,9 +14,8 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.georgevik.turnia.core.domain.model.GroupId
 import com.georgevik.turnia.navigation.LocalNavigator
-import com.georgevik.turnia.navigation.LocalRootNavigator
 import com.georgevik.turnia.navigation.main.routes.ExternalCalendarData
-import com.georgevik.turnia.navigation.root.routes.RootRoute
+import com.georgevik.turnia.navigation.main.routes.MainRoute
 import com.georgevik.turnia.ui.components.calendar.CalendarThemes
 import com.georgevik.turnia.ui.components.calendar.CalendarViewer
 import com.georgevik.turnia.ui.components.calendar.components.CalendarTitleBar
@@ -46,8 +45,6 @@ import turnia.app.shared.generated.resources.group_leave_title
 fun ExternalCalendar(viewModel: ExternalCalendarViewModel) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigator = LocalNavigator.current
-    // Group detail covers the whole screen, so it goes on the root stack, not this tab's.
-    val rootNavigator = LocalRootNavigator.current
     val snackbar = LocalSnackbar.current
     val data = viewModel.data
     val isGroup = data is ExternalCalendarData.Group
@@ -109,7 +106,7 @@ fun ExternalCalendar(viewModel: ExternalCalendarViewModel) {
                 theme = theme,
                 onBack = navigator::goBack,
                 onInfo = if (data is ExternalCalendarData.Group && !uiState.isRevoked) {
-                    { rootNavigator.goTo(RootRoute.GroupDetailKey(data.id)) }
+                    { navigator.goTo(MainRoute.GroupDetail(data.id)) }
                 } else {
                     null
                 },

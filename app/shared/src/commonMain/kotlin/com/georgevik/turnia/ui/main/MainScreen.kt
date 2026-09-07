@@ -30,6 +30,7 @@ import com.georgevik.turnia.navigation.TurniaNavDisplay
 import com.georgevik.turnia.navigation.main.MainNavigator
 import com.georgevik.turnia.navigation.main.rememberMainNavigationState
 import com.georgevik.turnia.navigation.main.routes.MainRoute
+import com.georgevik.turnia.ui.group.detail.navigation.groupDetailNavigation
 import com.georgevik.turnia.ui.main.changes.navigation.changesNavigation
 import com.georgevik.turnia.ui.main.group.navigation.externalCalendarNavigation
 import com.georgevik.turnia.ui.main.groups.navigation.groupsNavigation
@@ -93,8 +94,8 @@ fun MainScreen(viewModel: MainViewModel = koinViewModel()) {
         }
     }
 
-    // The tab a tapped notification asks for. `GroupDetail` is not here: it lives on the root back
-    // stack, above this screen, and RootScreen is what puts it there.
+    // Where a tapped notification asks to go. Every destination is one of Main's, so a cold start
+    // takes care of itself: this screen only exists once the splash has handed over to Main.
     val pendingDestination by viewModel.pendingDestination.collectAsStateWithLifecycle()
     HandleNotificationTapped(pendingDestination, viewModel::destinationHandled, navigator)
 
@@ -130,6 +131,7 @@ fun MainScreen(viewModel: MainViewModel = koinViewModel()) {
                         externalCalendarNavigation()
                         settingsNavigation()
                         changesNavigation()
+                        groupDetailNavigation()
                     }
                 ),
                 onBack = navigator::goBack,
@@ -146,13 +148,16 @@ private fun HandleNotificationTapped(
     navigator: MainNavigator
 ) {
     LaunchedEffect(pendingDestination) {
-        val tab = when (pendingDestination) {
+        val route = when (pendingDestination) {
             PushDestination.Groups -> MainRoute.GroupsTab
             PushDestination.People -> MainRoute.PeopleTab
-            else -> return@LaunchedEffect
+            is PushDestination.GroupDetail ->
+                MainRoute.GroupDetail(pendingDestination.groupId.value)
+
+            null -> return@LaunchedEffect
         }
 
         notifHandled()
-        navigator.goTo(tab)
+        navigator.goTo(route)
     }
 }

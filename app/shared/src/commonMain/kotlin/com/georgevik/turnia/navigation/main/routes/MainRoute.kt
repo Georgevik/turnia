@@ -22,6 +22,12 @@ sealed interface MainRoute : NavKey {
 
     @Serializable
     data class ExternalCalendar(val data: ExternalCalendarData) : MainRoute
+
+    @Serializable
+    data class GroupDetail(val groupId: String) : MainRoute
+
+    @Serializable
+    data object AdminGroups : MainRoute
 }
 
 @Serializable

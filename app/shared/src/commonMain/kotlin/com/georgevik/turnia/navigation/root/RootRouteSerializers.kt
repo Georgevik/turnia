@@ -12,7 +12,6 @@ internal val rootRouteSavedStateConfiguration: SavedStateConfiguration = SavedSt
             subclass(RootRoute.SplashKey::class, RootRoute.SplashKey.serializer())
             subclass(RootRoute.SignInKey::class, RootRoute.SignInKey.serializer())
             subclass(RootRoute.MainKey::class, RootRoute.MainKey.serializer())
-            subclass(RootRoute.GroupDetailKey::class, RootRoute.GroupDetailKey.serializer())
             subclass(
                 RootRoute.EventTypeDetailKey::class,
                 RootRoute.EventTypeDetailKey.serializer(),
