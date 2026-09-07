@@ -2,7 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>aps-environment</key>
-	<string>development</string>
+	<!-- aps-environment (development) va aquí, pero un Personal Team no puede firmar la
+	     capability de Push Notifications: Xcode no genera el perfil y el build falla.
+	     Restaurar al pasar al Apple Developer Program de pago; sin ella no hay FCM. -->
 </dict>
 </plist>
