@@ -64,6 +64,7 @@ import com.georgevik.turnia.navigation.LocalNavigator
 import com.georgevik.turnia.navigation.LocalRootNavigator
 import com.georgevik.turnia.navigation.root.routes.RootRoute
 import com.georgevik.turnia.navigation.routes.EventTypeDetailData
+import com.georgevik.turnia.ui.group.detail.model.GroupCloseUi
 import com.georgevik.turnia.ui.group.detail.model.GroupDetailMessage
 import com.georgevik.turnia.ui.group.detail.model.GroupDetailScreenError
 import com.georgevik.turnia.ui.group.detail.model.GroupDetailUi
@@ -78,6 +79,7 @@ import com.georgevik.turnia.ui.system.components.Avatar
 import com.georgevik.turnia.ui.system.components.Chevron
 import com.georgevik.turnia.ui.system.components.ColorSwatchPicker
 import com.georgevik.turnia.ui.system.components.ConfirmationDialog
+import com.georgevik.turnia.ui.system.components.ConfirmationStatus
 import com.georgevik.turnia.ui.system.components.TFieldLabel
 import com.georgevik.turnia.ui.system.components.TListItem
 import com.georgevik.turnia.ui.system.components.TReadOnlyField
@@ -85,6 +87,7 @@ import com.georgevik.turnia.ui.system.components.TurniaDialogError
 import com.georgevik.turnia.ui.system.components.TurniaErrorContent
 import com.georgevik.turnia.ui.system.entityColor
 import com.georgevik.turnia.ui.system.toErrorSnackbar
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
@@ -191,7 +194,7 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
                     if (state is GroupDetailUi.Success && !state.isNew) {
                         GroupExitAction(
                             isAdmin = state.form.editable,
-                            enabled = !state.saving,
+                            enabled = !state.saving && state.close == null,
                             onLeave = { leaveRequested = true },
                             onDelete = { deleteRequested = true },
                         )
@@ -312,16 +315,24 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
         )
     }
 
+    val close = success?.close
+    LaunchedEffect(close) {
+        if (close is GroupCloseUi.Succeeded || close is GroupCloseUi.Failed) {
+            delay(CLOSE_RESULT_MILLIS)
+            leaveRequested = false
+            deleteRequested = false
+            viewModel.closeResultShown()
+        }
+    }
+
     if (leaveRequested) {
         ConfirmationDialog(
             title = stringResource(Res.string.group_leave_title),
             message = stringResource(Res.string.group_leave_message),
             confirmText = stringResource(Res.string.group_leave_confirm),
             dismissText = stringResource(Res.string.dialog_cancel),
-            onConfirm = {
-                leaveRequested = false
-                viewModel.onLeaveGroup()
-            },
+            status = close.toStatus(),
+            onConfirm = viewModel::onLeaveGroup,
             onDismissRequest = { leaveRequested = false },
         )
     }
@@ -337,13 +348,21 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
             confirmText = stringResource(Res.string.group_delete_confirm),
             dismissText = stringResource(Res.string.dialog_cancel),
             confirmEnabled = canDelete,
-            onConfirm = {
-                deleteRequested = false
-                viewModel.onDeleteGroup()
-            },
+            status = close.toStatus(),
+            onConfirm = viewModel::onDeleteGroup,
             onDismissRequest = { deleteRequested = false },
         )
     }
+}
+
+/** How long the tick or the cross stays up before the outcome is acted on. */
+private const val CLOSE_RESULT_MILLIS = 1_000L
+
+private fun GroupCloseUi?.toStatus() = when (this) {
+    GroupCloseUi.Running -> ConfirmationStatus.Running
+    GroupCloseUi.Succeeded -> ConfirmationStatus.Succeeded
+    is GroupCloseUi.Failed -> ConfirmationStatus.Failed
+    null -> ConfirmationStatus.Idle
 }
 
 @Composable

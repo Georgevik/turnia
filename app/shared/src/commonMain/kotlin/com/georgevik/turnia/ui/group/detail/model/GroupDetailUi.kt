@@ -21,6 +21,7 @@ sealed interface GroupDetailUi {
         val saving: Boolean = false,
         val isSaved: Boolean = false,
         val hasLeft: Boolean = false,
+        val close: GroupCloseUi? = null,
         val userMessage: GroupDetailMessage? = null,
     ) : GroupDetailUi
 
@@ -67,6 +68,18 @@ data class JoinRequestUi(
     val name: String,
     val username: String,
 )
+
+/**
+ * Leaving or deleting the group. The confirmation dialog stays up for the whole thing and reports
+ * the outcome itself, so the state survives until the UI says it has been shown.
+ */
+sealed interface GroupCloseUi {
+    data object Running : GroupCloseUi
+
+    data object Succeeded : GroupCloseUi
+
+    data class Failed(val message: GroupDetailMessage) : GroupCloseUi
+}
 
 enum class GroupDetailScreenError { NotFound, LoadFailed }
 
