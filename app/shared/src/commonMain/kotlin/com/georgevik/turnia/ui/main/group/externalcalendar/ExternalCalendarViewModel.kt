@@ -2,13 +2,11 @@ package com.georgevik.turnia.ui.main.group.externalcalendar
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.georgevik.turnia.core.domain.model.GroupError
 import com.georgevik.turnia.core.domain.model.GroupId
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
 import com.georgevik.turnia.core.domain.repository.UserRepository
-import com.georgevik.turnia.core.system.fold
 import com.georgevik.turnia.core.system.valueOrEmpty
 import com.georgevik.turnia.navigation.main.routes.ExternalCalendarData
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
@@ -56,58 +54,10 @@ class ExternalCalendarViewModel(
             groupRepository.getGroups()
                 .onEach { groups ->
                     val group = groups.find { it.id.value == data.id }
-                    _uiState.update {
-                        it.copy(
-                            isRevoked = group?.isRevoked == true,
-                            isAdmin = group?.isAdmin == true,
-                        )
-                    }
+                    _uiState.update { it.copy(isRevoked = group?.isRevoked == true) }
                 }
                 .launchIn(viewModelScope)
         }
-    }
-
-    /**
-     * Leaves the group. Whatever the user still holds stays on the group's calendar and remains
-     * theirs to see; [GroupCalendarUi.hasLeft] tells the screen to close.
-     */
-    fun onLeaveGroup() {
-        val groupId = (data as? ExternalCalendarData.Group)?.id ?: return
-
-        viewModelScope.launch {
-            groupRepository.leaveGroup(GroupId(groupId)).fold(
-                onSuccess = { _uiState.update { it.copy(hasLeft = true) } },
-                onFailure = { error ->
-                    _uiState.update { it.copy(userMessage = error.toLeaveMessage()) }
-                },
-            )
-        }
-    }
-
-
-    fun onDeleteGroup() {
-        val groupId = (data as? ExternalCalendarData.Group)?.id ?: return
-
-        viewModelScope.launch {
-            groupRepository.deleteGroup(GroupId(groupId)).fold(
-                onSuccess = { _uiState.update { it.copy(hasLeft = true) } },
-                onFailure = { error ->
-                    _uiState.update { it.copy(userMessage = error.toDeleteMessage()) }
-                },
-            )
-        }
-    }
-
-    fun userMessageShown() = _uiState.update { it.copy(userMessage = null) }
-
-    private fun GroupError.toDeleteMessage() = when (this) {
-        GroupError.NotEmpty -> GroupCalendarMessage.DeleteNotEmpty
-        else -> GroupCalendarMessage.DeleteFailed
-    }
-
-    private fun GroupError.toLeaveMessage() = when (this) {
-        GroupError.LastAdmin -> GroupCalendarMessage.LeaveLastAdmin
-        else -> GroupCalendarMessage.LeaveFailed
     }
 
     /**
@@ -148,10 +98,4 @@ data class GroupCalendarUi(
     val loading: Boolean = true,
     /** The user was removed from this group: the leftover events show, nothing can be added. */
     val isRevoked: Boolean = false,
-    /** Only an admin is offered the group's destructive actions. */
-    val isAdmin: Boolean = false,
-    val hasLeft: Boolean = false,
-    val userMessage: GroupCalendarMessage? = null,
 )
-
-enum class GroupCalendarMessage { LeaveFailed, LeaveLastAdmin, DeleteFailed, DeleteNotEmpty }
