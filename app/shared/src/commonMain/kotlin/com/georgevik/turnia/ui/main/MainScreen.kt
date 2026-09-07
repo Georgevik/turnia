@@ -96,7 +96,7 @@ fun MainScreen(viewModel: MainViewModel = koinViewModel()) {
     // The tab a tapped notification asks for. `GroupDetail` is not here: it lives on the root back
     // stack, above this screen, and RootScreen is what puts it there.
     val pendingDestination by viewModel.pendingDestination.collectAsStateWithLifecycle()
-    handleNotificationTapped(pendingDestination, viewModel::destinationHandled, navigator)
+    HandleNotificationTapped(pendingDestination, viewModel::destinationHandled, navigator)
 
     TrackScreen(state.backStacks[state.topLevelRoute]?.lastOrNull())
 
@@ -140,7 +140,7 @@ fun MainScreen(viewModel: MainViewModel = koinViewModel()) {
 }
 
 @Composable
-private fun handleNotificationTapped(
+private fun HandleNotificationTapped(
     pendingDestination: PushDestination?,
     notifHandled : () -> Unit,
     navigator: MainNavigator
