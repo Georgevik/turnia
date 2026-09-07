@@ -1,6 +1,7 @@
 package com.georgevik.turnia.di
 
 import com.georgevik.turnia.core.domain.model.GroupId
+import com.georgevik.turnia.navigation.ScreenReporter
 import com.georgevik.turnia.navigation.main.routes.ExternalCalendarData
 import com.georgevik.turnia.navigation.root.routes.RootRoute
 import com.georgevik.turnia.navigation.routes.EventTypeDetailData
@@ -32,6 +33,7 @@ import org.koin.dsl.module
  * Presentation/UI layer dependencies (ViewModels and their collaborators).
  */
 val appModule: Module = module {
+    single { ScreenReporter(get()) }
     viewModelOf(::SignInViewModel)
     viewModelOf(::SplashViewModel)
     viewModelOf(::RootViewModel)

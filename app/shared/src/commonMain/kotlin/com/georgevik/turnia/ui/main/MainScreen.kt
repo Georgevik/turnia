@@ -25,6 +25,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.entryProvider
 import com.georgevik.turnia.core.domain.model.PushDestination
 import com.georgevik.turnia.navigation.LocalNavigator
+import com.georgevik.turnia.navigation.TrackScreen
 import com.georgevik.turnia.navigation.TurniaNavDisplay
 import com.georgevik.turnia.navigation.main.MainNavigator
 import com.georgevik.turnia.navigation.main.rememberMainNavigationState
@@ -96,6 +97,8 @@ fun MainScreen(viewModel: MainViewModel = koinViewModel()) {
     // stack, above this screen, and RootScreen is what puts it there.
     val pendingDestination by viewModel.pendingDestination.collectAsStateWithLifecycle()
     handleNotificationTapped(pendingDestination, viewModel::destinationHandled, navigator)
+
+    TrackScreen(state.backStacks[state.topLevelRoute]?.lastOrNull())
 
     CompositionLocalProvider(
         LocalNavigator provides navigator,

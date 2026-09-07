@@ -1,5 +1,6 @@
 package com.georgevik.turnia.core.di
 
+import com.georgevik.turnia.core.data.analytics.AnalyticsImpl
 import com.georgevik.turnia.core.data.config.AppConfigRepositoryImpl
 import com.georgevik.turnia.core.data.datasource.firestore.GroupEventFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.GroupFirestore
@@ -26,6 +27,7 @@ import com.georgevik.turnia.core.data.user.PersonalEventRepositoryImpl
 import com.georgevik.turnia.core.data.user.UserProvisioner
 import com.georgevik.turnia.core.data.user.UserRepositoryImpl
 import com.georgevik.turnia.core.data.user.delegate.FcmDelegateImpl
+import com.georgevik.turnia.core.domain.analytics.Analytics
 import com.georgevik.turnia.core.domain.repository.AppConfigRepository
 import com.georgevik.turnia.core.domain.repository.FcmDelegate
 import com.georgevik.turnia.core.domain.repository.GroupRepository
@@ -34,6 +36,7 @@ import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
 import com.georgevik.turnia.core.domain.repository.UserRepository
 import com.georgevik.turnia.core.domain.username.UsernameFactory
 import dev.gitlive.firebase.Firebase
+import dev.gitlive.firebase.analytics.analytics
 import dev.gitlive.firebase.auth.auth
 import dev.gitlive.firebase.firestore.firestore
 import dev.gitlive.firebase.functions.functions
@@ -60,6 +63,8 @@ val coreModule: Module = module {
     single { Firebase.firestore }
     single { Firebase.functions(FUNCTIONS_REGION) }
     single { Firebase.messaging }
+    single { Firebase.analytics }
+    single<Analytics> { AnalyticsImpl(get()) }
     single { UserProfileFunction(get()) }
     single { UserPathFirestore(get(), get(), get()) }
     single { UserPrivateFirestore(get(), get()) }
@@ -92,6 +97,7 @@ val coreModule: Module = module {
             get(),
             get(),
             get(),
+            get(),
             get()
         )
     }
@@ -99,7 +105,8 @@ val coreModule: Module = module {
     single<NotificationRepository> { NotificationRepositoryImpl() }
     single<GroupRepository> {
         GroupRepositoryImpl(
-            get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()
+            get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(),
+            get()
         )
     }
     single<PersonalEventRepository> { PersonalEventRepositoryImpl(get(), get(), get(), get()) }

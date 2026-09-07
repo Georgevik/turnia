@@ -7,6 +7,7 @@ import com.georgevik.turnia.core.data.datasource.firestore.errors.UserProfileErr
 import com.georgevik.turnia.core.data.datasource.firestore.mappers.UserDocumentMapper
 import com.georgevik.turnia.core.data.datasource.firestorefunctions.UserProfileFunction
 import com.georgevik.turnia.core.data.logger.Logger
+import com.georgevik.turnia.core.domain.analytics.Analytics
 import com.georgevik.turnia.core.domain.model.User
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.domain.model.UserProfile
@@ -36,6 +37,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -48,6 +50,7 @@ class UserRepositoryImpl(
     private val userMapper: UserDocumentMapper,
     private val provisioner: UserProvisioner,
     private val fcmDelegate: FcmDelegate,
+    private val analytics: Analytics,
     scope: CoroutineScope
 ) : UserRepository, FcmDelegate by fcmDelegate {
 
@@ -64,6 +67,7 @@ class UserRepositoryImpl(
             auth.authStateChanged
                 // authStateChanged also fires on token refresh; only a different account is a new session.
                 .distinctUntilChangedBy { it?.uid }
+                .onEach { firebaseUser -> analytics.setUser(firebaseUser?.uid?.let(::UserId)) }
                 .flatMapLatest { firebaseUser ->
                     if (firebaseUser == null) flowOf(UserSession.Unauthenticated)
                     else gatherUserInfo(firebaseUser)

@@ -13,6 +13,8 @@ import com.georgevik.turnia.core.data.datasource.firestore.mappers.GroupMapper
 import com.georgevik.turnia.core.data.datasource.firestorefunctions.GroupFunction
 import com.georgevik.turnia.core.data.datasource.firestorefunctions.GroupMembershipFunction
 import com.georgevik.turnia.core.data.logger.Logger
+import com.georgevik.turnia.core.domain.analytics.Analytics
+import com.georgevik.turnia.core.domain.analytics.AnalyticsEvent
 import com.georgevik.turnia.core.domain.model.EventId
 import com.georgevik.turnia.core.domain.model.EventTypeId
 import com.georgevik.turnia.core.domain.model.Group
@@ -31,6 +33,7 @@ import com.georgevik.turnia.core.domain.repository.UserRepository
 import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.createId
 import com.georgevik.turnia.core.system.errorOrNull
+import com.georgevik.turnia.core.system.isSuccess
 import com.georgevik.turnia.core.system.map
 import com.georgevik.turnia.core.system.mapError
 import com.georgevik.turnia.core.system.toFailure
@@ -65,6 +68,7 @@ class GroupRepositoryImpl(
     private val groupFunction: GroupFunction,
     private val userPathFirestore: UserPathFirestore,
     private val groupMapper: GroupMapper,
+    private val analytics: Analytics,
 ) : GroupRepository {
 
     /**
@@ -134,6 +138,8 @@ class GroupRepositoryImpl(
             return GroupError.NotFound.toFailure()
         }
 
+        if (isNew) analytics.log(AnalyticsEvent.GroupCreated)
+
         return coded.copy(id = groupId, isAdmin = userId.value in adminUids).toSuccess()
     }
 
@@ -149,9 +155,11 @@ class GroupRepositoryImpl(
         groupId: GroupId,
         userId: UserId,
     ): Outcome<Unit, GroupError> = groupMembershipFunction.acceptJoinRequest(groupId, userId)
+        .also { if (it.isSuccess) analytics.log(AnalyticsEvent.JoinAccepted) }
 
     override suspend fun requestToJoinGroup(code: String): Outcome<JoinGroupStatus, JoinGroupError> =
         groupMembershipFunction.requestToJoinGroup(code)
+            .also { if (it.isSuccess) analytics.log(AnalyticsEvent.JoinRequested) }
 
     override suspend fun leaveGroup(groupId: GroupId): Outcome<Unit, GroupError> =
         groupMembershipFunction.leaveGroup(groupId)
@@ -234,6 +242,7 @@ class GroupRepositoryImpl(
         }
 
         groupEventFirestore.set(event.groupId, event.id, groupMapper.map(event))
+        analytics.log(AnalyticsEvent.GroupEventCreated)
     }
 
     private suspend fun isRevoked(userId: UserId, groupId: GroupId): Boolean =

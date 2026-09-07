@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
+import com.georgevik.turnia.navigation.TrackScreen
 import com.georgevik.turnia.navigation.TurniaNavDisplay
 import com.georgevik.turnia.navigation.root.routes.RootRoute
 import com.georgevik.turnia.ui.group.detail.GroupDetailScreen
@@ -27,6 +28,8 @@ fun RootNavDisplay(
     snackbarHostState: SnackbarHostState,
     backStack: NavBackStack<NavKey>,
 ) {
+    TrackScreen(backStack.lastOrNull())
+
     TurniaNavDisplay(
         backStack = backStack,
         entryProvider = entryProvider {
