@@ -1,7 +1,6 @@
 package com.georgevik.turnia.ui.main.eventtypes.detail.model
 
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.isSpecified
 import com.georgevik.turnia.core.domain.model.EventTypeId
 import com.georgevik.turnia.ui.components.daydetail.components.EventTypeChipUi
 
@@ -28,13 +27,9 @@ sealed interface EventTypeDetailUi {
         val startTime: String,
         val endTime: String,
         val color: Color,
-        val officialColor: Color = Color.Unspecified,
         val isGroupType: Boolean = false,
         val swappable: Boolean?,
     ) {
-        val overridesOfficial: Boolean
-            get() = isGroupType && officialColor.isSpecified && officialColor != color
-
         val chipUi = EventTypeChipUi(title = acronym.ifEmpty { "   " }, color = color)
     }
 

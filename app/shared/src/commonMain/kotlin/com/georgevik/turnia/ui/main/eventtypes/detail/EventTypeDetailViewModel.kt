@@ -127,22 +127,6 @@ class EventTypeDetailViewModel(
         }
     }
 
-    /**
-     * El color del grupo. A diferencia del propio no se guarda al elegirlo: es del tipo, y viaja
-     * con el resto del formulario cuando el administrador pulsa Guardar.
-     */
-    fun onPickOfficialColor(color: Color) = updateSuccess { state ->
-        // Quien no se ha salido del color del grupo lo sigue: si no, cambiar el oficial dejaría al
-        // propio administrador viendo el viejo y pareciendo que no se ha guardado.
-        val follows = !state.form.overridesOfficial
-        state.copy(
-            form = state.form.copy(
-                officialColor = color,
-                color = if (follows) color else state.form.color,
-            )
-        )
-    }
-
     fun hideMessageError() = updateSuccess { it.copy(toastError = null) }
 
     fun onFieldChanged(field: EventTypeField, newValue: String) = updateSuccess { state ->
@@ -187,10 +171,10 @@ class EventTypeDetailViewModel(
             is EventTypeDetailData.EditPersonal -> savePersonal(EventTypeId(key.typeId), form)
             EventTypeDetailData.NewPersonal -> savePersonal(EventTypeId(createId()), form)
             is EventTypeDetailData.NewGroup ->
-                saveGroupType(GroupId(key.groupId), EventTypeId(createId()), form, isNew = true)
+                saveGroupType(GroupId(key.groupId), EventTypeId(createId()), form)
 
             is EventTypeDetailData.EditGroup ->
-                saveGroupType(GroupId(key.groupId), EventTypeId(key.typeId), form, isNew = false)
+                saveGroupType(GroupId(key.groupId), EventTypeId(key.typeId), form)
         }
     }
 
@@ -229,12 +213,7 @@ class EventTypeDetailViewModel(
         }
     }
 
-    private fun saveGroupType(
-        groupId: GroupId,
-        typeId: EventTypeId,
-        form: EventTypeForm,
-        isNew: Boolean,
-    ) {
+    private fun saveGroupType(groupId: GroupId, typeId: EventTypeId, form: EventTypeForm) {
         val type = GroupEventType(
             id = typeId,
             groupId = groupId,
@@ -245,9 +224,7 @@ class EventTypeDetailViewModel(
             startTime = form.startTime.toTimeOrNull(),
             endTime = form.endTime.toTimeOrNull(),
             swappable = form.swappable ?: true,
-            officialColor = form.officialColor.toHex(),
-            // El color propio no se guarda aquí: vive en el documento del usuario, y este objeto
-            // acaba en `groups/{g}`, que lee todo el grupo.
+            defaultColor = form.color.toHex(),
             userColor = null,
         )
 
@@ -255,15 +232,7 @@ class EventTypeDetailViewModel(
             updateSuccess { it.copy(saveButtonLoading = true) }
 
             groupRepository.saveEventType(groupId, type).fold(
-                onSuccess = {
-                    // En un tipo que ya existe, `onPickColor` guardó el color propio al elegirlo.
-                    // En uno nuevo todavía no había tipo al que asociarlo, así que se guarda aquí —
-                    // y sólo si me he salido del oficial: si no, no hay nada propio que guardar.
-                    if (isNew && form.overridesOfficial) {
-                        groupRepository.saveTypeColor(groupId, typeId, form.color.toHex())
-                    }
-                    updateSuccess { it.copy(saveButtonLoading = false, isSaved = true) }
-                },
+                onSuccess = { updateSuccess { it.copy(saveButtonLoading = false, isSaved = true) } },
                 onFailure = {
                     updateSuccess {
                         it.copy(
@@ -296,14 +265,8 @@ class EventTypeDetailViewModel(
         description = description.orEmpty(),
         startTime = startTime.orEmpty().toTimeInput(),
         endTime = endTime.orEmpty().toTimeInput(),
-        // Un tipo anterior al color oficial no tiene ninguno guardado. `entityColor` da uno
-        // derivado del id, así que sale el mismo para todo el grupo y el turno nunca queda sin
-        // fondo mientras nadie elija.
         color = color.toComposeColorOr(entityColor(id.value)),
-        officialColor = officialColor.toComposeColorOr(entityColor(id.value)),
         isGroupType = true,
-        // El valor real, no `false`: la pantalla no lo muestra, pero guardar tiene que devolverlo
-        // tal cual en lugar de apagar el intercambio de un tipo por haberlo editado.
         swappable = swappable,
     )
 
@@ -312,23 +275,18 @@ class EventTypeDetailViewModel(
         _uiState.update { if (it is EventTypeDetailUi.Success) block(it) else it }
 
     companion object {
-        private fun newForm(isGroupType: Boolean = false): EventTypeForm {
-            // Un color por tipo, no dos: mientras nadie se salga del oficial, el que se pinta es él.
-            val color = entityColor(createUuid())
-            return EventTypeForm(
-                typeId = null,
-                fieldsEditable = true,
-                name = "",
-                acronym = "",
-                description = "",
-                startTime = "",
-                endTime = "",
-                color = color,
-                officialColor = if (isGroupType) color else Color.Unspecified,
-                isGroupType = isGroupType,
-                swappable = null,
-            )
-        }
+        private fun newForm(isGroupType: Boolean = false) = EventTypeForm(
+            typeId = null,
+            fieldsEditable = true,
+            name = "",
+            acronym = "",
+            description = "",
+            startTime = "",
+            endTime = "",
+            color = entityColor(createUuid()),
+            isGroupType = isGroupType,
+            swappable = null,
+        )
     }
 
 }

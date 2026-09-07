@@ -202,7 +202,10 @@ class GroupRepositoryImpl(
             is Outcome.Success -> outcome.value
         }
 
-        val types = group.types.filterNot { it.id == type.id } + type
+        val existing = group.types.find { it.id == type.id }
+        val saved = if (existing == null) type else type.copy(defaultColor = existing.defaultColor)
+
+        val types = group.types.filterNot { it.id == type.id } + saved
 
         return saveGroup(group.copy(types = types)).map { }
     }

@@ -209,7 +209,7 @@ Reusable personal event templates the user defines.
 | `description` | string \| null | Optional details. |
 | `startTime` | string \| null | `HH:mm` or `null`. |
 | `endTime` | string \| null | `HH:mm` or `null`. |
-| `color` | string \| null | The type's **official** colour, picked by an admin; what every member sees by default. `null` in types created before it existed, which fall back to a colour derived from the `id`. |
+| `color` | string \| null | The type's **default** colour, fixed when the type is created and never written again; what every member sees until they pick their own. `null` in types created before it existed, which fall back to a colour derived from the `id`. |
 
 > A member may override it with their own in `users/{uid}.groupEventTypeColors`, keyed
 > `"{groupId}_{typeId}"`, and theirs wins. The member's colour never goes on this document:
@@ -317,7 +317,7 @@ it, and the rejoin path soft-deletes it.
 | `description` | string \| null | Optional details. |
 | `startTime` | string \| null | `HH:mm` or `null`. |
 | `endTime` | string \| null | `HH:mm` or `null`. |
-| `color` | string \| null | The type's **official** colour, picked by an admin; what every member sees by default. `null` in types created before it existed, which fall back to a colour derived from the `id`. |
+| `color` | string \| null | The type's **default** colour, fixed when the type is created and never written again; what every member sees until they pick their own. `null` in types created before it existed, which fall back to a colour derived from the `id`. |
 
 > A member may override it with their own in `users/{uid}.groupEventTypeColors`, keyed
 > `"{groupId}_{typeId}"`, and theirs wins. The member's colour never goes on this document:

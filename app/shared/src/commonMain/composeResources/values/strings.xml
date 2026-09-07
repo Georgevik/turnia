@@ -165,12 +165,6 @@
     <string name="event_type_field_description">Descripción</string>
     <string name="event_type_field_start">Inicio</string>
     <string name="event_type_field_end">Fin</string>
-    <string name="event_type_color_preview">Así se verá</string>
-    <string name="event_type_color_official">Color del grupo</string>
-    <string name="event_type_color_official_hint">Lo elige el administrador y lo ven todos los miembros.</string>
-    <string name="event_type_color_official_readonly">Elegido por el administrador del grupo.</string>
-    <string name="event_type_color_mine">Mi color</string>
-    <string name="event_type_color_mine_hint">Sólo lo ves tú. El color del grupo se queda en una esquina del turno.</string>
     <string name="event_type_field_color">Color</string>
     <string name="event_type_pick_color">Elegir color</string>
     <string name="event_type_swap_allowed">Intercambio permitido</string>

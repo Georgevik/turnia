@@ -27,7 +27,7 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
 |---------|-------------|
 | **User** | Healthcare professional (nurse/doctor); can belong to several groups. |
 | **Group** | A team an admin creates; defines its own group event types. Members see the group's events. |
-| **Group event type** | An event template of a group (name, description, optional start/end time). Carries the group's **official color**, picked by an admin; each user may override it with one of their own. |
+| **Group event type** | An event template of a group (name, description, optional start/end time). Carries a **default color**, fixed when the type is created; each user may override it with one of their own. |
 | **Group event** | Stored under its group (`groups/{groupId}/events`); has an `ownerId` (creator) and an `assigneeId` (who performs it). Can be offered for swap. |
 | **Personal event type** | A template a user defines for themselves (name, color, optional description/times). |
 | **Personal event** | An instance of a personal event type on a date; belongs to no group. |
@@ -44,13 +44,17 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
 - A user can **delete their own** event; an **admin** can delete any group event. Deleting removes it (there is no cancelled state).
 - **Personal events** can carry notes (on the event); group event docs are shared with all members, so they hold no private notes.
 - A user can define their own **personal event types** and add **personal events** (no group), each colored by its type.
-- **Colors**: a group event type carries an **official color** an admin picks, which is what every
-  member sees by default — without it a shift would have no background at all until somebody chose
-  one. A member may then pick their **own** color for that type, in `users/{uid}.groupEventTypeColors`,
-  and theirs wins outright: the shift is painted in one colour, theirs. A type saved before the
-  official color existed falls back to one derived from its id — the same for everyone in the group.
-  Personal event types carry their own color and have no second one. A **group** also carries its own
-  color, with the same id-derived fallback.
+- **Colors**: a group event type carries a **default color**, the one whoever created the type
+  picked, which is what every member sees until they choose otherwise — without it a shift would
+  have no background at all. It is **fixed at creation and never changes again**: an admin who
+  changes the color later changes only their own, like any other member. Everyone's own color for
+  a type lives in `users/{uid}.groupEventTypeColors`, and theirs wins outright: the shift is painted
+  in one colour, theirs. A type saved before the default color existed falls back to one derived
+  from its id — the same for everyone in the group. Personal event types carry their own color and
+  have no second one. A **group** also carries its own color, with the same id-derived fallback.
+  The screen shows **one** color picker either way: the user picks a color and the app decides where
+  it goes — onto the type as its default when the type is being created, onto that user's own
+  override every time after.
 - A user can belong to **several groups** and can invite another user to view **their entire calendar** (crossing groups).
 - A user can **leave** a group, and an **admin** can **remove** a member. Either way, if they still hold events
   there they become **revoked**: moved from `memberUids` to `revokedUids`, dropped from `members`, and left
@@ -86,6 +90,12 @@ Firebase must **not** accumulate every past event forever. The backend keeps onl
   | `EventSource` | **Where an event comes from** (`GROUP` \| `PERSONAL`) — an axis, not a template. Field name: `source`. | `type` (that word is taken by `EventType`) |
   | `swap` | Offering an event so another member takes it. `GroupEvent.onSwap` = offered right now; `GroupEventType.swappable` = the type allows it at all. | `sale`, `trade`, `sell` (`onSale` is dead) |
 | `revoked` | A former member who still holds events in the group, so they keep read access to **their own**. Field: `groups/{g}.revokedUids`; domain flag: `Group.isRevoked`. | `removed`, `kicked`, `banned`, `inactive`, `archived` |
+
+- **Comments are written in English — all of them, with no exceptions.** KDoc, block comments,
+  inline comments and `TODO`s alike, in Kotlin and in the Cloud Functions' TypeScript. The code,
+  its identifiers and this document are in English, so a comment in any other language forces the
+  reader to switch language mid-file. User-facing strings are a different matter and stay in
+  `composeResources` — Spanish belongs there, never in the source.
 
 - **Comments** — do **not** add a comment to every file, function or header. Comments belong only on **non-obvious, non-logic** code (a business rule, a workaround, a subtle invariant, a "why"). A comment that restates what the code already says is redundant — omit it.
 

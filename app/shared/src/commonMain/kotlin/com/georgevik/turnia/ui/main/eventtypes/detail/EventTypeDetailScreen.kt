@@ -1,6 +1,5 @@
 package com.georgevik.turnia.ui.main.eventtypes.detail
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -36,7 +34,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -64,12 +61,6 @@ import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.calendar_back
 import turnia.app.shared.generated.resources.event_details_new_title
-import turnia.app.shared.generated.resources.event_type_color_mine
-import turnia.app.shared.generated.resources.event_type_color_mine_hint
-import turnia.app.shared.generated.resources.event_type_color_official
-import turnia.app.shared.generated.resources.event_type_color_official_hint
-import turnia.app.shared.generated.resources.event_type_color_official_readonly
-import turnia.app.shared.generated.resources.event_type_color_preview
 import turnia.app.shared.generated.resources.event_type_error_group_not_found
 import turnia.app.shared.generated.resources.event_type_error_not_implemented
 import turnia.app.shared.generated.resources.event_type_error_pick_color
@@ -146,7 +137,6 @@ fun EventTypeDetailScreen(viewModel: EventTypeDetailViewModel) {
                     state = state,
                     onSave = viewModel::onSave,
                     onPickColor = viewModel::onPickColor,
-                    onPickOfficialColor = viewModel::onPickOfficialColor,
                     onFieldChanged = viewModel::onFieldChanged
                 )
             }
@@ -177,7 +167,6 @@ private fun EventTypeFormContent(
     state: EventTypeDetailUi.Success,
     onSave: () -> Unit,
     onPickColor: (color: Color) -> Unit,
-    onPickOfficialColor: (color: Color) -> Unit,
     onFieldChanged: (EventTypeField, String) -> Unit,
 ) {
     val eventTypeForm = state.form
@@ -191,41 +180,13 @@ private fun EventTypeFormContent(
             GroupDetail(eventTypeForm)
         }
 
-        if (eventTypeForm.isGroupType) {
-            ColorPreview(form = eventTypeForm)
-
-            // El del grupo primero: es el que existe antes que el mío y del que me estoy saliendo.
-            ColorSection(
-                title = stringResource(Res.string.event_type_color_official),
-                hint = stringResource(
-                    if (eventTypeForm.fieldsEditable) {
-                        Res.string.event_type_color_official_hint
-                    } else {
-                        Res.string.event_type_color_official_readonly
-                    }
-                ),
-                colors = state.colors,
-                selected = eventTypeForm.officialColor,
-                // Sólo el administrador lo mueve; al resto se le enseña cuál es, no un picker muerto.
-                onPick = onPickOfficialColor.takeIf { eventTypeForm.fieldsEditable },
-            )
-
-            ColorSection(
-                title = stringResource(Res.string.event_type_color_mine),
-                hint = stringResource(Res.string.event_type_color_mine_hint),
-                colors = state.colors,
-                selected = eventTypeForm.color,
-                onPick = onPickColor,
-            )
-        } else {
-            TFieldLabel(stringResource(Res.string.event_type_field_color))
-            ColorSwatchPicker(
-                colors = state.colors,
-                selected = eventTypeForm.color,
-                onPick = onPickColor,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
+        TFieldLabel(stringResource(Res.string.event_type_field_color))
+        ColorSwatchPicker(
+            colors = state.colors,
+            selected = eventTypeForm.color,
+            onPick = onPickColor,
+            modifier = Modifier.fillMaxWidth(),
+        )
 
         if (eventTypeForm.fieldsEditable) {
             Button(
@@ -251,82 +212,6 @@ private fun EventTypeFormContent(
                     )
                 }
             }
-        }
-    }
-}
-
-/**
- * Cómo va a quedar el turno: el color que se va a pintar, y al lado cuál es el mío y cuál el del
- * grupo. Arriba del todo, porque es lo que contesta la pregunta que trae aquí a la gente.
- */
-@Composable
-private fun ColorPreview(form: EventTypeForm) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        TFieldLabel(stringResource(Res.string.event_type_color_preview))
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            AcronymBadge(
-                color = form.color,
-                acronym = form.acronym.ifBlank { null },
-                size = 56.dp,
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                ColorLegend(
-                    color = form.color,
-                    label = stringResource(Res.string.event_type_color_mine),
-                )
-                if (form.overridesOfficial) {
-                    ColorLegend(
-                        color = form.officialColor,
-                        label = stringResource(Res.string.event_type_color_official),
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ColorLegend(color: Color, label: String) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Box(Modifier.size(14.dp).clip(CircleShape).background(color))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
-
-@Composable
-private fun ColorSection(
-    title: String,
-    hint: String,
-    colors: List<Color>,
-    selected: Color,
-    onPick: ((Color) -> Unit)?,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        TFieldLabel(title)
-        Text(
-            text = hint,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        if (onPick != null) {
-            ColorSwatchPicker(
-                colors = colors,
-                selected = selected,
-                onPick = onPick,
-                modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-            )
-        } else {
-            ColorLegend(color = selected, label = "")
         }
     }
 }

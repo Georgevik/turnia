@@ -22,6 +22,7 @@ import com.georgevik.turnia.core.domain.model.JoinRequest
 import com.georgevik.turnia.core.domain.model.JoinRequestStatus
 import com.georgevik.turnia.core.domain.model.MyJoinRequest
 import com.georgevik.turnia.core.domain.model.UserId
+import com.georgevik.turnia.core.system.ALL_COLORS
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.yearMonth
 
@@ -187,7 +188,7 @@ class GroupMapper {
         startTime = doc.startTime,
         endTime = doc.endTime,
         swappable = doc.swappable,
-        officialColor = doc.color.orEmpty(),
+        defaultColor = doc.color.orEmpty(),
         userColor = colors[UserDocument.typeColorKey(groupId.value, doc.id)],
     )
 
@@ -199,6 +200,6 @@ class GroupMapper {
         startTime = type.startTime,
         endTime = type.endTime,
         swappable = type.swappable,
-        color = type.officialColor.ifBlank { null },
+        color = type.defaultColor.ifBlank { ALL_COLORS.random() },
     )
 }

@@ -1,9 +1,11 @@
 package com.georgevik.turnia.core.domain.model
 
 /**
- * @param officialColor el que eligió el administrador del grupo, igual para todos. Es el fondo por
- *   defecto de un turno de este tipo. Vacío sólo en los tipos anteriores a que existiera.
- * @param userColor el que este usuario ha elegido para sí, que manda sobre el oficial.
+ * @param defaultColor fixed when the type was created, the same for everyone and never written
+ *   again: whoever changes it later, an admin included, changes only their own [userColor]. It is
+ *   the background of a shift of this type until the user picks theirs. Empty only in types older
+ *   than the field.
+ * @param userColor the one this user picked for themselves, which wins over the default.
  */
 data class GroupEventType(
     override val id: EventTypeId,
@@ -15,9 +17,9 @@ data class GroupEventType(
     override val startTime: String?,
     override val endTime: String?,
     val swappable: Boolean,
-    val officialColor: String,
+    val defaultColor: String,
     val userColor: String?,
     override val isDeleted: Boolean = false
 ) : EventType {
-    override val color = userColor?.takeIf { it.isNotBlank() } ?: officialColor
+    override val color = userColor?.takeIf { it.isNotBlank() } ?: defaultColor
 }
