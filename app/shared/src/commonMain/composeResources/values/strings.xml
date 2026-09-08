@@ -110,8 +110,8 @@
     <string name="group_detail_section_color">Color</string>
     <string name="group_detail_section_types">Tipos de evento</string>
     <string name="group_detail_types_add">Añadir tipo de evento</string>
-    <string name="group_detail_types_empty">Este grupo todavía no tiene tipos de evento.</string>
-    <string name="group_detail_types_new_hint">Podrás añadir tipos de evento cuando guardes el grupo.</string>
+    <string name="group_detail_types_empty">Aún no hay tipos de evento</string>
+    <string name="group_detail_types_empty_body">Sin al menos uno, nadie puede añadir turnos a este grupo.</string>
     <string name="group_detail_readonly">Solo un administrador puede editar los datos del grupo.</string>
     <string name="group_detail_save">Guardar</string>
     <string name="group_detail_error_not_found">No hemos encontrado el grupo. Puede que ya no exista o que hayas salido de él.</string>
@@ -161,6 +161,7 @@
     <string name="event_type_detail_title_personal">Evento personal</string>
     <string name="event_type_detail_new_personal">Nuevo evento personal</string>
     <string name="event_type_field_name">Nombre</string>
+    <string name="event_type_name_hint_group">Mañana, Tarde, Noche, Guardia…</string>
     <string name="event_type_field_acronym">Acrónimo</string>
     <string name="event_type_field_description">Descripción</string>
     <string name="event_type_field_start">Inicio</string>

@@ -13,6 +13,11 @@ class RootNavigator(private val backStack: NavBackStack<NavKey>) : Navigator {
         backStack.add(route)
     }
 
+    override fun replace(route: NavKey) {
+        if (backStack.size > 1) backStack.removeLastOrNull()
+        backStack.add(route)
+    }
+
     override fun goBack() {
         if (backStack.size > 1) backStack.removeLastOrNull()
     }

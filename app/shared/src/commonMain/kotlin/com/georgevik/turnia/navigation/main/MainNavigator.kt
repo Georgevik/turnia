@@ -15,6 +15,15 @@ class MainNavigator(private val state: MainNavigationState) : Navigator {
         }
     }
 
+    override fun replace(route: NavKey) {
+        val mainRoute = requireNotNull(route as? MainRoute) { "$route is not a MainRoute" }
+        val stack = state.backStacks.getValue(state.topLevelRoute)
+
+        // The tab's own root is the floor of its stack: replacing it would leave the tab empty.
+        if (stack.size > 1) stack.removeLastOrNull()
+        stack.add(mainRoute)
+    }
+
     override fun goBack() {
         val currentStack = state.backStacks.getValue(state.topLevelRoute)
         if (currentStack.last() == state.topLevelRoute) {

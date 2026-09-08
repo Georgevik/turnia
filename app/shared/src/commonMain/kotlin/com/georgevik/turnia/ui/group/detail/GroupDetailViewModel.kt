@@ -148,7 +148,15 @@ class GroupDetailViewModel(
             groupRepository.saveGroup(group).fold(
                 onSuccess = { saved ->
                     loadedGroup = saved
-                    updateSuccess { it.copy(saving = false, isSaved = true) }
+                    // A group that was just created carries its brand-new id back to the screen,
+                    // which needs it to hand over to the form for the first event type.
+                    updateSuccess {
+                        it.copy(
+                            form = it.form.copy(groupId = saved.id),
+                            saving = false,
+                            isSaved = true,
+                        )
+                    }
                 },
                 onFailure = {
                     updateSuccess {

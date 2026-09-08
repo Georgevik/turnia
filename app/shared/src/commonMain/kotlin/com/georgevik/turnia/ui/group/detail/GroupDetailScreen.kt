@@ -62,6 +62,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.navigation.LocalNavigator
 import com.georgevik.turnia.navigation.LocalRootNavigator
+import com.georgevik.turnia.navigation.main.routes.MainRoute
 import com.georgevik.turnia.navigation.root.routes.RootRoute
 import com.georgevik.turnia.navigation.routes.EventTypeDetailData
 import com.georgevik.turnia.ui.group.detail.model.GroupCloseUi
@@ -108,6 +109,7 @@ import turnia.app.shared.generated.resources.group_detail_auto_approve_on
 import turnia.app.shared.generated.resources.group_detail_code_changed
 import turnia.app.shared.generated.resources.group_detail_code_hidden
 import turnia.app.shared.generated.resources.group_detail_code_regenerate
+import turnia.app.shared.generated.resources.group_detail_create
 import turnia.app.shared.generated.resources.group_detail_error_load
 import turnia.app.shared.generated.resources.group_detail_error_not_found
 import turnia.app.shared.generated.resources.group_detail_error_remove_member
@@ -133,7 +135,7 @@ import turnia.app.shared.generated.resources.group_detail_section_types
 import turnia.app.shared.generated.resources.group_detail_title_new
 import turnia.app.shared.generated.resources.group_detail_types_add
 import turnia.app.shared.generated.resources.group_detail_types_empty
-import turnia.app.shared.generated.resources.group_detail_types_new_hint
+import turnia.app.shared.generated.resources.group_detail_types_empty_body
 import turnia.app.shared.generated.resources.group_leave_action
 import turnia.app.shared.generated.resources.group_leave_confirm
 import turnia.app.shared.generated.resources.group_leave_error
@@ -233,8 +235,22 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
                     }
                 }
                 LaunchedEffect(state.isSaved, state.hasLeft) {
+                    val groupId = state.form.groupId.value
                     when {
                         state.hasLeft -> navigator.popToRoot()
+
+                        // A group nobody can add a shift to is not finished, so creating one hands
+                        // straight over to the form for its first event type. The blank form is
+                        // replaced by the group it just became: going back must not return to it.
+                        state.isSaved && state.isNew -> {
+                            navigator.replace(MainRoute.GroupDetail(groupId))
+                            rootNavigator.goTo(
+                                RootRoute.EventTypeDetailKey(
+                                    EventTypeDetailData.NewGroup(groupId = groupId)
+                                )
+                            )
+                        }
+
                         state.isSaved -> navigator.goBack()
                     }
                 }
@@ -456,14 +472,14 @@ private fun GroupDetailContent(
             )
         }
 
-        if (!state.isNew) {
-            InvitationSection(
-                form = form,
-                onAutoApproveChanged = onAutoApproveChanged,
-                onMembersCanSeeCodeChanged = onMembersCanSeeCodeChanged,
-                onRegenerateCode = onRegenerateCode,
-            )
+        InvitationSection(
+            form = form,
+            onAutoApproveChanged = onAutoApproveChanged,
+            onMembersCanSeeCodeChanged = onMembersCanSeeCodeChanged,
+            onRegenerateCode = onRegenerateCode,
+        )
 
+        if (!state.isNew) {
             MembersSection(memberCount = form.memberCount, onClick = onMembersClick)
         }
 
@@ -471,11 +487,16 @@ private fun GroupDetailContent(
             Caption(stringResource(Res.string.group_detail_readonly))
         }
 
-        EventTypesSection(
-            state = state,
-            onTypeClick = onTypeClick,
-            onAddType = onAddType,
-        )
+        // Nothing to list and nothing that can be added yet: the first type is asked for right
+        // after the group is created, so the section only appears once there is a group to hang
+        // it off.
+        if (!state.isNew) {
+            EventTypesSection(
+                state = state,
+                onTypeClick = onTypeClick,
+                onAddType = onAddType,
+            )
+        }
 
         if (form.editable) {
             Button(
@@ -494,7 +515,10 @@ private fun GroupDetailContent(
                         modifier = Modifier.size(20.dp),
                     )
                     Text(
-                        text = stringResource(Res.string.group_detail_save),
+                        text = stringResource(
+                            if (state.isNew) Res.string.group_detail_create
+                            else Res.string.group_detail_save
+                        ),
                         modifier = Modifier.padding(start = 8.dp),
                         fontWeight = FontWeight.SemiBold,
                     )
@@ -790,20 +814,16 @@ private fun EventTypesSection(
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         TFieldLabel(stringResource(Res.string.group_detail_section_types))
 
-        when {
-            // A group has to exist before an admin can hang event types off it.
-            state.isNew -> Caption(stringResource(Res.string.group_detail_types_new_hint))
-
-            state.eventTypes.isEmpty() -> Caption(
-                stringResource(Res.string.group_detail_types_empty)
-            )
-
-            else -> state.eventTypes.forEach { row ->
+        // Until it has one, the group cannot hold a single shift — worth more than a caption.
+        if (state.eventTypes.isEmpty()) {
+            TypesEmptyCallout()
+        } else {
+            state.eventTypes.forEach { row ->
                 EventTypeRow(row = row, onClick = { onTypeClick(row) })
             }
         }
 
-        if (state.form.editable && !state.isNew) {
+        if (state.form.editable) {
             OutlinedButton(
                 onClick = onAddType,
                 shape = RoundedCornerShape(percent = 50),
@@ -817,6 +837,39 @@ private fun EventTypesSection(
                 Text(
                     text = stringResource(Res.string.group_detail_types_add),
                     modifier = Modifier.padding(start = 8.dp),
+                )
+            }
+        }
+    }
+}
+
+/** A group with no event types cannot hold a shift, so the gap is stated, not whispered. */
+@Composable
+private fun TypesEmptyCallout() {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.tertiaryContainer,
+        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Default.Info,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = stringResource(Res.string.group_detail_types_empty),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    text = stringResource(Res.string.group_detail_types_empty_body),
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             }
         }

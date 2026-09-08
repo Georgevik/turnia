@@ -76,6 +76,7 @@ import turnia.app.shared.generated.resources.event_type_field_end
 import turnia.app.shared.generated.resources.event_type_field_name
 import turnia.app.shared.generated.resources.event_type_field_start
 import turnia.app.shared.generated.resources.event_type_group_readonly
+import turnia.app.shared.generated.resources.event_type_name_hint_group
 import turnia.app.shared.generated.resources.event_type_save
 import turnia.app.shared.generated.resources.event_type_swap_allowed
 import turnia.app.shared.generated.resources.event_type_swap_not_allowed
@@ -296,6 +297,13 @@ private fun PersonalForm(
         value = ui.name,
         onValueChange = { onFieldChanged(EventTypeField.Name, it) },
         label = { Text(stringResource(Res.string.event_type_field_name)) },
+        // The shift names a group is usually built out of, offered where they cost nothing to
+        // ignore: an admin creating their first type has an empty screen and no example.
+        placeholder = if (ui.isGroupType) {
+            { Text(stringResource(Res.string.event_type_name_hint_group)) }
+        } else {
+            null
+        },
         keyboardOptions = KeyboardOptions.Default.copy(capitalization = KeyboardCapitalization.Words),
         singleLine = true,
         isError = errors.nameError != null,
