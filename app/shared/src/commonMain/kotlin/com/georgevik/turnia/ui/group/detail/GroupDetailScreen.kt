@@ -86,6 +86,7 @@ import com.georgevik.turnia.ui.system.components.TReadOnlyField
 import com.georgevik.turnia.ui.system.components.TurniaDialogError
 import com.georgevik.turnia.ui.system.components.TurniaErrorContent
 import com.georgevik.turnia.ui.system.entityColor
+import com.georgevik.turnia.ui.system.keyboardAware
 import com.georgevik.turnia.ui.system.toErrorSnackbar
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.pluralStringResource
@@ -239,7 +240,10 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
                 }
 
                 GroupDetailContent(
-                    modifier = contentModifier.padding(20.dp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .keyboardAware(innerPadding)
+                        .padding(20.dp),
                     state = state,
                     onNameChanged = viewModel::onNameChanged,
                     onPickColor = viewModel::onPickColor,

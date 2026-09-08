@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
+import com.georgevik.turnia.ui.system.keyboardAware
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.groups_join_action
@@ -38,6 +39,7 @@ fun JoinGroupSheet(
         modifier = Modifier
             .fillMaxWidth()
             .navigationBarsPadding()
+            .keyboardAware()
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),

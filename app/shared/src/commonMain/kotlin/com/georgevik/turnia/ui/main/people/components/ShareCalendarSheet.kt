@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.ui.main.people.SearchUi
 import com.georgevik.turnia.ui.system.components.TListItem
+import com.georgevik.turnia.ui.system.keyboardAware
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.share_calendar_already_shared
@@ -44,6 +45,7 @@ fun ShareCalendarSheet(
         modifier = Modifier
             .fillMaxWidth()
             .navigationBarsPadding()
+            .keyboardAware()
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),

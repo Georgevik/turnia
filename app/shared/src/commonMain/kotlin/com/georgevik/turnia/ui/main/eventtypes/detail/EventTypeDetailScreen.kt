@@ -56,6 +56,7 @@ import com.georgevik.turnia.ui.system.components.TFieldLabel
 import com.georgevik.turnia.ui.system.components.TReadOnlyField
 import com.georgevik.turnia.ui.system.components.TurniaDialogError
 import com.georgevik.turnia.ui.system.components.time.TTimeField
+import com.georgevik.turnia.ui.system.keyboardAware
 import com.georgevik.turnia.ui.system.toErrorSnackbar
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
@@ -132,7 +133,7 @@ fun EventTypeDetailScreen(viewModel: EventTypeDetailViewModel) {
                 EventTypeFormContent(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(innerPadding)
+                        .keyboardAware(innerPadding)
                         .padding(20.dp),
                     state = state,
                     onSave = viewModel::onSave,
