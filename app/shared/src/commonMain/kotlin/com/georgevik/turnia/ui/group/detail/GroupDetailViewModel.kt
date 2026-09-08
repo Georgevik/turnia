@@ -14,6 +14,7 @@ import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.fold
 import com.georgevik.turnia.core.system.valueOrEmpty
+import com.georgevik.turnia.ui.group.detail.model.GroupCloseUi
 import com.georgevik.turnia.ui.group.detail.model.GroupDetailMessage
 import com.georgevik.turnia.ui.group.detail.model.GroupDetailScreenError
 import com.georgevik.turnia.ui.group.detail.model.GroupDetailUi
@@ -202,6 +203,10 @@ class GroupDetailViewModel(
         },
     )
 
+    /**
+     * The confirmation dialog stays up for the whole operation, so the outcome only takes effect
+     * once the UI has shown it back — see [closeResultShown].
+     */
     private fun closeGroup(
         action: suspend () -> Outcome<Unit, GroupError>,
         message: (GroupError) -> GroupDetailMessage,
@@ -209,14 +214,22 @@ class GroupDetailViewModel(
         if (groupId.value.isBlank()) return
 
         viewModelScope.launch {
-            updateSuccess { it.copy(saving = true) }
+            updateSuccess { it.copy(close = GroupCloseUi.Running) }
 
             action().fold(
-                onSuccess = { updateSuccess { it.copy(saving = false, hasLeft = true) } },
+                onSuccess = { updateSuccess { it.copy(close = GroupCloseUi.Succeeded) } },
                 onFailure = { error ->
-                    updateSuccess { it.copy(saving = false, userMessage = message(error)) }
+                    updateSuccess { it.copy(close = GroupCloseUi.Failed(message(error))) }
                 },
             )
+        }
+    }
+
+    fun closeResultShown() = updateSuccess { state ->
+        when (val close = state.close) {
+            GroupCloseUi.Succeeded -> state.copy(close = null, hasLeft = true)
+            is GroupCloseUi.Failed -> state.copy(close = null, userMessage = close.message)
+            GroupCloseUi.Running, null -> state
         }
     }
 

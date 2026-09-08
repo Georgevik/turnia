@@ -26,10 +26,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.georgevik.turnia.navigation.LocalNavigator
-import com.georgevik.turnia.navigation.LocalRootNavigator
 import com.georgevik.turnia.navigation.main.routes.ExternalCalendarData
 import com.georgevik.turnia.navigation.main.routes.MainRoute
-import com.georgevik.turnia.navigation.root.routes.RootRoute
 import com.georgevik.turnia.ui.main.groups.components.GroupCard
 import com.georgevik.turnia.ui.main.groups.components.GroupsFabMenu
 import com.georgevik.turnia.ui.main.groups.components.GroupsFilterChips
@@ -69,8 +67,7 @@ import turnia.app.shared.generated.resources.groups_title
 @Composable
 fun GroupsScreen(viewModel: GroupsViewModel = koinViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    // Group detail covers the whole screen, so it goes on the root stack, not this tab's.
-    val rootNavigator = LocalRootNavigator.current
+    val navigator = LocalNavigator.current
     val snackbar = LocalSnackbar.current
     val success = state as? GroupsUi.Success
     var joinSheetOpen by rememberSaveable { mutableStateOf(false) }
@@ -92,7 +89,7 @@ fun GroupsScreen(viewModel: GroupsViewModel = koinViewModel()) {
             if (success != null) {
                 GroupsFabMenu(
                     onJoin = { joinSheetOpen = true },
-                    onCreate = { rootNavigator.goTo(RootRoute.GroupDetailKey(groupId = "")) },
+                    onCreate = { navigator.goTo(MainRoute.GroupDetail(groupId = "")) },
                 )
             }
         },
@@ -125,7 +122,7 @@ fun GroupsScreen(viewModel: GroupsViewModel = koinViewModel()) {
                             body = stringResource(Res.string.groups_empty_body),
                             action = stringResource(Res.string.group_detail_create),
                             onAction = {
-                                rootNavigator.goTo(RootRoute.GroupDetailKey(groupId = ""))
+                                navigator.goTo(MainRoute.GroupDetail(groupId = ""))
                             },
                             modifier = Modifier.fillMaxSize(),
                         )

@@ -240,7 +240,7 @@
     <string name="groups_load_error">No hemos podido cargar tus grupos.</string>
     <string name="groups_filter_all">Todos</string>
     <string name="groups_filter_mine">Tus grupos</string>
-    <string name="groups_filter_pending">Pendientes (%d)</string>
+    <string name="groups_filter_pending">Pendientes (%1$d)</string>
     <string name="groups_filter_mine_empty_title">Ningún grupo todavía</string>
     <string name="groups_filter_mine_empty_body">En cuanto un admin acepte tu petición, el grupo saldrá aquí.</string>
     <string name="admin_groups_title">Grupos que administras</string>

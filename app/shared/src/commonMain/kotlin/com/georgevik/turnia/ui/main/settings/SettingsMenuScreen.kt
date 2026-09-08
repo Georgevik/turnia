@@ -37,7 +37,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.georgevik.turnia.navigation.LocalNavigator
 import com.georgevik.turnia.navigation.LocalRootNavigator
+import com.georgevik.turnia.navigation.main.routes.MainRoute
 import com.georgevik.turnia.navigation.root.routes.RootRoute
 import com.georgevik.turnia.ui.system.LocalPaddings
 import com.georgevik.turnia.ui.system.components.ConfirmationDialog
@@ -61,6 +63,7 @@ import turnia.app.shared.generated.resources.settings_notifications
 fun SettingsMenuScreen(vm: SettingsMenuViewModel = koinViewModel()) {
     val uiState by vm.uiState.collectAsStateWithLifecycle()
     var showLogoutDialog by remember { mutableStateOf(false) }
+    val navigator = LocalNavigator.current
     val rootNavigator = LocalRootNavigator.current
     val details = uiState.userDetails
 
@@ -146,7 +149,7 @@ fun SettingsMenuScreen(vm: SettingsMenuViewModel = koinViewModel()) {
             rootNavigator.goTo(RootRoute.PersonalEventTypesKey)
         }
         ProfileRow(Icons.Default.Groups, stringResource(Res.string.groups_title)) {
-            rootNavigator.goTo(RootRoute.AdminGroupsKey)
+            navigator.goTo(MainRoute.AdminGroups)
         }
         ProfileRow(
             Icons.Default.Notifications,
