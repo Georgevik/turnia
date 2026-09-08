@@ -162,7 +162,9 @@
     <string name="event_type_detail_new_personal">Nuevo evento personal</string>
     <string name="event_type_field_name">Nombre</string>
     <string name="event_type_name_hint_group">Mañana, Tarde, Noche, Guardia…</string>
-    <string name="event_type_field_acronym">Acrónimo</string>
+    <string name="event_type_field_acronym">Siglas en el calendario</string>
+    <string name="event_type_acronym_hint">Hasta 4 letras. Es lo que se ve en cada día del calendario.</string>
+    <string name="event_type_field_optional">Opcional</string>
     <string name="event_type_field_description">Descripción</string>
     <string name="event_type_field_start">Inicio</string>
     <string name="event_type_field_end">Fin</string>
