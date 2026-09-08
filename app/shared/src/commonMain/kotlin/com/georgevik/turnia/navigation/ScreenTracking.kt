@@ -35,7 +35,6 @@ private fun screenName(route: NavKey): String? = when (route) {
     is RootRoute.EventTypeDetailKey -> "event_type_detail"
     RootRoute.PersonalEventTypesKey -> "personal_event_types"
     RootRoute.MyProfileKey -> "my_profile"
-    RootRoute.ShareCalendarKey -> "share_calendar"
     RootRoute.NotificationsKey -> "notifications"
     MainRoute.CalendarTab -> "calendar"
     MainRoute.PeopleTab -> "people"

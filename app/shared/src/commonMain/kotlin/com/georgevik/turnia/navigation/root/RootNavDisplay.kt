@@ -14,7 +14,6 @@ import com.georgevik.turnia.ui.main.eventtypes.detail.EventTypeDetailViewModel
 import com.georgevik.turnia.ui.main.eventtypes.personal.PersonalEventTypesScreen
 import com.georgevik.turnia.ui.main.notifications.NotificationsScreen
 import com.georgevik.turnia.ui.main.profile.MyProfileScreen
-import com.georgevik.turnia.ui.main.sharecalendar.ShareCalendarScreen
 import com.georgevik.turnia.ui.signin.SignInScreen
 import com.georgevik.turnia.ui.splash.SplashScreen
 import org.koin.compose.viewmodel.koinViewModel
@@ -45,8 +44,6 @@ fun RootNavDisplay(
             entry<RootRoute.PersonalEventTypesKey> { PersonalEventTypesScreen(viewModel = koinViewModel()) }
 
             entry<RootRoute.MyProfileKey> { MyProfileScreen() }
-
-            entry<RootRoute.ShareCalendarKey> { ShareCalendarScreen() }
 
             entry<RootRoute.NotificationsKey> { NotificationsScreen() }
         },

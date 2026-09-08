@@ -19,7 +19,6 @@ import com.georgevik.turnia.ui.main.notifications.NotificationsViewModel
 import com.georgevik.turnia.ui.main.people.PeopleViewModel
 import com.georgevik.turnia.ui.main.profile.MyProfileViewModel
 import com.georgevik.turnia.ui.main.settings.SettingsMenuViewModel
-import com.georgevik.turnia.ui.main.sharecalendar.ShareCalendarViewModel
 import com.georgevik.turnia.ui.root.RootViewModel
 import com.georgevik.turnia.ui.signin.SignInViewModel
 import com.georgevik.turnia.ui.splash.SplashViewModel
@@ -41,7 +40,6 @@ val appModule: Module = module {
     viewModelOf(::MainViewModel)
     viewModelOf(::SettingsMenuViewModel)
     viewModelOf(::MyProfileViewModel)
-    viewModelOf(::ShareCalendarViewModel)
     viewModelOf(::GroupsViewModel)
     viewModelOf(::AdminGroupsViewModel)
     viewModelOf(::PeopleViewModel)

@@ -234,6 +234,9 @@
     <string name="people_title">Personas</string>
     <string name="people_empty_title">Aquí no hay nadie todavía</string>
     <string name="people_empty_body">Pide a un compañero que comparta su calendario contigo. Funciona bastante mejor que preguntarle «¿tú libras el sábado?» a las once de la noche.</string>
+    <string name="people_shared_empty_title">Tu calendario es solo tuyo</string>
+    <string name="people_filter_shared_by_me">Comparto con</string>
+    <string name="people_filter_shared_with_me">Comparten conmigo</string>
     <string name="groups_title">Grupos</string>
     <string name="groups_empty_title">Ningún grupo por aquí</string>
     <string name="groups_empty_body">Crea uno y que los turnos dejen de vivir en un chat de WhatsApp.</string>
@@ -268,8 +271,6 @@
     <string name="people_load_error">No hemos podido cargar quién comparte su calendario contigo.</string>
 
     <!-- Share calendar -->
-    <string name="share_calendar_title">Compartir calendario</string>
-    <string name="share_calendar_action">Compartir</string>
     <string name="share_calendar_empty">Todavía no compartes tu calendario con nadie.</string>
     <string name="share_calendar_unknown_user">Usuario sin perfil</string>
     <string name="share_calendar_load_error">No hemos podido cargar con quién compartes tu calendario.</string>
