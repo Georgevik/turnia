@@ -315,14 +315,17 @@ private fun PersonalForm(
     )
     OutlinedTextField(
         value = ui.acronym,
-        onValueChange = { onFieldChanged(EventTypeField.Acronym, it.uppercase().take(4)) },
+        onValueChange = { onFieldChanged(EventTypeField.Acronym, it) },
         label = { Text(stringResource(Res.string.event_type_field_acronym)) },
         singleLine = true,
         isError = errors.acronymError != null,
         supportingText = {
             Text(
                 errors.acronymError?.message()
-                    ?: stringResource(Res.string.event_type_acronym_hint)
+                    ?: stringResource(
+                        Res.string.event_type_acronym_hint,
+                        EventTypeDetailViewModel.MAX_ACRONYM_SIZE
+                    )
             )
         },
         keyboardOptions = KeyboardOptions.Default.copy(capitalization = KeyboardCapitalization.Characters),

@@ -142,7 +142,7 @@ class EventTypeDetailViewModel(
         val newForm = with(state.form) {
             when (field) {
                 EventTypeField.Name -> copy(name = newValue)
-                EventTypeField.Acronym -> copy(acronym = newValue)
+                EventTypeField.Acronym -> copy(acronym = newValue.uppercase().take(MAX_ACRONYM_SIZE))
                 EventTypeField.Description -> copy(description = newValue)
                 EventTypeField.StartTime -> copy(startTime = newValue)
                 EventTypeField.EndTime -> copy(endTime = newValue)
@@ -306,6 +306,8 @@ class EventTypeDetailViewModel(
             isGroupType = isGroupType,
             swappable = null,
         )
+
+        const val MAX_ACRONYM_SIZE = 5
     }
 
 }
