@@ -26,7 +26,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class PeopleViewModel(private val userRepository: UserRepository) : ViewModel() {
 
-    private val filter = MutableStateFlow(PeopleFilter.SHARED_BY_ME)
+    private val filter = MutableStateFlow(PeopleFilter.SHARED_WITH_ME)
 
     private val sharedByMe = MutableStateFlow<List<PersonRowUi>?>(null)
 

@@ -9,7 +9,7 @@ sealed interface PeopleUi {
     data object Loading : PeopleUi
 
     data class Success(
-        val filter: PeopleFilter = PeopleFilter.SHARED_BY_ME,
+        val filter: PeopleFilter,
         val sharedByMe: List<PersonRowUi> = emptyList(),
         val sharedWithMe: List<PersonRowUi> = emptyList(),
         val search: SearchUi = SearchUi(),
