@@ -26,6 +26,7 @@ import com.georgevik.turnia.core.domain.model.JoinGroupError
 import com.georgevik.turnia.core.domain.model.JoinGroupStatus
 import com.georgevik.turnia.core.domain.model.JoinRequest
 import com.georgevik.turnia.core.domain.model.MyJoinRequest
+import com.georgevik.turnia.core.domain.model.NewGroup
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.domain.repository.AppConfigRepository
 import com.georgevik.turnia.core.domain.repository.GroupRepository
@@ -42,13 +43,18 @@ import com.georgevik.turnia.core.system.toSuccess
 import com.georgevik.turnia.core.system.valueOrNull
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
@@ -70,6 +76,10 @@ class GroupRepositoryImpl(
     private val groupMapper: GroupMapper,
     private val analytics: Analytics,
 ) : GroupRepository {
+
+    private val _pendingEventTypes = MutableStateFlow<List<GroupEventType>>(emptyList())
+    override val pendingEventTypes: StateFlow<List<GroupEventType>> =
+        _pendingEventTypes.asStateFlow()
 
     /**
      * The groups the user belongs to, plus the ones they were removed from while still holding
@@ -102,18 +112,45 @@ class GroupRepositoryImpl(
         return groupMapper.map(holder, userId, typeColors(userId)).toSuccess()
     }
 
-    override suspend fun saveGroup(group: Group): Outcome<Group, GroupError> {
+    override suspend fun createGroup(group: NewGroup): Outcome<Group, GroupError> {
         val user = userRepository.loggedUser ?: return GroupError.NotFound.toFailure()
         val userId = user.id
-        val isNew = group.id.value.isBlank()
+        val created = group.toGroup(GroupId(createId()))
 
-        val current = if (isNew) null else groupFirestore.get(group.id).valueOrNull()
-        val groupId = if (isNew) GroupId(createId()) else group.id
+        val document = groupMapper.map(
+            group = created,
+            memberUids = listOf(userId.value),
+            adminUids = listOf(userId.value),
+            revokedUids = emptyList(),
+        ).copy(
+            // The creator is a member from the start, so their name has to be here too: the
+            // calendar reads it off the group and nothing else would ever add it.
+            members = mapOf(
+                userId.value to GroupMemberDocument(
+                    name = user.displayName.orEmpty(),
+                    username = user.username,
+                )
+            )
+        )
+
+        groupFirestore.create(created.id, document).errorOrNull()?.let { error ->
+            Logger.e(TAG, "Failed to create group: $error")
+            return GroupError.NotFound.toFailure()
+        }
+
+        analytics.log(AnalyticsEvent.GroupCreated)
+
+        return created.toSuccess()
+    }
+
+    override suspend fun updateGroup(group: Group): Outcome<Group, GroupError> {
+        val user = userRepository.loggedUser ?: return GroupError.NotFound.toFailure()
+        val userId = user.id
+
+        val current = groupFirestore.get(group.id).valueOrNull()
         val memberUids = current?.doc?.memberUids ?: listOf(userId.value)
         val adminUids = current?.doc?.adminUids ?: listOf(userId.value)
         val revokedUids = current?.doc?.revokedUids.orEmpty()
-        // The creator is a member from the start, so their name has to be here too: the calendar
-        // reads it off the group and nothing else would ever add it.
         val members = current?.doc?.members ?: mapOf(
             userId.value to GroupMemberDocument(
                 name = user.displayName.orEmpty(),
@@ -130,18 +167,28 @@ class GroupRepositoryImpl(
         val document = groupMapper.map(coded, memberUids, adminUids, revokedUids)
             .copy(members = members)
 
-        val saved = if (isNew) groupFirestore.create(groupId, document)
-        else groupFirestore.update(groupId, document)
-
-        saved.errorOrNull()?.let { error ->
+        groupFirestore.update(group.id, document).errorOrNull()?.let { error ->
             Logger.e(TAG, "Failed to save group: $error")
             return GroupError.NotFound.toFailure()
         }
 
-        if (isNew) analytics.log(AnalyticsEvent.GroupCreated)
-
-        return coded.copy(id = groupId, isAdmin = userId.value in adminUids).toSuccess()
+        return coded.copy(isAdmin = userId.value in adminUids).toSuccess()
     }
+
+    private fun NewGroup.toGroup(id: GroupId) = Group(
+        id = id,
+        name = name,
+        color = color,
+        types = types,
+        members = emptyList(),
+        memberCount = 1,
+        // A group without a code is a group nobody can join. The screen mints one up front so
+        // the admin can read it before saving; this catches a group that arrived without.
+        invitationCode = invitationCode.ifBlank { createInvitationCode() },
+        autoApprove = autoApprove,
+        membersCanSeeCode = membersCanSeeCode,
+        isAdmin = true,
+    )
 
     override suspend fun getJoinRequests(groupId: GroupId): Outcome<List<JoinRequest>, GroupError> =
         groupJoinRequestFirestore.getPending(groupId)
@@ -201,6 +248,14 @@ class GroupRepositoryImpl(
             }
         }
 
+    override fun setPendingEventType(type: GroupEventType) = _pendingEventTypes.update { held ->
+        if (held.none { it.id == type.id }) held + type
+        else held.map { if (it.id == type.id) type else it }
+    }
+
+    override fun consumePendingEventTypes(): List<GroupEventType> =
+        _pendingEventTypes.getAndUpdate { emptyList() }
+
     override suspend fun saveEventType(
         groupId: GroupId,
         type: GroupEventType,
@@ -215,7 +270,7 @@ class GroupRepositoryImpl(
 
         val types = group.types.filterNot { it.id == type.id } + saved
 
-        return saveGroup(group.copy(types = types)).map { }
+        return updateGroup(group.copy(types = types)).map { }
     }
 
     override suspend fun saveTypeColor(

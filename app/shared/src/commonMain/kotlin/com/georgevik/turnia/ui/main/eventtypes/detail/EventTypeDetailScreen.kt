@@ -62,6 +62,7 @@ import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.calendar_back
 import turnia.app.shared.generated.resources.event_details_new_title
+import turnia.app.shared.generated.resources.event_type_acronym_hint
 import turnia.app.shared.generated.resources.event_type_error_group_not_found
 import turnia.app.shared.generated.resources.event_type_error_not_implemented
 import turnia.app.shared.generated.resources.event_type_error_pick_color
@@ -74,6 +75,7 @@ import turnia.app.shared.generated.resources.event_type_field_color
 import turnia.app.shared.generated.resources.event_type_field_description
 import turnia.app.shared.generated.resources.event_type_field_end
 import turnia.app.shared.generated.resources.event_type_field_name
+import turnia.app.shared.generated.resources.event_type_field_optional
 import turnia.app.shared.generated.resources.event_type_field_start
 import turnia.app.shared.generated.resources.event_type_group_readonly
 import turnia.app.shared.generated.resources.event_type_name_hint_group
@@ -317,16 +319,24 @@ private fun PersonalForm(
         label = { Text(stringResource(Res.string.event_type_field_acronym)) },
         singleLine = true,
         isError = errors.acronymError != null,
-        supportingText = errors.acronymError?.let { { Text(it.message()) } },
+        supportingText = {
+            Text(
+                errors.acronymError?.message()
+                    ?: stringResource(Res.string.event_type_acronym_hint)
+            )
+        },
         keyboardOptions = KeyboardOptions.Default.copy(capitalization = KeyboardCapitalization.Characters),
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth(),
     )
+
+    val optional = stringResource(Res.string.event_type_field_optional)
     OutlinedTextField(
         value = ui.description,
         onValueChange = { onFieldChanged(EventTypeField.Description, it) },
         keyboardOptions = KeyboardOptions.Default.copy(capitalization = KeyboardCapitalization.Sentences),
         label = { Text(stringResource(Res.string.event_type_field_description)) },
+        supportingText = { Text(optional) },
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth(),
     )
@@ -335,12 +345,14 @@ private fun PersonalForm(
             value = ui.startTime,
             onValueChange = { onFieldChanged(EventTypeField.StartTime, it) },
             label = stringResource(Res.string.event_type_field_start),
+            supportingText = optional,
             modifier = Modifier.weight(1f),
         )
         TTimeField(
             value = ui.endTime,
             onValueChange = { onFieldChanged(EventTypeField.EndTime, it) },
             label = stringResource(Res.string.event_type_field_end),
+            supportingText = optional,
             modifier = Modifier.weight(1f),
         )
     }

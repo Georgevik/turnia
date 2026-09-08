@@ -89,7 +89,7 @@ fun GroupsScreen(viewModel: GroupsViewModel = koinViewModel()) {
             if (success != null) {
                 GroupsFabMenu(
                     onJoin = { joinSheetOpen = true },
-                    onCreate = { navigator.goTo(MainRoute.GroupDetail(groupId = "")) },
+                    onCreate = { navigator.goTo(MainRoute.GroupDetail(groupId = null)) },
                 )
             }
         },
@@ -122,7 +122,7 @@ fun GroupsScreen(viewModel: GroupsViewModel = koinViewModel()) {
                             body = stringResource(Res.string.groups_empty_body),
                             action = stringResource(Res.string.group_detail_create),
                             onAction = {
-                                navigator.goTo(MainRoute.GroupDetail(groupId = ""))
+                                navigator.goTo(MainRoute.GroupDetail(groupId = null))
                             },
                             modifier = Modifier.fillMaxSize(),
                         )

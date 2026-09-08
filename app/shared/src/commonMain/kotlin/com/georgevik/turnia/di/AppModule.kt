@@ -49,7 +49,7 @@ val appModule: Module = module {
         EventTypeDetailViewModel(data, get(), get())
     }
     viewModel { (key: MainRoute.GroupDetail) ->
-        GroupDetailViewModel(GroupId(key.groupId), get())
+        GroupDetailViewModel(key.groupId?.let(::GroupId), get())
     }
     viewModel { (date: LocalDate, addMode: DayAddMode) ->
         DayDetailSheetViewModel(date, addMode, get(), get(), get())

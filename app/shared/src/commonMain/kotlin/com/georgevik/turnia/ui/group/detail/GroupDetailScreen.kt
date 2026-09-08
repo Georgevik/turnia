@@ -62,7 +62,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.navigation.LocalNavigator
 import com.georgevik.turnia.navigation.LocalRootNavigator
-import com.georgevik.turnia.navigation.main.routes.MainRoute
 import com.georgevik.turnia.navigation.root.routes.RootRoute
 import com.georgevik.turnia.navigation.routes.EventTypeDetailData
 import com.georgevik.turnia.ui.group.detail.model.GroupCloseUi
@@ -235,22 +234,8 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
                     }
                 }
                 LaunchedEffect(state.isSaved, state.hasLeft) {
-                    val groupId = state.form.groupId.value
                     when {
                         state.hasLeft -> navigator.popToRoot()
-
-                        // A group nobody can add a shift to is not finished, so creating one hands
-                        // straight over to the form for its first event type. The blank form is
-                        // replaced by the group it just became: going back must not return to it.
-                        state.isSaved && state.isNew -> {
-                            navigator.replace(MainRoute.GroupDetail(groupId))
-                            rootNavigator.goTo(
-                                RootRoute.EventTypeDetailKey(
-                                    EventTypeDetailData.NewGroup(groupId = groupId)
-                                )
-                            )
-                        }
-
                         state.isSaved -> navigator.goBack()
                     }
                 }
@@ -275,7 +260,7 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
                             RootRoute.EventTypeDetailKey(
                                 EventTypeDetailData.EditGroup(
                                     typeId = row.typeId.value,
-                                    groupId = row.groupId.value,
+                                    groupId = row.groupId?.value,
                                 )
                             )
                         )
@@ -283,7 +268,9 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
                     onAddType = {
                         rootNavigator.goTo(
                             RootRoute.EventTypeDetailKey(
-                                EventTypeDetailData.NewGroup(groupId = state.form.groupId.value)
+                                EventTypeDetailData.NewGroup(
+                                    groupId = state.form.groupId?.value
+                                )
                             )
                         )
                     },
@@ -487,21 +474,19 @@ private fun GroupDetailContent(
             Caption(stringResource(Res.string.group_detail_readonly))
         }
 
-        // Nothing to list and nothing that can be added yet: the first type is asked for right
-        // after the group is created, so the section only appears once there is a group to hang
-        // it off.
-        if (!state.isNew) {
-            EventTypesSection(
-                state = state,
-                onTypeClick = onTypeClick,
-                onAddType = onAddType,
-            )
-        }
+        EventTypesSection(
+            state = state,
+            onTypeClick = onTypeClick,
+            onAddType = onAddType,
+        )
 
         if (form.editable) {
             Button(
                 onClick = onSave,
-                enabled = form.name.isNotBlank() && !state.saving,
+                // A group is created with at least one event type, or it can hold no shift at all.
+                enabled = form.name.isNotBlank() &&
+                    !state.saving &&
+                    (!state.isNew || state.eventTypes.isNotEmpty()),
                 shape = RoundedCornerShape(percent = 50),
                 contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
                 modifier = Modifier.fillMaxWidth().height(52.dp),

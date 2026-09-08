@@ -23,8 +23,9 @@ sealed interface MainRoute : NavKey {
     @Serializable
     data class ExternalCalendar(val data: ExternalCalendarData) : MainRoute
 
+    /** A null [groupId] opens the screen on a group that is still being created. */
     @Serializable
-    data class GroupDetail(val groupId: String) : MainRoute
+    data class GroupDetail(val groupId: String?) : MainRoute
 
     @Serializable
     data object AdminGroups : MainRoute

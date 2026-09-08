@@ -15,9 +15,11 @@ sealed interface EventTypeDetailData {
     @Serializable
     data object NewPersonal : EventTypeDetailData
 
+    /** A null [groupId] means the type is a draft of a group that is still being created. */
     @Serializable
-    data class EditGroup(val typeId: String, val groupId: String) : EventTypeDetailData
+    data class EditGroup(val typeId: String, val groupId: String?) : EventTypeDetailData
 
+    /** A null [groupId] means the group is still being created — see `pendingEventTypes`. */
     @Serializable
-    data class NewGroup(val groupId: String) : EventTypeDetailData
+    data class NewGroup(val groupId: String?) : EventTypeDetailData
 }

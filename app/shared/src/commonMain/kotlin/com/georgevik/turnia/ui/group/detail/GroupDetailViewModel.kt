@@ -9,6 +9,7 @@ import com.georgevik.turnia.core.domain.model.GroupEventType
 import com.georgevik.turnia.core.domain.model.GroupId
 import com.georgevik.turnia.core.domain.model.GroupMember
 import com.georgevik.turnia.core.domain.model.JoinRequest
+import com.georgevik.turnia.core.domain.model.NewGroup
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.system.Outcome
@@ -34,11 +35,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * Group detail, edit and creation. A blank [groupId] means the screen is creating a group; the
+ * Group detail, edit and creation. A null [groupId] means the screen is creating a group; the
  * loaded group's [Group.isAdmin] decides whether an existing one can be edited or is read-only.
  */
 class GroupDetailViewModel(
-    private val groupId: GroupId,
+    private val groupId: GroupId?,
     private val groupRepository: GroupRepository,
 ) : ViewModel() {
 
@@ -49,22 +50,39 @@ class GroupDetailViewModel(
     private var loadedGroup: Group? = null
 
     init {
+        // Whatever a creation abandoned halfway left behind is not this group's.
+        if (groupId == null) groupRepository.consumePendingEventTypes()
         load()
+        observePendingTypes()
+    }
+
+    /**
+     * A type created while the group does not exist has nowhere to be written, so it waits on
+     * the repository and reaches the list from there instead of from a reload.
+     */
+    private fun observePendingTypes() {
+        if (groupId != null) return
+
+        viewModelScope.launch {
+            groupRepository.pendingEventTypes.collect { types ->
+                updateSuccess { state -> state.copy(eventTypes = types.map { it.toUiRow() }) }
+            }
+        }
     }
 
     fun retry() = load()
 
     /** Coming back from the event type detail: the type it just created has to show up here. */
     fun refresh() {
-        // A group being created has nothing to re-read, and re-entering the initial state would
-        // throw away the form.
-        if (groupId.value.isBlank()) return
+        // A group being created has nothing to re-read — its types come from the repository —
+        // and re-entering the initial state would throw away the form.
+        if (groupId == null) return
 
         load(showLoading = false)
     }
 
     private fun load(showLoading: Boolean = true) {
-        if (groupId.value.isBlank()) {
+        if (groupId == null) {
             _uiState.update { newGroupState() }
             return
         }
@@ -121,42 +139,46 @@ class GroupDetailViewModel(
         val state = _uiState.value as? GroupDetailUi.Success ?: return
         val form = state.form
         if (!form.editable || form.name.isBlank()) return
+        // A group nobody can add a shift to is not a group; the button is disabled, this is the rule.
+        if (groupId == null && groupRepository.pendingEventTypes.value.isEmpty()) return
 
         val name = form.name.trim()
-        val group = loadedGroup?.copy(
-            name = name,
-            color = form.color.toHex(),
-            invitationCode = form.invitationCode.orEmpty(),
-            autoApprove = form.autoApprove,
-            membersCanSeeCode = form.membersCanSeeCode,
-        ) ?: Group(
-            id = GroupId(""),
-            name = name,
-            color = form.color.toHex(),
-            types = emptyList(),
-            members = emptyList(),
-            memberCount = 1,
-            invitationCode = form.invitationCode.orEmpty(),
-            autoApprove = form.autoApprove,
-            membersCanSeeCode = form.membersCanSeeCode,
-            isAdmin = true,
-        )
+        val loaded = loadedGroup
 
         viewModelScope.launch {
             updateSuccess { it.copy(saving = true) }
 
-            groupRepository.saveGroup(group).fold(
+            val outcome = if (loaded == null) {
+                // The whole group is one document, types included, so a group is created with its
+                // types in a single write and never exists without them.
+                groupRepository.createGroup(
+                    NewGroup(
+                        name = name,
+                        color = form.color.toHex(),
+                        types = groupRepository.pendingEventTypes.value,
+                        invitationCode = form.invitationCode.orEmpty(),
+                        autoApprove = form.autoApprove,
+                        membersCanSeeCode = form.membersCanSeeCode,
+                    )
+                )
+            } else {
+                groupRepository.updateGroup(
+                    loaded.copy(
+                        name = name,
+                        color = form.color.toHex(),
+                        invitationCode = form.invitationCode.orEmpty(),
+                        autoApprove = form.autoApprove,
+                        membersCanSeeCode = form.membersCanSeeCode,
+                    )
+                )
+            }
+
+            outcome.fold(
                 onSuccess = { saved ->
                     loadedGroup = saved
-                    // A group that was just created carries its brand-new id back to the screen,
-                    // which needs it to hand over to the form for the first event type.
-                    updateSuccess {
-                        it.copy(
-                            form = it.form.copy(groupId = saved.id),
-                            saving = false,
-                            isSaved = true,
-                        )
-                    }
+                    // Written now, and only now: a failed save has to leave them on screen.
+                    groupRepository.consumePendingEventTypes()
+                    updateSuccess { it.copy(saving = false, isSaved = true) }
                 },
                 onFailure = {
                     updateSuccess {
@@ -167,12 +189,14 @@ class GroupDetailViewModel(
         }
     }
 
-    fun onAcceptRequest(userId: UserId) = answerRequest(userId) {
-        groupRepository.acceptJoinRequest(groupId, userId)
+    fun onAcceptRequest(userId: UserId) {
+        val groupId = groupId ?: return
+        answerRequest(userId) { groupRepository.acceptJoinRequest(groupId, userId) }
     }
 
-    fun onRejectRequest(userId: UserId) = answerRequest(userId) {
-        groupRepository.rejectJoinRequest(groupId, userId)
+    fun onRejectRequest(userId: UserId) {
+        val groupId = groupId ?: return
+        answerRequest(userId) { groupRepository.rejectJoinRequest(groupId, userId) }
     }
 
     /**
@@ -180,6 +204,8 @@ class GroupDetailViewModel(
      * need covering — and only they can see it from then on.
      */
     fun onRemoveMember(userId: UserId) {
+        val groupId = groupId ?: return
+
         viewModelScope.launch {
             updateSuccess { state ->
                 state.copy(members = state.members.filterNot { it.id == userId })
@@ -195,21 +221,27 @@ class GroupDetailViewModel(
         }
     }
 
-    fun onLeaveGroup() = closeGroup(
-        action = { groupRepository.leaveGroup(groupId) },
-        message = { error ->
-            if (error == GroupError.LastAdmin) GroupDetailMessage.LeaveLastAdmin
-            else GroupDetailMessage.LeaveFailed
-        },
-    )
+    fun onLeaveGroup() {
+        val groupId = groupId ?: return
+        closeGroup(
+            action = { groupRepository.leaveGroup(groupId) },
+            message = { error ->
+                if (error == GroupError.LastAdmin) GroupDetailMessage.LeaveLastAdmin
+                else GroupDetailMessage.LeaveFailed
+            },
+        )
+    }
 
-    fun onDeleteGroup() = closeGroup(
-        action = { groupRepository.deleteGroup(groupId) },
-        message = { error ->
-            if (error == GroupError.NotEmpty) GroupDetailMessage.DeleteNotEmpty
-            else GroupDetailMessage.DeleteFailed
-        },
-    )
+    fun onDeleteGroup() {
+        val groupId = groupId ?: return
+        closeGroup(
+            action = { groupRepository.deleteGroup(groupId) },
+            message = { error ->
+                if (error == GroupError.NotEmpty) GroupDetailMessage.DeleteNotEmpty
+                else GroupDetailMessage.DeleteFailed
+            },
+        )
+    }
 
     /**
      * The confirmation dialog stays up for the whole operation, so the outcome only takes effect
@@ -219,8 +251,6 @@ class GroupDetailViewModel(
         action: suspend () -> Outcome<Unit, GroupError>,
         message: (GroupError) -> GroupDetailMessage,
     ) {
-        if (groupId.value.isBlank()) return
-
         viewModelScope.launch {
             updateSuccess { it.copy(close = GroupCloseUi.Running) }
 
@@ -265,7 +295,7 @@ class GroupDetailViewModel(
 
     private fun newGroupState() = GroupDetailUi.Success(
         form = GroupForm(
-            groupId = GroupId(""),
+            groupId = null,
             name = "",
             color = entityColor(createUuid()),
             memberCount = 1,
@@ -306,7 +336,8 @@ class GroupDetailViewModel(
 
     private fun GroupEventType.toUiRow() = GroupTypeRowUi(
         typeId = id,
-        groupId = groupId,
+        // The screen's own group, so a type still waiting for one carries none.
+        groupId = this@GroupDetailViewModel.groupId,
         name = name,
         acronym = acronym,
         startTime = startTime,

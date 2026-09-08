@@ -56,7 +56,7 @@ class EventTypeDetailViewModel(
         viewModelScope.launch {
             when (key) {
                 is EventTypeDetailData.EditGroup -> loadGroupType(
-                    GroupId(key.groupId),
+                    key.groupId?.let(::GroupId),
                     EventTypeId(key.typeId)
                 )
 
@@ -73,7 +73,7 @@ class EventTypeDetailViewModel(
                         EventTypeDetailUi.Success(
                             title = title,
                             form = form,
-                            colors = EntityPalette
+                            colors = EntityPalette,
                         )
                     }
                 },
@@ -84,9 +84,15 @@ class EventTypeDetailViewModel(
 
 
     private suspend fun loadGroupType(
-        groupId: GroupId,
+        groupId: GroupId?,
         typeId: EventTypeId
     ): Outcome<EventTypeForm, EventTypeScreenError> {
+        if (groupId == null) {
+            return groupRepository.pendingEventTypes.value.find { it.id == typeId }
+                ?.toUi(editable = true)?.toSuccess()
+                ?: EventTypeScreenError.GroupEventNotFound.toFailure()
+        }
+
         val group =
             groupRepository.getGroup(groupId).valueOrNull()
                 ?: return EventTypeScreenError.GroupNotFound.toFailure()
@@ -108,13 +114,16 @@ class EventTypeDetailViewModel(
     }
 
     fun onPickColor(color: Color) {
+
         viewModelScope.launch {
             when (key) {
-                is EventTypeDetailData.EditGroup -> groupRepository.saveTypeColor(
-                    typeId = EventTypeId(key.typeId),
-                    groupId = GroupId(key.groupId),
-                    color = color.toHex()
-                )
+                is EventTypeDetailData.EditGroup -> key.groupId?.let { groupId ->
+                    groupRepository.saveTypeColor(
+                        typeId = EventTypeId(key.typeId),
+                        groupId = GroupId(groupId),
+                        color = color.toHex()
+                    )
+                } ?: Result.success(Unit)
 
                 is EventTypeDetailData.EditPersonal,
                 EventTypeDetailData.NewPersonal,
@@ -171,10 +180,10 @@ class EventTypeDetailViewModel(
             is EventTypeDetailData.EditPersonal -> savePersonal(EventTypeId(key.typeId), form)
             EventTypeDetailData.NewPersonal -> savePersonal(EventTypeId(createId()), form)
             is EventTypeDetailData.NewGroup ->
-                saveGroupType(GroupId(key.groupId), EventTypeId(createId()), form)
+                saveGroupType(key.groupId?.let(::GroupId), EventTypeId(createId()), form)
 
             is EventTypeDetailData.EditGroup ->
-                saveGroupType(GroupId(key.groupId), EventTypeId(key.typeId), form)
+                saveGroupType(key.groupId?.let(::GroupId), EventTypeId(key.typeId), form)
         }
     }
 
@@ -213,10 +222,12 @@ class EventTypeDetailViewModel(
         }
     }
 
-    private fun saveGroupType(groupId: GroupId, typeId: EventTypeId, form: EventTypeForm) {
+    private fun saveGroupType(groupId: GroupId?, typeId: EventTypeId, form: EventTypeForm) {
         val type = GroupEventType(
             id = typeId,
-            groupId = groupId,
+            // Never written: a type document carries no group id, the mapper fills this one in
+            // from the path on the way back. A draft with no group yet can carry the empty one.
+            groupId = groupId ?: GroupId(""),
             groupName = "",
             name = form.name.trim(),
             acronym = form.acronym.trim(),
@@ -227,6 +238,14 @@ class EventTypeDetailViewModel(
             defaultColor = form.color.toHex(),
             userColor = null,
         )
+
+        // Nowhere to write it yet: it waits with the group's other types until the form that
+        // is creating the group saves the lot.
+        if (groupId == null) {
+            groupRepository.setPendingEventType(type)
+            updateSuccess { it.copy(isSaved = true) }
+            return
+        }
 
         viewModelScope.launch {
             updateSuccess { it.copy(saveButtonLoading = true) }

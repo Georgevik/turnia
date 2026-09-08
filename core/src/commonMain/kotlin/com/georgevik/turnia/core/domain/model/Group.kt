@@ -19,6 +19,19 @@ data class Group(
     val isRevoked: Boolean = false,
 )
 
+/**
+ * A group that does not exist yet: everything its creator chose, and nothing the group only gets
+ * by being written — its id, its members, its admins.
+ */
+data class NewGroup(
+    val name: String,
+    val color: String?,
+    val types: List<GroupEventType>,
+    val invitationCode: String,
+    val autoApprove: Boolean,
+    val membersCanSeeCode: Boolean,
+)
+
 data class GroupMember(
     val id: UserId,
     val name: String,

@@ -27,7 +27,8 @@ sealed interface GroupDetailUi {
 
     @Immutable
     data class GroupForm(
-        val groupId: GroupId,
+        /** Null while the group is being created: it has no id until it is saved. */
+        val groupId: GroupId?,
         val name: String,
         /** The group's accent, the same for every member: only an admin changes it. */
         val color: Color,
@@ -46,7 +47,8 @@ sealed interface GroupDetailUi {
 @Immutable
 data class GroupTypeRowUi(
     val typeId: EventTypeId,
-    val groupId: GroupId,
+    /** Null while the group is being created: the type is a draft with no group to belong to. */
+    val groupId: GroupId?,
     val name: String,
     val acronym: String?,
     val startTime: String?,

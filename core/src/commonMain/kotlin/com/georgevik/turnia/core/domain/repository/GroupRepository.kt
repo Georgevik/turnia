@@ -11,9 +11,11 @@ import com.georgevik.turnia.core.domain.model.JoinGroupError
 import com.georgevik.turnia.core.domain.model.JoinGroupStatus
 import com.georgevik.turnia.core.domain.model.JoinRequest
 import com.georgevik.turnia.core.domain.model.MyJoinRequest
+import com.georgevik.turnia.core.domain.model.NewGroup
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.system.Outcome
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.datetime.LocalDate
 
 interface GroupRepository {
@@ -50,8 +52,10 @@ interface GroupRepository {
 
     suspend fun getGroup(groupId: GroupId): Outcome<Group, GroupError>
 
-    /** Creates the group when [group] has a blank id, updates it otherwise. */
-    suspend fun saveGroup(group: Group): Outcome<Group, GroupError>
+    /** Creates the group, with the logged user as its first member and only admin. */
+    suspend fun createGroup(group: NewGroup): Outcome<Group, GroupError>
+
+    suspend fun updateGroup(group: Group): Outcome<Group, GroupError>
 
     /** Who is waiting to be let in. Only an admin can read them. */
     suspend fun getJoinRequests(groupId: GroupId): Outcome<List<JoinRequest>, GroupError>
@@ -86,4 +90,19 @@ interface GroupRepository {
     suspend fun saveEventType(groupId: GroupId, type: GroupEventType): Outcome<Unit, GroupError>
 
     suspend fun saveTypeColor(groupId: GroupId, typeId: EventTypeId, color: String) : Result<Unit>
+
+    /**
+     * Event types built for a group that does not exist yet.
+     *
+     * A group's types live on the group's own document, so until the group is created there is
+     * nowhere to write one: they are held here and the group is created with the whole lot in the
+     * same write, never existing without them.
+     */
+    val pendingEventTypes: StateFlow<List<GroupEventType>>
+
+    /** Holds a type for the group being created, or replaces the one it is an edit of. */
+    fun setPendingEventType(type: GroupEventType)
+
+    /** Hands over the types held for the group being created and forgets them. */
+    fun consumePendingEventTypes(): List<GroupEventType>
 }

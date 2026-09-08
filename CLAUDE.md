@@ -40,9 +40,11 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
 
 - An **admin** creates a group and defines the group's group event types.
 - A group is **created with at least one group event type**: a group nobody can add a shift to is
-  not finished, so creating one hands straight over to the form for its first type, and a group
-  sitting on none says so until it has one. The rule is about the moment of creation — an existing
-  group is not stopped from deleting its last type.
+  not finished, so the form will not save until one exists. A type created before the group has
+  nowhere to be written — types live on the group's own document — so it waits in
+  `GroupRepository.pendingEventTypes` and the group is created with the whole lot in a single write,
+  never existing without them. The rule is about the moment of creation: an existing group is not stopped from
+  deleting its last type.
 - Each group has a **single invitation**. Anyone with the code can **request** to join; a group **admin must accept** the request.
 - Both invitation settings — **auto-approve** (whoever knows the code walks straight in) and whether
   **members can see the code** — are decided when the group is created, alongside the code itself,

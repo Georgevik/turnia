@@ -78,7 +78,7 @@ fun AdminGroupsScreen(viewModel: AdminGroupsViewModel = koinViewModel()) {
                     title = stringResource(Res.string.admin_groups_empty_title),
                     body = stringResource(Res.string.admin_groups_empty_body),
                     action = stringResource(Res.string.group_detail_create),
-                    onAction = { navigator.goTo(MainRoute.GroupDetail(groupId = "")) },
+                    onAction = { navigator.goTo(MainRoute.GroupDetail(groupId = null)) },
                     modifier = content,
                 )
             } else {
