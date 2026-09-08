@@ -156,7 +156,7 @@ class UserRepositoryImpl(
         }.associateBy { it.id }
 
         return sharedUids.map { sharedUid ->
-            resolved[sharedUid] ?: UserProfile(id = sharedUid, name = "Unknown", username = "")
+            resolved[sharedUid] ?: UserProfile(id = sharedUid, name = "", username = "")
         }.toSuccess()
     }
 

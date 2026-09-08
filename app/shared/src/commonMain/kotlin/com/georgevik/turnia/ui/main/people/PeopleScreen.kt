@@ -91,8 +91,7 @@ fun PeopleScreen(viewModel: PeopleViewModel = koinViewModel()) {
 
     Scaffold(
         floatingActionButton = {
-            // Only one of the two lists can be added to: nobody shares their calendar on request.
-            if (success?.filter == PeopleFilter.SHARED_BY_ME) {
+            if (success?.filter == PeopleFilter.SHARED_BY_ME && success.sharedByMe.isNotEmpty()) {
                 FloatingActionButton(onClick = { sheetOpen = true }) {
                     Icon(
                         imageVector = Icons.Default.PersonAdd,
