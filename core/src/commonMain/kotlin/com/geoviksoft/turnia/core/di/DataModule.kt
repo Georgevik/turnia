@@ -77,9 +77,9 @@ val dataModule: Module = module {
 
     // Datasources.
     single { UserProfileFunction(get(), get()) }
-    single { UserPathFirestore(get(), get(), get()) }
-    single { UserPrivateFirestore(get(), get()) }
-    single { UsernameFirestore(get(), get(), get()) }
+    single { UserPathFirestore(get(), get(), get(), get()) }
+    single { UserPrivateFirestore(get(), get(), get()) }
+    single { UsernameFirestore(get(), get()) }
     single { UserSyncFirestore(get(), get()) }
     single { GroupSyncFirestore(get(), get()) }
     single { GroupEventFirestore(get(), get()) }
@@ -129,7 +129,7 @@ val dataModule: Module = module {
     single<GroupRepository> {
         GroupRepositoryImpl(
             get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(),
-            get(), get()
+            get()
         )
     }
     single<PersonalEventRepository> { PersonalEventRepositoryImpl(get(), get(), get(), get()) }
