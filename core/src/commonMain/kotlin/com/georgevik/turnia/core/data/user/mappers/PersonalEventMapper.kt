@@ -1,4 +1,4 @@
-package com.georgevik.turnia.core.data.datasource.firestore.mappers
+package com.georgevik.turnia.core.data.user.mappers
 
 import com.georgevik.turnia.core.data.datasource.firestore.doc.DocHolder
 import com.georgevik.turnia.core.data.datasource.firestore.doc.PersonalEventDocument

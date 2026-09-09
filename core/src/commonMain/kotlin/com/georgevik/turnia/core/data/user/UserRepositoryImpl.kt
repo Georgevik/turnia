@@ -4,9 +4,9 @@ import com.georgevik.turnia.core.data.datasource.firestore.UserPathFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.UserPrivateFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.UsernameFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.errors.UserProfileError
-import com.georgevik.turnia.core.data.datasource.firestore.mappers.UserDocumentMapper
 import com.georgevik.turnia.core.data.datasource.firestorefunctions.UserProfileFunction
 import com.georgevik.turnia.core.data.logger.Logger
+import com.georgevik.turnia.core.data.user.mappers.UserDocumentMapper
 import com.georgevik.turnia.core.domain.analytics.Analytics
 import com.georgevik.turnia.core.domain.model.User
 import com.georgevik.turnia.core.domain.model.UserId

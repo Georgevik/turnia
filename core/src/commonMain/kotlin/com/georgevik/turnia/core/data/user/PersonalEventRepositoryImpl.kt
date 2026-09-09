@@ -2,8 +2,8 @@ package com.georgevik.turnia.core.data.user
 
 import com.georgevik.turnia.core.data.datasource.firestore.PersonalEventFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.PersonalEventTypesFirestore
-import com.georgevik.turnia.core.data.datasource.firestore.mappers.PersonalEventMapper
 import com.georgevik.turnia.core.data.logger.Logger
+import com.georgevik.turnia.core.data.user.mappers.PersonalEventMapper
 import com.georgevik.turnia.core.domain.model.EventId
 import com.georgevik.turnia.core.domain.model.EventTypeId
 import com.georgevik.turnia.core.domain.model.PersonalEvent

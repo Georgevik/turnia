@@ -1,8 +1,9 @@
-package com.georgevik.turnia.core.data.datasource.firestore.mappers
+package com.georgevik.turnia.core.data.user.mappers
 
 import com.georgevik.turnia.core.data.datasource.firestore.doc.SubscriptionDocument
 import com.georgevik.turnia.core.data.datasource.firestore.doc.Tier
 import com.georgevik.turnia.core.data.datasource.firestore.doc.UserDocument
+import com.georgevik.turnia.core.data.datasource.firestore.doc.UsernameDocument
 import com.georgevik.turnia.core.domain.model.Membership
 import com.georgevik.turnia.core.domain.model.User
 import com.georgevik.turnia.core.domain.model.UserId
@@ -31,6 +32,13 @@ class UserDocumentMapper {
         displayName = profile?.name ?: firebaseUser.displayName.orEmpty(),
         username = profile?.username.orEmpty(),
         membership = subscription.toMembership(),
+    )
+
+    /** A reservation carries the least there is to know about a user nobody can read yet. */
+    fun map(document: UsernameDocument) = UserProfile(
+        id = UserId(document.uid),
+        name = document.name,
+        username = document.username,
     )
 
     fun map(snapshot: DocumentSnapshot): UserProfile =

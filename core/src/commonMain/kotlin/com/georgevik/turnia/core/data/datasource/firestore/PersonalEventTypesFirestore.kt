@@ -5,9 +5,9 @@ import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackWrite
 import com.georgevik.turnia.core.data.datasource.firestore.doc.DocHolder
 import com.georgevik.turnia.core.data.datasource.firestore.doc.PersonalEventTypeDocument
 import com.georgevik.turnia.core.data.datasource.firestore.errors.GenericFirestoreError
-import com.georgevik.turnia.core.data.datasource.firestore.mappers.PersonalEventTypeDocMapper
 import com.georgevik.turnia.core.data.datasource.firestore.sync.SharedListeners
 import com.georgevik.turnia.core.data.logger.Logger
+import com.georgevik.turnia.core.data.user.mappers.PersonalEventTypeDocMapper
 import com.georgevik.turnia.core.domain.model.EventTypeId
 import com.georgevik.turnia.core.domain.model.PersonalEventType
 import com.georgevik.turnia.core.domain.model.UserId
@@ -45,7 +45,7 @@ class PersonalEventTypesFirestore(
         val cachedTypes = queryEventTypes(uid, null, Source.CACHE)
 
         var known = cachedTypes
-        emit(known.toDomain())
+        emit(personalEventTypeDocMapper.map(known))
 
         emitAll(userSyncFirestore.observe(uid).mapNotNull { sync ->
             val cacheUpdatedAt = known.mapNotNull { it.doc.updateAt.toInstantOrNull() }.maxOrNull()
@@ -55,7 +55,7 @@ class PersonalEventTypesFirestore(
 
             val settled = cacheUpdatedAt != null && cacheUpdatedAt >= serverUpdatedAt
             if (settled) {
-                return@mapNotNull known.toDomain()
+                return@mapNotNull personalEventTypeDocMapper.map(known)
             }
 
             val changed = queryEventTypes(
@@ -66,7 +66,7 @@ class PersonalEventTypesFirestore(
 
             val merged = known.map { cached -> changed.remove(cached.id) ?: cached }
             known = merged + changed.values
-            known.toDomain()
+            personalEventTypeDocMapper.map(known)
         })
     }
 
@@ -119,9 +119,6 @@ class PersonalEventTypesFirestore(
 
         return snapshot.documents.map { personalEventTypeDocMapper.map(it) }
     }
-
-    private fun List<DocHolder<PersonalEventTypeDocument>>.toDomain(): List<PersonalEventType> =
-        map { personalEventTypeDocMapper.map(it) }
 
     companion object {
         private const val TAG = "PersonalEventTypesFirestore"

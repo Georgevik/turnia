@@ -4,6 +4,8 @@ import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackData
 import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackWrite
 import com.georgevik.turnia.core.data.datasource.firestore.doc.UsernameDocument
 import com.georgevik.turnia.core.data.logger.Logger
+import com.georgevik.turnia.core.data.user.mappers.UserDocumentMapper
+import com.georgevik.turnia.core.data.user.mappers.UsernameErrorMapper
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.domain.model.UserProfile
 import com.georgevik.turnia.core.domain.model.UsernameError
@@ -11,21 +13,22 @@ import com.georgevik.turnia.core.domain.username.USERNAME_SEARCH_MIN_LENGTH
 import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.outcomeCatching
 import dev.gitlive.firebase.firestore.FirebaseFirestore
-import dev.gitlive.firebase.firestore.FirebaseFirestoreException
-import dev.gitlive.firebase.firestore.FirestoreExceptionCode
-import dev.gitlive.firebase.firestore.code
 
 /**
  * Interacts with Firestore: `usernames/{username}`
  */
-class UsernameFirestore(private val firestore: FirebaseFirestore) {
+class UsernameFirestore(
+    private val firestore: FirebaseFirestore,
+    private val userDocumentMapper: UserDocumentMapper,
+    private val errorMapper: UsernameErrorMapper,
+) {
 
     suspend fun claim(
         username: String,
         uid: UserId,
         name: String
     ): Outcome<Unit, UsernameError> =
-        outcomeCatching(TAG, { throwable -> throwable.toClaimError(username) }) {
+        outcomeCatching(TAG, { throwable -> errorMapper.mapClaim(throwable, username) }) {
             Logger.i(TAG, "Claim username")
             firestore.collection(PATH_USERNAMES).document(username)
                 .set(UsernameDocument(username = username, uid = uid.value, name = name))
@@ -40,7 +43,7 @@ class UsernameFirestore(private val firestore: FirebaseFirestore) {
                     .get().trackData(TAG, "findByUids")
                 Logger.d(TAG, "Resolved ${snapshot.documents.size} of ${chunk.size} uids")
 
-                snapshot.documents.map { it.data(UsernameDocument.serializer()).toProfile() }
+                snapshot.documents.map { it.data(UsernameDocument.serializer()).let(userDocumentMapper::map) }
             }
         }
 
@@ -60,22 +63,7 @@ class UsernameFirestore(private val firestore: FirebaseFirestore) {
                 .get().trackData(TAG, "search")
             Logger.d(TAG, "Username search '$prefix': ${snapshot.documents.size} results")
 
-            snapshot.documents.map { it.data(UsernameDocument.serializer()).toProfile() }
-        }
-
-    /**
-     * UsernameDocument contains the minimum info for unknown external users
-     */
-    private fun UsernameDocument.toProfile() =
-        UserProfile(id = UserId(uid), name = name, username = username)
-
-    private fun Throwable.toClaimError(username: String): UsernameError =
-        if (this is FirebaseFirestoreException && code == FirestoreExceptionCode.PERMISSION_DENIED) {
-            Logger.i(TAG, "Username '$username' already taken")
-            UsernameError.Taken
-        } else {
-            Logger.e(TAG, "Could not claim username '$username'", this)
-            UsernameError.SaveFailed
+            snapshot.documents.map { it.data(UsernameDocument.serializer()).let(userDocumentMapper::map) }
         }
 
     companion object {

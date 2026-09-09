@@ -4,9 +4,9 @@ import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackData
 import com.georgevik.turnia.core.data.datasource.firestore.analytics.trackWrite
 import com.georgevik.turnia.core.data.datasource.firestore.doc.UserDocument
 import com.georgevik.turnia.core.data.datasource.firestore.errors.UserProfileError
-import com.georgevik.turnia.core.data.datasource.firestore.mappers.UserDocumentMapper
 import com.georgevik.turnia.core.data.datasource.firestore.sync.SharedListeners
 import com.georgevik.turnia.core.data.logger.Logger
+import com.georgevik.turnia.core.data.user.mappers.UserDocumentMapper
 import com.georgevik.turnia.core.domain.model.EventTypeId
 import com.georgevik.turnia.core.domain.model.GroupId
 import com.georgevik.turnia.core.domain.model.UserId

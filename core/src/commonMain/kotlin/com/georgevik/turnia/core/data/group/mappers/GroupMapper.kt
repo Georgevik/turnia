@@ -1,4 +1,4 @@
-package com.georgevik.turnia.core.data.datasource.firestore.mappers
+package com.georgevik.turnia.core.data.group.mappers
 
 import com.georgevik.turnia.core.data.datasource.firestore.doc.DocHolder
 import com.georgevik.turnia.core.data.datasource.firestore.doc.EventHistoryDocument
@@ -10,6 +10,7 @@ import com.georgevik.turnia.core.data.datasource.firestore.doc.JoinRequestDocume
 import com.georgevik.turnia.core.data.datasource.firestore.doc.JoinRequestStatusDocument
 import com.georgevik.turnia.core.data.datasource.firestore.doc.RevokedGroupDocument
 import com.georgevik.turnia.core.data.datasource.firestore.doc.UserDocument
+import com.georgevik.turnia.core.data.datasource.firestorefunctions.responses.JoinGroupResponse
 import com.georgevik.turnia.core.domain.model.EventHistoryEntry
 import com.georgevik.turnia.core.domain.model.EventId
 import com.georgevik.turnia.core.domain.model.EventTypeId
@@ -18,6 +19,7 @@ import com.georgevik.turnia.core.domain.model.GroupEvent
 import com.georgevik.turnia.core.domain.model.GroupEventType
 import com.georgevik.turnia.core.domain.model.GroupId
 import com.georgevik.turnia.core.domain.model.GroupMember
+import com.georgevik.turnia.core.domain.model.JoinGroupStatus
 import com.georgevik.turnia.core.domain.model.JoinRequest
 import com.georgevik.turnia.core.domain.model.JoinRequestStatus
 import com.georgevik.turnia.core.domain.model.MyJoinRequest
@@ -30,6 +32,14 @@ import kotlinx.datetime.yearMonth
  * Group documents to the domain and back.
  */
 class GroupMapper {
+
+    /** The status `requestToJoinGroup` answers with, or null when it named one we do not know. */
+    fun mapJoinStatus(status: String): JoinGroupStatus? = when (status) {
+        JoinGroupResponse.STATUS_JOINED -> JoinGroupStatus.Joined
+        JoinGroupResponse.STATUS_REQUESTED -> JoinGroupStatus.Requested
+        JoinGroupResponse.STATUS_ALREADY_MEMBER -> JoinGroupStatus.AlreadyMember
+        else -> null
+    }
 
     fun map(holder: DocHolder<GroupDocument>, viewer: UserId, colors: Map<String, String>): Group {
         val groupId = GroupId(holder.id)

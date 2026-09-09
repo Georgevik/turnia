@@ -13,22 +13,27 @@ import com.georgevik.turnia.core.data.datasource.firestore.UserPathFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.UserPrivateFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.UserSyncFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.UsernameFirestore
-import com.georgevik.turnia.core.data.datasource.firestore.mappers.GroupMapper
-import com.georgevik.turnia.core.data.datasource.firestore.mappers.PersonalEventMapper
-import com.georgevik.turnia.core.data.datasource.firestore.mappers.PersonalEventTypeDocMapper
-import com.georgevik.turnia.core.data.datasource.firestore.mappers.UserDocumentMapper
 import com.georgevik.turnia.core.data.datasource.firestorefunctions.GroupFunction
 import com.georgevik.turnia.core.data.datasource.firestorefunctions.GroupMembershipFunction
 import com.georgevik.turnia.core.data.datasource.firestorefunctions.SharedCalendarFunction
 import com.georgevik.turnia.core.data.datasource.firestorefunctions.UserProfileFunction
+import com.georgevik.turnia.core.data.group.GroupFactory
 import com.georgevik.turnia.core.data.group.GroupRepositoryImpl
 import com.georgevik.turnia.core.data.group.InvitationCodeFactory
+import com.georgevik.turnia.core.data.group.mappers.GroupErrorMapper
+import com.georgevik.turnia.core.data.group.mappers.GroupMapper
 import com.georgevik.turnia.core.data.notification.NotificationRepositoryImpl
 import com.georgevik.turnia.core.data.sharedcalendar.SharedCalendarRepositoryImpl
+import com.georgevik.turnia.core.data.sharedcalendar.mappers.SharedCalendarErrorMapper
+import com.georgevik.turnia.core.data.sharedcalendar.mappers.SharedCalendarMapper
 import com.georgevik.turnia.core.data.user.PersonalEventRepositoryImpl
 import com.georgevik.turnia.core.data.user.UserProvisioner
 import com.georgevik.turnia.core.data.user.UserRepositoryImpl
 import com.georgevik.turnia.core.data.user.delegate.FcmDelegateImpl
+import com.georgevik.turnia.core.data.user.mappers.PersonalEventMapper
+import com.georgevik.turnia.core.data.user.mappers.PersonalEventTypeDocMapper
+import com.georgevik.turnia.core.data.user.mappers.UserDocumentMapper
+import com.georgevik.turnia.core.data.user.mappers.UsernameErrorMapper
 import com.georgevik.turnia.core.domain.analytics.Analytics
 import com.georgevik.turnia.core.domain.repository.AppConfigRepository
 import com.georgevik.turnia.core.domain.repository.FcmDelegate
@@ -68,27 +73,32 @@ val coreModule: Module = module {
     single { Firebase.messaging }
     single { Firebase.analytics }
     single<Analytics> { AnalyticsImpl(get()) }
-    single { UserProfileFunction(get()) }
+    single { UserProfileFunction(get(), get()) }
     single { UserPathFirestore(get(), get(), get()) }
     single { UserPrivateFirestore(get(), get()) }
-    single { UsernameFirestore(get()) }
+    single { UsernameFirestore(get(), get(), get()) }
     single { UserSyncFirestore(get(), get()) }
     single { GroupSyncFirestore(get(), get()) }
     single { GroupEventFirestore(get(), get()) }
     single { GroupFirestore(get(), get(), get()) }
     single { GroupJoinRequestFirestore(get()) }
     single { RevokedGroupFirestore(get(), get(), get()) }
-    single { GroupMembershipFunction(get()) }
-    single { GroupFunction(get()) }
-    single { SharedCalendarFunction(get()) }
+    single { GroupMembershipFunction(get(), get(), get()) }
+    single { GroupFunction(get(), get()) }
+    single { SharedCalendarFunction(get(), get()) }
     single { PersonalEventFirestore(get(), get(), get()) }
     single { PersonalEventTypesFirestore(get(), get(), get(), get()) }
     factory { UserDocumentMapper() }
     factory { UsernameFactory() }
     factory { InvitationCodeFactory() }
+    factory { GroupFactory() }
     factory { PersonalEventMapper() }
     factory { PersonalEventTypeDocMapper() }
     factory { GroupMapper() }
+    factory { GroupErrorMapper() }
+    factory { UsernameErrorMapper() }
+    factory { SharedCalendarMapper() }
+    factory { SharedCalendarErrorMapper() }
     single { UserProvisioner(get(), get(), get(), get()) }
     single<FcmDelegate> { FcmDelegateImpl(get(), get()) }
     single<UserRepository> {
@@ -110,9 +120,9 @@ val coreModule: Module = module {
     single<GroupRepository> {
         GroupRepositoryImpl(
             get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(),
-            get()
+            get(), get()
         )
     }
     single<PersonalEventRepository> { PersonalEventRepositoryImpl(get(), get(), get(), get()) }
-    single<SharedCalendarRepository> { SharedCalendarRepositoryImpl(get()) }
+    single<SharedCalendarRepository> { SharedCalendarRepositoryImpl(get(), get()) }
 }

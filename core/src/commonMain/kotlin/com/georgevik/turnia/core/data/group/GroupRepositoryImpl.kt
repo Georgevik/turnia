@@ -9,9 +9,9 @@ import com.georgevik.turnia.core.data.datasource.firestore.UserPrivateFirestore
 import com.georgevik.turnia.core.data.datasource.firestore.doc.DocHolder
 import com.georgevik.turnia.core.data.datasource.firestore.doc.GroupDocument
 import com.georgevik.turnia.core.data.datasource.firestore.doc.GroupMemberDocument
-import com.georgevik.turnia.core.data.datasource.firestore.mappers.GroupMapper
 import com.georgevik.turnia.core.data.datasource.firestorefunctions.GroupFunction
 import com.georgevik.turnia.core.data.datasource.firestorefunctions.GroupMembershipFunction
+import com.georgevik.turnia.core.data.group.mappers.GroupMapper
 import com.georgevik.turnia.core.data.logger.Logger
 import com.georgevik.turnia.core.domain.analytics.Analytics
 import com.georgevik.turnia.core.domain.analytics.AnalyticsEvent
@@ -65,6 +65,7 @@ class GroupRepositoryImpl(
     private val userRepository: UserRepository,
     private val appConfigRepository: AppConfigRepository,
     private val invitationCodeFactory: InvitationCodeFactory,
+    private val groupFactory: GroupFactory,
     private val groupFirestore: GroupFirestore,
     private val groupEventFirestore: GroupEventFirestore,
     private val groupJoinRequestFirestore: GroupJoinRequestFirestore,
@@ -115,7 +116,13 @@ class GroupRepositoryImpl(
     override suspend fun createGroup(group: NewGroup): Outcome<Group, GroupError> {
         val user = userRepository.loggedUser ?: return GroupError.NotFound.toFailure()
         val userId = user.id
-        val created = group.toGroup(GroupId(createId()))
+        val created = groupFactory.create(
+            group = group,
+            id = GroupId(createId()),
+            // A group without a code is a group nobody can join. The screen mints one up front so
+            // the admin can read it before saving; this catches a group that arrived without.
+            invitationCode = group.invitationCode.ifBlank { createInvitationCode() },
+        )
 
         val document = groupMapper.map(
             group = created,
@@ -174,21 +181,6 @@ class GroupRepositoryImpl(
 
         return coded.copy(isAdmin = userId.value in adminUids).toSuccess()
     }
-
-    private fun NewGroup.toGroup(id: GroupId) = Group(
-        id = id,
-        name = name,
-        color = color,
-        types = types,
-        members = emptyList(),
-        memberCount = 1,
-        // A group without a code is a group nobody can join. The screen mints one up front so
-        // the admin can read it before saving; this catches a group that arrived without.
-        invitationCode = invitationCode.ifBlank { createInvitationCode() },
-        autoApprove = autoApprove,
-        membersCanSeeCode = membersCanSeeCode,
-        isAdmin = true,
-    )
 
     override suspend fun getJoinRequests(groupId: GroupId): Outcome<List<JoinRequest>, GroupError> =
         groupJoinRequestFirestore.getPending(groupId)
