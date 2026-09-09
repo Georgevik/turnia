@@ -146,6 +146,7 @@ class PeopleViewModel(private val userRepository: UserRepository) : ViewModel() 
                     name = user.name,
                     username = user.username,
                     alreadyShared = user.id in shared,
+                    avatar = user.avatar,
                 )
             }
 
@@ -167,8 +168,12 @@ class PeopleViewModel(private val userRepository: UserRepository) : ViewModel() 
     }
 
 
-    private fun toRow(user: UserProfile) =
-        PersonRowUi(id = user.id, name = user.name, username = user.username)
+    private fun toRow(user: UserProfile) = PersonRowUi(
+        id = user.id,
+        name = user.name,
+        username = user.username,
+        avatar = user.avatar,
+    )
 
     private companion object {
         const val SUBSCRIPTION_TIMEOUT = 5_000L
