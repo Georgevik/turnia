@@ -31,6 +31,7 @@ class SettingsMenuViewModel(private val userRepository: UserRepository) : ViewMo
                                 displayName = session.user.displayName.orEmpty(),
                                 username = session.user.username,
                                 isPremium = session.user.membership == Membership.PREMIUM,
+                                avatar = session.user.avatar,
                             )
                         )
                     }

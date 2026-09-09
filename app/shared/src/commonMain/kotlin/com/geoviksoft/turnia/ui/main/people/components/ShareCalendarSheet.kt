@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,6 +33,7 @@ import com.geoviksoft.turnia.ui.main.people.SearchResultUi
 import com.geoviksoft.turnia.ui.main.people.SearchUi
 import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
 import com.geoviksoft.turnia.ui.system.components.TListItem
+import com.geoviksoft.turnia.ui.system.components.UserAvatar
 import com.geoviksoft.turnia.ui.system.keyboardAware
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
@@ -113,7 +115,8 @@ private fun SearchUserList(users: List<SearchResultUi>, onPick: (UserId) -> Unit
                 },
                 subtitle = "@${result.username}",
                 onClick = if (result.alreadyShared) null else ({ onPick(result.id) }),
-                leading = { PersonAvatar(result.id) },
+                leading = { UserAvatar(avatar = result.avatar, modifier = Modifier.size(42.dp)) },
+                maxLines = 1,
                 trailing = if (result.alreadyShared) {
                     {
                         Icon(
@@ -146,7 +149,7 @@ fun PreviewShareCalendarSheet() {
         users = listOf(
             SearchResultUi(
                 id = UserId("1"),
-                name = "George Vik",
+                name = "George Vi asdfa sdf asdf adf asdfaa asdf adf adfk",
                 username = "georgevik",
                 alreadyShared = false,
             ),
@@ -156,7 +159,7 @@ fun PreviewShareCalendarSheet() {
                 username = "thesecond",
                 alreadyShared = false,
             )
-        ), isLoading = true
+        ), isLoading = false
     )
 
     val searchPanelEmpty = SearchUi.Panel.Empty

@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.geoviksoft.turnia.core.domain.model.UserProfile
 import com.geoviksoft.turnia.navigation.LocalNavigator
 import com.geoviksoft.turnia.navigation.LocalRootNavigator
 import com.geoviksoft.turnia.navigation.main.routes.MainRoute
@@ -49,7 +50,6 @@ import com.geoviksoft.turnia.ui.system.components.UserAvatar
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import turnia.app.shared.generated.resources.Res
-import turnia.app.shared.generated.resources.animal_icon_duck
 import turnia.app.shared.generated.resources.dialog_cancel
 import turnia.app.shared.generated.resources.groups_title
 import turnia.app.shared.generated.resources.profile_logout
@@ -95,9 +95,8 @@ private fun SettingsMenuScreenContent(uiState: SettingsMenuUi, onLogoutClicked: 
         ) {
 
             UserAvatar(
+                avatar = details?.avatar ?: UserProfile.AnimalAvatar.NONE,
                 modifier = Modifier.size(64.dp),
-                background = MaterialTheme.colorScheme.primaryContainer,
-                animalIcon = Res.drawable.animal_icon_duck
             )
 
             Column {
@@ -221,7 +220,8 @@ fun SettingsMenuScreenPreview() {
                     userDetails = SettingsMenuUi.UserDetails(
                         displayName = "John Due",
                         username = "Georgevik",
-                        isPremium = false
+                        isPremium = false,
+                        avatar = UserProfile.AnimalAvatar(animal = "duck", background = "#F4B400"),
                     )
                 )
             )
