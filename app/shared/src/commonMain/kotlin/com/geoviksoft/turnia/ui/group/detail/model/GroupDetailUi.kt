@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.Color
 import com.geoviksoft.turnia.core.domain.model.EventTypeId
 import com.geoviksoft.turnia.core.domain.model.GroupId
 import com.geoviksoft.turnia.core.domain.model.UserId
+import com.geoviksoft.turnia.core.domain.model.UserProfile
 
 sealed interface GroupDetailUi {
     data object Loading : GroupDetailUi
@@ -62,6 +63,7 @@ data class GroupMemberUi(
     val name: String,
     val username: String,
     val isAdmin: Boolean,
+    val avatar: UserProfile.AnimalAvatar = UserProfile.AnimalAvatar.NONE,
 )
 
 @Immutable
@@ -69,6 +71,7 @@ data class JoinRequestUi(
     val userId: UserId,
     val name: String,
     val username: String,
+    val avatar: UserProfile.AnimalAvatar = UserProfile.AnimalAvatar.NONE,
 )
 
 /**
