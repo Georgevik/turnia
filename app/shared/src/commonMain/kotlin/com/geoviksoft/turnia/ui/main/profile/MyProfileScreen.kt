@@ -1,5 +1,6 @@
 package com.geoviksoft.turnia.ui.main.profile
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -33,7 +34,9 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.geoviksoft.turnia.core.domain.model.UserProfile
 import com.geoviksoft.turnia.navigation.LocalNavigator
+import com.geoviksoft.turnia.ui.main.profile.components.AvatarPickerSheet
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
 import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
 import com.geoviksoft.turnia.ui.system.components.TReadOnlyField
@@ -44,6 +47,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.calendar_back
+import turnia.app.shared.generated.resources.profile_avatar_change
 import turnia.app.shared.generated.resources.profile_error_name_required
 import turnia.app.shared.generated.resources.profile_error_save
 import turnia.app.shared.generated.resources.profile_error_username_invalid
@@ -63,6 +67,10 @@ fun MyProfileScreen(viewModel: MyProfileViewModel = koinViewModel()) {
         onUsernameChanged = viewModel::onUsernameChanged,
         onNameChanged = viewModel::onNameChanged,
         onSnackbarShown = viewModel::userMessageShown,
+        onAvatarClicked = viewModel::onAvatarClicked,
+        onAvatarPickerDismissed = viewModel::onAvatarPickerDismissed,
+        onAnimalPicked = viewModel::onAnimalPicked,
+        onBackgroundPicked = viewModel::onBackgroundPicked,
         onSave = viewModel::onSave,
     )
 }
@@ -73,6 +81,10 @@ private fun MyProfileScreenContent(
     onNameChanged: (String) -> Unit = {},
     onUsernameChanged: (String) -> Unit = {},
     onSnackbarShown: () -> Unit = {},
+    onAvatarClicked: () -> Unit = {},
+    onAvatarPickerDismissed: () -> Unit = {},
+    onAnimalPicked: (String) -> Unit = {},
+    onBackgroundPicked: (String) -> Unit = {},
     onSave: () -> Unit = {},
 ) {
     val navigator = LocalNavigator.current
@@ -111,9 +123,17 @@ private fun MyProfileScreenContent(
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             UserAvatar(
-                modifier = Modifier.size(64.dp).align(Alignment.CenterHorizontally),
-                background = uiState.avatarBackground,
-                animalIcon = uiState.avatarDrawable
+                avatar = UserProfile.AnimalAvatar(
+                    animal = uiState.animalIconId,
+                    background = uiState.backgroundColor,
+                ),
+                modifier = Modifier
+                    .size(64.dp)
+                    .align(Alignment.CenterHorizontally)
+                    .clickable(
+                        onClick = onAvatarClicked,
+                        onClickLabel = stringResource(Res.string.profile_avatar_change),
+                    ),
             )
 
             OutlinedTextField(
@@ -170,6 +190,16 @@ private fun MyProfileScreenContent(
                 }
             }
         }
+    }
+
+    if (uiState.pickingAvatar) {
+        AvatarPickerSheet(
+            animalIconId = uiState.animalIconId,
+            backgroundColor = uiState.backgroundColor,
+            onAnimalPicked = onAnimalPicked,
+            onColorPicked = onBackgroundPicked,
+            onDismiss = onAvatarPickerDismissed,
+        )
     }
 }
 
