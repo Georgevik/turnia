@@ -43,11 +43,11 @@ fun VariantDimension.localPropertyToBuildConfig(localProperty: String, buildConf
 }
 
 android {
-    namespace = "com.georgevik.turnia"
+    namespace = "com.geoviksoft.turnia"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "com.georgevik.turnia"
+        applicationId = "com.geoviksoft.turnia"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1

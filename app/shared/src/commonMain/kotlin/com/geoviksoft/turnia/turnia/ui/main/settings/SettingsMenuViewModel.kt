@@ -1,0 +1,48 @@
+package com.geoviksoft.turnia.ui.main.settings
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.geoviksoft.turnia.core.domain.model.Membership
+import com.geoviksoft.turnia.core.domain.model.UserSession
+import com.geoviksoft.turnia.core.domain.repository.UserRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+
+class SettingsMenuViewModel(private val userRepository: UserRepository) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(SettingsMenuUi())
+    val uiState: StateFlow<SettingsMenuUi> = _uiState.asStateFlow()
+
+    init {
+        loadUser()
+    }
+
+    fun loadUser() {
+        viewModelScope.launch {
+            userRepository.userSession.filterIsInstance<UserSession.Authenticated>()
+                .collect { session ->
+                    _uiState.update {
+                        it.copy(
+                            userDetails = SettingsMenuUi.UserDetails(
+                                displayName = session.user.displayName.orEmpty(),
+                                username = session.user.username,
+                                isPremium = session.user.membership == Membership.PREMIUM,
+                            )
+                        )
+                    }
+                }
+
+
+        }
+    }
+
+    fun onLogoutClicked() {
+        viewModelScope.launch {
+            userRepository.signOut()
+        }
+    }
+}

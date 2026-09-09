@@ -162,7 +162,7 @@ A UiState carries a **`StringResource`**, or a semantic error type the UI maps t
 
 ### `Outcome<T, E>` instead of `Result<T>`
 
-Use [`Outcome`](core/src/commonMain/kotlin/com/georgevik/turnia/core/system/Outcome.kt) for anything that can fail with a **known** domain error.
+Use [`Outcome`](core/src/commonMain/kotlin/com/geoviksoft/turnia/core/system/Outcome.kt) for anything that can fail with a **known** domain error.
 
 `kotlin.Result` constrains failures to `Throwable`: it forces domain errors to be modelled as exceptions, allocates stack traces nothing reads, and lets `getOrNull()` collapse the reason for a failure into `null`. `Outcome` keeps the error as a sealed type or enum, so a `when` over it is checked by the compiler.
 
@@ -212,7 +212,7 @@ See [firebase/firestore-schema.md](firebase/firestore-schema.md) — the single 
 
 Firestore bills **per document**: one read for every document the server returns, one write for every document sent to it. The local cache is the only lever we have on that bill, so its effect has to be measurable — a read served from cache is free, and we count those apart to see the caching working.
 
-**Every Firestore call must report itself** through [`FirestoreUsageMetrics.kt`](core/src/commonMain/kotlin/com/georgevik/turnia/core/data/datasource/firestore/analytics/FirestoreUsageMetrics.kt). A new datasource, or a new query in an existing one, is not finished until it does.
+**Every Firestore call must report itself** through [`FirestoreUsageMetrics.kt`](core/src/commonMain/kotlin/com/geoviksoft/turnia/core/data/datasource/firestore/analytics/FirestoreUsageMetrics.kt). A new datasource, or a new query in an existing one, is not finished until it does.
 
 | Call | How to report it |
 |------|------------------|

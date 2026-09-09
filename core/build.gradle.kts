@@ -11,7 +11,7 @@ kotlin {
     iosSimulatorArm64()
 
     android {
-       namespace = "com.georgevik.turnia.core"
+       namespace = "com.geoviksoft.turnia.core"
        compileSdk = libs.versions.android.compileSdk.get().toInt()
        minSdk = libs.versions.android.minSdk.get().toInt()
     
