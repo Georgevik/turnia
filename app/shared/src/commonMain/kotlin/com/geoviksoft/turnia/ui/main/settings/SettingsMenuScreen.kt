@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -46,9 +45,11 @@ import com.geoviksoft.turnia.navigation.root.routes.RootRoute
 import com.geoviksoft.turnia.ui.system.LocalPaddings
 import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
 import com.geoviksoft.turnia.ui.system.components.ConfirmationDialog
+import com.geoviksoft.turnia.ui.system.components.UserAvatar
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import turnia.app.shared.generated.resources.Res
+import turnia.app.shared.generated.resources.animal_icon_duck
 import turnia.app.shared.generated.resources.dialog_cancel
 import turnia.app.shared.generated.resources.groups_title
 import turnia.app.shared.generated.resources.profile_logout
@@ -92,19 +93,13 @@ private fun SettingsMenuScreenContent(uiState: SettingsMenuUi, onLogoutClicked: 
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.size(32.dp),
-                )
-            }
+
+            UserAvatar(
+                modifier = Modifier.size(64.dp),
+                background = MaterialTheme.colorScheme.primaryContainer,
+                animalIcon = Res.drawable.animal_icon_duck
+            )
+
             Column {
                 Text(
                     text = details?.displayName.orEmpty(),
