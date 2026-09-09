@@ -1,6 +1,6 @@
 package com.georgevik.turnia.di
 
-import com.georgevik.turnia.core.di.coreModule
+import com.georgevik.turnia.core.di.coreModules
 import com.mmk.kmpauth.core.KMPAuth
 import com.mmk.kmpauth.google.google
 import org.koin.core.KoinApplication
@@ -20,6 +20,6 @@ fun initKoin(webClientId: String, config: KoinAppDeclaration? = null): KoinAppli
     }
     return startKoin {
         config?.invoke(this)
-        modules(coreModule, appModule)
+        modules(coreModules + featureModules)
     }
 }
