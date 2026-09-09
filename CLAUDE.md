@@ -329,6 +329,42 @@ Use the run configurations provided by the run widget in your IDE's toolbar. You
 - Android app: `./gradlew :app:androidApp:assembleDebug`
 - iOS app: open the [/app/iosApp](./app/iosApp) directory in Xcode and run it from there.
 
+## Pending: the paid Apple Developer Program
+
+Two features are written and shipped but cannot work yet, both for the same reason: the project is
+signed with a **Personal Team**, which cannot sign either capability. Xcode does not even list them
+under *Signing & Capabilities → + Capability*, and writing the entitlement by hand only breaks the
+build — Xcode fails to generate a profile. Both are blocked on an Apple Developer Program
+membership; neither has a workaround.
+
+- **Push (FCM)** — `aps-environment` is missing from
+  [iosApp.entitlements](app/iosApp/iosApp/iosApp.entitlements). Without it iOS receives nothing.
+- **Sign in with Apple** — the button is on the sign-in screen and calls `rememberAppleAuthState`,
+  but every attempt fails until the setup below is complete. App Store guideline 4.8 requires it
+  once an app offers third-party sign-in, and Turnia already offers Google, so this is release
+  blocking rather than optional.
+
+### Sign in with Apple — what is left
+
+The Apple provider is already enabled in Firebase Authentication. What remains, in order:
+
+1. **App ID** — developer.apple.com → *Identifiers* → `com.geoviksoft.turnia.Turnia` → tick
+   **Sign In with Apple**. This is what makes the capability appear in Xcode.
+2. **Services ID** — *Identifiers* → **+** → *Services IDs*. Its identifier must differ from the
+   bundle id (e.g. `com.geoviksoft.turnia.signin`). Configure it with the App ID above, the domain
+   `turnia-23ebc.firebaseapp.com`, and the return URL
+   `https://turnia-23ebc.firebaseapp.com/__/auth/handler`. Android needs this: there the flow is
+   Firebase's browser OAuth, not the native sheet.
+3. **Key** — *Keys* → **+** → tick *Sign in with Apple* → register → download the `.p8`. It can be
+   downloaded **once**; a lost key has to be replaced. Note the Key ID.
+4. **Firebase** — Authentication → Sign-in method → Apple: the Services ID, Apple Team ID
+   `83GQ2T4N4H`, the Key ID, and the private key. The same key is what lets Firebase **revoke Apple
+   tokens**, which Apple requires of any app that lets a user delete their account.
+5. **Xcode** — *+ Capability* → *Sign in with Apple*, which writes
+   `com.apple.developer.applesignin` into the entitlements.
+
+Steps 2 to 4 are not optional here: without them the button would work on iOS and fail on Android.
+
 ## License
 
 To be defined.

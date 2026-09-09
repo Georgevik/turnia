@@ -2,8 +2,15 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- aps-environment (development) va aquí, pero un Personal Team no puede firmar la
-	     capability de Push Notifications: Xcode no genera el perfil y el build falla.
-	     Restaurar al pasar al Apple Developer Program de pago; sin ella no hay FCM. -->
+	<!-- TODO Two capabilities belong here and neither can be added yet: a Personal Team cannot sign
+	     them, so Xcode does not offer them under Signing & Capabilities, and writing the key by
+	     hand only breaks the build. Both wait on the paid Apple Developer Program.
+
+	       · aps-environment (development) — without it there is no FCM on iOS.
+	       · com.apple.developer.applesignin — without it the Apple button on the sign-in screen
+	         fails every time.
+
+	     Adding the entitlement is the last step of each, not the only one. See
+	     "Pending: the paid Apple Developer Program" in CLAUDE.md. -->
 </dict>
 </plist>
