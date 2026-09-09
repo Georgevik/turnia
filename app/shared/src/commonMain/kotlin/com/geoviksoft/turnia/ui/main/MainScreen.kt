@@ -135,6 +135,7 @@ private fun HandleNotificationTapped(
         val route = when (pendingDestination) {
             PushDestination.Groups -> MainRoute.GroupsTab
             PushDestination.People -> MainRoute.PeopleTab
+            PushDestination.Swap -> MainRoute.SwapTab
             is PushDestination.GroupDetail ->
                 MainRoute.GroupDetail(pendingDestination.groupId.value)
 

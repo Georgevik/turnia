@@ -619,8 +619,8 @@ Firestore keeps only a **recent window** of events; older events are purged and 
   | `join_requested` | the group's admins | that group (`groupId` travels with it) |
   | `join_accepted` | the requester | the Groups tab |
   | `calendar_shared` | whoever was granted access | the People tab |
-  | `event_on_swap` | the other group members | nothing yet |
-  | `event_taken` | the member who offered it | nothing yet |
+  | `event_on_swap` | the other group members | the Swap tab |
+  | `event_taken` | the member who offered it | the Swap tab |
 
   A `type` with no destination still opens the app; it just does not move it anywhere, which is also
   what an older client does with a `type` it has never heard of.
