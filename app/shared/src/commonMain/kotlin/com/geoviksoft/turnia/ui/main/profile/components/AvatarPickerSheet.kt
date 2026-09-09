@@ -30,7 +30,6 @@ import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
 import com.geoviksoft.turnia.ui.system.avatar.AnimalIconIds
 import com.geoviksoft.turnia.ui.system.avatar.animalIcon
 import com.geoviksoft.turnia.ui.system.color.EntityPalette
-import com.geoviksoft.turnia.ui.system.color.entityColor
 import com.geoviksoft.turnia.ui.system.color.toComposeColorOrNull
 import com.geoviksoft.turnia.ui.system.color.toHex
 import com.geoviksoft.turnia.ui.system.components.ColorSwatchPicker
@@ -47,7 +46,6 @@ import turnia.app.shared.generated.resources.profile_avatar_title
 fun AvatarPickerSheet(
     animalIconId: String?,
     backgroundColor: String?,
-    fallbackId: String,
     onAnimalPicked: (String) -> Unit,
     onColorPicked: (String) -> Unit,
     onDismiss: () -> Unit,
@@ -61,7 +59,6 @@ fun AvatarPickerSheet(
             AvatarPickerContent(
                 animalIconId = animalIconId,
                 backgroundColor = backgroundColor,
-                fallbackId = fallbackId,
                 onAnimalPicked = onAnimalPicked,
                 onColorPicked = onColorPicked,
                 onDismiss = onDismiss,
@@ -74,13 +71,12 @@ fun AvatarPickerSheet(
 private fun AvatarPickerContent(
     animalIconId: String?,
     backgroundColor: String?,
-    fallbackId: String,
     onAnimalPicked: (String) -> Unit,
     onColorPicked: (String) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val background = backgroundColor?.toComposeColorOrNull() ?: entityColor(fallbackId)
+    val background = backgroundColor?.toComposeColorOrNull() ?: EntityPalette.first()
 
     Column(
         modifier = modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 20.dp),
@@ -162,7 +158,6 @@ fun AvatarPickerSheetPreview() {
             modifier = Modifier.background(Color.White),
             animalIconId = "cat",
             backgroundColor = null,
-            fallbackId = "duck",
             onAnimalPicked = {},
             onColorPicked = {},
             onDismiss = {},
