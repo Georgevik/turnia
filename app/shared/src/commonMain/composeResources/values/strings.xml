@@ -219,7 +219,6 @@
     <string name="profile_field_name">Nombre</string>
     <string name="profile_field_username">Nombre de usuario</string>
     <string name="profile_field_email">Correo</string>
-    <string name="profile_email_readonly">El correo viene de tu cuenta y no se puede cambiar.</string>
     <string name="profile_save">Guardar</string>
     <string name="profile_error_name_required">Escribe tu nombre.</string>
     <string name="profile_error_username_invalid">Entre 3 y 20 caracteres: letras, números, guion bajo o punto.</string>

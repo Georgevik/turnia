@@ -2,11 +2,17 @@ package com.geoviksoft.turnia.ui.system
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.unit.dp
+import androidx.navigation3.runtime.NavKey
+import com.geoviksoft.turnia.navigation.LocalNavigator
+import com.geoviksoft.turnia.navigation.LocalRootNavigator
+import com.geoviksoft.turnia.navigation.Navigator
 
 private val LightColorScheme = lightColorScheme(
     primary = Teal500,
@@ -103,4 +109,23 @@ fun TurniaTheme(
         colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme,
         content = content,
     )
+}
+
+@Composable
+fun PreviewTurniaTheme(content: @Composable () -> Unit) {
+    CompositionLocalProvider(
+        LocalRootNavigator provides FakeNavigator,
+        LocalNavigator provides FakeNavigator,
+        LocalSnackbar provides SnackbarHostState(),
+    ) {
+        TurniaTheme(content = content)
+    }
+}
+
+private val FakeNavigator = object : Navigator {
+    override fun goTo(route: NavKey) = Unit
+
+    override fun goBack() = Unit
+
+    override fun popToRoot() = Unit
 }
