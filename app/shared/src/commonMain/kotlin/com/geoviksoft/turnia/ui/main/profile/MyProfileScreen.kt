@@ -26,6 +26,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -36,6 +37,7 @@ import com.geoviksoft.turnia.navigation.LocalNavigator
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
 import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
 import com.geoviksoft.turnia.ui.system.components.TReadOnlyField
+import com.geoviksoft.turnia.ui.system.components.UserAvatar
 import com.geoviksoft.turnia.ui.system.keyboardAware
 import com.geoviksoft.turnia.ui.system.toErrorSnackbar
 import org.jetbrains.compose.resources.stringResource
@@ -104,13 +106,16 @@ private fun MyProfileScreenContent(
         },
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .keyboardAware(innerPadding)
-                .padding(20.dp)
+            modifier = Modifier.fillMaxSize().keyboardAware(innerPadding).padding(20.dp)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
+            UserAvatar(
+                modifier = Modifier.size(64.dp).align(Alignment.CenterHorizontally),
+                background = uiState.avatarBackground,
+                animalIcon = uiState.avatarDrawable
+            )
+
             OutlinedTextField(
                 value = uiState.name,
                 onValueChange = onNameChanged,
@@ -190,9 +195,7 @@ fun MyProfileScreenPreview() {
     PreviewTurniaTheme {
         MyProfileScreenContent(
             uiState = MyProfileUi(
-                name = "John Due",
-                username = "Georgevik",
-                email = "myemail@domain.com"
+                name = "John Due", username = "Georgevik", email = "myemail@domain.com"
             )
         )
     }
