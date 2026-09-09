@@ -3,10 +3,12 @@ package com.georgevik.turnia.ui.main.group.externalcalendar
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.georgevik.turnia.core.domain.model.GroupId
+import com.georgevik.turnia.core.domain.model.SharedCalendarError
 import com.georgevik.turnia.core.domain.model.UserId
 import com.georgevik.turnia.core.domain.repository.GroupRepository
-import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
+import com.georgevik.turnia.core.domain.repository.SharedCalendarRepository
 import com.georgevik.turnia.core.domain.repository.UserRepository
+import com.georgevik.turnia.core.system.Outcome
 import com.georgevik.turnia.core.system.valueOrEmpty
 import com.georgevik.turnia.navigation.main.routes.ExternalCalendarData
 import com.georgevik.turnia.ui.components.calendar.model.CalendarEventUi
@@ -18,13 +20,17 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
+import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
 import kotlin.time.Clock
 
@@ -32,7 +38,7 @@ import kotlin.time.Clock
 class ExternalCalendarViewModel(
     val data: ExternalCalendarData,
     private val groupRepository: GroupRepository,
-    private val personalRepository: PersonalEventRepository,
+    private val sharedCalendarRepository: SharedCalendarRepository,
     private val userRepository: UserRepository,
 ) : ViewModel() {
     private val monthDate = MutableStateFlow(Clock.System.todayIn(TimeZone.currentSystemDefault()))
@@ -61,8 +67,8 @@ class ExternalCalendarViewModel(
     }
 
     /**
-     * Cached events first, then the server's if it had anything newer: the month paints without
-     * waiting on a round trip.
+     * A group's events come from the cache first and again once the server has something newer, so
+     * the month paints without waiting on a round trip. A colleague's cannot: see [sharedCalendar].
      */
     private fun events(date: LocalDate): Flow<Map<LocalDate, List<CalendarEventUi>>> =
         userRepository.loggedUserFlow.flatMapLatest { user ->
@@ -81,15 +87,46 @@ class ExternalCalendarViewModel(
                         }
 
                 is ExternalCalendarData.Personal ->
-                    personalRepository.getEvents(UserId(data.id), date, monthDelta = 2)
-                        .map { events -> events.map { event -> event.toUi(removable = false) } }
+                    sharedCalendar(UserId(data.id), viewerId = uid, date = date)
             }
 
             events.map { list -> list.groupBy { event -> event.date } }
         }
 
+    private fun sharedCalendar(
+        ownerId: UserId,
+        viewerId: UserId,
+        date: LocalDate,
+    ): Flow<List<CalendarEventUi>> =
+        flow {
+            val outcome = sharedCalendarRepository.getSharedCalendar(
+                ownerId = ownerId,
+                from = date.minus(SHARED_MONTH_DELTA, DateTimeUnit.MONTH),
+                to = date.plus(SHARED_MONTH_DELTA, DateTimeUnit.MONTH),
+            )
+
+            when (outcome) {
+                is Outcome.Success -> emit(
+                    outcome.value.groupEvents.map {
+                        it.toUi(currentUserId = viewerId, removable = false)
+                    } + outcome.value.personalEvents.map { it.toUi(removable = false) }
+                )
+
+                is Outcome.Failure -> {
+                    _uiState.update { it.copy(userMessage = outcome.error) }
+                    emit(emptyList())
+                }
+            }
+        }
+
     fun onMonthChanged(date: LocalDate) {
         monthDate.update { date }
+    }
+
+    fun userMessageShown() = _uiState.update { it.copy(userMessage = null) }
+
+    private companion object {
+        const val SHARED_MONTH_DELTA = 1
     }
 }
 
@@ -98,4 +135,5 @@ data class GroupCalendarUi(
     val loading: Boolean = true,
     /** The user was removed from this group: the leftover events show, nothing can be added. */
     val isRevoked: Boolean = false,
+    val userMessage: SharedCalendarError? = null,
 )

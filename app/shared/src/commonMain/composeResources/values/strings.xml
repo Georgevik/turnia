@@ -275,6 +275,9 @@
 
     <!-- Share calendar -->
     <string name="share_calendar_empty">Todavía no compartes tu calendario con nadie.</string>
+    <string name="shared_calendar_error_not_shared">Esta persona ya no comparte su calendario contigo.</string>
+    <string name="shared_calendar_error_range">No hemos podido cargar tantos días a la vez.</string>
+    <string name="shared_calendar_error_load">No hemos podido cargar el calendario.</string>
     <string name="share_calendar_unknown_user">Usuario sin perfil</string>
     <string name="share_calendar_load_error">No hemos podido cargar con quién compartes tu calendario.</string>
     <string name="share_calendar_add">Compartir con alguien</string>

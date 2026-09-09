@@ -19,10 +19,12 @@ import com.georgevik.turnia.core.data.datasource.firestore.mappers.PersonalEvent
 import com.georgevik.turnia.core.data.datasource.firestore.mappers.UserDocumentMapper
 import com.georgevik.turnia.core.data.datasource.firestorefunctions.GroupFunction
 import com.georgevik.turnia.core.data.datasource.firestorefunctions.GroupMembershipFunction
+import com.georgevik.turnia.core.data.datasource.firestorefunctions.SharedCalendarFunction
 import com.georgevik.turnia.core.data.datasource.firestorefunctions.UserProfileFunction
 import com.georgevik.turnia.core.data.group.GroupRepositoryImpl
 import com.georgevik.turnia.core.data.group.InvitationCodeFactory
 import com.georgevik.turnia.core.data.notification.NotificationRepositoryImpl
+import com.georgevik.turnia.core.data.sharedcalendar.SharedCalendarRepositoryImpl
 import com.georgevik.turnia.core.data.user.PersonalEventRepositoryImpl
 import com.georgevik.turnia.core.data.user.UserProvisioner
 import com.georgevik.turnia.core.data.user.UserRepositoryImpl
@@ -33,6 +35,7 @@ import com.georgevik.turnia.core.domain.repository.FcmDelegate
 import com.georgevik.turnia.core.domain.repository.GroupRepository
 import com.georgevik.turnia.core.domain.repository.NotificationRepository
 import com.georgevik.turnia.core.domain.repository.PersonalEventRepository
+import com.georgevik.turnia.core.domain.repository.SharedCalendarRepository
 import com.georgevik.turnia.core.domain.repository.UserRepository
 import com.georgevik.turnia.core.domain.username.UsernameFactory
 import dev.gitlive.firebase.Firebase
@@ -77,6 +80,7 @@ val coreModule: Module = module {
     single { RevokedGroupFirestore(get(), get(), get()) }
     single { GroupMembershipFunction(get()) }
     single { GroupFunction(get()) }
+    single { SharedCalendarFunction(get()) }
     single { PersonalEventFirestore(get(), get(), get()) }
     single { PersonalEventTypesFirestore(get(), get(), get(), get()) }
     factory { UserDocumentMapper() }
@@ -110,4 +114,5 @@ val coreModule: Module = module {
         )
     }
     single<PersonalEventRepository> { PersonalEventRepositoryImpl(get(), get(), get(), get()) }
+    single<SharedCalendarRepository> { SharedCalendarRepositoryImpl(get()) }
 }

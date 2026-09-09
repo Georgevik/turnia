@@ -77,24 +77,41 @@ export const getSharedCalendar = onCall(async (request) => {
   );
   const groupEvents = groupEventsPerGroup.flat();
 
-  // Personal events in range.
+  // Personal events in range. Their `date` is a full ISO instant, not the plain "YYYY-MM-DD" a
+  // group event carries, and it is the start of the day in the *writer's* timezone — so string
+  // comparison against a bare date drops the last day, and a day either side can land outside the
+  // range. Both bounds are widened by a day; the client renders each event on its own local date
+  // and simply never draws the surplus.
+  const dayShift = (date: string, days: number) =>
+    new Date(Date.parse(date) + days * 86_400_000).toISOString().slice(0, 10);
+
   const personalSnap = await db
     .collection(`users/${ownerUid}/personalEvents`)
-    .where("date", ">=", from)
-    .where("date", "<=", to)
+    .where("date", ">=", dayShift(from, -1))
+    .where("date", "<=", dayShift(to, 2))
     .get();
-  const personalEvents = personalSnap.docs.map((doc) => ({
-    eventId: doc.id,
-    personalEventTypeId: doc.get("personalEventTypeId"),
-    date: doc.get("date"),
-    notes: doc.get("notes") ?? null,
-  }));
+  const personalEvents = personalSnap.docs
+    .filter((doc) => doc.get("isDeleted") !== true)
+    .map((doc) => ({
+      eventId: doc.id,
+      // The field is `typeId`: `personalEventTypeId` never existed on these documents and read
+      // back undefined, which left every personal event here without a type to render it with.
+      personalEventTypeId: doc.get("typeId"),
+      date: doc.get("date"),
+      notes: doc.get("notes") ?? null,
+    }));
 
   // Lookups for rendering: personal types, the owner's colors, and group types per group.
   const personalTypesSnap = await db.collection(`users/${ownerUid}/personalEventTypes`).get();
   const personalEventTypes = personalTypesSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
   const groupEventTypeColors = (ownerDoc.get("groupEventTypeColors") as Record<string, string> | undefined) ?? {};
+
+  // The viewer may belong to none of these groups, so they cannot read the names themselves.
+  const groupNames: Record<string, string> = {};
+  ownerGroups.docs.forEach((group) => {
+    groupNames[group.id] = (group.get("name") as string | undefined) ?? "";
+  });
 
   // The groups were already read to find the events; their types came along with them. A group the
   // owner was revoked from gives up only the types their own returned events use — the same
@@ -112,5 +129,12 @@ export const getSharedCalendar = onCall(async (request) => {
     groupEventTypes[group.id] = types.filter((type) => usedTypeIds.has(type.id as string));
   });
 
-  return { groupEvents, personalEvents, personalEventTypes, groupEventTypeColors, groupEventTypes };
+  return {
+    groupEvents,
+    personalEvents,
+    personalEventTypes,
+    groupEventTypeColors,
+    groupEventTypes,
+    groupNames,
+  };
 });
