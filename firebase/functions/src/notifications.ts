@@ -171,8 +171,8 @@ export const onEventPutOnSwap = onDocumentWritten(
  * on the granter's own public document, which is what both the security rules and the "shared with
  * me" query read, and routing it through a function to send a push would not make it any safer.
  *
- * The cost is that this runs on every write to `users/{uid}` — a rename, a colour picked for an
- * event type — so the first thing it does is compare the two lists and leave.
+ * The cost is that this runs on every write to `users/{uid}` — a rename, a new avatar — so the
+ * first thing it does is compare the two lists and leave.
  */
 export const onCalendarShared = onDocumentWritten("users/{uid}", async (event) => {
   const before = (event.data?.before.get("calendarSharedWith") as string[] | undefined) ?? [];

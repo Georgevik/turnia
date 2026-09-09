@@ -226,6 +226,11 @@
     <string name="profile_error_username_invalid">Entre 3 y 20 caracteres: letras, números, guion bajo o punto.</string>
     <string name="profile_error_username_taken">Ese nombre de usuario ya está en uso.</string>
     <string name="profile_error_save">No hemos podido guardar los cambios.</string>
+    <string name="profile_avatar_change">Cambiar avatar</string>
+    <string name="profile_avatar_title">Elige tu avatar</string>
+    <string name="profile_avatar_animal">Animal</string>
+    <string name="profile_avatar_color">Color</string>
+    <string name="profile_avatar_done">Listo</string>
 
     <!-- Bottom bar -->
     <string name="tab_calendar">Calendario</string>

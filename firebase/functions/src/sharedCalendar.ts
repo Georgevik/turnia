@@ -105,7 +105,11 @@ export const getSharedCalendar = onCall(async (request) => {
   const personalTypesSnap = await db.collection(`users/${ownerUid}/personalEventTypes`).get();
   const personalEventTypes = personalTypesSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
-  const groupEventTypeColors = (ownerDoc.get("groupEventTypeColors") as Record<string, string> | undefined) ?? {};
+  // The owner's colour picks live under `private`, not on their public profile: nobody but them
+  // may read what they chose, and this function is the one thing allowed to render with it.
+  const preferencesDoc = await db.doc(`users/${ownerUid}/private/preferences`).get();
+  const groupEventTypeColors =
+    (preferencesDoc.get("groupEventTypeColors") as Record<string, string> | undefined) ?? {};
 
   // The viewer may belong to none of these groups, so they cannot read the names themselves.
   const groupNames: Record<string, string> = {};

@@ -48,7 +48,7 @@ Everything on a calendar is an **event** (there is no separate "shift" term). Tw
 ## Colors
 
 `groupEventType` has **no color**: each user picks the color per group event type
-(`users/{uid}.groupEventTypeColors`), and all their events of that type share it.
+(`users/{uid}/private/preferences.groupEventTypeColors`), and all their events of that type share it.
 `personalEventType` carries its own `color`.
 
 A **group** does carry one (`groups/{groupId}.color`): unlike a type's, it is the admin's pick and
@@ -59,19 +59,37 @@ derives its accent from the group id instead.
 
 ## `users/{uid}`
 
-The **public** profile: every user this one shares their calendar with can read this whole document,
-so it carries nothing but the name and the grant list. Everything else lives under `private` (below).
+The **public** profile: readable by **any signed-in user**. That is the point — a search result has
+to render for someone who has never shared anything with the searcher, and before this document was
+public the only way to do that was to keep a second copy of the name on the reservation. There is
+one copy now, here. Everything a stranger must not see lives under `private` (below).
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `name` | string | Display name. |
 | `username` | string | Handle, `a-z0-9._`, 3-20 chars. Auto-generated from the name on sign-up (`jorgeg482`); the user can change it. Kept unique by the `usernames` collection. |
+| `animalIconId` | string \| null | The `animal_icon_*` drawable suffix the user picked (`"duck"`). Absent until they pick one. |
+| `backgroundColor` | string \| null | Hex behind the icon. Absent until they pick one. |
 | `calendarSharedWith` | string[] | UIDs this user grants read access to **their** calendar. Written only by the owner. |
-| `groupEventTypeColors` | map&lt;string,string&gt; | Color per group event type, keyed by `"{groupId}_{groupEventTypeId}"` → hex. |
+| `updateAt` | timestamp | Server timestamp of the last write. The marker on `usernames/{username}` is a copy of it; a reader compares the two to tell whether their cached profile is current. |
 
-> `calendarSharedWith` has to stay on the public document: the security rules read it to authorize the
-> very access it grants, and the "calendars shared with me" list is a query over it. The cost is that a
-> user you share with can see who else you share with.
+> **Neither half of the avatar is stored until the user picks it.** Both fields are absent on a
+> profile that has never opened the picker, and the client renders the same default for all of them
+> — the first colour of the palette behind a default animal. The default lives in the client, not in
+> the document, so changing it re-skins every account that never picked instead of only the ones
+> created afterwards.
+
+> The avatar is written **straight from the client**, unlike the name. A rename goes through the
+> `updateProfile` Cloud Function because the name is copied into every group the user belongs to and
+> copies need a keeper; the avatar is copied nowhere, so there is nothing to chase. Both writes move
+> `updateAt` here **and** on the reservation, in one commit.
+
+> `calendarSharedWith` has to stay on this document: the security rules read it to authorize the
+> very access it grants, and the "calendars shared with me" list is a query over it. Now that the
+> document is public, so is the grant list — anyone signed in can see who you share your calendar
+> with, and resolve those uids to names through this same collection. That is a deliberate trade,
+> made when the profile was opened up: the alternative was a separate grant collection, two reads
+> per row on the People screen, and a rule that does an `exists()` per event query.
 
 ### `users/{uid}/private/account`
 
@@ -103,6 +121,31 @@ Readable and writable **only by the owner**.
 > again. Nothing on the server reads it; an empty `fcmTokens` is already the whole story there.
 > It is not the **system** permission either, which only the OS can answer for: a user who denied
 > notifications to the app sees this switch on and still gets nothing.
+
+### `users/{uid}/private/preferences`
+
+What the user has chosen for themselves. Readable and writable **only by the owner**.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `groupEventTypeColors` | map&lt;string,string&gt; | Color per group event type, keyed by `"{groupId}_{groupEventTypeId}"` → hex. |
+| `updateAt` | timestamp | Server timestamp of the last write. What a reader compares the `preferences` marker against. |
+
+> It has **its own marker**, `preferences` on `users/{uid}/sync/updates`, written in the same commit
+> as the document. That is what lets every group screen read the colours from the cache instead of
+> holding a listener on them: the sync document is already listened to, so the marker costs nothing,
+> and only another of this user's devices moving it costs a read. An **unresolved** marker counts as
+> settled — a pick made on this device is in the cache before the server acknowledges it, which is
+> exactly when the cache is the most current thing there is, so the colour repaints immediately and
+> offline.
+>
+> It could not share the old `private` marker: `account` is read once per session through that one,
+> and a colour pick moving it would make `account` look stale and cost a server read of it on every
+> launch. That is one of the two reasons the marker was split per document.
+
+> It used to live on `users/{uid}`. It moved when that document became world-readable: what colour
+> somebody paints their own shifts is nobody else's business. `getSharedCalendar` still renders with
+> the owner's picks — it reads them here, with admin privileges.
 
 ### `users/{uid}/private/joinRequests`
 
@@ -148,16 +191,16 @@ receipt. An absent document means the free tier.
 | `expiresAt` | timestamp \| null | Current period end; entitlement is active while now &lt; `expiresAt`. |
 | `updatedAt` | timestamp | Last time the server updated this from a store notification. |
 
-**Access**: `users/{uid}` is readable by the owner and by UIDs in `calendarSharedWith`, and writable only by
-the owner. `users/{uid}/private/**` is readable and writable only by the owner, except
-`private/subscription`, which the owner may read but never write. `private/joinRequests` is written by
-both the owner and the server, and the wildcard covers that: the server adds a pointer, the owner
-removes it.
+**Access**: `users/{uid}` is readable by **any signed-in user** and writable only by the owner, who
+may not change `name` or `username` — only `updateProfile` may. `users/{uid}/private/**` is readable
+and writable only by the owner, except `private/subscription`, which the owner may read but never
+write. `private/joinRequests` is written by both the owner and the server, and the wildcard covers
+that: the server adds a pointer, the owner removes it.
 
 **Listing the calendars shared with me** — the grant lives on the **granter's** document, so the list is a
 query over `users` filtered by `calendarSharedWith array-contains {myUid}`, not a field of my own document.
-`array-contains` is covered by the automatic single-field index, and the rule on `users/{uid}` allows exactly
-the documents that query returns, so nothing else is readable through it.
+`array-contains` is covered by the automatic single-field index. The query returns whole profiles, so
+the names and avatars in that list arrive with it and cost no second read.
 
 **A single source of truth for a grant** — A may read B's calendar if and only if `A ∈ users/B.calendarSharedWith`.
 Only B writes it, on their own document; `getSharedCalendar` and the security rules both check that one list.
@@ -167,34 +210,52 @@ There is no mirrored list on the reader's side to drift out of sync with it.
 
 ## `usernames/{username}`
 
-The reservation that makes a username unique, and the only way to find a user you cannot read yet.
-The **document id is the username**; `username` repeats it as a field because a document id cannot be
+The reservation that makes a username unique, and the index a prefix search runs over. The
+**document id is the username**; `username` repeats it as a field because a document id cannot be
 prefix-queried.
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `username` | string | Same as the document id. |
 | `uid` | string | The user who reserved it. |
-| `name` | string | Display name, so a search result can be rendered without reading `users/{uid}`. |
+| `updateAt` | timestamp | Server timestamp of the last profile write by that user. The marker a searcher compares their cached `users/{uid}` against. |
 
-**Access**: readable by any signed-in user — that is the point, since `users/{uid}` is not. `create`
-only when `uid == auth.uid`; `update` and `delete` only by the uid already in the document.
+**It no longer carries the name.** It used to, because `users/{uid}` was unreadable to a stranger and
+a search result had to render from something. Now the profile is public and the name lives in one
+place; what the reservation carries instead is the marker below.
 
-**Uniqueness** comes from Firestore itself: a write to a document that does not exist is a `create`, and
-one to an existing document is an `update`. A second claimant therefore lands on `update`, where the rule
-demands they already own it, and is denied. No transaction needed.
+**Access**: readable by any signed-in user. `create` only when `uid == auth.uid` and the field
+matches the document id; `delete` never — releasing a reservation is `updateProfile`'s alone.
+`update` is allowed to the owning uid and **only for `updateAt`**: the two fields that make the
+document a lock are frozen, and a client changing the marker cannot quietly take over a handle.
 
-**Search** is a prefix query: `username >= q` and `username <= q + '\uf8ff'`, minimum 3 characters, capped
-at 20 results. Firestore has **no substring or full-text search** — `jorge` finds `jorgeg482`, but `geg`
-finds nothing. Matching the middle of a handle, or searching by display name, needs either an n-gram field,
-a Cloud Function, or an external search index.
+**Uniqueness** comes from Firestore itself: a write to a document that does not exist is a `create`,
+and one to an existing document is an `update`. A second claimant therefore lands on `update`, where
+the rule demands they already own it, and is denied. No transaction needed.
 
-**Resolving a uid** — `usernames` is also queried by `uid in [...]`, because `users/{uid}` is unreadable
-unless that person shares their calendar back: it is the only way to put a name to someone *you* granted
-access to. `uid` is covered by the automatic single-field index.
+**Search** is a prefix query: `username >= q` and `username <= q + '\uf8ff'`, minimum 3 characters,
+capped at 20 results. Firestore has **no substring or full-text search** — `jorge` finds
+`jorgeg482`, but `geg` finds nothing. Matching the middle of a handle, or searching by display name,
+needs either an n-gram field, a Cloud Function, or an external search index.
 
-**Renaming** is claim-then-release: reserve the new document, point `users/{uid}.username` at it, then
-delete the old one. A release that fails leaves a stale reservation, which only blocks that one username.
+**The marker is what makes the second search free.** A hit gives the searcher a uid, and the profile
+behind it is one more read. `updateAt` moves on every write to that user's profile — a rename
+through `updateProfile`, an avatar written by the client — and it arrives inside the search query
+the client was already paying for. So the profile read consults the cache first and only asks the
+server when the cached copy's own `updateAt` is older. Searching the same prefix twice costs the
+query and nothing more.
+
+> The marker only pays where it arrives free. Resolving a **known list** of uids — the People
+> screen's "shared by me", a group's members — reads `users/{uid}` directly: fetching a marker per
+> uid would cost exactly the read it was meant to save. Those reads are cache-first without a
+> marker, so a new avatar shows up there on the next forced refresh rather than instantly.
+
+> A profile write and its marker must land in the **same commit**. Written apart, the marker is
+> always the later of the two, every reader thinks their cache is behind, and no cache ever settles.
+
+**Renaming** is claim-then-release: reserve the new document, point `users/{uid}.username` at it,
+then delete the old one. A release that fails leaves a stale reservation, which only blocks that one
+username.
 
 ---
 
@@ -211,7 +272,7 @@ Reusable personal event templates the user defines.
 | `endTime` | string \| null | `HH:mm` or `null`. |
 | `color` | string \| null | The type's **default** colour, fixed when the type is created and never written again; what every member sees until they pick their own. `null` in types created before it existed, which fall back to a colour derived from the `id`. |
 
-> A member may override it with their own in `users/{uid}.groupEventTypeColors`, keyed
+> A member may override it with their own in `users/{uid}/private/preferences.groupEventTypeColors`, keyed
 > `"{groupId}_{typeId}"`, and theirs wins. The member's colour never goes on this document:
 > `groups/{groupId}` is read by the whole group, and a personal preference has no business there.
 
@@ -240,21 +301,39 @@ what it already cached to decide whether it has to query the server at all.
 | `personalEventsUpdatedAt` | timestamp \| null | Last write to `personalEvents` (server timestamp). |
 | `personalEventTypesUpdatedAt` | timestamp \| null | Last write to `personalEventTypes` (server timestamp). |
 | `revokedGroups` | timestamp \| null | Last write to `revokedGroups` — a revocation or a rejoin. Moved **only** by `leaveGroup` / `removeMember` / the rejoin path, never by a client. |
-| `private` | timestamp \| null | Last write to the `private` subcollection: `account` and `joinRequests`. |
+| `account` | timestamp \| null | Last write to `private/account`. |
+| `joinRequests` | timestamp \| null | Last write to `private/joinRequests`, **or** to a `groups/{g}/joinRequests/{uid}` this user owns — answering a request changes no field of the pointer list, and this is the only thing that tells the requester to look again. |
+| `preferences` | timestamp \| null | Last write to `private/preferences`. |
+| `private` | timestamp \| null | **Legacy, read-only.** The single marker `account` and `joinRequests` used to share. |
 
 Every timestamp is written with a **server timestamp**, so readers on other devices compare against the same
 clock. A missing document (or field) means that part has never been written. Each writer merges **only its
-own field**, so the two timestamps never overwrite each other.
+own field**, so the timestamps never overwrite each other.
 
-`private` gates two documents that are read once per session — `account`, to decide whether the device
-should register for push, and `joinRequests`, to show a requester the answer to their request. Both are
-written from **both sides**: the owner's app and the Cloud Functions. So every writer has to move this
+**One marker per document, not one per subcollection.** `account` and `joinRequests` shared a single
+`private` field, so registering a push token invalidated the join-request cache and answering a request
+invalidated the account cache — a needless server read each way. They are separate now, and clients read
+`account ?? private` / `joinRequests ?? private` so an install that predates the split is not told its
+cache is fine when it is not. `private` is never written again; drop the fallback once no account can
+still be carrying only the old field.
+
+`account` and `joinRequests` are read once per session — `account`, to decide whether the device should
+register for push, and `joinRequests`, to show a requester the answer to their request. Both are written
+from **both sides**: the owner's app and the Cloud Functions. So every writer has to move the matching
 marker, the server included — `writeJoinRequestPointer` in `functions/src/users.ts` exists to make that
-impossible to forget. A document written without moving the marker is one the reader never sees.
+impossible to forget. A document written without moving its marker is one the reader never sees.
 
-`private/subscription` is **not** covered by it: only the receipt-verification Cloud Function writes that
+`preferences` is read differently: not once per session but continuously, by every group screen. Its
+marker is what lets those reads come from the **cache** — a listener on the document itself would bill it
+again on every re-attach, whereas the sync document is already listened to and the marker rides along for
+free. The rule the reader follows is *cache unless the marker says otherwise*, and an **unresolved**
+marker settles rather than forcing a read: a pick made on this device is in the cache before the server
+acknowledges it, so the colour repaints straight away, offline included. Only another of the user's
+devices leaves the cache genuinely behind, and only that costs a read.
+
+`private/subscription` is covered by no marker: only the receipt-verification Cloud Function writes that
 document, and gating it behind a marker the client also moves would keep an expired subscription looking
-valid. The day that function bumps `private` too, `subscription` can join.
+valid.
 
 **Access**: written by the owner; read by the owner and by UIDs in `calendarSharedWith`.
 
@@ -303,7 +382,7 @@ it, and the rejoin path soft-deletes it.
 | `color` | string \| null | Accent color (`#RRGGBB`), picked by an admin and shared by every member. Null on groups saved before the field existed. |
 | `memberUids` | string[] | Every member. The **single source of truth** for membership — written only by `acceptJoinRequest`, `leaveGroup` and `removeMember`. |
 | `revokedUids` | string[] | Former members who still hold events here. They read **only the events assigned to them** and never the group document itself. A uid is in `memberUids` **xor** `revokedUids`, never both; someone who left with no events is in neither. Written only by `leaveGroup` / `removeMember`, and cleared when they rejoin. |
-| `members` | map&lt;uid, {`name`, `username`}&gt; | Who those uids are — **`memberUids` only**; a revoked uid is dropped from here, so the calendar renders their leftover shifts without a name and the UI labels them as a former member. Denormalized on purpose: a calendar shows who covers each shift constantly, and `users/{uid}` is unreadable between group mates, so the alternative is a query against `usernames` every time. Here it costs **no read at all** — it arrives with the group. |
+| `members` | map&lt;uid, {`name`, `username`}&gt; | Who those uids are — **`memberUids` only**; a revoked uid is dropped from here, so the calendar renders their leftover shifts without a name and the UI labels them as a former member. Denormalized on purpose: a calendar shows who covers each shift constantly, so the alternative is a read of `users/{uid}` per member every time it renders. Here it costs **no read at all** — it arrives with the group. The **avatar is deliberately not copied here**: it is shown on the member list and the join requests, not on every calendar row, so it is read from the profile on demand and a new one needs no fan-out. |
 | `adminUids` | string[] | UIDs with admin role. |
 | `groupEventTypes` | array&lt;map&gt; | Event type templates — see below. |
 | `invitation` | map | The group's single invitation — see below. |
@@ -319,7 +398,7 @@ it, and the rejoin path soft-deletes it.
 | `endTime` | string \| null | `HH:mm` or `null`. |
 | `color` | string \| null | The type's **default** colour, fixed when the type is created and never written again; what every member sees until they pick their own. `null` in types created before it existed, which fall back to a colour derived from the `id`. |
 
-> A member may override it with their own in `users/{uid}.groupEventTypeColors`, keyed
+> A member may override it with their own in `users/{uid}/private/preferences.groupEventTypeColors`, keyed
 > `"{groupId}_{typeId}"`, and theirs wins. The member's colour never goes on this document:
 > `groups/{groupId}` is read by the whole group, and a personal preference has no business there.
 
@@ -540,15 +619,20 @@ Firestore keeps only a **recent window** of events; older events are purged and 
 
   A `type` with no destination still opens the app; it just does not move it anywhere, which is also
   what an older client does with a `type` it has never heard of.
-- **Colors**: `groupEventType` has no color (user's `groupEventTypeColors` decides it); `personalEventType`and `group` carry their own — a group's is the admin's pick and is the same for every member..
+- **Colors**: `groupEventType` has no color (the user's `private/preferences.groupEventTypeColors` decides it); `personalEventType` and `group` carry their own — a group's is the admin's pick and is the same for every member.
 - **Group-wide event queries are bounded to a ≤ 3-month `date` range** (collection-group on `event`, filtered by `groupId`).
 - **Cross-group shared calendars** are served on demand by the `getSharedCalendar` Cloud Function
   (collection-group on `event` filtered by `assigneeId` + date range); nothing is mirrored.
 - **A username is unique and reserved**: `usernames/{username}` holds it; claim the reservation *before*
   writing `users/{uid}.username`, and release the old one after.
 - **A grant lives in one place**: `users/{owner}.calendarSharedWith`, written only by the owner. No mirrored list.
-- **`users/{uid}` is public to everyone you share with** — the name and the grant list, nothing else; email,
-  FCM tokens and entitlement live under `users/{uid}/private/**`.
+- **`users/{uid}` is public to every signed-in user** — the name, the handle, the avatar and the
+  grant list; email, FCM tokens, entitlement and the user's own colour picks live under
+  `users/{uid}/private/**`.
+- **A profile write and its marker travel together**: any write to `users/{uid}` must also move
+  `usernames/{username}.updateAt` in the **same commit**, or no reader's cache ever settles.
+- **The name has a keeper, the avatar does not**: `name` and `username` are copied into every group,
+  so only `updateProfile` may change them; the avatar is copied nowhere and the client writes it.
 - **Sync timestamps are bumped on every personal write**: a write to `personalEvents` / `personalEventTypes` must also
   merge the matching field of `users/{uid}/sync/updates`, or readers keep serving a stale cache.
 - **`subscription` is server-only**: only the subscription-verification Cloud Function writes `users/{uid}/private/subscription`; the client can never set itself premium.
