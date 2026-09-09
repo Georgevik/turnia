@@ -13,6 +13,7 @@ data class UserProfile(
     ) {
         companion object {
             val NONE = AnimalAvatar(animal = null, background = null)
+            val PREVIEW = AnimalAvatar(animal = "bat", background = "#488844")
         }
     }
 }

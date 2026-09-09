@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.geoviksoft.turnia.core.domain.model.UserProfile
 import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
@@ -29,13 +30,20 @@ import turnia.app.shared.generated.resources.animal_icon_duck
 @Composable
 fun UserAvatar(
     avatar: UserProfile.AnimalAvatar,
+    size: UserAvatarSize = UserAvatarSize.M,
     modifier: Modifier = Modifier,
 ) {
     UserAvatar(
-        modifier = modifier,
+        modifier = modifier.size(size.value),
         background = avatar.background?.toComposeColorOrNull() ?: EntityPalette.first(),
         animalIcon = animalIcon(avatar.animal ?: "bat"),
     )
+}
+
+enum class UserAvatarSize(val value : Dp) {
+    S(32.dp),
+    M(48.dp),
+    L(64.dp)
 }
 
 @Composable
@@ -76,7 +84,7 @@ fun UserAvatarPreview() {
             UserAvatar(
                 avatar = UserProfile.AnimalAvatar(
                     animal = "duck",
-                    background = EntityPalette.random().toHex()
+                    background = EntityPalette[2].toHex()
                 ),
                 modifier = Modifier.size(64.dp),
             )
