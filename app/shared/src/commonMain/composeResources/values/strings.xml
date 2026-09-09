@@ -236,7 +236,7 @@
     <string name="tab_calendar">Calendario</string>
     <string name="tab_people">Personas</string>
     <string name="tab_groups">Grupos</string>
-    <string name="tab_changes">Cambios</string>
+    <string name="tab_swap">Intercambios</string>
     <string name="tab_settings">Ajustes</string>
 
     <string name="group_admin_badge">ADMIN</string>
@@ -319,5 +319,22 @@
     <string name="event_swap_error_not_member">Ya no estás en este grupo.</string>
     <string name="event_swap_error_own_shift">Este turno ya es tuyo.</string>
     <string name="event_swap_error_not_found">Este turno ya no existe.</string>
+
+    <!-- Swap tab -->
+    <string name="swap_title">Intercambios</string>
+    <string name="swap_segment_offered">Los ofrezco</string>
+    <string name="swap_segment_available">Disponibles</string>
+    <string name="swap_segment_covered">Los cubre otro</string>
+    <string name="swap_segment_covering">Los cubro yo</string>
+    <string name="swap_filter_title">Filtrar por grupo</string>
+    <string name="swap_filter_all">Todos los grupos</string>
+    <string name="swap_empty_offered_title">Nada en el escaparate</string>
+    <string name="swap_empty_offered_body">No has puesto ningún turno en intercambio. Tu tiempo libre sigue siendo teórico.</string>
+    <string name="swap_empty_available_title">Aquí no hay ganga</string>
+    <string name="swap_empty_available_body">Nadie suelta un turno ahora mismo. Sorprendente, sí.</string>
+    <string name="swap_empty_covered_title">Todo sigue siendo tuyo</string>
+    <string name="swap_empty_covered_body">Nadie te ha cubierto nada todavía. Paciencia, o una tarta bien colocada.</string>
+    <string name="swap_empty_covering_title">Libre de favores</string>
+    <string name="swap_empty_covering_body">No cubres el turno de nadie. Disfrútalo mientras dure.</string>
 
 </resources>

@@ -416,6 +416,41 @@ class GroupRepositoryImpl(
         )
     }
 
+    /**
+     * The window is asymmetric — today to [monthsAhead] months on — where the calendar's is centred
+     * on the month it is showing. A shift in the past is history, not something to swap.
+     *
+     * The date cut-off is applied here and never in the query: as a Firestore clause it would make
+     * the shape `yearMonth == X and updateAt > T and date >= D`, which needs a composite index that
+     * does not exist, for a filter three lines of Kotlin do for free.
+     */
+    override fun getSwapEvents(date: LocalDate, monthsAhead: Int): Flow<List<GroupEvent>> = flow {
+        val viewer = userRepository.loggedUser?.id
+        if (viewer == null) {
+            emit(emptyList())
+            return@flow
+        }
+
+        emitAll(
+            getGroups().flatMapLatest { groups ->
+                if (groups.isEmpty()) return@flatMapLatest flowOf(emptyList())
+
+                val perGroup = groups.map { group ->
+                    eventsBetween(
+                        group = group,
+                        memberNames = group.memberNames(),
+                        viewer = viewer,
+                        from = date,
+                        until = date.plus(monthsAhead, DateTimeUnit.MONTH),
+                    )
+                }
+                combine(perGroup) { events ->
+                    events.toList().flatten().filter { it.date >= date }
+                }
+            }
+        )
+    }
+
     /** The copy of the members' names the group carries, so rendering one costs no read. */
     private fun Group.memberNames(): Map<String, String> =
         members.associate { member -> member.id.value to member.name }
@@ -441,10 +476,24 @@ class GroupRepositoryImpl(
         viewer: UserId,
         date: LocalDate,
         monthDelta: Int,
+    ): Flow<List<GroupEvent>> = eventsBetween(
+        group = group,
+        memberNames = memberNames,
+        viewer = viewer,
+        from = date.minus(monthDelta, DateTimeUnit.MONTH),
+        until = date.plus(monthDelta, DateTimeUnit.MONTH),
+    )
+
+    private fun eventsBetween(
+        group: Group,
+        memberNames: Map<String, String>,
+        viewer: UserId,
+        from: LocalDate,
+        until: LocalDate,
     ): Flow<List<GroupEvent>> = groupEventFirestore.get(
         group.id,
-        from = date.minus(monthDelta, DateTimeUnit.MONTH).toInstant(),
-        until = date.plus(monthDelta, DateTimeUnit.MONTH).toInstant(),
+        from = from.toInstant(),
+        until = until.toInstant(),
         // Not an optimisation: the rules only let a revoked user read the events assigned to them,
         // and they prove it from the query's filters, so without this the read is refused.
         assigneeId = viewer.takeIf { group.isRevoked },

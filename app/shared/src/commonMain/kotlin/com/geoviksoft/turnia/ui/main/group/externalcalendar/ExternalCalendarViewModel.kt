@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
@@ -75,18 +76,20 @@ class ExternalCalendarViewModel(
         userRepository.loggedUserFlow.flatMapLatest { user ->
             val uid = user.id
             val events = when (data) {
-                is ExternalCalendarData.Group ->
-
+                // Revocation is followed rather than read once: a member removed while the
+                // calendar is open must lose the swap controls, not keep them until a reload.
+                is ExternalCalendarData.Group -> isRevoked().flatMapLatest { revoked ->
                     groupRepository.getEventsByGroup(GroupId(data.id), date, monthDelta = 2)
                         .map { outcome ->
                             outcome.valueOrEmpty().map {
                                 it.toUi(
                                     currentUserId = uid,
                                     removable = it.ownerId == uid && it.assigneeId == uid,
-                                    takeable = true,
+                                    activeMember = !revoked,
                                 )
                             }
                         }
+                }
 
                 is ExternalCalendarData.Personal ->
                     sharedCalendar(UserId(data.id), viewerId = uid, date = date)
@@ -94,6 +97,10 @@ class ExternalCalendarViewModel(
 
             events.map { list -> list.groupBy { event -> event.date }.swapFirst() }
         }
+
+    private fun isRevoked(): Flow<Boolean> = groupRepository.getGroups()
+        .map { groups -> groups.find { it.id.value == data.id }?.isRevoked == true }
+        .distinctUntilChanged()
 
     private fun sharedCalendar(
         ownerId: UserId,
@@ -109,9 +116,9 @@ class ExternalCalendarViewModel(
 
             when (outcome) {
                 is Outcome.Success -> emit(
-                    // `takeable` stays false: these shifts belong to groups the viewer may not be
-                    // in at all, and `takeEvent` refuses a non-member. Offering them the button
-                    // would only produce a failure.
+                    // `activeMember` stays false: these shifts belong to groups the viewer may not
+                    // be in at all, and every swap write would be refused. Offering the controls
+                    // would only produce failures.
                     outcome.value.groupEvents.map {
                         it.toUi(currentUserId = viewerId, removable = false)
                     } + outcome.value.personalEvents.map { it.toUi(removable = false) }
