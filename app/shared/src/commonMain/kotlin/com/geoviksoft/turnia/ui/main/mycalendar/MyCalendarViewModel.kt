@@ -10,6 +10,7 @@ import com.geoviksoft.turnia.core.domain.repository.GroupRepository
 import com.geoviksoft.turnia.core.domain.repository.PersonalEventRepository
 import com.geoviksoft.turnia.core.domain.repository.UserRepository
 import com.geoviksoft.turnia.ui.components.calendar.model.CalendarEventUi
+import com.geoviksoft.turnia.ui.components.calendar.model.swapFirst
 import com.geoviksoft.turnia.ui.components.calendar.model.toUi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -88,6 +89,6 @@ class MyCalendarViewModel(
             }
         }
 
-        return eventsByDate.mapValues { it.value.toList() }
+        return eventsByDate.mapValues { it.value.toList() }.swapFirst()
     }
 }

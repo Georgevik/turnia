@@ -15,7 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -57,6 +58,8 @@ fun CalendarCell(
     onClick: () -> Unit,
     modifier: Modifier = Modifier.Companion,
     events: List<CalendarEventUi> = emptyList(),
+    /** Driven once for the whole calendar; see `CalendarViewer`. */
+    swapMarkerAngle: Float = 0f,
 ) {
     val indicatorColor = if (isToday) theme.accentColor else Color.Transparent
     val numberColor = when {
@@ -117,7 +120,11 @@ fun CalendarCell(
                             .fillMaxWidth()
                             .weight(1f)
                     ) {
-                        EventRow(modifier = Modifier.weight(1f), event = events.first())
+                        EventRow(
+                            modifier = Modifier.weight(1f),
+                            event = events.first(),
+                            swapMarkerAngle = swapMarkerAngle,
+                        )
                         Spacer(modifier.weight(1f))
                     }
                 }
@@ -128,8 +135,16 @@ fun CalendarCell(
                             .fillMaxWidth()
                             .weight(1f)
                     ) {
-                        EventRow(modifier = Modifier.weight(1f), event = events[0])
-                        EventRow(modifier = Modifier.weight(1f), event = events[1])
+                        EventRow(
+                            modifier = Modifier.weight(1f),
+                            event = events[0],
+                            swapMarkerAngle = swapMarkerAngle,
+                        )
+                        EventRow(
+                            modifier = Modifier.weight(1f),
+                            event = events[1],
+                            swapMarkerAngle = swapMarkerAngle,
+                        )
                         if (events.size > 2) {
                             OverflowRow()
                         }
@@ -142,7 +157,11 @@ fun CalendarCell(
 }
 
 @Composable
-private fun EventRow(event: CalendarEventUi, modifier: Modifier = Modifier) {
+private fun EventRow(
+    event: CalendarEventUi,
+    modifier: Modifier = Modifier,
+    swapMarkerAngle: Float = 0f,
+) {
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -171,15 +190,18 @@ private fun EventRow(event: CalendarEventUi, modifier: Modifier = Modifier) {
                 stepSize = 1.sp,
             ),
         )
-        // On swap — small corner marker so it stands out at a glance in the grid.
+        // On swap — a turning corner marker, so a shift going spare catches the eye in a grid of
+        // otherwise still tiles. The angle is read inside `graphicsLayer` so each frame invalidates
+        // the draw and not the composition.
         if (event.onSwap) {
             Icon(
-                imageVector = Icons.Default.SwapHoriz,
+                imageVector = Icons.Default.Autorenew,
                 contentDescription = null,
                 tint = event.textColor,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .size(11.dp),
+                    .size(11.dp)
+                    .graphicsLayer { rotationZ = swapMarkerAngle },
             )
         }
     }

@@ -12,6 +12,7 @@ import com.geoviksoft.turnia.core.system.Outcome
 import com.geoviksoft.turnia.core.system.valueOrEmpty
 import com.geoviksoft.turnia.navigation.main.routes.ExternalCalendarData
 import com.geoviksoft.turnia.ui.components.calendar.model.CalendarEventUi
+import com.geoviksoft.turnia.ui.components.calendar.model.swapFirst
 import com.geoviksoft.turnia.ui.components.calendar.model.toUi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -91,7 +92,7 @@ class ExternalCalendarViewModel(
                     sharedCalendar(UserId(data.id), viewerId = uid, date = date)
             }
 
-            events.map { list -> list.groupBy { event -> event.date } }
+            events.map { list -> list.groupBy { event -> event.date }.swapFirst() }
         }
 
     private fun sharedCalendar(
