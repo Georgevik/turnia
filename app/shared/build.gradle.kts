@@ -67,6 +67,7 @@ kotlin {
             implementation(libs.navigation3.ui)
             implementation(libs.lifecycle.viewmodel.navigation3)
             implementation(libs.kmpauth.google)
+            implementation(libs.kmpauth.apple)
             implementation(libs.kmpauth.firebase)
             implementation(libs.kmpauth.uihelper)
 

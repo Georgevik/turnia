@@ -2,6 +2,7 @@ package com.geoviksoft.turnia.ui.signin
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,7 +38,10 @@ import com.geoviksoft.turnia.ui.signin.model.SignInError
 import com.geoviksoft.turnia.ui.signin.model.SignInUi
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
 import com.geoviksoft.turnia.ui.system.toErrorSnackbar
+import com.mmk.kmpauth.apple.rememberAppleAuthState
 import com.mmk.kmpauth.google.rememberGoogleAuthState
+import com.mmk.kmpauth.uihelper.apple.AppleButtonMode
+import com.mmk.kmpauth.uihelper.apple.AppleSignInButton
 import com.mmk.kmpauth.uihelper.google.GoogleSignInButton
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -45,7 +49,9 @@ import org.koin.compose.viewmodel.koinViewModel
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.app_name
 import turnia.app.shared.generated.resources.logo
+import turnia.app.shared.generated.resources.signin_apple
 import turnia.app.shared.generated.resources.signin_error_failed
+import turnia.app.shared.generated.resources.signin_google
 import turnia.app.shared.generated.resources.welcome_body
 import turnia.app.shared.generated.resources.welcome_feature_clear_body
 import turnia.app.shared.generated.resources.welcome_feature_clear_title
@@ -203,9 +209,14 @@ private fun FeatureRow(icon: ImageVector, title: String, body: String) {
     }
 }
 
+private val SignInButtonHeight = 52.dp
+
 @Composable
 private fun SignInSection(uiState: SignInUi, viewModel: SignInViewModel) {
+    // Both providers answer through the same callback: whichever the user picks, what comes back
+    // is a session, and the screen has nothing left to decide.
     val googleAuth = rememberGoogleAuthState(onResult = viewModel::onSignInResult)
+    val appleAuth = rememberAppleAuthState(onResult = viewModel::onSignInResult)
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
@@ -216,16 +227,35 @@ private fun SignInSection(uiState: SignInUi, viewModel: SignInViewModel) {
 
         Spacer(Modifier.height(12.dp))
 
-        Box(
-            modifier = Modifier.fillMaxWidth().height(52.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (uiState.signingIn) {
+        if (uiState.signingIn) {
+            Box(
+                modifier = Modifier.fillMaxWidth().height(SignInButtonHeight),
+                contentAlignment = Alignment.Center,
+            ) {
                 CircularProgressIndicator()
-            } else {
-                GoogleSignInButton(modifier = Modifier.fillMaxWidth().height(52.dp)) {
+            }
+        } else {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                GoogleSignInButton(
+                    modifier = Modifier.fillMaxWidth().height(SignInButtonHeight),
+                    text = stringResource(Res.string.signin_google),
+                ) {
                     viewModel.onSignInStarted()
                     googleAuth.launch()
+                }
+
+                AppleSignInButton(
+                    modifier = Modifier.fillMaxWidth().height(SignInButtonHeight),
+                    // Apple's guideline is about contrast, not taste: the black button is for
+                    // light backgrounds and the white one for dark.
+                    mode = if (isSystemInDarkTheme()) AppleButtonMode.White else AppleButtonMode.Black,
+                    text = stringResource(Res.string.signin_apple),
+                ) {
+                    viewModel.onSignInStarted()
+                    appleAuth.launch()
                 }
             }
         }
