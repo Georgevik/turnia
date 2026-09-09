@@ -1,4 +1,4 @@
-package com.geoviksoft.turnia.ui.system
+package com.geoviksoft.turnia.ui.system.color
 
 import androidx.compose.ui.graphics.Color
 

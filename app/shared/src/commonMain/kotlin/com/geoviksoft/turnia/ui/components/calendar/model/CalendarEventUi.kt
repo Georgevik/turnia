@@ -9,8 +9,8 @@ import com.geoviksoft.turnia.core.domain.model.GroupId
 import com.geoviksoft.turnia.core.domain.model.PersonalEvent
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.system.toLocalDate
-import com.geoviksoft.turnia.ui.system.entityColor
-import com.geoviksoft.turnia.ui.system.toComposeColorOrNull
+import com.geoviksoft.turnia.ui.system.color.entityColor
+import com.geoviksoft.turnia.ui.system.color.toComposeColorOrNull
 import kotlinx.datetime.LocalDate
 
 enum class EventSource { GROUP, PERSONAL }

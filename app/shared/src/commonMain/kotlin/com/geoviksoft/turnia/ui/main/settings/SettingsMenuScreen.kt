@@ -34,7 +34,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.geoviksoft.turnia.navigation.LocalNavigator
@@ -42,6 +44,7 @@ import com.geoviksoft.turnia.navigation.LocalRootNavigator
 import com.geoviksoft.turnia.navigation.main.routes.MainRoute
 import com.geoviksoft.turnia.navigation.root.routes.RootRoute
 import com.geoviksoft.turnia.ui.system.LocalPaddings
+import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
 import com.geoviksoft.turnia.ui.system.components.ConfirmationDialog
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -59,9 +62,16 @@ import turnia.app.shared.generated.resources.settings_notifications
  * "Perfil" tab — a draft account screen: the signed-in user header plus entry
  * points to groups, shared calendars, subscription and settings.
  */
+
 @Composable
 fun SettingsMenuScreen(vm: SettingsMenuViewModel = koinViewModel()) {
     val uiState by vm.uiState.collectAsStateWithLifecycle()
+
+    SettingsMenuScreenContent(uiState, vm::onLogoutClicked)
+}
+
+@Composable
+private fun SettingsMenuScreenContent(uiState: SettingsMenuUi, onLogoutClicked: () -> Unit = {}) {
     var showLogoutDialog by remember { mutableStateOf(false) }
     val navigator = LocalNavigator.current
     val rootNavigator = LocalRootNavigator.current
@@ -170,7 +180,7 @@ fun SettingsMenuScreen(vm: SettingsMenuViewModel = koinViewModel()) {
             dismissText = stringResource(Res.string.dialog_cancel),
             onConfirm = {
                 showLogoutDialog = false
-                vm.onLogoutClicked()
+                onLogoutClicked()
             },
             onDismissRequest = { showLogoutDialog = false },
         )
@@ -203,5 +213,23 @@ private fun ProfileRow(icon: ImageVector, label: String, onClick: () -> Unit = {
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+    }
+}
+
+@Preview
+@Composable
+fun SettingsMenuScreenPreview() {
+    PreviewTurniaTheme {
+        Box(modifier = Modifier.background(Color.White)) {
+            SettingsMenuScreenContent(
+                uiState = SettingsMenuUi(
+                    userDetails = SettingsMenuUi.UserDetails(
+                        displayName = "John Due",
+                        username = "Georgevik",
+                        isPremium = false
+                    )
+                )
+            )
+        }
     }
 }

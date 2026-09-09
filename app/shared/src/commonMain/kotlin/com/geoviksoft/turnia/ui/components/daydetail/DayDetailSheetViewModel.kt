@@ -20,9 +20,9 @@ import com.geoviksoft.turnia.ui.components.daydetail.components.EventTypeChipUi
 import com.geoviksoft.turnia.ui.components.daydetail.model.AddEventTypesUi
 import com.geoviksoft.turnia.ui.components.daydetail.model.EventTypeSectionUi
 import com.geoviksoft.turnia.ui.components.daydetail.model.EventTypeUi
-import com.geoviksoft.turnia.ui.system.entityColor
-import com.geoviksoft.turnia.ui.system.toComposeColorOr
-import com.geoviksoft.turnia.ui.system.toHex
+import com.geoviksoft.turnia.ui.system.color.entityColor
+import com.geoviksoft.turnia.ui.system.color.toComposeColorOr
+import com.geoviksoft.turnia.ui.system.color.toHex
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine

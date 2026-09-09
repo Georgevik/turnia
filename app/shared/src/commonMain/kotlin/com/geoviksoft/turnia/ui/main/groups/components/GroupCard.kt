@@ -11,12 +11,12 @@ import androidx.compose.ui.unit.dp
 import com.geoviksoft.turnia.core.domain.model.GroupId
 import com.geoviksoft.turnia.ui.main.groups.model.GroupRowUi
 import com.geoviksoft.turnia.ui.system.TurniaTheme
+import com.geoviksoft.turnia.ui.system.color.entityColor
 import com.geoviksoft.turnia.ui.system.components.AdminBadge
 import com.geoviksoft.turnia.ui.system.components.Avatar
 import com.geoviksoft.turnia.ui.system.components.Chevron
 import com.geoviksoft.turnia.ui.system.components.RevokedBadge
 import com.geoviksoft.turnia.ui.system.components.TListItem
-import com.geoviksoft.turnia.ui.system.entityColor
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
@@ -65,4 +65,3 @@ private fun GroupCardPreview() {
         )
     }
 }
-

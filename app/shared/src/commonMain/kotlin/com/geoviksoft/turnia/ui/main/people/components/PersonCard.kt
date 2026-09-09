@@ -5,9 +5,9 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.runtime.Composable
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.ui.main.people.model.PersonRowUi
+import com.geoviksoft.turnia.ui.system.color.entityColor
 import com.geoviksoft.turnia.ui.system.components.Avatar
 import com.geoviksoft.turnia.ui.system.components.TListItem
-import com.geoviksoft.turnia.ui.system.entityColor
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.share_calendar_unknown_user

@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.geoviksoft.turnia.core.domain.repository.GroupRepository
 import com.geoviksoft.turnia.ui.main.groups.model.GroupRowUi
-import com.geoviksoft.turnia.ui.system.entityColor
-import com.geoviksoft.turnia.ui.system.toComposeColorOrNull
+import com.geoviksoft.turnia.ui.system.color.entityColor
+import com.geoviksoft.turnia.ui.system.color.toComposeColorOrNull
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map

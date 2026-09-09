@@ -71,8 +71,9 @@ import com.geoviksoft.turnia.ui.group.detail.model.GroupDetailUi
 import com.geoviksoft.turnia.ui.group.detail.model.GroupMemberUi
 import com.geoviksoft.turnia.ui.group.detail.model.GroupTypeRowUi
 import com.geoviksoft.turnia.ui.group.detail.model.JoinRequestUi
-import com.geoviksoft.turnia.ui.system.EntityPalette
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
+import com.geoviksoft.turnia.ui.system.color.EntityPalette
+import com.geoviksoft.turnia.ui.system.color.entityColor
 import com.geoviksoft.turnia.ui.system.components.AcronymBadge
 import com.geoviksoft.turnia.ui.system.components.AdminBadge
 import com.geoviksoft.turnia.ui.system.components.Avatar
@@ -85,7 +86,6 @@ import com.geoviksoft.turnia.ui.system.components.TListItem
 import com.geoviksoft.turnia.ui.system.components.TReadOnlyField
 import com.geoviksoft.turnia.ui.system.components.TurniaDialogError
 import com.geoviksoft.turnia.ui.system.components.TurniaErrorContent
-import com.geoviksoft.turnia.ui.system.entityColor
 import com.geoviksoft.turnia.ui.system.keyboardAware
 import com.geoviksoft.turnia.ui.system.toErrorSnackbar
 import kotlinx.coroutines.delay
