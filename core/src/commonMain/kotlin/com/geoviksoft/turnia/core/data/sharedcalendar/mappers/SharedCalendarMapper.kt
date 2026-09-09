@@ -1,6 +1,6 @@
 package com.geoviksoft.turnia.core.data.sharedcalendar.mappers
 
-import com.geoviksoft.turnia.core.data.datasource.firestore.doc.UserDocument
+import com.geoviksoft.turnia.core.data.datasource.firestore.doc.UserPreferencesDocument
 import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.requests.SharedCalendarResponse
 import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.requests.SharedGroupEventResponse
 import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.requests.SharedPersonalEventResponse
@@ -53,7 +53,7 @@ class SharedCalendarMapper {
                     // The owner's own pick, not the viewer's: it is the owner's calendar, and
                     // recognising a shift on it means seeing it the way they do.
                     userColor = groupEventTypeColors[
-                        UserDocument.typeColorKey(groupId, type.id)
+                        UserPreferencesDocument.typeColorKey(groupId, type.id)
                     ],
                 )
             }

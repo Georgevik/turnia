@@ -4,9 +4,13 @@ import com.geoviksoft.turnia.core.data.datasource.firestore.analytics.trackData
 import com.geoviksoft.turnia.core.data.datasource.firestore.analytics.trackWrite
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.SubscriptionDocument
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.UserJoinRequestsDocument
+import com.geoviksoft.turnia.core.data.datasource.firestore.doc.UserPreferencesDocument
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.UserPrivateDocument
 import com.geoviksoft.turnia.core.data.datasource.firestore.errors.UserProfileError
+import com.geoviksoft.turnia.core.data.datasource.firestore.sync.SharedListeners
 import com.geoviksoft.turnia.core.data.logger.Logger
+import com.geoviksoft.turnia.core.domain.model.EventTypeId
+import com.geoviksoft.turnia.core.domain.model.GroupId
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.system.Outcome
 import com.geoviksoft.turnia.core.system.outcomeCatching
@@ -18,12 +22,16 @@ import dev.gitlive.firebase.firestore.FieldValue
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Source
 import dev.gitlive.firebase.firestore.Timestamp
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * Interacts with Firestore: `users/{uid}/private`
@@ -31,7 +39,97 @@ import kotlinx.serialization.Serializable
 class UserPrivateFirestore(
     private val firestore: FirebaseFirestore,
     private val userSyncFirestore: UserSyncFirestore,
+    scope: CoroutineScope,
 ) {
+    private val preferences =
+        SharedListeners<UserId, UserPreferencesDocument>(scope, keepAlive = 10.minutes)
+
+    /**
+     * The user's own picks, kept current off the `preferences` marker rather than a listener of
+     * their own.
+     */
+    fun observePreferences(uid: UserId): Flow<UserPreferencesDocument> =
+        preferences.shared(uid) { preferenceUpdates(uid) }
+
+    /** From the cache: the picks are this device's own last word, and every group screen asks. */
+    suspend fun fetchCachedPreferences(uid: UserId): Outcome<UserPreferencesDocument, UserProfileError> =
+        outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
+            cachedPreferences(uid) ?: serverPreferences(uid)
+        }
+
+    suspend fun updateTypeColor(
+        uid: UserId,
+        groupId: GroupId,
+        typeId: EventTypeId,
+        color: String,
+    ): Outcome<Unit, UserProfileError> =
+        outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
+            Logger.i(TAG, "Update group event type colour")
+            val key = UserPreferencesDocument.typeColorKey(groupId.value, typeId.value)
+
+            val batch = firestore.batch()
+            // `set(merge)` and not `updateFields`: the document does not exist until the first pick.
+            // Firestore merges map fields key by key, so the other types keep their colours.
+            batch.set(
+                document(DOCUMENT_PREFERENCES, uid),
+                UserPreferencesDocument(groupEventTypeColors = mapOf(key to color)),
+                merge = true,
+            )
+            val syncWrite = userSyncFirestore.writePreferences(batch, uid)
+            batch.commit()
+            trackWrite(TAG, "updateTypeColor")
+            syncWrite.committed()
+        }
+
+    private fun preferenceUpdates(uid: UserId): Flow<UserPreferencesDocument> = flow {
+        emit(cachedPreferences(uid) ?: serverPreferences(uid))
+
+        emitAll(
+            userSyncFirestore.observe(uid).mapNotNull { sync ->
+                currentPreferences(uid, sync.preferencesUpdatedAt)
+            }
+        )
+    }
+        .distinctUntilChanged()
+        .catch { throwable ->
+            Logger.e(TAG, "Preferences updates failed", throwable)
+        }
+
+    /**
+     * The cache whenever the marker says it is current, the server only when it is not.
+     */
+    private suspend fun currentPreferences(
+        uid: UserId,
+        marker: BaseTimestamp?,
+    ): UserPreferencesDocument? {
+        val cached = cachedPreferences(uid)
+        if (cached != null && cached.isSettledAgainst(marker)) return cached
+
+        // Nothing has ever been written: no marker to be behind, and no document to read.
+        if (marker.toInstantOrNull() == null) return cached
+
+        return serverPreferences(uid)
+    }
+
+    private fun UserPreferencesDocument.isSettledAgainst(marker: BaseTimestamp?): Boolean {
+        val markerAt = marker.toInstantOrNull() ?: return true
+        val mineAt = updateAt.toInstantOrNull() ?: return false
+        return mineAt >= markerAt
+    }
+
+    private suspend fun cachedPreferences(uid: UserId): UserPreferencesDocument? =
+        document(DOCUMENT_PREFERENCES, uid).getCached(TAG, "preferences(cache)")
+            ?.data(UserPreferencesDocument.serializer())
+
+    private suspend fun serverPreferences(uid: UserId): UserPreferencesDocument {
+        val snapshot = document(DOCUMENT_PREFERENCES, uid).get(Source.SERVER)
+            .trackData(TAG, "preferences(server)")
+
+        // A user who has never picked a colour has no document; `updateAt` null keeps it settled
+        // against the marker that does not exist either, so this is asked for once and not again.
+        return if (!snapshot.exists) UserPreferencesDocument(updateAt = null)
+        else snapshot.data(UserPreferencesDocument.serializer())
+    }
 
     suspend fun fetchAccount(uid: UserId): Outcome<UserPrivateDocument?, UserProfileError> =
         outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
@@ -89,7 +187,7 @@ class UserPrivateFirestore(
             userSyncFirestore.observe(uid).mapNotNull { sync ->
                 val cacheUpdateAt = cacheDoc?.updateAt?.toInstantOrNull()
                 val syncUpdateAt =
-                    sync.privateUpdatedAt?.toInstantOrNull() ?: return@mapNotNull null
+                    sync.joinRequestsMarker.toInstantOrNull() ?: return@mapNotNull null
 
                 if (cacheUpdateAt != null && cacheUpdateAt >= syncUpdateAt) {
                     return@mapNotNull null
@@ -119,7 +217,7 @@ class UserPrivateFirestore(
                 ),
                 merge = true,
             )
-            val syncWrite = userSyncFirestore.writePrivate(batch, uid)
+            val syncWrite = userSyncFirestore.writeJoinRequests(batch, uid)
             batch.commit()
             trackWrite(TAG, "removeJoinRequest")
             syncWrite.committed()
@@ -150,7 +248,7 @@ class UserPrivateFirestore(
             patch.copy(updateAt = Timestamp.ServerTimestamp),
             merge = true,
         ) { encodeDefaults = false }
-        val syncWrite = userSyncFirestore.writePrivate(batch, uid)
+        val syncWrite = userSyncFirestore.writeAccount(batch, uid)
         batch.commit()
         trackWrite(TAG, "patchAccount")
         syncWrite.committed()
@@ -158,7 +256,7 @@ class UserPrivateFirestore(
 
     private suspend fun isSettled(uid: UserId, cached: UserPrivateDocument): Boolean {
         val serverUpdatedAt =
-            userSyncFirestore.get(uid).valueOrNull()?.privateUpdatedAt.toInstantOrNull()
+            userSyncFirestore.get(uid).valueOrNull()?.accountMarker.toInstantOrNull()
                 ?: return true
 
         val cacheUpdatedAt = cached.updateAt.toInstantOrNull() ?: return false
@@ -185,6 +283,7 @@ class UserPrivateFirestore(
         private const val DOCUMENT_ACCOUNT = "account"
         private const val DOCUMENT_SUBSCRIPTION = "subscription"
         private const val DOCUMENT_JOIN_REQUESTS = "joinRequests"
+        private const val DOCUMENT_PREFERENCES = "preferences"
         private fun PATH_PRIVATE(uid: String) = "users/${uid}/private"
     }
 }

@@ -83,11 +83,25 @@ class UserSyncFirestore(
         UserSyncDocument(personalEventTypesUpdatedAt = Timestamp.ServerTimestamp),
     )
 
-    fun writePrivate(batch: WriteBatch, uid: UserId) = write(
-        "writePrivate",
+    fun writeAccount(batch: WriteBatch, uid: UserId) = write(
+        "writeAccount",
         batch,
         uid,
-        UserSyncDocument(privateUpdatedAt = Timestamp.ServerTimestamp),
+        UserSyncDocument(accountUpdatedAt = Timestamp.ServerTimestamp),
+    )
+
+    fun writeJoinRequests(batch: WriteBatch, uid: UserId) = write(
+        "writeJoinRequests",
+        batch,
+        uid,
+        UserSyncDocument(joinRequestsUpdatedAt = Timestamp.ServerTimestamp),
+    )
+
+    fun writePreferences(batch: WriteBatch, uid: UserId) = write(
+        "writePreferences",
+        batch,
+        uid,
+        UserSyncDocument(preferencesUpdatedAt = Timestamp.ServerTimestamp),
     )
 
     private fun write(

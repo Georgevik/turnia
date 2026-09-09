@@ -3,7 +3,6 @@ package com.geoviksoft.turnia.core.data.user.mappers
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.SubscriptionDocument
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.Tier
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.UserDocument
-import com.geoviksoft.turnia.core.data.datasource.firestore.doc.UsernameDocument
 import com.geoviksoft.turnia.core.domain.model.Membership
 import com.geoviksoft.turnia.core.domain.model.User
 import com.geoviksoft.turnia.core.domain.model.UserId
@@ -32,13 +31,7 @@ class UserDocumentMapper {
         displayName = profile?.name ?: firebaseUser.displayName.orEmpty(),
         username = profile?.username.orEmpty(),
         membership = subscription.toMembership(),
-    )
-
-    /** A reservation carries the least there is to know about a user nobody can read yet. */
-    fun map(document: UsernameDocument) = UserProfile(
-        id = UserId(document.uid),
-        name = document.name,
-        username = document.username,
+        avatar = profile?.avatar ?: UserProfile.AnimalAvatar.NONE,
     )
 
     fun map(snapshot: DocumentSnapshot): UserProfile =
@@ -48,6 +41,10 @@ class UserDocumentMapper {
         id = uid,
         name = document.name,
         username = document.username,
+        avatar = UserProfile.AnimalAvatar(
+            animal = document.animalIconId,
+            background = document.backgroundColor,
+        ),
     )
 
     /** No subscription document means the user has never bought anything: free tier. */

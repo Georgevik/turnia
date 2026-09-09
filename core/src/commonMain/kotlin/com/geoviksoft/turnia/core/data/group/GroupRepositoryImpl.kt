@@ -4,7 +4,6 @@ import com.geoviksoft.turnia.core.data.datasource.firestore.GroupEventFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.GroupFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.GroupJoinRequestFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.RevokedGroupFirestore
-import com.geoviksoft.turnia.core.data.datasource.firestore.UserPathFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.UserPrivateFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.DocHolder
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.GroupDocument
@@ -73,7 +72,6 @@ class GroupRepositoryImpl(
     private val revokedGroupFirestore: RevokedGroupFirestore,
     private val groupMembershipFunction: GroupMembershipFunction,
     private val groupFunction: GroupFunction,
-    private val userPathFirestore: UserPathFirestore,
     private val groupMapper: GroupMapper,
     private val analytics: Analytics,
 ) : GroupRepository {
@@ -94,9 +92,9 @@ class GroupRepositoryImpl(
             combine(
                 groupFirestore.observeMyGroups(userId),
                 revokedGroupFirestore.observe(userId),
-                userPathFirestore.observe(userId)
-            ) { mine, revoked, userData ->
-                val colors = userData.groupEventTypeColors
+                userPrivateFirestore.observePreferences(userId)
+            ) { mine, revoked, preferences ->
+                val colors = preferences.groupEventTypeColors
                 mine.map { groupMapper.map(it, userId, colors) } +
                         revoked.map { groupMapper.map(it, colors) }
             }
@@ -273,7 +271,7 @@ class GroupRepositoryImpl(
         val userId = userRepository.loggedUser?.id
             ?: return Result.failure(IllegalStateException("No signed-in user"))
 
-        userPathFirestore.updateTypeColor(userId, groupId, typeId, color).errorOrNull()
+        userPrivateFirestore.updateTypeColor(userId, groupId, typeId, color).errorOrNull()
             ?.let { return Result.failure(IllegalStateException("Failed to save the colour: $it")) }
 
         return Result.success(Unit)
@@ -324,7 +322,7 @@ class GroupRepositoryImpl(
         monthDelta: Int,
     ): Flow<Outcome<List<GroupEvent>, Unit>> = userRepository.loggedUserFlow.flatMapLatest { user ->
         val userId = user.id
-        userPathFirestore.observe(userId).map { it.groupEventTypeColors }.flatMapLatest { colors ->
+        userPrivateFirestore.observePreferences(userId).map { it.groupEventTypeColors }.flatMapLatest { colors ->
             revokedGroupFirestore.observe(userId).flatMapLatest { revoked ->
                 val snapshot = revoked.find { it.id == groupId.value }
                 if (snapshot != null) {
@@ -417,9 +415,8 @@ class GroupRepositoryImpl(
         outcome.valueOrNull().orEmpty().mapNotNull { groupMapper.map(it, group, memberNames) }
     }
 
-    /** From the cache: the colours are the user's own picks, and every group screen asks. */
     private suspend fun typeColors(userId: UserId): Map<String, String> =
-        userPathFirestore.getCachedUserDocument(userId).valueOrNull()
+        userPrivateFirestore.fetchCachedPreferences(userId).valueOrNull()
             ?.groupEventTypeColors.orEmpty()
 
     companion object {

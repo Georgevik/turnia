@@ -9,7 +9,7 @@ import com.geoviksoft.turnia.core.data.datasource.firestore.doc.InvitationDocume
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.JoinRequestDocument
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.JoinRequestStatusDocument
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.RevokedGroupDocument
-import com.geoviksoft.turnia.core.data.datasource.firestore.doc.UserDocument
+import com.geoviksoft.turnia.core.data.datasource.firestore.doc.UserPreferencesDocument
 import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.responses.JoinGroupResponse
 import com.geoviksoft.turnia.core.domain.model.EventHistoryEntry
 import com.geoviksoft.turnia.core.domain.model.EventId
@@ -199,7 +199,7 @@ class GroupMapper {
         endTime = doc.endTime,
         swappable = doc.swappable,
         defaultColor = doc.color.orEmpty(),
-        userColor = colors[UserDocument.typeColorKey(groupId.value, doc.id)],
+        userColor = colors[UserPreferencesDocument.typeColorKey(groupId.value, doc.id)],
     )
 
     private fun map(type: GroupEventType) = GroupEventTypeDocument(
