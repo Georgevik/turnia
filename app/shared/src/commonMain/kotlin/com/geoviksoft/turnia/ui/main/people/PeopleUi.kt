@@ -25,7 +25,7 @@ data class SearchUi(
         data object TooShort : Panel
         data object Searching : Panel
         data object Empty : Panel
-        data class Results(val users: List<SearchResultUi>) : Panel
+        data class Results(val users: List<SearchResultUi>, val isLoading: Boolean) : Panel
     }
 }
 
