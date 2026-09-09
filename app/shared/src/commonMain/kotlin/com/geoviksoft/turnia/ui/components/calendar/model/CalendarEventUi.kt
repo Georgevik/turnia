@@ -38,6 +38,14 @@ data class CalendarEventUi(
     val onSwap: Boolean,
     /** Whether the event's type allows swapping at all. Always false for a personal event. */
     val swappable: Boolean,
+    /**
+     * Whether this calendar is one the user could take a shift from at all.
+     *
+     * Not derivable from the fields above: the same event renders on a colleague's shared calendar,
+     * where the viewer is outside the group entirely and `takeEvent` would refuse them. It defaults
+     * to false so a new caller has to opt in rather than accidentally offer a button that fails.
+     */
+    val takeable: Boolean,
     val isOwner: Boolean,
     val assigneeName: String,
     val assigneeIsMe: Boolean,
@@ -61,6 +69,15 @@ data class CalendarEventUi(
     val canOfferSwap: Boolean
         get() = source == EventSource.GROUP && swappable && assigneeIsMe
 
+    /**
+     * Whether this user may cover the shift.
+     *
+     * Deliberately not `&& !isOwner`: if B offers back a shift they took from A, A may take it
+     * again — `takeEvent` only refuses a taker who already holds it.
+     */
+    val canTake: Boolean
+        get() = source == EventSource.GROUP && takeable && onSwap && !assigneeIsMe
+
     companion object {
         fun create(
             id: EventId,
@@ -76,6 +93,7 @@ data class CalendarEventUi(
             subtitle: String = "",
             onSwap: Boolean = false,
             swappable: Boolean = false,
+            takeable: Boolean = false,
             isOwner: Boolean = false,
             assigneeName: String = "",
             assigneeIsMe: Boolean = false,
@@ -98,6 +116,7 @@ data class CalendarEventUi(
             subtitle = subtitle,
             onSwap = onSwap,
             swappable = swappable,
+            takeable = takeable,
             isOwner = isOwner,
             assigneeName = assigneeName,
             assigneeIsMe = assigneeIsMe,
@@ -115,6 +134,7 @@ data class CalendarEventUi(
 fun GroupEvent.toUi(
     currentUserId: UserId?,
     removable: Boolean = false,
+    takeable: Boolean = false,
 ) = CalendarEventUi.create(
     id = id,
     groupId = groupId,
@@ -127,6 +147,7 @@ fun GroupEvent.toUi(
     background = colorHex.toComposeColorOrNull() ?: entityColor(type.id.value),
     onSwap = onSwap,
     swappable = type.swappable,
+    takeable = takeable,
     isOwner = ownerId == currentUserId,
     assigneeName = assigneeName,
     assigneeIsMe = assigneeId == currentUserId,

@@ -8,6 +8,7 @@ import com.geoviksoft.turnia.core.data.datasource.firestore.UserPrivateFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.DocHolder
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.GroupDocument
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.GroupMemberDocument
+import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.GroupEventFunction
 import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.GroupFunction
 import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.GroupMembershipFunction
 import com.geoviksoft.turnia.core.data.group.mappers.GroupMapper
@@ -73,6 +74,7 @@ class GroupRepositoryImpl(
     private val revokedGroupFirestore: RevokedGroupFirestore,
     private val groupMembershipFunction: GroupMembershipFunction,
     private val groupFunction: GroupFunction,
+    private val groupEventFunction: GroupEventFunction,
     private val groupMapper: GroupMapper,
     private val analytics: Analytics,
 ) : GroupRepository {
@@ -343,6 +345,9 @@ class GroupRepositoryImpl(
                 SwapError.SaveFailed
             }
     }
+
+    override suspend fun takeEvent(groupId: GroupId, eventId: EventId): Outcome<Unit, SwapError> =
+        groupEventFunction.takeEvent(groupId, eventId)
 
     /**
      * Follows the group as well as its events: a type renamed or recoloured, or a member renamed,

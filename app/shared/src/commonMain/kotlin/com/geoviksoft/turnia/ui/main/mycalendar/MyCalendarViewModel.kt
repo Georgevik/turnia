@@ -78,7 +78,7 @@ class MyCalendarViewModel(
             groupEvents.forEach { ev ->
                 val removable = ev.ownerId == userId && ev.assigneeId == userId
                 getOrPut(ev.date) { mutableListOf() }.add(
-                    ev.toUi(currentUserId = userId, removable = removable)
+                    ev.toUi(currentUserId = userId, removable = removable, takeable = true)
                 )
             }
             personalEvents.forEach { ev ->

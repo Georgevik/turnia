@@ -59,7 +59,15 @@ import turnia.app.shared.generated.resources.event_remove_confirm_body
 import turnia.app.shared.generated.resources.event_remove_confirm_title
 import turnia.app.shared.generated.resources.event_swap_error_not_assignee
 import turnia.app.shared.generated.resources.event_swap_error_not_swappable
+import turnia.app.shared.generated.resources.event_swap_error_not_found
+import turnia.app.shared.generated.resources.event_swap_error_not_member
+import turnia.app.shared.generated.resources.event_swap_error_own_shift
 import turnia.app.shared.generated.resources.event_swap_error_save
+import turnia.app.shared.generated.resources.event_swap_error_taken_by_someone
+import turnia.app.shared.generated.resources.event_swap_take_cancel
+import turnia.app.shared.generated.resources.event_swap_take_confirm
+import turnia.app.shared.generated.resources.event_swap_take_confirm_body
+import turnia.app.shared.generated.resources.event_swap_take_confirm_title
 
 @Composable
 fun DayDetailSheet(
@@ -78,6 +86,7 @@ fun DayDetailSheet(
     var adding by rememberSaveable { mutableStateOf(false) }
     var pendingDelete by remember { mutableStateOf<CalendarEventUi?>(null) }
     var editingNotes by remember { mutableStateOf<CalendarEventUi?>(null) }
+    var pendingTake by remember { mutableStateOf<CalendarEventUi?>(null) }
 
     val noteError by viewModel.noteError.collectAsStateWithLifecycle()
     val snackbar = LocalSnackbar.current
@@ -105,6 +114,27 @@ fun DayDetailSheet(
             onSave = { notes ->
                 viewModel.saveNotes(event, notes)
                 editingNotes = null
+            },
+        )
+    }
+
+    pendingTake?.let { event ->
+        AlertDialog(
+            onDismissRequest = { pendingTake = null },
+            title = { Text(stringResource(Res.string.event_swap_take_confirm_title)) },
+            text = { Text(stringResource(Res.string.event_swap_take_confirm_body)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.takeEvent(event)
+                    pendingTake = null
+                }) {
+                    Text(stringResource(Res.string.event_swap_take_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingTake = null }) {
+                    Text(stringResource(Res.string.event_swap_take_cancel))
+                }
             },
         )
     }
@@ -202,6 +232,11 @@ fun DayDetailSheet(
                                     } else {
                                         null
                                     },
+                                    onTake = if (event.canTake) {
+                                        { pendingTake = event }
+                                    } else {
+                                        null
+                                    },
                                 )
                             }
                         }
@@ -266,6 +301,10 @@ private fun DaySwapMessage.text(): String = stringResource(
     when (this) {
         DaySwapMessage.NotAssignee -> Res.string.event_swap_error_not_assignee
         DaySwapMessage.NotSwappable -> Res.string.event_swap_error_not_swappable
+        DaySwapMessage.NotMember -> Res.string.event_swap_error_not_member
+        DaySwapMessage.OwnShift -> Res.string.event_swap_error_own_shift
+        DaySwapMessage.NotFound -> Res.string.event_swap_error_not_found
+        DaySwapMessage.TakenBySomeoneElse -> Res.string.event_swap_error_taken_by_someone
         DaySwapMessage.SaveFailed -> Res.string.event_swap_error_save
     }
 )

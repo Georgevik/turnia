@@ -310,5 +310,14 @@
     <string name="event_swap_error_not_assignee">Solo puede ofrecer el turno quien lo cubre.</string>
     <string name="event_swap_error_not_swappable">Este tipo de turno no admite cambios.</string>
     <string name="event_swap_error_save">No hemos podido cambiarlo. Inténtalo otra vez.</string>
+    <string name="event_swap_take">Cubrir este turno</string>
+    <string name="event_swap_take_confirm_title">¿Cubres este turno?</string>
+    <string name="event_swap_take_confirm_body">Pasará a ser tuyo y avisaremos a quien lo ofrecía.</string>
+    <string name="event_swap_take_confirm">Cubrirlo</string>
+    <string name="event_swap_take_cancel">Mejor no</string>
+    <string name="event_swap_error_taken_by_someone">Alguien se te ha adelantado: este turno ya tiene quien lo cubra.</string>
+    <string name="event_swap_error_not_member">Ya no estás en este grupo.</string>
+    <string name="event_swap_error_own_shift">Este turno ya es tuyo.</string>
+    <string name="event_swap_error_not_found">Este turno ya no existe.</string>
 
 </resources>

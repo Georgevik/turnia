@@ -82,6 +82,7 @@ class ExternalCalendarViewModel(
                                 it.toUi(
                                     currentUserId = uid,
                                     removable = it.ownerId == uid && it.assigneeId == uid,
+                                    takeable = true,
                                 )
                             }
                         }
@@ -107,6 +108,9 @@ class ExternalCalendarViewModel(
 
             when (outcome) {
                 is Outcome.Success -> emit(
+                    // `takeable` stays false: these shifts belong to groups the viewer may not be
+                    // in at all, and `takeEvent` refuses a non-member. Offering them the button
+                    // would only produce a failure.
                     outcome.value.groupEvents.map {
                         it.toUi(currentUserId = viewerId, removable = false)
                     } + outcome.value.personalEvents.map { it.toUi(removable = false) }

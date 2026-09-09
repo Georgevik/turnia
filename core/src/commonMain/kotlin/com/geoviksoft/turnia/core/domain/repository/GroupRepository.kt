@@ -52,6 +52,11 @@ interface GroupRepository {
         onSwap: Boolean,
     ): Outcome<Unit, SwapError>
 
+    /**
+     * Takes a shift another member offered.
+     */
+    suspend fun takeEvent(groupId: GroupId, eventId: EventId): Outcome<Unit, SwapError>
+
     /** Cached events first, then the server's if it had anything newer. */
     fun getEventsByGroup(
         groupId: GroupId,

@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.NoteAdd
 import androidx.compose.material.icons.filled.StickyNote2
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -48,6 +49,7 @@ import turnia.app.shared.generated.resources.event_note_add
 import turnia.app.shared.generated.resources.event_note_edit
 import turnia.app.shared.generated.resources.event_remove
 import turnia.app.shared.generated.resources.event_status_on_swap
+import turnia.app.shared.generated.resources.event_swap_take
 import turnia.app.shared.generated.resources.event_swap_toggle
 import turnia.app.shared.generated.resources.group_member_former
 
@@ -57,6 +59,7 @@ fun DayEventRow(
     onRemove: (() -> Unit)? = null,
     onEditNotes: (() -> Unit)? = null,
     onSwapChange: ((Boolean) -> Unit)? = null,
+    onTake: (() -> Unit)? = null,
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -184,6 +187,13 @@ fun DayEventRow(
                     if (onSwapChange != null) {
                         Spacer(Modifier.height(4.dp))
                         SwapToggle(checked = event.onSwap, onCheckedChange = onSwapChange)
+                    }
+
+                    if (onTake != null) {
+                        Spacer(Modifier.height(10.dp))
+                        Button(onClick = onTake) {
+                            Text(text = stringResource(Res.string.event_swap_take))
+                        }
                     }
 
                     // The note is shown whenever there is one, even somebody else's: on a shared

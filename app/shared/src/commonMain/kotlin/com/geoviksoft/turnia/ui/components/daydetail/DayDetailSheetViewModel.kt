@@ -119,14 +119,22 @@ class DayDetailSheetViewModel(
         _swapMessage.value = null
     }
 
+    fun takeEvent(event: CalendarEventUi) {
+        val groupId = event.groupId ?: return
+
+        viewModelScope.launch {
+            groupRepository.takeEvent(groupId, event.id)
+                .onFailure { error -> _swapMessage.value = error.toMessage() }
+        }
+    }
+
     private fun SwapError.toMessage(): DaySwapMessage = when (this) {
         SwapError.NotAssignee -> DaySwapMessage.NotAssignee
         SwapError.NotSwappable -> DaySwapMessage.NotSwappable
-        // Nothing else can come back from offering a shift: the rest belong to taking one.
-        SwapError.NotMember,
-        SwapError.OwnShift,
-        SwapError.NotFound,
-        SwapError.TakenBySomeoneElse,
+        SwapError.NotMember -> DaySwapMessage.NotMember
+        SwapError.OwnShift -> DaySwapMessage.OwnShift
+        SwapError.NotFound -> DaySwapMessage.NotFound
+        SwapError.TakenBySomeoneElse -> DaySwapMessage.TakenBySomeoneElse
         SwapError.SaveFailed -> DaySwapMessage.SaveFailed
     }
 

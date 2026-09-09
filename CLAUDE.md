@@ -277,6 +277,12 @@ Functions  Calls: 3
   the `onSwap` flag already says so, and a client cannot append to a frozen array anyway.
 - Each entry points to `parentEventId`, so the full chain A→B→C can be reconstructed.
 - **Taking an event offered for swap** runs in a `takeEvent` transaction that checks `onSwap == true` before moving it, to prevent double assignment.
+- **Two members taking the same shift is resolved in arrival order, and that is all "FIFO" means here.**
+  `tx.get` locks the event, so both takers read `onSwap: true`; Firestore aborts the later commit and
+  re-runs it, and the re-run finds the flag cleared and answers `TakeEventNotOnSwap` — which the client
+  shows as *somebody got there first*. There is deliberately **no queue**: nobody holds a place, an
+  earlier tap from a device that was offline longer wins nothing, and a waiting list would cost a
+  claims subcollection, a trigger and rules to protect them for a race that settles in milliseconds.
 
 ## Permissions (Security Rules)
 
