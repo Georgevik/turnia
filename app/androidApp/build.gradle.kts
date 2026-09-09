@@ -1,6 +1,5 @@
-import com.android.build.api.dsl.VariantDimension
+import groovy.json.JsonSlurper
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import java.util.Properties
 
 plugins {
     alias(libs.plugins.androidApplication)
@@ -27,19 +26,22 @@ dependencies {
     debugImplementation(libs.compose.uiTooling)
 }
 
-// local.properties (git-ignored) → BuildConfig, so config values aren't hardcoded in source.
-val localProperties = Properties().apply {
-    val file = rootProject.file("local.properties")
-    if (file.exists()) file.inputStream().use { load(it) }
-}
+/** `client_type` of the project's web OAuth client inside `google-services.json`. */
+val WEB_OAUTH_CLIENT_TYPE = 3
 
 /**
- * Exposes a [localProperty] from local.properties as a String BuildConfig field
- * named [buildConfigName]. Defaults to empty when the property is missing.
+ * The web OAuth client id Google Sign-In takes as its `serverId`.
  */
-fun VariantDimension.localPropertyToBuildConfig(localProperty: String, buildConfigName: String) {
-    val value = localProperties.getProperty(localProperty).orEmpty().trim().removeSurrounding("\"")
-    buildConfigField("String", buildConfigName, "\"$value\"")
+fun webClientId(): String {
+    val config = JsonSlurper().parse(file("google-services.json")) as Map<*, *>
+
+    return (config["client"] as? List<*>).orEmpty()
+        .mapNotNull { (it as? Map<*, *>)?.get("oauth_client") as? List<*> }
+        .flatten()
+        .mapNotNull { it as? Map<*, *> }
+        .firstOrNull { it["client_type"] == WEB_OAUTH_CLIENT_TYPE }
+        ?.get("client_id") as? String
+        ?: error("google-services.json has no web OAuth client (client_type $WEB_OAUTH_CLIENT_TYPE)")
 }
 
 android {
@@ -53,7 +55,7 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        localPropertyToBuildConfig("WEB_CLIENT_ID", "WEB_CLIENT_ID")
+        buildConfigField("String", "WEB_CLIENT_ID", "\"${webClientId()}\"")
     }
     packaging {
         resources {
