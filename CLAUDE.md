@@ -273,7 +273,8 @@ Functions  Calls: 3
   can add to it.
 - A transfer changes `assigneeId` in place, so the event never moves and the history never has to be copied
   forward: the chain is simply the entries of that one event.
-- It records only the swap lifecycle: `put_on_swap` and `transferred` (with `fromUid`→`toUid`).
+- It records one thing only: `transferred` (with `fromUid`→`toUid`). Offering a shift writes no entry —
+  the `onSwap` flag already says so, and a client cannot append to a frozen array anyway.
 - Each entry points to `parentEventId`, so the full chain A→B→C can be reconstructed.
 - **Taking an event offered for swap** runs in a `takeEvent` transaction that checks `onSwap == true` before moving it, to prevent double assignment.
 
@@ -282,7 +283,11 @@ Functions  Calls: 3
 - **read** `groups/{g}/events`: only members of the group.
 - **create** event: the member for themselves — `ownerId == assigneeId == auth.uid`.
 - **update** event: the assignee or an admin, with `ownerId`, `assigneeId` and `history` immutable from the
-  client (`takeEvent` is the only writer that reassigns or appends to the chain).
+  client (`takeEvent` is the only writer that reassigns or appends to the chain). `onSwap` is narrower
+  still — **only the assignee** may move it, because offering a shift is a decision for whoever covers
+  it, not for an admin. Whether the shift's *type* allows swapping is **not** enforced here: the flag
+  lives inside the group's `groupEventTypes` array and the rules cannot search it by id, so that one
+  stays a product rule the client applies.
 - **delete** event: only the creator while they still hold it (`ownerId == assigneeId == auth.uid`).
 - A group's calendar is one query over its own `events` collection, filtered by `yearMonth`.
 - Membership is a field of the group: `isMember(g) = auth.uid in groups/{g}.memberUids`, and reading the group

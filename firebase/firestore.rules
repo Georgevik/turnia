@@ -137,11 +137,18 @@ service cloud.firestore {
         // A revoked user gets the second branch only: deleting is a soft delete, so it arrives
         // here as an update, and theirs is narrowed to flipping `isDeleted` on an event they
         // created and still hold.
+        // `onSwap` is the one field an admin may not touch: offering a shift is a decision for
+        // whoever covers it. Everything else an admin may still edit. Whether the event's *type*
+        // allows swapping is not checked here — the flag lives inside the group's own
+        // `groupEventTypes` array and these rules cannot search it by id, so that stays a product
+        // rule the client enforces.
         allow update: if (isMember(groupId) &&
           (resource.data.assigneeId == request.auth.uid || isAdmin(groupId)) &&
           request.resource.data.ownerId == resource.data.ownerId &&
           request.resource.data.assigneeId == resource.data.assigneeId &&
-          request.resource.data.get('history', []) == resource.data.get('history', []))
+          request.resource.data.get('history', []) == resource.data.get('history', []) &&
+          (request.resource.data.get('onSwap', false) == resource.data.get('onSwap', false)
+            || resource.data.assigneeId == request.auth.uid))
           || (isRevoked(groupId) &&
           resource.data.ownerId == request.auth.uid &&
           resource.data.assigneeId == request.auth.uid &&

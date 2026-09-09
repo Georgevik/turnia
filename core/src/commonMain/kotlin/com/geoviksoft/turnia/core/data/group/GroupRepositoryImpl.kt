@@ -26,6 +26,7 @@ import com.geoviksoft.turnia.core.domain.model.JoinGroupStatus
 import com.geoviksoft.turnia.core.domain.model.JoinRequest
 import com.geoviksoft.turnia.core.domain.model.MyJoinRequest
 import com.geoviksoft.turnia.core.domain.model.NewGroup
+import com.geoviksoft.turnia.core.domain.model.SwapError
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.domain.repository.AppConfigRepository
 import com.geoviksoft.turnia.core.domain.repository.GroupRepository
@@ -310,6 +311,37 @@ class GroupRepositoryImpl(
 
         return groupEventFirestore.delete(groupId, eventId, eventDate)
             .mapError { error -> Logger.e(TAG, "Failed to delete the group event: $error") }
+    }
+
+    override suspend fun setOnSwap(
+        groupId: GroupId,
+        eventId: EventId,
+        eventDate: LocalDate,
+        assigneeId: UserId,
+        swappable: Boolean,
+        onSwap: Boolean,
+    ): Outcome<Unit, SwapError> {
+        // Checked here to fail before the write and with something to show the user; the rules are
+        // what actually keep a member from offering a shift that is not theirs. There is deliberately
+        // no owner check: a member who took a shift from somebody else may pass it on, which is the
+        // A -> B -> C chain the app exists to keep track of.
+        val userId = userRepository.loggedUser?.id
+        if (userId != assigneeId) {
+            Logger.w(TAG, "Only whoever covers a shift can offer it")
+            return SwapError.NotAssignee.toFailure()
+        }
+        // The rules cannot check this one: the flag lives inside the group's own event type array,
+        // which they have no way to search by id. A product rule, not a boundary.
+        if (!swappable) {
+            Logger.w(TAG, "This event type does not allow swapping")
+            return SwapError.NotSwappable.toFailure()
+        }
+
+        return groupEventFirestore.updateOnSwap(groupId, eventId, eventDate, onSwap)
+            .mapError { error ->
+                Logger.e(TAG, "Failed to set the group event onSwap: $error")
+                SwapError.SaveFailed
+            }
     }
 
     /**

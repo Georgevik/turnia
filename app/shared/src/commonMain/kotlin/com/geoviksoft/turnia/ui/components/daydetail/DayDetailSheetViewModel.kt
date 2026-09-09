@@ -9,6 +9,7 @@ import com.geoviksoft.turnia.core.domain.model.GroupEvent
 import com.geoviksoft.turnia.core.domain.model.GroupEventType
 import com.geoviksoft.turnia.core.domain.model.PersonalEvent
 import com.geoviksoft.turnia.core.domain.model.PersonalEventType
+import com.geoviksoft.turnia.core.domain.model.SwapError
 import com.geoviksoft.turnia.core.domain.repository.GroupRepository
 import com.geoviksoft.turnia.core.domain.repository.PersonalEventRepository
 import com.geoviksoft.turnia.core.domain.repository.UserRepository
@@ -18,6 +19,7 @@ import com.geoviksoft.turnia.ui.components.calendar.model.CalendarEventUi
 import com.geoviksoft.turnia.ui.components.calendar.model.EventSource
 import com.geoviksoft.turnia.ui.components.daydetail.components.EventTypeChipUi
 import com.geoviksoft.turnia.ui.components.daydetail.model.AddEventTypesUi
+import com.geoviksoft.turnia.ui.components.daydetail.model.DaySwapMessage
 import com.geoviksoft.turnia.ui.components.daydetail.model.EventTypeSectionUi
 import com.geoviksoft.turnia.ui.components.daydetail.model.EventTypeUi
 import com.geoviksoft.turnia.ui.system.color.entityColor
@@ -92,6 +94,40 @@ class DayDetailSheetViewModel(
 
     fun noteErrorShown() {
         _noteError.value = false
+    }
+
+    private val _swapMessage = MutableStateFlow<DaySwapMessage?>(null)
+    val swapMessage = _swapMessage.asStateFlow()
+
+    fun setOnSwap(event: CalendarEventUi, onSwap: Boolean) {
+        val groupId = event.groupId ?: return
+        val assigneeId = event.assigneeId ?: return
+
+        viewModelScope.launch {
+            groupRepository.setOnSwap(
+                groupId = groupId,
+                eventId = event.id,
+                eventDate = event.date,
+                assigneeId = assigneeId,
+                swappable = event.swappable,
+                onSwap = onSwap,
+            ).onFailure { error -> _swapMessage.value = error.toMessage() }
+        }
+    }
+
+    fun swapMessageShown() {
+        _swapMessage.value = null
+    }
+
+    private fun SwapError.toMessage(): DaySwapMessage = when (this) {
+        SwapError.NotAssignee -> DaySwapMessage.NotAssignee
+        SwapError.NotSwappable -> DaySwapMessage.NotSwappable
+        // Nothing else can come back from offering a shift: the rest belong to taking one.
+        SwapError.NotMember,
+        SwapError.OwnShift,
+        SwapError.NotFound,
+        SwapError.TakenBySomeoneElse,
+        SwapError.SaveFailed -> DaySwapMessage.SaveFailed
     }
 
     fun addEventOfType(eventTypeUi: EventTypeUi) {

@@ -12,6 +12,7 @@ import com.geoviksoft.turnia.core.domain.model.JoinGroupStatus
 import com.geoviksoft.turnia.core.domain.model.JoinRequest
 import com.geoviksoft.turnia.core.domain.model.MyJoinRequest
 import com.geoviksoft.turnia.core.domain.model.NewGroup
+import com.geoviksoft.turnia.core.domain.model.SwapError
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.system.Outcome
 import kotlinx.coroutines.flow.Flow
@@ -35,6 +36,21 @@ interface GroupRepository {
         ownerId: UserId,
         assigneeId: UserId
     ): Outcome<Unit, Unit>
+
+    /**
+     * Offers a shift for swap, or withdraws the offer.
+     *
+     * Whoever covers a shift may offer it, including someone who took it from another member —
+     * passing it on again is what makes a chain of changes, not a state to forbid.
+     */
+    suspend fun setOnSwap(
+        groupId: GroupId,
+        eventId: EventId,
+        eventDate: LocalDate,
+        assigneeId: UserId,
+        swappable: Boolean,
+        onSwap: Boolean,
+    ): Outcome<Unit, SwapError>
 
     /** Cached events first, then the server's if it had anything newer. */
     fun getEventsByGroup(

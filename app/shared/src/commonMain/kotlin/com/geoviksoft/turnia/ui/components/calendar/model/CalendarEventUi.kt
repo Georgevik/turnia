@@ -36,6 +36,8 @@ data class CalendarEventUi(
     val timeRange: String?,
     val subtitle: String,
     val onSwap: Boolean,
+    /** Whether the event's type allows swapping at all. Always false for a personal event. */
+    val swappable: Boolean,
     val isOwner: Boolean,
     val assigneeName: String,
     val assigneeIsMe: Boolean,
@@ -48,6 +50,16 @@ data class CalendarEventUi(
     val gridLabel: String get() = acronym?.takeIf { it.isNotBlank() } ?: name
 
     val assignedToOther: Boolean get() = !assigneeIsMe && isOwner
+
+    /**
+     * Whether this user may offer the shift, or withdraw the offer.
+     *
+     * Covering it is the whole condition: someone who took it from another member may pass it on,
+     * and once it has been handed away [assigneeIsMe] is false, so the control disappears on its own
+     * while the shift stays on the calendar of whoever created it.
+     */
+    val canOfferSwap: Boolean
+        get() = source == EventSource.GROUP && swappable && assigneeIsMe
 
     companion object {
         fun create(
@@ -63,6 +75,7 @@ data class CalendarEventUi(
             timeRange: String? = null,
             subtitle: String = "",
             onSwap: Boolean = false,
+            swappable: Boolean = false,
             isOwner: Boolean = false,
             assigneeName: String = "",
             assigneeIsMe: Boolean = false,
@@ -84,6 +97,7 @@ data class CalendarEventUi(
             timeRange = timeRange,
             subtitle = subtitle,
             onSwap = onSwap,
+            swappable = swappable,
             isOwner = isOwner,
             assigneeName = assigneeName,
             assigneeIsMe = assigneeIsMe,
@@ -111,6 +125,8 @@ fun GroupEvent.toUi(
     acronym = type.acronym,
     date = date,
     background = colorHex.toComposeColorOrNull() ?: entityColor(type.id.value),
+    onSwap = onSwap,
+    swappable = type.swappable,
     isOwner = ownerId == currentUserId,
     assigneeName = assigneeName,
     assigneeIsMe = assigneeId == currentUserId,

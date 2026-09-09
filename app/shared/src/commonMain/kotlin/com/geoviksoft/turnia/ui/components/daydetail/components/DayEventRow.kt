@@ -24,6 +24,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -47,6 +48,7 @@ import turnia.app.shared.generated.resources.event_note_add
 import turnia.app.shared.generated.resources.event_note_edit
 import turnia.app.shared.generated.resources.event_remove
 import turnia.app.shared.generated.resources.event_status_on_swap
+import turnia.app.shared.generated.resources.event_swap_toggle
 import turnia.app.shared.generated.resources.group_member_former
 
 @Composable
@@ -54,6 +56,7 @@ fun DayEventRow(
     event: CalendarEventUi,
     onRemove: (() -> Unit)? = null,
     onEditNotes: (() -> Unit)? = null,
+    onSwapChange: ((Boolean) -> Unit)? = null,
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -178,8 +181,13 @@ fun DayEventRow(
                         TransferTrail(chain = event.transferChain)
                     }
 
-                    // La nota se enseña siempre que exista, aunque no sea nuestra: en un calendario
-                    // compartido es del dueño del evento y se lee, no se toca.
+                    if (onSwapChange != null) {
+                        Spacer(Modifier.height(4.dp))
+                        SwapToggle(checked = event.onSwap, onCheckedChange = onSwapChange)
+                    }
+
+                    // The note is shown whenever there is one, even somebody else's: on a shared
+                    // calendar it belongs to the event's owner and is read, not edited.
                     val notes = event.notes?.takeIf { it.isNotBlank() }
                     if (notes != null) {
                         Spacer(Modifier.height(10.dp))
@@ -309,6 +317,24 @@ private fun AcronymChip(acronym: String, background: Color, textColor: Color) {
             fontWeight = FontWeight.Bold,
             color = if (hasColor) textColor else MaterialTheme.colorScheme.onSurface,
         )
+    }
+}
+
+/** Offering the shift, or taking the offer back. Only ever shown to whoever covers it. */
+@Composable
+private fun SwapToggle(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = stringResource(Res.string.event_swap_toggle),
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
 

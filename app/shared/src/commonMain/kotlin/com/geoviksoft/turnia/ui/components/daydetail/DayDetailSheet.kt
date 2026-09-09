@@ -37,6 +37,7 @@ import com.geoviksoft.turnia.ui.components.daydetail.components.DayDetailHeader
 import com.geoviksoft.turnia.ui.components.daydetail.components.DayEventRow
 import com.geoviksoft.turnia.ui.components.daydetail.model.AddEventTypesError
 import com.geoviksoft.turnia.ui.components.daydetail.model.AddEventTypesUi
+import com.geoviksoft.turnia.ui.components.daydetail.model.DaySwapMessage
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
 import com.geoviksoft.turnia.ui.system.components.TurniaErrorContent
 import com.geoviksoft.turnia.ui.system.toErrorSnackbar
@@ -56,6 +57,9 @@ import turnia.app.shared.generated.resources.event_remove_cancel
 import turnia.app.shared.generated.resources.event_remove_confirm
 import turnia.app.shared.generated.resources.event_remove_confirm_body
 import turnia.app.shared.generated.resources.event_remove_confirm_title
+import turnia.app.shared.generated.resources.event_swap_error_not_assignee
+import turnia.app.shared.generated.resources.event_swap_error_not_swappable
+import turnia.app.shared.generated.resources.event_swap_error_save
 
 @Composable
 fun DayDetailSheet(
@@ -82,6 +86,15 @@ fun DayDetailSheet(
         LaunchedEffect(Unit) {
             snackbar.showSnackbar(text.toErrorSnackbar())
             viewModel.noteErrorShown()
+        }
+    }
+
+    val swapMessage by viewModel.swapMessage.collectAsStateWithLifecycle()
+    swapMessage?.let { message ->
+        val text = message.text()
+        LaunchedEffect(message) {
+            snackbar.showSnackbar(text.toErrorSnackbar())
+            viewModel.swapMessageShown()
         }
     }
 
@@ -184,6 +197,11 @@ fun DayDetailSheet(
                                     } else {
                                         null
                                     },
+                                    onSwapChange = if (event.canOfferSwap) {
+                                        { onSwap -> viewModel.setOnSwap(event, onSwap) }
+                                    } else {
+                                        null
+                                    },
                                 )
                             }
                         }
@@ -240,5 +258,14 @@ private fun AddPaneLoading() {
 private fun AddEventTypesError.message(): String = stringResource(
     when (this) {
         AddEventTypesError.LoadFailed -> Res.string.day_detail_load_error
+    }
+)
+
+@Composable
+private fun DaySwapMessage.text(): String = stringResource(
+    when (this) {
+        DaySwapMessage.NotAssignee -> Res.string.event_swap_error_not_assignee
+        DaySwapMessage.NotSwappable -> Res.string.event_swap_error_not_swappable
+        DaySwapMessage.SaveFailed -> Res.string.event_swap_error_save
     }
 )

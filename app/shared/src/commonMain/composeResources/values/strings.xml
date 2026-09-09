@@ -305,4 +305,10 @@
     <string name="day_detail_add_event">Añadir</string>
     <string name="day_detail_load_error">No hemos podido cargar tus tipos de evento.</string>
 
+    <!-- Swap -->
+    <string name="event_swap_toggle">Ofrecer para cambio</string>
+    <string name="event_swap_error_not_assignee">Solo puede ofrecer el turno quien lo cubre.</string>
+    <string name="event_swap_error_not_swappable">Este tipo de turno no admite cambios.</string>
+    <string name="event_swap_error_save">No hemos podido cambiarlo. Inténtalo otra vez.</string>
+
 </resources>

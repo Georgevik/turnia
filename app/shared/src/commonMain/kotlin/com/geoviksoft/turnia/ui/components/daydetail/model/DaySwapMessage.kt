@@ -1,0 +1,8 @@
+package com.geoviksoft.turnia.ui.components.daydetail.model
+
+/** Why offering a shift did not work, for the sheet to turn into a sentence. */
+enum class DaySwapMessage {
+    NotAssignee,
+    NotSwappable,
+    SaveFailed,
+}

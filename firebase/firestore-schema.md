@@ -482,7 +482,10 @@ the document.
 `assigneeId == their uid` — on a `list` that term is what forces their query to carry the matching
 `assigneeId ==` filter, so the constraint is the rule rather than the client's good manners.
 `create` by the member for themselves (`ownerId == assigneeId == auth.uid`) and never by a revoked user;
-`update` by the assignee or an admin, with `ownerId`, `assigneeId` and `history` immutable from the client.
+`update` by the assignee or an admin, with `ownerId`, `assigneeId` and `history` immutable from the client —
+and `onSwap` movable by the **assignee alone**, since offering a shift is not an admin's call. The type's
+`swappable` flag is not checked by the rules (it sits inside the group's `groupEventTypes` array, which they
+cannot search by id); the client enforces that one.
 **`delete` only by the creator while they still hold it** (`ownerId == assigneeId == auth.uid`) — once a shift
 has been handed to someone else it is theirs to cover, and giving it back means putting it up for swap, not
 deleting it. Taking is done by
@@ -529,7 +532,7 @@ here it travels with the event for free. Each entry:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `type` | string | `put_on_swap` \| `transferred`. |
+| `type` | string | `transferred` — the only value written. |
 | `actorUid` | string | Who performed the action. |
 | `fromUid` | string \| null | Previous assignee (for `transferred`). |
 | `toUid` | string \| null | New assignee (for `transferred`). |
@@ -556,8 +559,10 @@ Represented by the boolean `event.onSwap`.
 
 | Value | Emitted when | `fromUid` / `toUid` |
 |-------|--------------|---------------------|
-| `put_on_swap` | The assignee puts the event up for swap. | — |
 | `transferred` | A member takes the event; it moves to the new assignee. | `from` = previous assignee, `to` = new assignee |
+
+Putting an event up for swap writes **no** history entry: `onSwap` already records it, and the array is
+frozen against clients, so only a function could append one — a write per offer for nothing new.
 
 ### Member role
 
