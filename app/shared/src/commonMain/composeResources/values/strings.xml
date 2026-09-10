@@ -10,7 +10,7 @@
         <item>Calculando cuántos cafés harán falta para esta semana.</item>
         <item>Cambiando mañanas por tardes y salvando planes de última hora…</item>
         <item>Reorganizando el tiempo para que por fin tengas vida social.</item>
-        <item>Poniendo en marcha la diplomacia del intercambio de turnos…</item>
+        <item>Poniendo en marcha la diplomacia del cambio de turnos…</item>
         <item>Validando cuadrantes: un segundo, que casi lo tenemos.</item>
         <item>Negociando el turno de noche por un trozo de tarta...</item>
         <item>Buscando a la persona valiente que cubra el festivo...</item>
@@ -197,8 +197,8 @@
     <string name="event_type_field_end">Fin</string>
     <string name="event_type_field_color">Color</string>
     <string name="event_type_pick_color">Elegir color</string>
-    <string name="event_type_swap_allowed">Intercambio permitido</string>
-    <string name="event_type_swap_not_allowed">Intercambio no permitido</string>
+    <string name="event_type_swap_allowed">Cambio permitido</string>
+    <string name="event_type_swap_not_allowed">Cambio no permitido</string>
     <string name="event_type_group_readonly">Solo el administrador del grupo puede editar estos campos. Tú puedes cambiar el color.</string>
     <string name="event_type_save">Guardar</string>
     <string name="event_type_not_set">—</string>
@@ -261,7 +261,7 @@
     <string name="tab_calendar">Calendario</string>
     <string name="tab_people">Personas</string>
     <string name="tab_groups">Grupos</string>
-    <string name="tab_swap">Intercambios</string>
+    <string name="tab_swap">Cambios</string>
     <string name="tab_settings">Ajustes</string>
 
     <string name="group_admin_badge">ADMIN</string>
@@ -346,7 +346,7 @@
     <string name="event_swap_error_not_found">Este turno ya no existe.</string>
 
     <!-- Swap tab -->
-    <string name="swap_title">Intercambios</string>
+    <string name="swap_title">Mis cambios</string>
     <string name="swap_segment_offered">Los ofrezco</string>
     <string name="swap_segment_covered">Los cubre otro</string>
     <string name="swap_filter_title">Filtrar por grupo</string>

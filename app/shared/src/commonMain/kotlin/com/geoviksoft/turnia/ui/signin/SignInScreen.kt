@@ -106,7 +106,7 @@ private fun LogoAndAppName(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Box(
-            modifier = modifier
+            modifier = Modifier
                 .size(88.dp)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.primaryContainer),
