@@ -1,10 +1,5 @@
 package com.geoviksoft.turnia.ui.components.calendar
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -80,16 +75,6 @@ private const val WEEKS = 6
 private const val MONTH_PAGE_COUNT = 12 * 400
 private const val MONTH_PAGE_ANCHOR = MONTH_PAGE_COUNT / 2
 
-/**
- * One full turn of the swap marker, in milliseconds. `Autorenew` has two-fold rotational symmetry,
- * so a single turn reads as two beats — slower than the number suggests to look at.
- *
- * The animation is driven from here and not from the marker on purpose: the pager keeps its
- * neighbours composed, so three grids of 42 cells exist at once. One transition for all of them
- * costs one animation instead of dozens, and keeps every marker on the grid turning together.
- */
-private const val SWAP_MARKER_SPIN_MS = 2200
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalendarViewer(
@@ -120,16 +105,6 @@ fun CalendarViewer(
 
 
     val scope = rememberCoroutineScope()
-
-    val swapMarkerAngle by rememberInfiniteTransition(label = "swapMarker").animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(SWAP_MARKER_SPIN_MS, easing = LinearEasing),
-        ),
-        label = "swapMarkerAngle",
-    )
-
     fun monthForPage(page: Int): LocalDate =
         anchorMonth.plus(page - MONTH_PAGE_ANCHOR, DateTimeUnit.MONTH)
 
@@ -192,7 +167,6 @@ fun CalendarViewer(
                             // Highlight the open day's tile while its sheet is up.
                             selectedDate = sheetDate,
                             eventsByDate = eventsByDate,
-                            swapMarkerAngle = swapMarkerAngle,
                             onDateSelected = { date -> sheetDate = date },
                             onMonthChanged = { newMonth ->
                                 scope.launch {
@@ -324,7 +298,6 @@ private fun CalendarGrid(
     calendarTheme: CalendarTheme,
     selectedDate: LocalDate?,
     eventsByDate: Map<LocalDate, List<CalendarEventUi>>,
-    swapMarkerAngle: Float,
     onDateSelected: (LocalDate) -> Unit,
     onMonthChanged: (LocalDate) -> Unit,
 ) {
@@ -352,7 +325,6 @@ private fun CalendarGrid(
                         isSelected = date == selectedDate,
                         theme = calendarTheme,
                         events = eventsByDate[date].orEmpty(),
-                        swapMarkerAngle = swapMarkerAngle,
                         onClick = {
                             if (!dateInMonth) {
                                 onMonthChanged(LocalDate(date.year, date.month, 1))

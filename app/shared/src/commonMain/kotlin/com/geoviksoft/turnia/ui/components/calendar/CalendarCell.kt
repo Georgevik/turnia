@@ -1,5 +1,10 @@
 package com.geoviksoft.turnia.ui.components.calendar
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -23,18 +28,28 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.geoviksoft.turnia.core.domain.model.EventId
+import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.ui.components.calendar.model.CalendarEventUi
+import com.geoviksoft.turnia.ui.components.calendar.model.EventSource
+import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
+import kotlin.random.Random
+import kotlin.time.Clock
 
 /** Height reserved at the top of a cell for the day number. */
 private val CalendarCellNumberHeight = 24.dp
@@ -48,6 +63,8 @@ private val CellOuterMargin = 2.dp
 /** Inner padding between the tile edge and its content. */
 private val CellContentPadding = 2.dp
 
+private const val SWAP_MARKER_SPIN_MS = 2200
+
 @Composable
 fun CalendarCell(
     date: LocalDate,
@@ -58,8 +75,6 @@ fun CalendarCell(
     onClick: () -> Unit,
     modifier: Modifier = Modifier.Companion,
     events: List<CalendarEventUi> = emptyList(),
-    /** Driven once for the whole calendar; see `CalendarViewer`. */
-    swapMarkerAngle: Float = 0f,
 ) {
     val indicatorColor = if (isToday) theme.accentColor else Color.Transparent
     val numberColor = when {
@@ -123,7 +138,6 @@ fun CalendarCell(
                         EventRow(
                             modifier = Modifier.weight(1f),
                             event = events.first(),
-                            swapMarkerAngle = swapMarkerAngle,
                         )
                         Spacer(modifier.weight(1f))
                     }
@@ -138,12 +152,10 @@ fun CalendarCell(
                         EventRow(
                             modifier = Modifier.weight(1f),
                             event = events[0],
-                            swapMarkerAngle = swapMarkerAngle,
                         )
                         EventRow(
                             modifier = Modifier.weight(1f),
                             event = events[1],
-                            swapMarkerAngle = swapMarkerAngle,
                         )
                         if (events.size > 2) {
                             OverflowRow()
@@ -160,8 +172,16 @@ fun CalendarCell(
 private fun EventRow(
     event: CalendarEventUi,
     modifier: Modifier = Modifier,
-    swapMarkerAngle: Float = 0f,
 ) {
+    val swapMarkerAngle by rememberInfiniteTransition(label = "swapMarker_${event.id}").animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(SWAP_MARKER_SPIN_MS, easing = LinearEasing),
+        ),
+        label = "swapMarkerAngle",
+    )
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -171,11 +191,10 @@ private fun EventRow(
             .padding(horizontal = 4.dp),
         contentAlignment = Alignment.Center,
     ) {
-        // Owned by me but performed by someone else — hatch it (stripes under text).
         if (event.assignedToOther) {
             Box(Modifier.matchParentSize().diagonalHatch(event.textColor.copy(alpha = 0.65f)))
         }
-        // Grow the label to fill the tiny tile so short siglas stay big and legible.
+
         BasicText(
             text = event.gridLabel,
             maxLines = 1,
@@ -190,9 +209,7 @@ private fun EventRow(
                 stepSize = 1.sp,
             ),
         )
-        // On swap — a turning corner marker, so a shift going spare catches the eye in a grid of
-        // otherwise still tiles. The angle is read inside `graphicsLayer` so each frame invalidates
-        // the draw and not the composition.
+
         if (event.onSwap) {
             Icon(
                 imageVector = Icons.Default.Autorenew,
@@ -220,3 +237,46 @@ private fun OverflowRow() {
         )
     }
 }
+
+@Preview
+@Composable
+fun CalendarCellPreview() {
+    PreviewTurniaTheme {
+        Box(modifier = Modifier.size(60.dp, 100.dp)) {
+            CalendarCell(
+                Clock.System.todayIn(TimeZone.currentSystemDefault()),
+                true,
+                true,
+                false,
+                CalendarThemes.myCalendar(),
+                {},
+                events = listOf(demo_event.copy(assigneeId = demo_event.ownerId)))
+        }
+    }
+}
+
+private val demo_event = CalendarEventUi(
+    id = EventId(Random.nextInt().toString()),
+    groupId =null,
+    ownerId = UserId(Random.nextInt().toString()),
+    assigneeId = UserId(Random.nextInt().toString()),
+    source = EventSource.GROUP,
+    name = "Demo Event",
+    acronym = "DE",
+    background = Color.Yellow,
+    date = LocalDate(2023, 1, 1),
+    textColor = Color.Black,
+    timeRange = null,
+    subtitle = "",
+    onSwap = true,
+    swappable = true,
+    activeMember = true,
+    isOwner = true,
+    assigneeName = "Ricardo",
+    assigneeIsMe = true,
+    groupName = "MyGroup",
+    transferChain = emptyList(),
+    removable = false,
+    notes = null,
+    notesEditable = false,
+)
