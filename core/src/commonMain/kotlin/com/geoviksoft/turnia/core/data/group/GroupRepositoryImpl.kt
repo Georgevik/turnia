@@ -323,17 +323,12 @@ class GroupRepositoryImpl(
         swappable: Boolean,
         onSwap: Boolean,
     ): Outcome<Unit, SwapError> {
-        // Checked here to fail before the write and with something to show the user; the rules are
-        // what actually keep a member from offering a shift that is not theirs. There is deliberately
-        // no owner check: a member who took a shift from somebody else may pass it on, which is the
-        // A -> B -> C chain the app exists to keep track of.
         val userId = userRepository.loggedUser?.id
         if (userId != assigneeId) {
             Logger.w(TAG, "Only whoever covers a shift can offer it")
             return SwapError.NotAssignee.toFailure()
         }
-        // The rules cannot check this one: the flag lives inside the group's own event type array,
-        // which they have no way to search by id. A product rule, not a boundary.
+
         if (!swappable) {
             Logger.w(TAG, "This event type does not allow swapping")
             return SwapError.NotSwappable.toFailure()
@@ -349,10 +344,6 @@ class GroupRepositoryImpl(
     override suspend fun takeEvent(groupId: GroupId, eventId: EventId): Outcome<Unit, SwapError> =
         groupEventFunction.takeEvent(groupId, eventId)
 
-    /**
-     * Follows the group as well as its events: a type renamed or recoloured, or a member renamed,
-     * re-renders the calendar without a reload, because the shifts are drawn from both.
-     */
     override fun getEventsByGroup(
         groupId: GroupId,
         date: LocalDate,
@@ -381,12 +372,6 @@ class GroupRepositoryImpl(
         }
     }
 
-    /**
-     * The user's own shifts across every group. One pass over the groups [getGroups] already
-     * returns — each carries its types and its members, so nothing else has to be read to render
-     * them — and that includes the groups they were removed from: the shifts they still hold are
-     * theirs to cover, so they belong on their calendar.
-     */
     override fun getEventsByUser(
         userId: UserId,
         date: LocalDate,
@@ -416,14 +401,6 @@ class GroupRepositoryImpl(
         )
     }
 
-    /**
-     * The window is asymmetric — today to [monthsAhead] months on — where the calendar's is centred
-     * on the month it is showing. A shift in the past is history, not something to swap.
-     *
-     * The date cut-off is applied here and never in the query: as a Firestore clause it would make
-     * the shape `yearMonth == X and updateAt > T and date >= D`, which needs a composite index that
-     * does not exist, for a filter three lines of Kotlin do for free.
-     */
     override fun getSwapEvents(date: LocalDate, monthsAhead: Int): Flow<List<GroupEvent>> = flow {
         val viewer = userRepository.loggedUser?.id
         if (viewer == null) {
@@ -494,8 +471,6 @@ class GroupRepositoryImpl(
         group.id,
         from = from.toInstant(),
         until = until.toInstant(),
-        // Not an optimisation: the rules only let a revoked user read the events assigned to them,
-        // and they prove it from the query's filters, so without this the read is refused.
         assigneeId = viewer.takeIf { group.isRevoked },
     ).map { outcome ->
         outcome.valueOrNull().orEmpty().mapNotNull { groupMapper.map(it, group, memberNames) }

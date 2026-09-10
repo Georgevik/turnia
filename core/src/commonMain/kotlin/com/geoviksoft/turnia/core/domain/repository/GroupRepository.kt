@@ -73,11 +73,6 @@ interface GroupRepository {
 
     /**
      * Every swap-related shift across the user's groups, from [date] forward.
-     *
-     * Unlike [getEventsByUser] this keeps the other members' shifts too, because a shift somebody
-     * else offered is the one the user might cover. It costs no extra read to do so: the query
-     * behind both is the same unfiltered one over each group's own events, and discarding the rest
-     * was only ever a Kotlin filter.
      */
     fun getSwapEvents(date: LocalDate, monthsAhead: Int = 3): Flow<List<GroupEvent>>
 
