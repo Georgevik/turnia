@@ -20,6 +20,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SecondaryScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -59,18 +60,12 @@ import turnia.app.shared.generated.resources.event_swap_take_cancel
 import turnia.app.shared.generated.resources.event_swap_take_confirm
 import turnia.app.shared.generated.resources.event_swap_take_confirm_body
 import turnia.app.shared.generated.resources.event_swap_take_confirm_title
-import turnia.app.shared.generated.resources.swap_empty_available_body
-import turnia.app.shared.generated.resources.swap_empty_available_title
 import turnia.app.shared.generated.resources.swap_empty_covered_body
 import turnia.app.shared.generated.resources.swap_empty_covered_title
-import turnia.app.shared.generated.resources.swap_empty_covering_body
-import turnia.app.shared.generated.resources.swap_empty_covering_title
 import turnia.app.shared.generated.resources.swap_empty_offered_body
 import turnia.app.shared.generated.resources.swap_empty_offered_title
 import turnia.app.shared.generated.resources.swap_filter_title
-import turnia.app.shared.generated.resources.swap_segment_available
 import turnia.app.shared.generated.resources.swap_segment_covered
-import turnia.app.shared.generated.resources.swap_segment_covering
 import turnia.app.shared.generated.resources.swap_segment_offered
 import turnia.app.shared.generated.resources.swap_title
 
@@ -82,82 +77,80 @@ fun SwapScreen(viewModel: SwapViewModel = koinViewModel()) {
     var pendingTake by remember { mutableStateOf<DayEventUi?>(null) }
     val sheetState = rememberModalBottomSheetState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .safeContentPadding()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        when (val state = uiState) {
-            SwapUi.Loading -> ScreenHeader(stringResource(Res.string.swap_title))
+    Scaffold(modifier = Modifier.padding()) { innerPadding   ->
 
-            is SwapUi.Success -> {
-                // ScreenHeader has no trailing slot of its own, so the filter sits beside it here
-                // rather than changing a component four other screens share.
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    ScreenHeader(
-                        title = stringResource(Res.string.swap_title),
-                        modifier = Modifier.weight(1f),
-                    )
-                    if (state.filterable) {
-                        FilterButton(
-                            hidden = state.groups.count { !it.selected },
-                            onClick = { filterOpen = true },
-                        )
-                    }
-                }
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
 
-                SecondaryScrollableTabRow(
-                    selectedTabIndex = SwapSegment.entries.indexOf(state.segment),
-                    edgePadding = 0.dp,
-                ) {
-                    SwapSegment.entries.forEach { segment ->
-                        Tab(
-                            selected = segment == state.segment,
-                            onClick = { viewModel.segmentSelected(segment) },
-                            text = { Text(stringResource(segment.title())) },
-                        )
-                    }
-                }
+            when (val state = uiState) {
+                SwapUi.Loading -> Header()
 
-                SwapMessageSnackbar(state.userMessage, viewModel::userMessageShown)
-
-                if (state.events.isEmpty()) {
-                    val (title, body) = state.segment.emptyState()
-                    EmptyState(
-                        icon = Icons.Default.SwapHoriz,
-                        title = stringResource(title),
-                        body = stringResource(body),
-                    )
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        items(state.events, key = { it.id.value }) { event ->
-                            SwapEventRow(
-                                event = event,
-                                onTake = if (event.canTake) {
-                                    { pendingTake = event }
-                                } else {
-                                    null
-                                },
+                is SwapUi.Success -> {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Header(modifier = Modifier.weight(1f),)
+                        if (state.filterable) {
+                            FilterButton(
+                                hidden = state.groups.count { !it.selected },
+                                onClick = { filterOpen = true },
                             )
                         }
                     }
-                }
 
-                if (filterOpen) {
-                    ModalBottomSheet(
-                        onDismissRequest = { filterOpen = false },
-                        sheetState = sheetState,
+                    SecondaryScrollableTabRow(
+                        selectedTabIndex = SwapSegment.entries.indexOf(state.segment),
+                        edgePadding = 0.dp,
                     ) {
-                        SwapGroupFilterSheet(
-                            groups = state.groups,
-                            onToggle = viewModel::groupToggled,
-                            onSelectAll = viewModel::allGroupsSelected,
+                        SwapSegment.entries.forEach { segment ->
+                            Tab(
+                                selected = segment == state.segment,
+                                onClick = { viewModel.segmentSelected(segment) },
+                                text = { Text(stringResource(segment.title())) },
+                            )
+                        }
+                    }
+
+                    SwapMessageSnackbar(state.userMessage, viewModel::userMessageShown)
+
+                    if (state.events.isEmpty()) {
+                        val (title, body) = state.segment.emptyState()
+                        EmptyState(
+                            icon = Icons.Default.SwapHoriz,
+                            title = stringResource(title),
+                            body = stringResource(body),
                         )
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            items(state.events, key = { it.id.value }) { event ->
+                                SwapEventRow(
+                                    event = event,
+                                    onTake = if (event.canTake) {
+                                        { pendingTake = event }
+                                    } else {
+                                        null
+                                    },
+                                )
+                            }
+                        }
+                    }
+
+                    if (filterOpen) {
+                        ModalBottomSheet(
+                            onDismissRequest = { filterOpen = false },
+                            sheetState = sheetState,
+                        ) {
+                            SwapGroupFilterSheet(
+                                groups = state.groups,
+                                onToggle = viewModel::groupToggled,
+                                onSelectAll = viewModel::allGroupsSelected,
+                            )
+                        }
                     }
                 }
             }
@@ -184,6 +177,14 @@ fun SwapScreen(viewModel: SwapViewModel = koinViewModel()) {
             },
         )
     }
+}
+
+@Composable
+private fun Header(modifier: Modifier = Modifier) {
+    ScreenHeader(
+        title = stringResource(Res.string.swap_title),
+        modifier = modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+    )
 }
 
 /**
@@ -226,23 +227,15 @@ private fun SwapMessageSnackbar(message: SwapMessage?, onShown: () -> Unit) {
 
 private fun SwapSegment.title(): StringResource = when (this) {
     SwapSegment.OFFERED -> Res.string.swap_segment_offered
-    SwapSegment.AVAILABLE -> Res.string.swap_segment_available
     SwapSegment.COVERED -> Res.string.swap_segment_covered
-    SwapSegment.COVERING -> Res.string.swap_segment_covering
 }
 
 private fun SwapSegment.emptyState(): Pair<StringResource, StringResource> = when (this) {
     SwapSegment.OFFERED ->
         Res.string.swap_empty_offered_title to Res.string.swap_empty_offered_body
 
-    SwapSegment.AVAILABLE ->
-        Res.string.swap_empty_available_title to Res.string.swap_empty_available_body
-
     SwapSegment.COVERED ->
         Res.string.swap_empty_covered_title to Res.string.swap_empty_covered_body
-
-    SwapSegment.COVERING ->
-        Res.string.swap_empty_covering_title to Res.string.swap_empty_covering_body
 }
 
 private fun SwapMessage.resource(): StringResource = when (this) {

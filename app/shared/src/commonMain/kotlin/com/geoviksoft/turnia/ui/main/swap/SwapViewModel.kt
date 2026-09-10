@@ -39,9 +39,6 @@ class SwapViewModel(
     private val _uiState = MutableStateFlow<SwapUi>(SwapUi.Loading)
     val uiState = _uiState.asStateFlow()
 
-    // What the user has chosen, kept apart from what the repositories say. Holding these as their
-    // own flows is what lets the state be rebuilt as a pure function of its inputs: a new emission
-    // of the events cannot forget which tab is open or swallow a message not yet shown.
     /** The groups the user has unticked. Empty means they have not touched the filter. */
     private val deselectedGroups = MutableStateFlow<Set<GroupId>>(emptySet())
     private val segment = MutableStateFlow(SwapSegment.OFFERED)
@@ -114,18 +111,9 @@ class SwapViewModel(
         )
     }
 
-    /**
-     * The four segments, as predicates over who owns a shift and who covers it.
-     *
-     * `ownerId` is whoever created it and never changes; `assigneeId` is whoever covers it now. So
-     * the two of them disagreeing is exactly the record that a transfer happened, and which side of
-     * it the user is on says whether they gave the shift away or picked it up.
-     */
     private fun SwapSegment.holds(event: GroupEvent, userId: UserId): Boolean = when (this) {
         SwapSegment.OFFERED -> event.assigneeId == userId && event.onSwap
-        SwapSegment.AVAILABLE -> event.onSwap && event.assigneeId != userId
         SwapSegment.COVERED -> event.ownerId == userId && event.assigneeId != userId
-        SwapSegment.COVERING -> event.assigneeId == userId && event.ownerId != userId
     }
 
     private fun SwapError.toMessage(): SwapMessage = when (this) {
