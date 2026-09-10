@@ -47,6 +47,8 @@ import com.geoviksoft.turnia.ui.components.calendar.diagonalHatch
 import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
 import com.geoviksoft.turnia.ui.components.calendar.model.EventSource
 import com.geoviksoft.turnia.ui.components.calendar.model.TransferHolderUi
+import com.geoviksoft.turnia.ui.components.event.AcronymChip
+import com.geoviksoft.turnia.ui.components.event.TransferTrail
 import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
@@ -270,73 +272,8 @@ private fun AddNoteButton(onClick: () -> Unit) {
     }
 }
 
-@Composable
-private fun TransferTrail(chain: List<TransferHolderUi>) {
-    FlowRow(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        chain.forEachIndexed { index, holder ->
-            if (index > 0) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                    contentDescription = null,
-                    modifier = Modifier.size(14.dp).align(Alignment.CenterVertically),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            val name = when {
-                holder.isMe -> stringResource(Res.string.event_holder_me)
-                holder.name.isNotBlank() -> holder.name
-                else -> stringResource(Res.string.group_member_former)
-            }
-            HolderPill(name = name, highlighted = index == chain.lastIndex)
-        }
-    }
-}
 
-@Composable
-private fun HolderPill(name: String, highlighted: Boolean) {
-    Surface(
-        shape = RoundedCornerShape(8.dp),
-        color = if (highlighted) {
-            MaterialTheme.colorScheme.secondaryContainer
-        } else {
-            MaterialTheme.colorScheme.surfaceContainerHigh
-        },
-        contentColor = if (highlighted) {
-            MaterialTheme.colorScheme.onSecondaryContainer
-        } else {
-            MaterialTheme.colorScheme.onSurfaceVariant
-        },
-    ) {
-        Text(
-            text = name,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = if (highlighted) FontWeight.SemiBold else FontWeight.Normal,
-            maxLines = 1,
-        )
-    }
-}
 
-@Composable
-private fun AcronymChip(acronym: String, background: Color, textColor: Color) {
-    val hasColor = background.isSpecified
-    Surface(
-        shape = RoundedCornerShape(8.dp),
-        color = if (hasColor) background else MaterialTheme.colorScheme.surfaceContainerHigh,
-    ) {
-        Text(
-            text = acronym,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold,
-            color = if (hasColor) textColor else MaterialTheme.colorScheme.onSurface,
-        )
-    }
-}
 
 /** Offering the shift, or taking the offer back. Only ever shown to whoever covers it. */
 @Composable

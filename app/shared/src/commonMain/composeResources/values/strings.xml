@@ -78,6 +78,31 @@
         <item>Diciembre</item>
     </string-array>
 
+    <!-- Short forms, for where a date has to fit beside something else. Monday first, like the grid. -->
+    <string-array name="calendar_weekdays_short">
+        <item>Lun</item>
+        <item>Mar</item>
+        <item>Mié</item>
+        <item>Jue</item>
+        <item>Vie</item>
+        <item>Sáb</item>
+        <item>Dom</item>
+    </string-array>
+    <string-array name="calendar_months_short">
+        <item>ene</item>
+        <item>feb</item>
+        <item>mar</item>
+        <item>abr</item>
+        <item>may</item>
+        <item>jun</item>
+        <item>jul</item>
+        <item>ago</item>
+        <item>sep</item>
+        <item>oct</item>
+        <item>nov</item>
+        <item>dic</item>
+    </string-array>
+
     <!-- Welcome / Sign in -->
     <string name="welcome_headline">Tus turnos, sin líos</string>
     <string name="welcome_body">Cambios de última hora, coberturas y favores entre compañeros… por fin en un solo sitio. Se acabó perderse entre mensajes de WhatsApp.</string>
@@ -325,6 +350,7 @@
     <string name="swap_segment_offered">Los ofrezco</string>
     <string name="swap_segment_covered">Los cubre otro</string>
     <string name="swap_filter_title">Filtrar por grupo</string>
+    <string name="swap_filter_subtitle">Elige de qué grupos quieres ver los turnos.</string>
     <string name="swap_filter_all">Todos los grupos</string>
     <string name="swap_empty_offered_title">Nada en el escaparate</string>
     <string name="swap_empty_offered_body">No has puesto ningún turno para cambiar. Tu tiempo libre sigue siendo teórico.</string>

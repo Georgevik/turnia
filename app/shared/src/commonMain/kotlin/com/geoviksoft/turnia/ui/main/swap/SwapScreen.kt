@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -18,11 +17,8 @@ import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SecondaryScrollableTabRow
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -37,8 +33,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
-import com.geoviksoft.turnia.ui.components.daydetail.components.DayEventRow
+import com.geoviksoft.turnia.ui.main.swap.components.SwapEventRow
 import com.geoviksoft.turnia.ui.main.swap.components.SwapGroupFilterSheet
+import com.geoviksoft.turnia.ui.main.swap.components.SwapSegmentChips
 import com.geoviksoft.turnia.ui.main.swap.model.SwapMessage
 import com.geoviksoft.turnia.ui.main.swap.model.SwapSegment
 import com.geoviksoft.turnia.ui.main.swap.model.SwapUi
@@ -65,8 +62,6 @@ import turnia.app.shared.generated.resources.swap_empty_covered_title
 import turnia.app.shared.generated.resources.swap_empty_offered_body
 import turnia.app.shared.generated.resources.swap_empty_offered_title
 import turnia.app.shared.generated.resources.swap_filter_title
-import turnia.app.shared.generated.resources.swap_segment_covered
-import turnia.app.shared.generated.resources.swap_segment_offered
 import turnia.app.shared.generated.resources.swap_title
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -77,12 +72,12 @@ fun SwapScreen(viewModel: SwapViewModel = koinViewModel()) {
     var pendingTake by remember { mutableStateOf<DayEventUi?>(null) }
     val sheetState = rememberModalBottomSheetState()
 
-    Scaffold(modifier = Modifier.padding()) { innerPadding   ->
-
+    Scaffold { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
+                .padding(innerPadding)
+                .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
 
@@ -100,18 +95,10 @@ fun SwapScreen(viewModel: SwapViewModel = koinViewModel()) {
                         }
                     }
 
-                    SecondaryScrollableTabRow(
-                        selectedTabIndex = SwapSegment.entries.indexOf(state.segment),
-                        edgePadding = 0.dp,
-                    ) {
-                        SwapSegment.entries.forEach { segment ->
-                            Tab(
-                                selected = segment == state.segment,
-                                onClick = { viewModel.segmentSelected(segment) },
-                                text = { Text(stringResource(segment.title())) },
-                            )
-                        }
-                    }
+                    SwapSegmentChips(
+                        selected = state.segment,
+                        onSelected = viewModel::segmentSelected,
+                    )
 
                     SwapMessageSnackbar(state.userMessage, viewModel::userMessageShown)
 
@@ -183,25 +170,10 @@ fun SwapScreen(viewModel: SwapViewModel = koinViewModel()) {
 private fun Header(modifier: Modifier = Modifier) {
     ScreenHeader(
         title = stringResource(Res.string.swap_title),
-        modifier = modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+        modifier = modifier.padding(vertical = 16.dp),
     )
 }
 
-/**
- * A row here is a day's row taken out of its day, so it has to say which day it is: the list spans
- * three months and the date is the first thing anyone looks for.
- */
-@Composable
-private fun SwapEventRow(event: DayEventUi, onTake: (() -> Unit)?) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(
-            text = event.date.toString(),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        DayEventRow(event = event, onTake = onTake)
-    }
-}
 
 @Composable
 private fun FilterButton(hidden: Int, onClick: () -> Unit) {
@@ -225,10 +197,6 @@ private fun SwapMessageSnackbar(message: SwapMessage?, onShown: () -> Unit) {
     }
 }
 
-private fun SwapSegment.title(): StringResource = when (this) {
-    SwapSegment.OFFERED -> Res.string.swap_segment_offered
-    SwapSegment.COVERED -> Res.string.swap_segment_covered
-}
 
 private fun SwapSegment.emptyState(): Pair<StringResource, StringResource> = when (this) {
     SwapSegment.OFFERED ->
