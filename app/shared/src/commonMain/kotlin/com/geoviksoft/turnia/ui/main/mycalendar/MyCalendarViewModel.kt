@@ -9,13 +9,16 @@ import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.domain.repository.GroupRepository
 import com.geoviksoft.turnia.core.domain.repository.PersonalEventRepository
 import com.geoviksoft.turnia.core.domain.repository.UserRepository
-import com.geoviksoft.turnia.ui.components.calendar.model.CalendarEventUi
+import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
+import com.geoviksoft.turnia.ui.components.calendar.model.swapFirst
 import com.geoviksoft.turnia.ui.components.calendar.model.toUi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import com.geoviksoft.turnia.core.domain.model.GroupId
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
@@ -28,7 +31,7 @@ import kotlin.time.Clock
 @Immutable
 data class MyCalendarUiState(
     val isLoading: Boolean = false,
-    val eventsByDate: Map<LocalDate, List<CalendarEventUi>> = emptyMap(),
+    val eventsByDate: Map<LocalDate, List<DayEventUi>> = emptyMap(),
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -63,22 +66,33 @@ class MyCalendarViewModel(
     private fun events(
         userId: UserId,
         date: LocalDate,
-    ): Flow<Map<LocalDate, List<CalendarEventUi>>> = combine(
+    ): Flow<Map<LocalDate, List<DayEventUi>>> = combine(
         personalRepository.getEvents(userId, date, monthDelta = 2),
         groupRepository.getEventsByUser(userId, date, monthDelta = 2),
-    ) { personal, group ->
-        mapToUiState(userId, group, personal)
+        // The groups the user was removed from. Their leftover shifts still belong on the calendar,
+        // but nothing there can be offered or taken any more and the rules refuse the write, so the
+        // controls have to know.
+        groupRepository.getGroups()
+            .map { groups -> groups.filter { it.isRevoked }.map { it.id }.toSet() },
+    ) { personal, group, revokedGroups ->
+        mapToUiState(userId, group, personal, revokedGroups)
     }
 
     private fun mapToUiState(
         userId: UserId,
-        groupEvents: List<GroupEvent>, personalEvents: List<PersonalEvent>
-    ): Map<LocalDate, List<CalendarEventUi>> {
-        val eventsByDate: Map<LocalDate, MutableList<CalendarEventUi>> = buildMap {
+        groupEvents: List<GroupEvent>,
+        personalEvents: List<PersonalEvent>,
+        revokedGroups: Set<GroupId>,
+    ): Map<LocalDate, List<DayEventUi>> {
+        val eventsByDate: Map<LocalDate, MutableList<DayEventUi>> = buildMap {
             groupEvents.forEach { ev ->
                 val removable = ev.ownerId == userId && ev.assigneeId == userId
                 getOrPut(ev.date) { mutableListOf() }.add(
-                    ev.toUi(currentUserId = userId, removable = removable)
+                    ev.toUi(
+                        currentUserId = userId,
+                        removable = removable,
+                        activeMember = ev.groupId !in revokedGroups,
+                    )
                 )
             }
             personalEvents.forEach { ev ->
@@ -88,6 +102,6 @@ class MyCalendarViewModel(
             }
         }
 
-        return eventsByDate.mapValues { it.value.toList() }
+        return eventsByDate.mapValues { it.value.toList() }.swapFirst()
     }
 }

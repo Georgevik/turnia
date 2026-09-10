@@ -1,5 +1,6 @@
 package com.geoviksoft.turnia.ui.main.profile
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,7 +20,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -27,21 +27,27 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.geoviksoft.turnia.core.domain.model.UserProfile
 import com.geoviksoft.turnia.navigation.LocalNavigator
+import com.geoviksoft.turnia.ui.main.profile.components.AvatarPickerSheet
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
+import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
 import com.geoviksoft.turnia.ui.system.components.TReadOnlyField
+import com.geoviksoft.turnia.ui.system.components.UserAvatar
 import com.geoviksoft.turnia.ui.system.keyboardAware
 import com.geoviksoft.turnia.ui.system.toErrorSnackbar
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.calendar_back
-import turnia.app.shared.generated.resources.profile_email_readonly
+import turnia.app.shared.generated.resources.profile_avatar_change
 import turnia.app.shared.generated.resources.profile_error_name_required
 import turnia.app.shared.generated.resources.profile_error_save
 import turnia.app.shared.generated.resources.profile_error_username_invalid
@@ -55,6 +61,32 @@ import turnia.app.shared.generated.resources.profile_title
 @Composable
 fun MyProfileScreen(viewModel: MyProfileViewModel = koinViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    MyProfileScreenContent(
+        uiState = uiState,
+        onUsernameChanged = viewModel::onUsernameChanged,
+        onNameChanged = viewModel::onNameChanged,
+        onSnackbarShown = viewModel::userMessageShown,
+        onAvatarClicked = viewModel::onAvatarClicked,
+        onAvatarPickerDismissed = viewModel::onAvatarPickerDismissed,
+        onAnimalPicked = viewModel::onAnimalPicked,
+        onBackgroundPicked = viewModel::onBackgroundPicked,
+        onSave = viewModel::onSave,
+    )
+}
+
+@Composable
+private fun MyProfileScreenContent(
+    uiState: MyProfileUi,
+    onNameChanged: (String) -> Unit = {},
+    onUsernameChanged: (String) -> Unit = {},
+    onSnackbarShown: () -> Unit = {},
+    onAvatarClicked: () -> Unit = {},
+    onAvatarPickerDismissed: () -> Unit = {},
+    onAnimalPicked: (String) -> Unit = {},
+    onBackgroundPicked: (String) -> Unit = {},
+    onSave: () -> Unit = {},
+) {
     val navigator = LocalNavigator.current
     val snackbar = LocalSnackbar.current
 
@@ -62,7 +94,7 @@ fun MyProfileScreen(viewModel: MyProfileViewModel = koinViewModel()) {
         val text = message.message()
         LaunchedEffect(message) {
             snackbar.showSnackbar(text.toErrorSnackbar())
-            viewModel.userMessageShown()
+            onSnackbarShown()
         }
     }
 
@@ -86,16 +118,27 @@ fun MyProfileScreen(viewModel: MyProfileViewModel = koinViewModel()) {
         },
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .keyboardAware(innerPadding)
-                .padding(20.dp)
+            modifier = Modifier.fillMaxSize().keyboardAware(innerPadding).padding(20.dp)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
+            UserAvatar(
+                avatar = UserProfile.AnimalAvatar(
+                    animal = uiState.animalIconId,
+                    background = uiState.backgroundColor,
+                ),
+                modifier = Modifier
+                    .size(64.dp)
+                    .align(Alignment.CenterHorizontally)
+                    .clickable(
+                        onClick = onAvatarClicked,
+                        onClickLabel = stringResource(Res.string.profile_avatar_change),
+                    ),
+            )
+
             OutlinedTextField(
                 value = uiState.name,
-                onValueChange = viewModel::onNameChanged,
+                onValueChange = onNameChanged,
                 label = { Text(stringResource(Res.string.profile_field_name)) },
                 keyboardOptions = KeyboardOptions.Default.copy(
                     capitalization = KeyboardCapitalization.Words
@@ -109,7 +152,7 @@ fun MyProfileScreen(viewModel: MyProfileViewModel = koinViewModel()) {
 
             OutlinedTextField(
                 value = uiState.username,
-                onValueChange = viewModel::onUsernameChanged,
+                onValueChange = onUsernameChanged,
                 label = { Text(stringResource(Res.string.profile_field_username)) },
                 prefix = { Text("@") },
                 singleLine = true,
@@ -123,14 +166,9 @@ fun MyProfileScreen(viewModel: MyProfileViewModel = koinViewModel()) {
                 label = stringResource(Res.string.profile_field_email),
                 value = uiState.email,
             )
-            Text(
-                text = stringResource(Res.string.profile_email_readonly),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
 
             Button(
-                onClick = viewModel::onSave,
+                onClick = onSave,
                 enabled = uiState.canSave,
                 shape = RoundedCornerShape(percent = 50),
                 contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
@@ -153,6 +191,16 @@ fun MyProfileScreen(viewModel: MyProfileViewModel = koinViewModel()) {
             }
         }
     }
+
+    if (uiState.pickingAvatar) {
+        AvatarPickerSheet(
+            animalIconId = uiState.animalIconId,
+            backgroundColor = uiState.backgroundColor,
+            onAnimalPicked = onAnimalPicked,
+            onColorPicked = onBackgroundPicked,
+            onDismiss = onAvatarPickerDismissed,
+        )
+    }
 }
 
 @Composable
@@ -170,3 +218,15 @@ private fun ProfileMessage.message(): String = stringResource(
         ProfileMessage.SaveFailed -> Res.string.profile_error_save
     }
 )
+
+@Preview
+@Composable
+fun MyProfileScreenPreview() {
+    PreviewTurniaTheme {
+        MyProfileScreenContent(
+            uiState = MyProfileUi(
+                name = "John Due", username = "Georgevik", email = "myemail@domain.com"
+            )
+        )
+    }
+}

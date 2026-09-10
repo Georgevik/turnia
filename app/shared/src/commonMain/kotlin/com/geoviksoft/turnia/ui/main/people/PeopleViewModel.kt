@@ -134,7 +134,7 @@ class PeopleViewModel(private val userRepository: UserRepository) : ViewModel() 
             return
         }
 
-        updatePanel(SearchUi.Panel.Searching)
+        updateSearchLoading()
 
         val shared = sharedByMe.value.orEmpty().mapTo(mutableSetOf()) { it.id }
         val results = userRepository.searchUsers(prefix).valueOrEmpty()
@@ -146,18 +146,34 @@ class PeopleViewModel(private val userRepository: UserRepository) : ViewModel() 
                     name = user.name,
                     username = user.username,
                     alreadyShared = user.id in shared,
+                    avatar = user.avatar,
                 )
             }
 
         updatePanel(
-            if (results.isEmpty()) SearchUi.Panel.Empty else SearchUi.Panel.Results(results)
+            if (results.isEmpty()) SearchUi.Panel.Empty else SearchUi.Panel.Results(users = results, isLoading = false)
         )
     }
 
     private fun updatePanel(panel: SearchUi.Panel) = search.update { it.copy(panel = panel) }
+    private fun updateSearchLoading() {
+        search.update {
+            if (it.panel is SearchUi.Panel.Results) {
+                it.copy(panel = it.panel.copy(isLoading = true))
+            } else {
 
-    private fun toRow(user: UserProfile) =
-        PersonRowUi(id = user.id, name = user.name, username = user.username)
+                it.copy(panel = SearchUi.Panel.Searching)
+            }
+        }
+    }
+
+
+    private fun toRow(user: UserProfile) = PersonRowUi(
+        id = user.id,
+        name = user.name,
+        username = user.username,
+        avatar = user.avatar,
+    )
 
     private companion object {
         const val SUBSCRIPTION_TIMEOUT = 5_000L

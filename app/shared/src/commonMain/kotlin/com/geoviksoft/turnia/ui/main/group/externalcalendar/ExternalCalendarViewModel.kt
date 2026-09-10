@@ -11,7 +11,8 @@ import com.geoviksoft.turnia.core.domain.repository.UserRepository
 import com.geoviksoft.turnia.core.system.Outcome
 import com.geoviksoft.turnia.core.system.valueOrEmpty
 import com.geoviksoft.turnia.navigation.main.routes.ExternalCalendarData
-import com.geoviksoft.turnia.ui.components.calendar.model.CalendarEventUi
+import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
+import com.geoviksoft.turnia.ui.components.calendar.model.swapFirst
 import com.geoviksoft.turnia.ui.components.calendar.model.toUi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
@@ -70,34 +72,41 @@ class ExternalCalendarViewModel(
      * A group's events come from the cache first and again once the server has something newer, so
      * the month paints without waiting on a round trip. A colleague's cannot: see [sharedCalendar].
      */
-    private fun events(date: LocalDate): Flow<Map<LocalDate, List<CalendarEventUi>>> =
+    private fun events(date: LocalDate): Flow<Map<LocalDate, List<DayEventUi>>> =
         userRepository.loggedUserFlow.flatMapLatest { user ->
             val uid = user.id
             val events = when (data) {
-                is ExternalCalendarData.Group ->
-
+                // Revocation is followed rather than read once: a member removed while the
+                // calendar is open must lose the swap controls, not keep them until a reload.
+                is ExternalCalendarData.Group -> isRevoked().flatMapLatest { revoked ->
                     groupRepository.getEventsByGroup(GroupId(data.id), date, monthDelta = 2)
                         .map { outcome ->
                             outcome.valueOrEmpty().map {
                                 it.toUi(
                                     currentUserId = uid,
                                     removable = it.ownerId == uid && it.assigneeId == uid,
+                                    activeMember = !revoked,
                                 )
                             }
                         }
+                }
 
                 is ExternalCalendarData.Personal ->
                     sharedCalendar(UserId(data.id), viewerId = uid, date = date)
             }
 
-            events.map { list -> list.groupBy { event -> event.date } }
+            events.map { list -> list.groupBy { event -> event.date }.swapFirst() }
         }
+
+    private fun isRevoked(): Flow<Boolean> = groupRepository.getGroups()
+        .map { groups -> groups.find { it.id.value == data.id }?.isRevoked == true }
+        .distinctUntilChanged()
 
     private fun sharedCalendar(
         ownerId: UserId,
         viewerId: UserId,
         date: LocalDate,
-    ): Flow<List<CalendarEventUi>> =
+    ): Flow<List<DayEventUi>> =
         flow {
             val outcome = sharedCalendarRepository.getSharedCalendar(
                 ownerId = ownerId,
@@ -107,6 +116,9 @@ class ExternalCalendarViewModel(
 
             when (outcome) {
                 is Outcome.Success -> emit(
+                    // `activeMember` stays false: these shifts belong to groups the viewer may not
+                    // be in at all, and every swap write would be refused. Offering the controls
+                    // would only produce failures.
                     outcome.value.groupEvents.map {
                         it.toUi(currentUserId = viewerId, removable = false)
                     } + outcome.value.personalEvents.map { it.toUi(removable = false) }
@@ -131,7 +143,7 @@ class ExternalCalendarViewModel(
 }
 
 data class GroupCalendarUi(
-    val events: Map<LocalDate, List<CalendarEventUi>> = emptyMap(),
+    val events: Map<LocalDate, List<DayEventUi>> = emptyMap(),
     val loading: Boolean = true,
     /** The user was removed from this group: the leftover events show, nothing can be added. */
     val isRevoked: Boolean = false,

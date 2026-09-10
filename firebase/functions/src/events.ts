@@ -13,6 +13,17 @@ import { requireFields, requireUid } from "./requests";
  * transaction verifies `onSwap` before changing anything, which is what keeps two members from
  * taking the same shift.
  *
+ * That check is the whole of the mutual exclusion, and it resolves a race in the order the requests
+ * reach Firestore. `tx.get` takes a read lock on the event, so two members tapping at once both read
+ * `onSwap: true`; Firestore aborts the later commit, re-runs its transaction body, and the re-run
+ * finds the flag already cleared and throws `TakeEventNotOnSwap`. The guard doubles as the retry's
+ * exit, which is why the loser gets a domain error and not an internal one.
+ *
+ * There is no queue and no fairness beyond arrival: a member who tapped earlier but was offline
+ * longer does not get priority, and nobody is told their position. That is deliberate — a waiting
+ * list would need a claims subcollection, a trigger to award them and rules to protect them, for a
+ * race that is measured in milliseconds and settles correctly without any of it.
+ *
  * Request data: `{ groupId: string, eventId: string }`
  * Returns: `{ groupId, eventId, assigneeId, status: "taken" }`
  */

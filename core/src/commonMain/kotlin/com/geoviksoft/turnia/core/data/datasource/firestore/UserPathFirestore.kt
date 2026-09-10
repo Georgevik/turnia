@@ -7,14 +7,14 @@ import com.geoviksoft.turnia.core.data.datasource.firestore.errors.UserProfileEr
 import com.geoviksoft.turnia.core.data.datasource.firestore.sync.SharedListeners
 import com.geoviksoft.turnia.core.data.logger.Logger
 import com.geoviksoft.turnia.core.data.user.mappers.UserDocumentMapper
-import com.geoviksoft.turnia.core.domain.model.EventTypeId
-import com.geoviksoft.turnia.core.domain.model.GroupId
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.domain.model.UserProfile
 import com.geoviksoft.turnia.core.system.Outcome
 import com.geoviksoft.turnia.core.system.outcomeCatching
 import com.geoviksoft.turnia.core.system.toFailure
+import com.geoviksoft.turnia.core.system.toInstantOrNull
 import com.geoviksoft.turnia.core.system.toSuccess
+import dev.gitlive.firebase.firestore.BaseTimestamp
 import dev.gitlive.firebase.firestore.FieldValue
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Source
@@ -33,10 +33,9 @@ private typealias CalendarsSharedWithMe = Outcome<List<UserProfile>, UserProfile
 class UserPathFirestore(
     private val firestore: FirebaseFirestore,
     private val mapper: UserDocumentMapper,
+    private val remoteUsernames: UsernameFirestore,
     scope: CoroutineScope
 ) {
-    private val listeners = SharedListeners<UserId, UserDocument>(scope, keepAlive = 10.minutes)
-
     // Held long past the screen that asks for it: a listener bills its result set again on every
     // re-attach, and nothing while it stays attached and nobody grants a calendar.
     private val calendarSharedWithMe =
@@ -51,43 +50,43 @@ class UserPathFirestore(
             mapper.map(snapshot)
         }
 
+    /**
+     * Somebody else's profile, from the cache whenever [marker] says the cached copy is current.
+     */
+    suspend fun fetchProfile(
+        uid: UserId,
+        marker: BaseTimestamp?,
+    ): Outcome<UserProfile, UserProfileError> =
+        outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
+            cachedProfile(uid)?.takeIf { it.isSettledAgainst(marker) }?.let { cached ->
+                return@outcomeCatching mapper.map(uid, cached)
+            }
+
+            val document = serverProfile(uid)
+                ?: return Outcome.Failure(UserProfileError.NotFound)
+            mapper.map(uid, document)
+        }
+
+    /**
+     * Profiles for a known list of uids, cache first.
+     */
+    suspend fun fetchProfiles(
+        uids: List<UserId>,
+        refresh: Boolean = false,
+    ): Outcome<List<UserProfile>, UserProfileError> =
+        outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
+            uids.mapNotNull { uid ->
+                val document = (if (refresh) null else cachedProfile(uid)) ?: serverProfile(uid)
+                document?.let { mapper.map(uid, it) }
+            }
+        }
+
     fun fetchCalendarsSharedWithMe(uid: UserId): Flow<CalendarsSharedWithMe> =
         calendarSharedWithMe.shared(uid) { queryCalendarSharedWith(uid) }
-
-    fun observe(uid: UserId): Flow<UserDocument> = listeners.shared(uid) { observeUserDoc(uid) }
-
-    private fun observeUserDoc(uid: UserId): Flow<UserDocument> =
-        queryUserDocument(uid).snapshots.map { snapshot ->
-            snapshot.trackData(TAG, "userDoc(snapshots)")
-            if (!snapshot.exists) UserDocument("")
-            else snapshot.data(UserDocument.serializer())
-        }
-            .distinctUntilChanged()
-            .catch { throwable ->
-                Logger.e(TAG, "Sync updates listener failed", throwable)
-            }
 
     suspend fun getUserDocument(uid: UserId): Outcome<UserDocument, UserProfileError> =
         outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
             val snapshot = queryUserDocument(uid).get().trackData(TAG, "userDoc")
-            if (!snapshot.exists) return Outcome.Failure(UserProfileError.NotFound)
-
-            snapshot.data(UserDocument.serializer())
-        }
-    /**
-     * The user's own document, from the cache whenever it is there.
-     *
-     * `users/{uid}` is only ever written by its owner, so a cached copy is this device's own last
-     * word. The group type colours are read through here on every group screen, and asking the
-     * server each time bought nothing but reads.
-     */
-    suspend fun getCachedUserDocument(uid: UserId): Outcome<UserDocument, UserProfileError> =
-        outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
-            queryUserDocument(uid).getCached(TAG, "userDoc(cache)")?.let {
-                return@outcomeCatching it.data(UserDocument.serializer())
-            }
-
-            val snapshot = queryUserDocument(uid).get(Source.SERVER).trackData(TAG, "userDoc(server)")
             if (!snapshot.exists) return Outcome.Failure(UserProfileError.NotFound)
 
             snapshot.data(UserDocument.serializer())
@@ -117,17 +116,35 @@ class UserPathFirestore(
             trackWrite(TAG, "revokeCalendarAccess")
         }
 
-    suspend fun updateTypeColor(
+    /**
+     * The avatar, and the marker that tells everyone else their cached copy is stale.
+     */
+    suspend fun updateAvatar(
         uid: UserId,
-        groupId: GroupId,
-        typeId: EventTypeId,
-        color: String
+        username: String,
+        animalIconId: String?,
+        backgroundColor: String?,
     ): Outcome<Unit, UserProfileError> =
         outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
-            Logger.i(TAG, "Update group event type colour")
-            val key = UserDocument.typeColorKey(groupId.value, typeId.value)
-            queryUserDocument(uid).updateFields { "${UserDocument.FIELD_TYPE_COLORS}.$key" to color }
-            trackWrite(TAG, "updateTypeColor")
+            Logger.i(TAG, "Update avatar")
+
+            val batch = firestore.batch()
+            batch.set(
+                queryUserDocument(uid),
+                mapOf(
+                    UserDocument.FIELD_ANIMAL_ICON_ID to animalIconId,
+                    UserDocument.FIELD_BACKGROUND_COLOR to backgroundColor,
+                    UserDocument.FIELD_UPDATE_AT to FieldValue.serverTimestamp,
+                ),
+                merge = true,
+            )
+            // A user with no reservation yet has no marker to move, and `touch` would land on the
+            // reservation's `create` rule, which this payload cannot satisfy.
+            val markerWrite = username.takeIf { it.isNotBlank() }
+                ?.let { remoteUsernames.touch(batch, it) }
+            batch.commit()
+            trackWrite(TAG, "updateAvatar")
+            markerWrite?.committed()
         }
 
     suspend fun updateUsername(uid: UserId, username: String): Outcome<Unit, UserProfileError> =
@@ -143,6 +160,21 @@ class UserPathFirestore(
             queryUserDocument(uid).set(userPatched)
             trackWrite(TAG, "updateUserDoc")
         }
+
+    private suspend fun cachedProfile(uid: UserId): UserDocument? =
+        queryUserDocument(uid).getCached(TAG, "profile(cache)")
+            ?.data(UserDocument.serializer())
+
+    private suspend fun serverProfile(uid: UserId): UserDocument? {
+        val snapshot = queryUserDocument(uid).get(Source.SERVER).trackData(TAG, "profile(server)")
+        return if (snapshot.exists) snapshot.data(UserDocument.serializer()) else null
+    }
+
+    private fun UserDocument.isSettledAgainst(marker: BaseTimestamp?): Boolean {
+        val markerAt = marker.toInstantOrNull() ?: return false
+        val cachedAt = updateAt.toInstantOrNull() ?: return false
+        return cachedAt >= markerAt
+    }
 
     private fun queryUserDocument(uid: UserId) =
         firestore.collection(PATH_USER).document(uid.value)

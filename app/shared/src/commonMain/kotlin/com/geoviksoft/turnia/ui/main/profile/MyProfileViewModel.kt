@@ -2,7 +2,6 @@ package com.geoviksoft.turnia.ui.main.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.geoviksoft.turnia.core.domain.model.UserSession
 import com.geoviksoft.turnia.core.domain.model.UsernameError
 import com.geoviksoft.turnia.core.domain.repository.UserRepository
 import com.geoviksoft.turnia.core.domain.username.UsernameFactory
@@ -10,8 +9,6 @@ import com.geoviksoft.turnia.core.system.fold
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -23,20 +20,36 @@ class MyProfileViewModel(
     private val _uiState = MutableStateFlow(MyProfileUi())
     val uiState: StateFlow<MyProfileUi> = _uiState.asStateFlow()
 
+    /** What the screen opened with, so saving can skip the halves that did not move. */
+    private var initProfileUi: MyProfileUi = MyProfileUi()
+
     init {
         viewModelScope.launch {
-            val user = userRepository.userSession
-                .filterIsInstance<UserSession.Authenticated>().first().user
+            userRepository.loggedUserFlow.collect { user ->
 
-            _uiState.update {
-                it.copy(
-                    name = user.displayName.orEmpty(),
-                    username = user.username,
-                    email = user.email.orEmpty(),
-                )
+                _uiState.update {
+                    it.copy(
+                        name = user.displayName.orEmpty(),
+                        username = user.username,
+                        email = user.email.orEmpty(),
+                        animalIconId = user.avatar.animal,
+                        backgroundColor = user.avatar.background,
+                    )
+                }
+                initProfileUi = _uiState.value
             }
         }
     }
+
+    fun onAvatarClicked() = _uiState.update { it.copy(pickingAvatar = true) }
+
+    fun onAvatarPickerDismissed() = _uiState.update { it.copy(pickingAvatar = false) }
+
+    fun onAnimalPicked(animalIconId: String) =
+        _uiState.update { it.copy(animalIconId = animalIconId) }
+
+    fun onBackgroundPicked(backgroundColor: String) =
+        _uiState.update { it.copy(backgroundColor = backgroundColor) }
 
     fun onNameChanged(name: String) = _uiState.update {
         it.copy(
@@ -63,12 +76,40 @@ class MyProfileViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(saving = true) }
 
+            if (state.avatarChanged()) {
+                val stored = userRepository
+                    .updateAvatar(state.animalIconId, state.backgroundColor)
+                    .fold(onSuccess = { true }, onFailure = { false })
+
+                if (!stored) {
+                    _uiState.update {
+                        it.copy(saving = false, userMessage = ProfileMessage.SaveFailed)
+                    }
+                    return@launch
+                }
+            }
+
+            if (!state.profileChanged()) {
+                _uiState.update { it.copy(saving = false, saved = true) }
+                return@launch
+            }
+
             userRepository.updateProfile(state.name.trim(), state.username).fold(
                 onSuccess = { _uiState.update { it.copy(saving = false, saved = true) } },
-                onFailure = { error -> _uiState.update { it.copy(saving = false).withError(error) } },
+                onFailure = { error ->
+                    _uiState.update {
+                        it.copy(saving = false).withError(error)
+                    }
+                },
             )
         }
     }
+
+    private fun MyProfileUi.avatarChanged(): Boolean =
+        animalIconId != initProfileUi.animalIconId || backgroundColor != initProfileUi.backgroundColor
+
+    private fun MyProfileUi.profileChanged(): Boolean =
+        name.trim() != initProfileUi.name.trim() || username != initProfileUi.username
 
     fun userMessageShown() = _uiState.update { it.copy(userMessage = null) }
 

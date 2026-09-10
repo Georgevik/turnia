@@ -4,6 +4,7 @@ import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.callableErr
 import com.geoviksoft.turnia.core.data.logger.Logger
 import com.geoviksoft.turnia.core.domain.model.GroupError
 import com.geoviksoft.turnia.core.domain.model.JoinGroupError
+import com.geoviksoft.turnia.core.domain.model.SwapError
 
 /**
  * What the group's Cloud Functions throw, as the errors the domain speaks. Each code belongs to one
@@ -35,6 +36,19 @@ class GroupErrorMapper {
         }
     }
 
+    fun mapTake(throwable: Throwable): SwapError {
+        val code = throwable.callableErrorCode
+        Logger.e(TAG, "Take event failed with code $code", throwable)
+
+        return when (code) {
+            CODE_TAKE_EVENT_NOT_MEMBER -> SwapError.NotMember
+            CODE_TAKE_EVENT_SELF -> SwapError.OwnShift
+            CODE_TAKE_EVENT_NOT_FOUND -> SwapError.NotFound
+            CODE_TAKE_EVENT_NOT_ON_SWAP -> SwapError.TakenBySomeoneElse
+            else -> SwapError.SaveFailed
+        }
+    }
+
     private companion object {
         const val TAG = "GroupErrorMapper"
         const val CODE_INVITATION_NOT_FOUND = 1003
@@ -43,5 +57,9 @@ class GroupErrorMapper {
         const val CODE_LEAVE_GROUP_LAST_ADMIN = 1013
         const val CODE_GROUP_NOT_FOUND = 1022
         const val CODE_GROUP_NOT_EMPTY = 1024
+        const val CODE_TAKE_EVENT_NOT_MEMBER = 3003
+        const val CODE_TAKE_EVENT_SELF = 3004
+        const val CODE_TAKE_EVENT_NOT_FOUND = 3005
+        const val CODE_TAKE_EVENT_NOT_ON_SWAP = 3006
     }
 }

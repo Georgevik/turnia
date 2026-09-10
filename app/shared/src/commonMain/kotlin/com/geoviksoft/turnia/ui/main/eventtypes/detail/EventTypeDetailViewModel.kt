@@ -22,13 +22,13 @@ import com.geoviksoft.turnia.ui.main.eventtypes.detail.model.EventTypeFieldError
 import com.geoviksoft.turnia.ui.main.eventtypes.detail.model.EventTypeScreenError
 import com.geoviksoft.turnia.ui.main.eventtypes.detail.model.EventTypeTitle
 import com.geoviksoft.turnia.ui.main.eventtypes.detail.model.EventTypeToastError
-import com.geoviksoft.turnia.ui.system.EntityPalette
+import com.geoviksoft.turnia.ui.system.color.EntityPalette
+import com.geoviksoft.turnia.ui.system.color.entityColor
+import com.geoviksoft.turnia.ui.system.color.toComposeColorOr
+import com.geoviksoft.turnia.ui.system.color.toHex
 import com.geoviksoft.turnia.ui.system.components.time.toTimeInput
 import com.geoviksoft.turnia.ui.system.components.time.toTimeOrNull
 import com.geoviksoft.turnia.ui.system.createUuid
-import com.geoviksoft.turnia.ui.system.entityColor
-import com.geoviksoft.turnia.ui.system.toComposeColorOr
-import com.geoviksoft.turnia.ui.system.toHex
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

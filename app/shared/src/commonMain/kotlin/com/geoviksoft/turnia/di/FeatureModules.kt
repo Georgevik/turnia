@@ -7,6 +7,7 @@ import com.geoviksoft.turnia.ui.main.mycalendar.di.calendarModule
 import com.geoviksoft.turnia.ui.main.notifications.di.notificationsModule
 import com.geoviksoft.turnia.ui.main.people.di.peopleModule
 import com.geoviksoft.turnia.ui.main.settings.di.settingsModule
+import com.geoviksoft.turnia.ui.main.swap.di.swapModule
 import com.geoviksoft.turnia.ui.root.di.rootModule
 import org.koin.core.module.Module
 
@@ -22,5 +23,6 @@ val featureModules: List<Module> = listOf(
     eventTypesModule,
     peopleModule,
     settingsModule,
+    swapModule,
     notificationsModule,
 )

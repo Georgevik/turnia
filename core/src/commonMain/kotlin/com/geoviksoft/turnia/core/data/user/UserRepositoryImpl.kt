@@ -17,6 +17,7 @@ import com.geoviksoft.turnia.core.domain.repository.FcmDelegate
 import com.geoviksoft.turnia.core.domain.repository.UserRepository
 import com.geoviksoft.turnia.core.system.Outcome
 import com.geoviksoft.turnia.core.system.errorOrNull
+import com.geoviksoft.turnia.core.system.fold
 import com.geoviksoft.turnia.core.system.mapError
 import com.geoviksoft.turnia.core.system.onSuccess
 import com.geoviksoft.turnia.core.system.toFailure
@@ -136,9 +137,26 @@ class UserRepositoryImpl(
         }
     }
 
-    override suspend fun searchUsers(prefix: String): Outcome<List<UserProfile>, Unit> =
-        remoteUsernames.search(prefix.trim().lowercase())
-            .mapError { error -> Logger.e(TAG, "Failed username search: $error") }
+    /**
+     * The reservation is the index; the profile behind each hit comes from `users/{uid}`.
+     *
+     * Each hit carries the `updateAt` of its reservation, which the profile read compares its
+     * cached copy against — so searching the same prefix twice costs the query and nothing more.
+     */
+    override suspend fun searchUsers(prefix: String): Outcome<List<UserProfile>, Unit> {
+        val matches = remoteUsernames.search(prefix.trim().lowercase()).valueOrElse { error ->
+            Logger.e(TAG, "Failed username search: $error")
+            return Unit.toFailure()
+        }
+
+        return matches.mapNotNull { match ->
+            remoteProfiles.fetchProfile(match.uid, match.updateAt).valueOrNull()
+        }.toSuccess()
+    }
+
+    override suspend fun getProfiles(userIds: List<UserId>): Outcome<List<UserProfile>, Unit> =
+        remoteProfiles.fetchProfiles(userIds)
+            .mapError { error -> Logger.e(TAG, "Failed to read profiles: $error") }
 
     override suspend fun getCalendarSharedWith(): Outcome<List<UserProfile>, Unit> {
         val uid = loggedUser?.id ?: return Unit.toFailure()
@@ -150,7 +168,7 @@ class UserRepositoryImpl(
 
         if (sharedUids.isEmpty()) return emptyList<UserProfile>().toSuccess()
 
-        val resolved = remoteUsernames.findByUids(sharedUids).valueOrElse { error ->
+        val resolved = remoteProfiles.fetchProfiles(sharedUids).valueOrElse { error ->
             Logger.e(TAG, "Failed resolve the users shared with: $error")
             return Unit.toFailure()
         }.associateBy { it.id }
@@ -158,6 +176,30 @@ class UserRepositoryImpl(
         return sharedUids.map { sharedUid ->
             resolved[sharedUid] ?: UserProfile(id = sharedUid, name = "", username = "")
         }.toSuccess()
+    }
+
+    override suspend fun updateAvatar(
+        animalIconId: String?,
+        backgroundColor: String?,
+    ): Outcome<Unit, Unit> {
+        val user = loggedUser ?: return Unit.toFailure()
+
+        return remoteProfiles
+            .updateAvatar(user.id, user.username, animalIconId, backgroundColor)
+            .fold(
+                onSuccess = {
+                    _userSession.value = UserSession.Authenticated(
+                        user.copy(
+                            avatar = UserProfile.AnimalAvatar(animalIconId, backgroundColor)
+                        )
+                    )
+                    Unit.toSuccess()
+                },
+                onFailure = { error ->
+                    Logger.e(TAG, "Failed to save the avatar: $error")
+                    Unit.toFailure()
+                },
+            )
     }
 
     override suspend fun grantCalendarAccess(userId: UserId): Outcome<Unit, Unit> {

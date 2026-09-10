@@ -1,6 +1,7 @@
 package com.geoviksoft.turnia.ui.main.people
 
 import com.geoviksoft.turnia.core.domain.model.UserId
+import com.geoviksoft.turnia.core.domain.model.UserProfile
 import com.geoviksoft.turnia.ui.main.people.model.PeopleFilter
 import com.geoviksoft.turnia.ui.main.people.model.PersonRowUi
 
@@ -25,7 +26,7 @@ data class SearchUi(
         data object TooShort : Panel
         data object Searching : Panel
         data object Empty : Panel
-        data class Results(val users: List<SearchResultUi>) : Panel
+        data class Results(val users: List<SearchResultUi>, val isLoading: Boolean) : Panel
     }
 }
 
@@ -34,6 +35,7 @@ data class SearchResultUi(
     val name: String,
     val username: String,
     val alreadyShared: Boolean,
+    val avatar: UserProfile.AnimalAvatar = UserProfile.AnimalAvatar.NONE,
 )
 
 enum class PeopleMessage { SharedWithMeLoadFailed, SharedByMeLoadFailed, GrantFailed, RevokeFailed }

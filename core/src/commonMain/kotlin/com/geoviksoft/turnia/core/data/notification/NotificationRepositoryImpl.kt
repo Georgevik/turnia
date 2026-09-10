@@ -34,6 +34,7 @@ class NotificationRepositoryImpl : NotificationRepository {
 
             TYPE_JOIN_ACCEPTED -> PushDestination.Groups
             TYPE_CALENDAR_SHARED -> PushDestination.People
+            TYPE_EVENT_ON_SWAP, TYPE_EVENT_TAKEN -> PushDestination.Swap
             else -> null
         }
 
@@ -47,5 +48,7 @@ class NotificationRepositoryImpl : NotificationRepository {
         private const val TYPE_JOIN_REQUESTED = "join_requested"
         private const val TYPE_JOIN_ACCEPTED = "join_accepted"
         private const val TYPE_CALENDAR_SHARED = "calendar_shared"
+        private const val TYPE_EVENT_ON_SWAP = "event_on_swap"
+        private const val TYPE_EVENT_TAKEN = "event_taken"
     }
 }

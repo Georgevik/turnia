@@ -18,7 +18,7 @@ sealed interface MainRoute : NavKey {
     data object SettingsMenuTab : MainRoute
 
     @Serializable
-    data object ChangesTab : MainRoute
+    data object SwapTab : MainRoute
 
     @Serializable
     data class ExternalCalendar(val data: ExternalCalendarData) : MainRoute

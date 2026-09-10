@@ -39,7 +39,7 @@ private fun screenName(route: NavKey): String? = when (route) {
     MainRoute.CalendarTab -> "calendar"
     MainRoute.PeopleTab -> "people"
     MainRoute.GroupsTab -> "groups"
-    MainRoute.ChangesTab -> "changes"
+    MainRoute.SwapTab -> "swap"
     MainRoute.SettingsMenuTab -> "settings"
     is MainRoute.ExternalCalendar -> "external_calendar"
     is MainRoute.GroupDetail -> "group_detail"

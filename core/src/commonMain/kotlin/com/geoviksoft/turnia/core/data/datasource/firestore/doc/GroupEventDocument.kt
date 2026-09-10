@@ -15,7 +15,7 @@ data class GroupEventDocument(
     @SerialName("groupEventTypeId") val groupEventTypeId: String,
     @SerialName("date") val date: String,
     @SerialName(FIELD_YEAR_MONTH) val yearMonth: String,
-    @SerialName("onSwap") val onSwap: Boolean = false,
+    @SerialName(FIELD_ON_SWAP) val onSwap: Boolean = false,
     @SerialName(FIELD_HISTORY) val history: List<EventHistoryDocument> = emptyList(),
     @SerialName(FIELD_IS_DELETED) val isDeleted: Boolean = false,
     // Nullable: a write reads back with the server timestamp unresolved until it is acknowledged.
@@ -28,6 +28,7 @@ data class GroupEventDocument(
         const val FIELD_IS_DELETED = "isDeleted"
         const val FIELD_UPDATE_AT = "updateAt"
         const val FIELD_HISTORY = "history"
+        const val FIELD_ON_SWAP = "onSwap"
     }
 }
 
@@ -40,7 +41,6 @@ data class EventHistoryDocument(
     @SerialName("timestamp") val timestamp: BaseTimestamp? = null,
 ) {
     companion object {
-        const val TYPE_PUT_ON_SWAP = "put_on_swap"
         const val TYPE_TRANSFERRED = "transferred"
     }
 }

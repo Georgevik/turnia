@@ -31,12 +31,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.geoviksoft.turnia.ui.components.calendar.model.CalendarEventUi
+import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
 import com.geoviksoft.turnia.ui.components.daydetail.components.DayDetailAddEvent
 import com.geoviksoft.turnia.ui.components.daydetail.components.DayDetailHeader
 import com.geoviksoft.turnia.ui.components.daydetail.components.DayEventRow
 import com.geoviksoft.turnia.ui.components.daydetail.model.AddEventTypesError
 import com.geoviksoft.turnia.ui.components.daydetail.model.AddEventTypesUi
+import com.geoviksoft.turnia.ui.components.daydetail.model.DaySwapMessage
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
 import com.geoviksoft.turnia.ui.system.components.TurniaErrorContent
 import com.geoviksoft.turnia.ui.system.toErrorSnackbar
@@ -56,11 +57,22 @@ import turnia.app.shared.generated.resources.event_remove_cancel
 import turnia.app.shared.generated.resources.event_remove_confirm
 import turnia.app.shared.generated.resources.event_remove_confirm_body
 import turnia.app.shared.generated.resources.event_remove_confirm_title
+import turnia.app.shared.generated.resources.event_swap_error_not_assignee
+import turnia.app.shared.generated.resources.event_swap_error_not_swappable
+import turnia.app.shared.generated.resources.event_swap_error_not_found
+import turnia.app.shared.generated.resources.event_swap_error_not_member
+import turnia.app.shared.generated.resources.event_swap_error_own_shift
+import turnia.app.shared.generated.resources.event_swap_error_save
+import turnia.app.shared.generated.resources.event_swap_error_taken_by_someone
+import turnia.app.shared.generated.resources.event_swap_take_cancel
+import turnia.app.shared.generated.resources.event_swap_take_confirm
+import turnia.app.shared.generated.resources.event_swap_take_confirm_body
+import turnia.app.shared.generated.resources.event_swap_take_confirm_title
 
 @Composable
 fun DayDetailSheet(
     date: LocalDate,
-    events: List<CalendarEventUi>,
+    events: List<DayEventUi>,
     addMode: DayAddMode,
     openEditTypeScreen: (groupId: String, groupName: String) -> Unit,
     openNewPersonalTypeScreen: () -> Unit,
@@ -72,8 +84,9 @@ fun DayDetailSheet(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var adding by rememberSaveable { mutableStateOf(false) }
-    var pendingDelete by remember { mutableStateOf<CalendarEventUi?>(null) }
-    var editingNotes by remember { mutableStateOf<CalendarEventUi?>(null) }
+    var pendingDelete by remember { mutableStateOf<DayEventUi?>(null) }
+    var editingNotes by remember { mutableStateOf<DayEventUi?>(null) }
+    var pendingTake by remember { mutableStateOf<DayEventUi?>(null) }
 
     val noteError by viewModel.noteError.collectAsStateWithLifecycle()
     val snackbar = LocalSnackbar.current
@@ -85,6 +98,15 @@ fun DayDetailSheet(
         }
     }
 
+    val swapMessage by viewModel.swapMessage.collectAsStateWithLifecycle()
+    swapMessage?.let { message ->
+        val text = message.text()
+        LaunchedEffect(message) {
+            snackbar.showSnackbar(text.toErrorSnackbar())
+            viewModel.swapMessageShown()
+        }
+    }
+
     editingNotes?.let { event ->
         NotesDialog(
             initialNotes = event.notes.orEmpty(),
@@ -92,6 +114,27 @@ fun DayDetailSheet(
             onSave = { notes ->
                 viewModel.saveNotes(event, notes)
                 editingNotes = null
+            },
+        )
+    }
+
+    pendingTake?.let { event ->
+        AlertDialog(
+            onDismissRequest = { pendingTake = null },
+            title = { Text(stringResource(Res.string.event_swap_take_confirm_title)) },
+            text = { Text(stringResource(Res.string.event_swap_take_confirm_body)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.takeEvent(event)
+                    pendingTake = null
+                }) {
+                    Text(stringResource(Res.string.event_swap_take_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingTake = null }) {
+                    Text(stringResource(Res.string.event_swap_take_cancel))
+                }
             },
         )
     }
@@ -184,6 +227,16 @@ fun DayDetailSheet(
                                     } else {
                                         null
                                     },
+                                    onSwapChange = if (event.canOfferSwap) {
+                                        { onSwap -> viewModel.setOnSwap(event, onSwap) }
+                                    } else {
+                                        null
+                                    },
+                                    onTake = if (event.canTake) {
+                                        { pendingTake = event }
+                                    } else {
+                                        null
+                                    },
                                 )
                             }
                         }
@@ -240,5 +293,18 @@ private fun AddPaneLoading() {
 private fun AddEventTypesError.message(): String = stringResource(
     when (this) {
         AddEventTypesError.LoadFailed -> Res.string.day_detail_load_error
+    }
+)
+
+@Composable
+private fun DaySwapMessage.text(): String = stringResource(
+    when (this) {
+        DaySwapMessage.NotAssignee -> Res.string.event_swap_error_not_assignee
+        DaySwapMessage.NotSwappable -> Res.string.event_swap_error_not_swappable
+        DaySwapMessage.NotMember -> Res.string.event_swap_error_not_member
+        DaySwapMessage.OwnShift -> Res.string.event_swap_error_own_shift
+        DaySwapMessage.NotFound -> Res.string.event_swap_error_not_found
+        DaySwapMessage.TakenBySomeoneElse -> Res.string.event_swap_error_taken_by_someone
+        DaySwapMessage.SaveFailed -> Res.string.event_swap_error_save
     }
 )

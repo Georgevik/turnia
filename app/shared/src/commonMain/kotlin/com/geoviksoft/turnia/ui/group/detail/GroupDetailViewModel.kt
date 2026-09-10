@@ -11,7 +11,9 @@ import com.geoviksoft.turnia.core.domain.model.GroupMember
 import com.geoviksoft.turnia.core.domain.model.JoinRequest
 import com.geoviksoft.turnia.core.domain.model.NewGroup
 import com.geoviksoft.turnia.core.domain.model.UserId
+import com.geoviksoft.turnia.core.domain.model.UserProfile
 import com.geoviksoft.turnia.core.domain.repository.GroupRepository
+import com.geoviksoft.turnia.core.domain.repository.UserRepository
 import com.geoviksoft.turnia.core.system.Outcome
 import com.geoviksoft.turnia.core.system.fold
 import com.geoviksoft.turnia.core.system.valueOrEmpty
@@ -23,11 +25,11 @@ import com.geoviksoft.turnia.ui.group.detail.model.GroupDetailUi.GroupForm
 import com.geoviksoft.turnia.ui.group.detail.model.GroupMemberUi
 import com.geoviksoft.turnia.ui.group.detail.model.GroupTypeRowUi
 import com.geoviksoft.turnia.ui.group.detail.model.JoinRequestUi
+import com.geoviksoft.turnia.ui.system.color.entityColor
+import com.geoviksoft.turnia.ui.system.color.toComposeColorOr
+import com.geoviksoft.turnia.ui.system.color.toComposeColorOrNull
+import com.geoviksoft.turnia.ui.system.color.toHex
 import com.geoviksoft.turnia.ui.system.createUuid
-import com.geoviksoft.turnia.ui.system.entityColor
-import com.geoviksoft.turnia.ui.system.toComposeColorOr
-import com.geoviksoft.turnia.ui.system.toComposeColorOrNull
-import com.geoviksoft.turnia.ui.system.toHex
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -41,6 +43,7 @@ import kotlinx.coroutines.launch
 class GroupDetailViewModel(
     private val groupId: GroupId?,
     private val groupRepository: GroupRepository,
+    private val userRepository: UserRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<GroupDetailUi>(GroupDetailUi.Loading)
@@ -100,8 +103,10 @@ class GroupDetailViewModel(
                         emptyList()
                     }
 
+                    val avatars = avatarsOf(group, requests)
+
                     _uiState.update { current ->
-                        val loaded = group.toUiState(requests)
+                        val loaded = group.toUiState(requests, avatars)
                         // A refresh brings the event types and the members up to date; whatever
                         // the user was typing is theirs and stays.
                         if (!showLoading && current is GroupDetailUi.Success) {
@@ -310,7 +315,25 @@ class GroupDetailViewModel(
         isNew = true,
     )
 
-    private fun Group.toUiState(requests: List<JoinRequest>) = GroupDetailUi.Success(
+    /**
+     * The group document carries every member's name but not their avatar, which lives on their own
+     * profile — one read each, and the cache answers from the second open on.
+     */
+    private suspend fun avatarsOf(
+        group: Group,
+        requests: List<JoinRequest>,
+    ): Map<UserId, UserProfile.AnimalAvatar> {
+        val uids = (group.members.map { it.id } + requests.map { it.userId }).distinct()
+        if (uids.isEmpty()) return emptyMap()
+
+        return userRepository.getProfiles(uids).valueOrEmpty()
+            .associate { it.id to it.avatar }
+    }
+
+    private fun Group.toUiState(
+        requests: List<JoinRequest>,
+        avatars: Map<UserId, UserProfile.AnimalAvatar>,
+    ) = GroupDetailUi.Success(
         form = GroupForm(
             groupId = id,
             name = name,
@@ -322,17 +345,23 @@ class GroupDetailViewModel(
             editable = isAdmin,
         ),
         eventTypes = types.map { it.toUiRow() },
-        members = members.map { it.toUiRow() },
-        joinRequests = requests.map { JoinRequestUi(it.userId, it.name, it.username) },
+        members = members.map { it.toUiRow(avatars) },
+        joinRequests = requests.map {
+            JoinRequestUi(it.userId, it.name, it.username, avatars.avatarOf(it.userId))
+        },
         isNew = false,
     )
 
-    private fun GroupMember.toUiRow() = GroupMemberUi(
+    private fun GroupMember.toUiRow(avatars: Map<UserId, UserProfile.AnimalAvatar>) = GroupMemberUi(
         id = id,
         name = name,
         username = username,
         isAdmin = isAdmin,
+        avatar = avatars.avatarOf(id),
     )
+
+    private fun Map<UserId, UserProfile.AnimalAvatar>.avatarOf(id: UserId) =
+        this[id] ?: UserProfile.AnimalAvatar.NONE
 
     private fun GroupEventType.toUiRow() = GroupTypeRowUi(
         typeId = id,

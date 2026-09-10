@@ -10,7 +10,7 @@
         <item>Calculando cuántos cafés harán falta para esta semana.</item>
         <item>Cambiando mañanas por tardes y salvando planes de última hora…</item>
         <item>Reorganizando el tiempo para que por fin tengas vida social.</item>
-        <item>Poniendo en marcha la diplomacia del intercambio de turnos…</item>
+        <item>Poniendo en marcha la diplomacia del cambio de turnos…</item>
         <item>Validando cuadrantes: un segundo, que casi lo tenemos.</item>
         <item>Negociando el turno de noche por un trozo de tarta...</item>
         <item>Buscando a la persona valiente que cubra el festivo...</item>
@@ -42,7 +42,7 @@
     <string name="event_full_date">%2$s %1$d, %3$d</string>
     <string name="event_details_count">%1$d eventos</string>
     <string name="event_details_empty">No hay eventos este día</string>
-    <string name="event_status_on_swap">En intercambio</string>
+    <string name="event_status_on_swap">Pidiendo cambio</string>
     <string name="event_assigned_to">Asignado a %1$s</string>
     <string name="event_holder_me">Yo</string>
     <string name="event_manage">Gestionar</string>
@@ -78,6 +78,31 @@
         <item>Diciembre</item>
     </string-array>
 
+    <!-- Short forms, for where a date has to fit beside something else. Monday first, like the grid. -->
+    <string-array name="calendar_weekdays_short">
+        <item>Lun</item>
+        <item>Mar</item>
+        <item>Mié</item>
+        <item>Jue</item>
+        <item>Vie</item>
+        <item>Sáb</item>
+        <item>Dom</item>
+    </string-array>
+    <string-array name="calendar_months_short">
+        <item>ene</item>
+        <item>feb</item>
+        <item>mar</item>
+        <item>abr</item>
+        <item>may</item>
+        <item>jun</item>
+        <item>jul</item>
+        <item>ago</item>
+        <item>sep</item>
+        <item>oct</item>
+        <item>nov</item>
+        <item>dic</item>
+    </string-array>
+
     <!-- Welcome / Sign in -->
     <string name="welcome_headline">Tus turnos, sin líos</string>
     <string name="welcome_body">Cambios de última hora, coberturas y favores entre compañeros… por fin en un solo sitio. Se acabó perderse entre mensajes de WhatsApp.</string>
@@ -88,6 +113,8 @@
     <string name="welcome_feature_notify_title">Te avisamos cuando importa</string>
     <string name="welcome_feature_notify_body">Una notificación en cuanto algo afecta a tu horario.</string>
     <string name="welcome_signin_hint">Inicia sesión para empezar</string>
+    <string name="signin_google">Continuar con Google</string>
+    <string name="signin_apple">Continuar con Apple</string>
     <string name="signin_error_failed">No hemos podido iniciar sesión. Inténtalo de nuevo.</string>
 
     <!-- Groups tab -->
@@ -170,8 +197,8 @@
     <string name="event_type_field_end">Fin</string>
     <string name="event_type_field_color">Color</string>
     <string name="event_type_pick_color">Elegir color</string>
-    <string name="event_type_swap_allowed">Intercambio permitido</string>
-    <string name="event_type_swap_not_allowed">Intercambio no permitido</string>
+    <string name="event_type_swap_allowed">Cambio permitido</string>
+    <string name="event_type_swap_not_allowed">Cambio no permitido</string>
     <string name="event_type_group_readonly">Solo el administrador del grupo puede editar estos campos. Tú puedes cambiar el color.</string>
     <string name="event_type_save">Guardar</string>
     <string name="event_type_not_set">—</string>
@@ -219,18 +246,22 @@
     <string name="profile_field_name">Nombre</string>
     <string name="profile_field_username">Nombre de usuario</string>
     <string name="profile_field_email">Correo</string>
-    <string name="profile_email_readonly">El correo viene de tu cuenta y no se puede cambiar.</string>
     <string name="profile_save">Guardar</string>
     <string name="profile_error_name_required">Escribe tu nombre.</string>
     <string name="profile_error_username_invalid">Entre 3 y 20 caracteres: letras, números, guion bajo o punto.</string>
     <string name="profile_error_username_taken">Ese nombre de usuario ya está en uso.</string>
     <string name="profile_error_save">No hemos podido guardar los cambios.</string>
+    <string name="profile_avatar_change">Cambiar avatar</string>
+    <string name="profile_avatar_title">Elige tu avatar</string>
+    <string name="profile_avatar_animal">Animal</string>
+    <string name="profile_avatar_color">Color</string>
+    <string name="profile_avatar_done">Listo</string>
 
     <!-- Bottom bar -->
     <string name="tab_calendar">Calendario</string>
     <string name="tab_people">Personas</string>
     <string name="tab_groups">Grupos</string>
-    <string name="tab_changes">Cambios</string>
+    <string name="tab_swap">Cambios</string>
     <string name="tab_settings">Ajustes</string>
 
     <string name="group_admin_badge">ADMIN</string>
@@ -298,5 +329,34 @@
     <string name="day_detail_group_events">EVENTOS DE GRUPO</string>
     <string name="day_detail_add_event">Añadir</string>
     <string name="day_detail_load_error">No hemos podido cargar tus tipos de evento.</string>
+    <string name="event_group_no_types">Este grupo todavía no tiene tipos de turno, así que aquí no hay nada que añadir.</string>
+    <string name="event_group_no_types_action">Gestionar el grupo</string>
+
+    <!-- Swap -->
+    <string name="event_swap_toggle">Ofrecer para cambio</string>
+    <string name="event_swap_error_not_assignee">Solo puede ofrecer el turno quien lo cubre.</string>
+    <string name="event_swap_error_not_swappable">Este tipo de turno no admite cambios.</string>
+    <string name="event_swap_error_save">No hemos podido cambiarlo. Inténtalo otra vez.</string>
+    <string name="event_swap_take">Cubrir este turno</string>
+    <string name="event_swap_take_confirm_title">¿Cubres este turno?</string>
+    <string name="event_swap_take_confirm_body">Pasará a ser tuyo y avisaremos a quien lo ofrecía.</string>
+    <string name="event_swap_take_confirm">Cubrirlo</string>
+    <string name="event_swap_take_cancel">Mejor no</string>
+    <string name="event_swap_error_taken_by_someone">Alguien se te ha adelantado: este turno ya tiene quien lo cubra.</string>
+    <string name="event_swap_error_not_member">Ya no estás en este grupo.</string>
+    <string name="event_swap_error_own_shift">Este turno ya es tuyo.</string>
+    <string name="event_swap_error_not_found">Este turno ya no existe.</string>
+
+    <!-- Swap tab -->
+    <string name="swap_title">Mis cambios</string>
+    <string name="swap_segment_offered">Los ofrezco</string>
+    <string name="swap_segment_covered">Los cubre otro</string>
+    <string name="swap_filter_title">Filtrar por grupo</string>
+    <string name="swap_filter_subtitle">Elige de qué grupos quieres ver los turnos.</string>
+    <string name="swap_filter_all">Todos los grupos</string>
+    <string name="swap_empty_offered_title">Nada en el escaparate</string>
+    <string name="swap_empty_offered_body">No has puesto ningún turno para cambiar. Tu tiempo libre sigue siendo teórico.</string>
+    <string name="swap_empty_covered_title">Todo sigue siendo tuyo</string>
+    <string name="swap_empty_covered_body">Nadie te ha cubierto nada todavía. Paciencia, o una tarta bien colocada.</string>
 
 </resources>

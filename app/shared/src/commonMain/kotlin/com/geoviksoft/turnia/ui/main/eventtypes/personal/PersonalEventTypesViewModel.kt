@@ -9,8 +9,8 @@ import com.geoviksoft.turnia.core.system.fold
 import com.geoviksoft.turnia.ui.main.eventtypes.personal.model.PersonalEventTypeRowUi
 import com.geoviksoft.turnia.ui.main.eventtypes.personal.model.PersonalEventTypesMessage
 import com.geoviksoft.turnia.ui.main.eventtypes.personal.model.PersonalEventTypesUi
-import com.geoviksoft.turnia.ui.system.entityColor
-import com.geoviksoft.turnia.ui.system.toComposeColorOr
+import com.geoviksoft.turnia.ui.system.color.entityColor
+import com.geoviksoft.turnia.ui.system.color.toComposeColorOr
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

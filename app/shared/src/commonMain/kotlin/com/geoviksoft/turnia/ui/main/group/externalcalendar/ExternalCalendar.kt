@@ -70,6 +70,9 @@ fun ExternalCalendar(viewModel: ExternalCalendarViewModel) {
             )
         },
         onMonthChanged = viewModel::onMonthChanged,
+        // Without this the pencil beside the group's types in the add pane does nothing, and a group
+        // with no types has no way out of an empty pane at all.
+        onEditGroup = { groupId, _ -> navigator.goTo(MainRoute.GroupDetail(groupId)) },
         eventsByDate = uiState.events,
     )
 }

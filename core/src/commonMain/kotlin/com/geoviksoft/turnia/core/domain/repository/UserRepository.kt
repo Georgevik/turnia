@@ -20,7 +20,11 @@ interface UserRepository : FcmDelegate {
 
     suspend fun updateProfile(name: String, username: String): Outcome<Unit, UsernameError>
 
+    suspend fun updateAvatar(animalIconId: String?, backgroundColor: String?): Outcome<Unit, Unit>
+
     suspend fun searchUsers(prefix: String): Outcome<List<UserProfile>, Unit>
+
+    suspend fun getProfiles(userIds: List<UserId>): Outcome<List<UserProfile>, Unit>
 
     suspend fun getCalendarSharedWith(): Outcome<List<UserProfile>, Unit>
 

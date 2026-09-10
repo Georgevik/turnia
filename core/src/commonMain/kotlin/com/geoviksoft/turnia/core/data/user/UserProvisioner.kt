@@ -73,7 +73,7 @@ class UserProvisioner(
         var candidate = first ?: usernameFactory.create(name)
 
         repeat(UsernameFactory.CLAIM_ATTEMPTS) {
-            if (remoteUsernames.claim(candidate, uid, name).isSuccess) return candidate
+            if (remoteUsernames.claim(candidate, uid).isSuccess) return candidate
             candidate = usernameFactory.create(name)
         }
 

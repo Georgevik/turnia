@@ -24,7 +24,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.PersonRemove
 import androidx.compose.material.icons.filled.Refresh
@@ -71,8 +70,8 @@ import com.geoviksoft.turnia.ui.group.detail.model.GroupDetailUi
 import com.geoviksoft.turnia.ui.group.detail.model.GroupMemberUi
 import com.geoviksoft.turnia.ui.group.detail.model.GroupTypeRowUi
 import com.geoviksoft.turnia.ui.group.detail.model.JoinRequestUi
-import com.geoviksoft.turnia.ui.system.EntityPalette
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
+import com.geoviksoft.turnia.ui.system.color.EntityPalette
 import com.geoviksoft.turnia.ui.system.components.AcronymBadge
 import com.geoviksoft.turnia.ui.system.components.AdminBadge
 import com.geoviksoft.turnia.ui.system.components.Avatar
@@ -85,7 +84,8 @@ import com.geoviksoft.turnia.ui.system.components.TListItem
 import com.geoviksoft.turnia.ui.system.components.TReadOnlyField
 import com.geoviksoft.turnia.ui.system.components.TurniaDialogError
 import com.geoviksoft.turnia.ui.system.components.TurniaErrorContent
-import com.geoviksoft.turnia.ui.system.entityColor
+import com.geoviksoft.turnia.ui.system.components.UserAvatar
+import com.geoviksoft.turnia.ui.system.components.UserAvatarSize
 import com.geoviksoft.turnia.ui.system.keyboardAware
 import com.geoviksoft.turnia.ui.system.toErrorSnackbar
 import kotlinx.coroutines.delay
@@ -485,8 +485,8 @@ private fun GroupDetailContent(
                 onClick = onSave,
                 // A group is created with at least one event type, or it can hold no shift at all.
                 enabled = form.name.isNotBlank() &&
-                    !state.saving &&
-                    (!state.isNew || state.eventTypes.isNotEmpty()),
+                        !state.saving &&
+                        (!state.isNew || state.eventTypes.isNotEmpty()),
                 shape = RoundedCornerShape(percent = 50),
                 contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
                 modifier = Modifier.fillMaxWidth().height(52.dp),
@@ -547,7 +547,14 @@ private fun JoinRequestsSection(
             }
 
             requests.forEach { request ->
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    UserAvatar(
+                        avatar = request.avatar,
+                        size = UserAvatarSize.M
+                    )
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = request.name.ifBlank { request.username },
@@ -748,12 +755,7 @@ private fun MembersSheet(
                 title = member.name.ifBlank { member.username },
                 subtitle = "@${member.username}".takeIf { member.username.isNotBlank() },
                 onLongClick = { onMemberLongPress(member) }.takeIf { manageable },
-                leading = {
-                    Avatar(
-                        background = entityColor(member.id.value),
-                        icon = Icons.Default.Person,
-                    )
-                },
+                leading = { UserAvatar(avatar = member.avatar) },
                 trailing = { if (member.isAdmin) AdminBadge() },
             )
         }

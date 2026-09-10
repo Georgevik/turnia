@@ -4,11 +4,11 @@ import com.geoviksoft.turnia.core.data.datasource.firestore.GroupEventFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.GroupFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.GroupJoinRequestFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.RevokedGroupFirestore
-import com.geoviksoft.turnia.core.data.datasource.firestore.UserPathFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.UserPrivateFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.DocHolder
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.GroupDocument
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.GroupMemberDocument
+import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.GroupEventFunction
 import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.GroupFunction
 import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.GroupMembershipFunction
 import com.geoviksoft.turnia.core.data.group.mappers.GroupMapper
@@ -27,6 +27,7 @@ import com.geoviksoft.turnia.core.domain.model.JoinGroupStatus
 import com.geoviksoft.turnia.core.domain.model.JoinRequest
 import com.geoviksoft.turnia.core.domain.model.MyJoinRequest
 import com.geoviksoft.turnia.core.domain.model.NewGroup
+import com.geoviksoft.turnia.core.domain.model.SwapError
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.domain.repository.AppConfigRepository
 import com.geoviksoft.turnia.core.domain.repository.GroupRepository
@@ -73,7 +74,7 @@ class GroupRepositoryImpl(
     private val revokedGroupFirestore: RevokedGroupFirestore,
     private val groupMembershipFunction: GroupMembershipFunction,
     private val groupFunction: GroupFunction,
-    private val userPathFirestore: UserPathFirestore,
+    private val groupEventFunction: GroupEventFunction,
     private val groupMapper: GroupMapper,
     private val analytics: Analytics,
 ) : GroupRepository {
@@ -94,9 +95,9 @@ class GroupRepositoryImpl(
             combine(
                 groupFirestore.observeMyGroups(userId),
                 revokedGroupFirestore.observe(userId),
-                userPathFirestore.observe(userId)
-            ) { mine, revoked, userData ->
-                val colors = userData.groupEventTypeColors
+                userPrivateFirestore.observePreferences(userId)
+            ) { mine, revoked, preferences ->
+                val colors = preferences.groupEventTypeColors
                 mine.map { groupMapper.map(it, userId, colors) } +
                         revoked.map { groupMapper.map(it, colors) }
             }
@@ -273,7 +274,7 @@ class GroupRepositoryImpl(
         val userId = userRepository.loggedUser?.id
             ?: return Result.failure(IllegalStateException("No signed-in user"))
 
-        userPathFirestore.updateTypeColor(userId, groupId, typeId, color).errorOrNull()
+        userPrivateFirestore.updateTypeColor(userId, groupId, typeId, color).errorOrNull()
             ?.let { return Result.failure(IllegalStateException("Failed to save the colour: $it")) }
 
         return Result.success(Unit)
@@ -314,17 +315,42 @@ class GroupRepositoryImpl(
             .mapError { error -> Logger.e(TAG, "Failed to delete the group event: $error") }
     }
 
-    /**
-     * Follows the group as well as its events: a type renamed or recoloured, or a member renamed,
-     * re-renders the calendar without a reload, because the shifts are drawn from both.
-     */
+    override suspend fun setOnSwap(
+        groupId: GroupId,
+        eventId: EventId,
+        eventDate: LocalDate,
+        assigneeId: UserId,
+        swappable: Boolean,
+        onSwap: Boolean,
+    ): Outcome<Unit, SwapError> {
+        val userId = userRepository.loggedUser?.id
+        if (userId != assigneeId) {
+            Logger.w(TAG, "Only whoever covers a shift can offer it")
+            return SwapError.NotAssignee.toFailure()
+        }
+
+        if (!swappable) {
+            Logger.w(TAG, "This event type does not allow swapping")
+            return SwapError.NotSwappable.toFailure()
+        }
+
+        return groupEventFirestore.updateOnSwap(groupId, eventId, eventDate, onSwap)
+            .mapError { error ->
+                Logger.e(TAG, "Failed to set the group event onSwap: $error")
+                SwapError.SaveFailed
+            }
+    }
+
+    override suspend fun takeEvent(groupId: GroupId, eventId: EventId): Outcome<Unit, SwapError> =
+        groupEventFunction.takeEvent(groupId, eventId)
+
     override fun getEventsByGroup(
         groupId: GroupId,
         date: LocalDate,
         monthDelta: Int,
     ): Flow<Outcome<List<GroupEvent>, Unit>> = userRepository.loggedUserFlow.flatMapLatest { user ->
         val userId = user.id
-        userPathFirestore.observe(userId).map { it.groupEventTypeColors }.flatMapLatest { colors ->
+        userPrivateFirestore.observePreferences(userId).map { it.groupEventTypeColors }.flatMapLatest { colors ->
             revokedGroupFirestore.observe(userId).flatMapLatest { revoked ->
                 val snapshot = revoked.find { it.id == groupId.value }
                 if (snapshot != null) {
@@ -346,12 +372,6 @@ class GroupRepositoryImpl(
         }
     }
 
-    /**
-     * The user's own shifts across every group. One pass over the groups [getGroups] already
-     * returns — each carries its types and its members, so nothing else has to be read to render
-     * them — and that includes the groups they were removed from: the shifts they still hold are
-     * theirs to cover, so they belong on their calendar.
-     */
     override fun getEventsByUser(
         userId: UserId,
         date: LocalDate,
@@ -376,6 +396,33 @@ class GroupRepositoryImpl(
                 combine(perGroup) { events ->
                     events.toList().flatten()
                         .filter { it.assigneeId == userId || it.ownerId == userId }
+                }
+            }
+        )
+    }
+
+    override fun getSwapEvents(date: LocalDate, monthsAhead: Int): Flow<List<GroupEvent>> = flow {
+        val viewer = userRepository.loggedUser?.id
+        if (viewer == null) {
+            emit(emptyList())
+            return@flow
+        }
+
+        emitAll(
+            getGroups().flatMapLatest { groups ->
+                if (groups.isEmpty()) return@flatMapLatest flowOf(emptyList())
+
+                val perGroup = groups.map { group ->
+                    eventsBetween(
+                        group = group,
+                        memberNames = group.memberNames(),
+                        viewer = viewer,
+                        from = date,
+                        until = date.plus(monthsAhead, DateTimeUnit.MONTH),
+                    )
+                }
+                combine(perGroup) { events ->
+                    events.toList().flatten().filter { it.date >= date }
                 }
             }
         )
@@ -406,20 +453,31 @@ class GroupRepositoryImpl(
         viewer: UserId,
         date: LocalDate,
         monthDelta: Int,
+    ): Flow<List<GroupEvent>> = eventsBetween(
+        group = group,
+        memberNames = memberNames,
+        viewer = viewer,
+        from = date.minus(monthDelta, DateTimeUnit.MONTH),
+        until = date.plus(monthDelta, DateTimeUnit.MONTH),
+    )
+
+    private fun eventsBetween(
+        group: Group,
+        memberNames: Map<String, String>,
+        viewer: UserId,
+        from: LocalDate,
+        until: LocalDate,
     ): Flow<List<GroupEvent>> = groupEventFirestore.get(
         group.id,
-        from = date.minus(monthDelta, DateTimeUnit.MONTH).toInstant(),
-        until = date.plus(monthDelta, DateTimeUnit.MONTH).toInstant(),
-        // Not an optimisation: the rules only let a revoked user read the events assigned to them,
-        // and they prove it from the query's filters, so without this the read is refused.
+        from = from.toInstant(),
+        until = until.toInstant(),
         assigneeId = viewer.takeIf { group.isRevoked },
     ).map { outcome ->
         outcome.valueOrNull().orEmpty().mapNotNull { groupMapper.map(it, group, memberNames) }
     }
 
-    /** From the cache: the colours are the user's own picks, and every group screen asks. */
     private suspend fun typeColors(userId: UserId): Map<String, String> =
-        userPathFirestore.getCachedUserDocument(userId).valueOrNull()
+        userPrivateFirestore.fetchCachedPreferences(userId).valueOrNull()
             ?.groupEventTypeColors.orEmpty()
 
     companion object {

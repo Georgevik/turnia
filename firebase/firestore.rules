@@ -31,11 +31,13 @@ service cloud.firestore {
       return isSignedIn() && (request.auth.uid == uid ||
         request.auth.uid in get(/databases/$(database)/documents/users/$(uid)).data.get('calendarSharedWith', []));
     }
-    // The public profile: the name, plus the `calendarSharedWith` grant list the rules and the
-    // sharing query both need. Anything else about a user lives under `private`.
+    // The public profile: name, username and avatar, readable by any signed-in user — a searcher
+    // has to render a result for someone who has never shared anything with them. `calendarSharedWith`
+    // rides along because the rules read it to authorize the very access it grants and the sharing
+    // query filters on it; the cost is that the grant list is public too. Anything a stranger must
+    // not see lives under `private`.
     match /users/{uid} {
-      allow read: if isSignedIn() && (request.auth.uid == uid ||
-        request.auth.uid in resource.data.get('calendarSharedWith', []));
+      allow read: if isSignedIn();
       allow create: if isSignedIn() && request.auth.uid == uid;
       // `name` and `username` are copied into every group the user belongs to, so only the
       // `updateProfile` function may change them — a keeper that ships inside the app is only as
@@ -84,16 +86,21 @@ service cloud.firestore {
 
     }
 
-    // Username reservations. Readable by any signed-in user: this is how you find someone whose
-    // `users/{uid}` you cannot read yet. Uniqueness comes from `create` only firing when the
-    // document does not exist — a second claimant lands on `update` and is denied.
+    // Username reservations: the lock that keeps a handle unique, and the index a prefix search
+    // runs over. Readable by any signed-in user. Uniqueness comes from `create` only firing when
+    // the document does not exist — a second claimant lands on `update` and is denied.
     match /usernames/{username} {
       allow read: if isSignedIn();
       allow create: if isSignedIn() &&
         request.resource.data.uid == request.auth.uid &&
         request.resource.data.username == username;
-      // Renaming means moving a reservation *and* every copy of the name; `updateProfile` owns it.
-      allow update, delete: if false;
+      // The reservation's identity is frozen: `username` and `uid` are what make it a lock, and
+      // releasing one is `updateProfile`'s alone. `updateAt` is the exception — it is the marker a
+      // searcher compares their cached copy of `users/{uid}` against, so every profile write has to
+      // move it, and the avatar is written straight from the client.
+      allow update: if isSignedIn() && resource.data.uid == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['updateAt']);
+      allow delete: if false;
     }
 
     match /groups/{groupId} {
@@ -130,11 +137,18 @@ service cloud.firestore {
         // A revoked user gets the second branch only: deleting is a soft delete, so it arrives
         // here as an update, and theirs is narrowed to flipping `isDeleted` on an event they
         // created and still hold.
+        // `onSwap` is the one field an admin may not touch: offering a shift is a decision for
+        // whoever covers it. Everything else an admin may still edit. Whether the event's *type*
+        // allows swapping is not checked here — the flag lives inside the group's own
+        // `groupEventTypes` array and these rules cannot search it by id, so that stays a product
+        // rule the client enforces.
         allow update: if (isMember(groupId) &&
           (resource.data.assigneeId == request.auth.uid || isAdmin(groupId)) &&
           request.resource.data.ownerId == resource.data.ownerId &&
           request.resource.data.assigneeId == resource.data.assigneeId &&
-          request.resource.data.get('history', []) == resource.data.get('history', []))
+          request.resource.data.get('history', []) == resource.data.get('history', []) &&
+          (request.resource.data.get('onSwap', false) == resource.data.get('onSwap', false)
+            || resource.data.assigneeId == request.auth.uid))
           || (isRevoked(groupId) &&
           resource.data.ownerId == request.auth.uid &&
           resource.data.assigneeId == request.auth.uid &&

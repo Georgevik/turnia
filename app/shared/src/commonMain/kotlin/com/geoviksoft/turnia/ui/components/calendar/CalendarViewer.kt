@@ -44,7 +44,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.geoviksoft.turnia.core.data.logger.Logger
-import com.geoviksoft.turnia.ui.components.calendar.model.CalendarEventUi
+import com.geoviksoft.turnia.ui.components.calendar.model.CalendarCellEventUi
+import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
 import com.geoviksoft.turnia.ui.components.calendar.model.ThreeDotsOption
 import com.geoviksoft.turnia.ui.components.daydetail.DayAddMode
 import com.geoviksoft.turnia.ui.components.daydetail.DayDetailSheet
@@ -80,7 +81,7 @@ private const val MONTH_PAGE_ANCHOR = MONTH_PAGE_COUNT / 2
 fun CalendarViewer(
     modifier: Modifier = Modifier,
     theme: CalendarTheme = CalendarThemes.myCalendar(),
-    eventsByDate: Map<LocalDate, List<CalendarEventUi>> = emptyMap(),
+    eventsByDate: Map<LocalDate, List<DayEventUi>> = emptyMap(),
     addMode: DayAddMode,
     titleBar: @Composable () -> Unit = {},
     contextualOptions: List<ThreeDotsOption> = emptyList(),
@@ -106,6 +107,9 @@ fun CalendarViewer(
 
     val scope = rememberCoroutineScope()
 
+    val cellsByDate = remember(eventsByDate) {
+        eventsByDate.mapValues { (_, events) -> events.map { it.cell } }
+    }
     fun monthForPage(page: Int): LocalDate =
         anchorMonth.plus(page - MONTH_PAGE_ANCHOR, DateTimeUnit.MONTH)
 
@@ -167,7 +171,7 @@ fun CalendarViewer(
                             calendarTheme = theme,
                             // Highlight the open day's tile while its sheet is up.
                             selectedDate = sheetDate,
-                            eventsByDate = eventsByDate,
+                            cellsByDate = cellsByDate,
                             onDateSelected = { date -> sheetDate = date },
                             onMonthChanged = { newMonth ->
                                 scope.launch {
@@ -298,7 +302,7 @@ private fun CalendarGrid(
     month: LocalDate,
     calendarTheme: CalendarTheme,
     selectedDate: LocalDate?,
-    eventsByDate: Map<LocalDate, List<CalendarEventUi>>,
+    cellsByDate: Map<LocalDate, List<CalendarCellEventUi>>,
     onDateSelected: (LocalDate) -> Unit,
     onMonthChanged: (LocalDate) -> Unit,
 ) {
@@ -325,7 +329,7 @@ private fun CalendarGrid(
                         isToday = date == today,
                         isSelected = date == selectedDate,
                         theme = calendarTheme,
-                        events = eventsByDate[date].orEmpty(),
+                        events = cellsByDate[date].orEmpty(),
                         onClick = {
                             if (!dateInMonth) {
                                 onMonthChanged(LocalDate(date.year, date.month, 1))

@@ -24,20 +24,16 @@ export function writeJoinRequestPointer(
     { groupIds, updateAt: FieldValue.serverTimestamp() },
     { merge: true },
   );
-  markPrivateUpdated(db, batch, uid);
+  markJoinRequestsUpdated(db, batch, uid);
 }
 
 /**
- * Tells a user's app that something under their `private` subcollection has moved.
- *
- * Answering a join request is the case that is easy to miss: the pointer list does not change, so
- * nothing about it looks like a write to the requester — but their app reads the request's `status`
- * through this marker, and without moving it they go on being told they are still waiting.
+ * Tells a user's app that one of their join requests has moved.
  */
-export function markPrivateUpdated(db: Firestore, batch: WriteBatch, uid: string) {
+export function markJoinRequestsUpdated(db: Firestore, batch: WriteBatch, uid: string) {
   batch.set(
     db.doc(`users/${uid}/sync/updates`),
-    { private: FieldValue.serverTimestamp() },
+    { joinRequests: FieldValue.serverTimestamp() },
     { merge: true },
   );
 }
@@ -52,8 +48,8 @@ export type PushTarget = { uid: string; token: string };
  * Every device registered by the given users.
  *
  * Push tokens live under `users/{uid}/private`, unreadable to anyone but their owner — the public
- * user document carries nothing but the name. One `getAll` rather than a read per uid: a group of
- * twenty admins is still a single round trip.
+ * user document carries nothing but the name and the avatar. One `getAll` rather than a read per
+ * uid: a group of twenty admins is still a single round trip.
  */
 export async function pushTargetsOf(uids: string[]): Promise<PushTarget[]> {
   if (uids.length === 0) return [];
@@ -104,13 +100,17 @@ export const updateProfile = onCall(async (request) => {
       if (reservation.exists && reservation.get("uid") !== uid) {
         throw TurniaError.UpdateProfileUsernameTaken;
       }
-      tx.set(reservationRef, { username, uid, name, updateAt: FieldValue.serverTimestamp() });
+      tx.set(reservationRef, { username, uid, updateAt: FieldValue.serverTimestamp() });
     });
   } else {
-    await db.doc(`usernames/${username}`).set({ name }, { merge: true });
+
+    await db.doc(`usernames/${username}`).set(
+      { updateAt: FieldValue.serverTimestamp() },
+      { merge: true },
+    );
   }
 
-  await userRef.set({ name, username }, { merge: true });
+  await userRef.set({ name, username, updateAt: FieldValue.serverTimestamp() }, { merge: true });
 
   // Every group carrying a copy of this name. Entry and sync marker in one batch per group, so a
   // reader sees them as equally old — written apart, the marker is always the later of the two and

@@ -122,6 +122,29 @@ class GroupEventFirestore(
             syncWrite.committed()
         }
 
+    /**
+     * Offers a shift for swap, or withdraws it.
+     */
+    suspend fun updateOnSwap(
+        groupId: GroupId,
+        eventId: EventId,
+        eventDate: LocalDate,
+        onSwap: Boolean,
+    ): Outcome<Unit, GenericFirestoreError> =
+        outcomeCatching(TAG, { GenericFirestoreError(it) }) {
+            Logger.d(TAG, "Set group event onSwap to $onSwap")
+
+            val batch = firestore.batch()
+            batch.updateFields(eventDocument(groupId, eventId)) {
+                GroupEventDocument.FIELD_ON_SWAP to onSwap
+                GroupEventDocument.FIELD_UPDATE_AT to Timestamp.ServerTimestamp
+            }
+            val syncWrite = groupSyncFirestore.writeEvents(batch, groupId, eventDate.yearMonth)
+            batch.commit()
+            trackWrite(TAG, "updateOnSwap")
+            syncWrite.committed()
+        }
+
     private suspend fun queryEvents(
         groupId: GroupId,
         months: Map<YearMonth, Timestamp?>,

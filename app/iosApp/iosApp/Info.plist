@@ -6,9 +6,11 @@
 	<true/>
 	<!-- iOS OAuth client id (from GoogleService-Info.plist CLIENT_ID). The GoogleSignIn
 	     SDK reads this to build its active configuration; KMPAuth never sets one itself,
-	     so without this key signInWithPresentingViewController has no configuration and fails. -->
+	     so without this key signInWithPresentingViewController has no configuration and fails.
+	     It and the URL scheme below are the same id in two spellings, and the SDK refuses to
+	     present the sign-in sheet unless they agree — change one and you must change the other. -->
 	<key>GIDClientID</key>
-	<string>570433560233-5vkolbvu74mg78tjpq3l06kmnivih2oi.apps.googleusercontent.com</string>
+	<string>570433560233-085g4o2j74b7fh5n5fhcp3pse3ptbc3e.apps.googleusercontent.com</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

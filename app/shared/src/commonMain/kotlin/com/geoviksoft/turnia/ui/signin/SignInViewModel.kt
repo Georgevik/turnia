@@ -23,7 +23,7 @@ class SignInViewModel : ViewModel() {
         result.fold(
             onSuccess = { },
             onFailure = { error ->
-                Logger.e(TAG, "Google sign-in failed", error)
+                Logger.e(TAG, "Sign-in failed", error)
                 _uiState.update { it.copy(signingIn = false, userMessage = SignInError.Failed) }
             },
         )

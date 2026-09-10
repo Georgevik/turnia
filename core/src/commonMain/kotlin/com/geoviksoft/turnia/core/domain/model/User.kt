@@ -5,7 +5,8 @@ data class User(
     val email: String?,
     val displayName: String?,
     val username: String,
-    val membership: Membership
+    val membership: Membership,
+    val avatar: UserProfile.AnimalAvatar = UserProfile.AnimalAvatar.NONE,
 )
 
 enum class Membership {

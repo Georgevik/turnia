@@ -1,10 +1,14 @@
 package com.geoviksoft.turnia.ui.main.people
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -144,21 +148,35 @@ fun PeopleScreen(viewModel: PeopleViewModel = koinViewModel()) {
             },
             sheetState = sheetState,
         ) {
-            ShareCalendarSheet(
-                search = success.search,
-                onQueryChanged = viewModel::onSearchChanged,
-                onPick = { userId ->
-                    sheetOpen = false
-                    viewModel.onGrant(userId)
-                },
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .animateContentSize(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioLowBouncy,
+                            stiffness = Spring.StiffnessLow
+                        )
+                    )
+            ) {
+                ShareCalendarSheet(
+                    search = success.search,
+                    onQueryChanged = viewModel::onSearchChanged,
+                    onPick = { userId ->
+                        sheetOpen = false
+                        viewModel.onGrant(userId)
+                    },
+                )
+            }
         }
     }
 
     pendingRevoke?.let { person ->
         ConfirmationDialog(
             title = stringResource(Res.string.share_calendar_revoke_title),
-            message = stringResource(Res.string.share_calendar_revoke_message, person.displayName()),
+            message = stringResource(
+                Res.string.share_calendar_revoke_message,
+                person.displayName()
+            ),
             confirmText = stringResource(Res.string.share_calendar_revoke_confirm),
             dismissText = stringResource(Res.string.dialog_cancel),
             onConfirm = {

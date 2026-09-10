@@ -13,6 +13,7 @@ import com.geoviksoft.turnia.core.data.datasource.firestore.UserPathFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.UserPrivateFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.UserSyncFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.UsernameFirestore
+import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.GroupEventFunction
 import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.GroupFunction
 import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.GroupMembershipFunction
 import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.SharedCalendarFunction
@@ -77,9 +78,9 @@ val dataModule: Module = module {
 
     // Datasources.
     single { UserProfileFunction(get(), get()) }
-    single { UserPathFirestore(get(), get(), get()) }
-    single { UserPrivateFirestore(get(), get()) }
-    single { UsernameFirestore(get(), get(), get()) }
+    single { UserPathFirestore(get(), get(), get(), get()) }
+    single { UserPrivateFirestore(get(), get(), get()) }
+    single { UsernameFirestore(get(), get()) }
     single { UserSyncFirestore(get(), get()) }
     single { GroupSyncFirestore(get(), get()) }
     single { GroupEventFirestore(get(), get()) }
@@ -88,6 +89,7 @@ val dataModule: Module = module {
     single { RevokedGroupFirestore(get(), get(), get()) }
     single { GroupMembershipFunction(get(), get(), get()) }
     single { GroupFunction(get(), get()) }
+    single { GroupEventFunction(get(), get()) }
     single { SharedCalendarFunction(get(), get()) }
     single { PersonalEventFirestore(get(), get(), get()) }
     single { PersonalEventTypesFirestore(get(), get(), get(), get()) }

@@ -10,8 +10,8 @@ import com.geoviksoft.turnia.core.system.fold
 import com.geoviksoft.turnia.ui.main.groups.model.GroupRowUi
 import com.geoviksoft.turnia.ui.main.groups.model.GroupsFilter
 import com.geoviksoft.turnia.ui.main.groups.model.JoinRequestRowUi
-import com.geoviksoft.turnia.ui.system.entityColor
-import com.geoviksoft.turnia.ui.system.toComposeColorOrNull
+import com.geoviksoft.turnia.ui.system.color.entityColor
+import com.geoviksoft.turnia.ui.system.color.toComposeColorOrNull
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
