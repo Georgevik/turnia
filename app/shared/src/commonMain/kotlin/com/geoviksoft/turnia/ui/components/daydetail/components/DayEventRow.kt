@@ -4,8 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -40,15 +40,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.geoviksoft.turnia.ui.components.calendar.diagonalHatch
 import com.geoviksoft.turnia.core.domain.model.EventId
 import com.geoviksoft.turnia.core.domain.model.GroupId
 import com.geoviksoft.turnia.core.domain.model.UserId
+import com.geoviksoft.turnia.ui.components.calendar.diagonalHatch
 import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
 import com.geoviksoft.turnia.ui.components.calendar.model.EventSource
+import com.geoviksoft.turnia.ui.components.calendar.model.TransferHolderUi
 import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
 import kotlinx.datetime.LocalDate
-import com.geoviksoft.turnia.ui.components.calendar.model.TransferHolderUi
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.event_assigned_to
@@ -403,8 +403,7 @@ private fun AssignedToChip(name: String) {
     }
 }
 
-// Previews. Split by what they exercise rather than crammed into one, because a row is tall and a
-// dozen of them in a single preview is unreadable. Labels are developer-facing, so they stay here.
+// Previews. ==============================
 
 /** The width the row gets inside the day sheet, near enough to preview at. */
 private val PreviewRowWidth = 340.dp

@@ -42,7 +42,7 @@
     <string name="event_full_date">%2$s %1$d, %3$d</string>
     <string name="event_details_count">%1$d eventos</string>
     <string name="event_details_empty">No hay eventos este día</string>
-    <string name="event_status_on_swap">En intercambio</string>
+    <string name="event_status_on_swap">Pidiendo cambio</string>
     <string name="event_assigned_to">Asignado a %1$s</string>
     <string name="event_holder_me">Yo</string>
     <string name="event_manage">Gestionar</string>
@@ -329,7 +329,7 @@
     <string name="swap_filter_title">Filtrar por grupo</string>
     <string name="swap_filter_all">Todos los grupos</string>
     <string name="swap_empty_offered_title">Nada en el escaparate</string>
-    <string name="swap_empty_offered_body">No has puesto ningún turno en intercambio. Tu tiempo libre sigue siendo teórico.</string>
+    <string name="swap_empty_offered_body">No has puesto ningún turno para cambiar. Tu tiempo libre sigue siendo teórico.</string>
     <string name="swap_empty_available_title">Aquí no hay ganga</string>
     <string name="swap_empty_available_body">Nadie suelta un turno ahora mismo. Sorprendente, sí.</string>
     <string name="swap_empty_covered_title">Todo sigue siendo tuyo</string>
