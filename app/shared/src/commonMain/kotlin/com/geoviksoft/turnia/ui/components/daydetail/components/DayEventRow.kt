@@ -1,8 +1,10 @@
 package com.geoviksoft.turnia.ui.components.daydetail.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -36,10 +38,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.geoviksoft.turnia.ui.components.calendar.diagonalHatch
+import com.geoviksoft.turnia.core.domain.model.EventId
+import com.geoviksoft.turnia.core.domain.model.GroupId
+import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
 import com.geoviksoft.turnia.ui.components.calendar.model.EventSource
+import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
+import kotlinx.datetime.LocalDate
 import com.geoviksoft.turnia.ui.components.calendar.model.TransferHolderUi
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
@@ -394,3 +402,199 @@ private fun AssignedToChip(name: String) {
         }
     }
 }
+
+// Previews. Split by what they exercise rather than crammed into one, because a row is tall and a
+// dozen of them in a single preview is unreadable. Labels are developer-facing, so they stay here.
+
+/** The width the row gets inside the day sheet, near enough to preview at. */
+private val PreviewRowWidth = 340.dp
+
+/** The shapes a row takes from the event itself, before any action is offered on it. */
+@Preview
+@Composable
+fun DayEventRowPreview() {
+    PreviewTurniaTheme {
+        PreviewRows {
+            Labelled("personal, with a note") {
+                DayEventRow(
+                    event = personalEvent(notes = "Cambiar con Marta si puede"),
+                    onEditNotes = {},
+                    onRemove = {},
+                )
+            }
+            Labelled("personal, no note yet") {
+                DayEventRow(event = personalEvent(), onEditNotes = {}, onRemove = {})
+            }
+            Labelled("group, I cover it") {
+                DayEventRow(event = groupEvent(), onRemove = {})
+            }
+            // Hatched, and it keeps its place on the calendar: the shift is still this user's
+            // doing even though somebody else works it now.
+            Labelled("group, somebody else covers it") {
+                DayEventRow(event = groupEvent(assigneeIsMe = false, assigneeName = "Bruno"))
+            }
+            Labelled("group, whoever covered it has left") {
+                DayEventRow(event = groupEvent(assigneeIsMe = false, assigneeName = ""))
+            }
+            Labelled("no acronym, no times") {
+                DayEventRow(event = groupEvent(acronym = null, timeRange = null))
+            }
+        }
+    }
+}
+
+/** Every control the row can offer, and the badge it shows when it can offer none. */
+@Preview
+@Composable
+fun DayEventRowSwapPreview() {
+    PreviewTurniaTheme {
+        PreviewRows {
+            Labelled("mine, not offered — toggle off") {
+                DayEventRow(event = groupEvent(), onSwapChange = {}, onRemove = {})
+            }
+            Labelled("mine, offered — toggle on") {
+                DayEventRow(event = groupEvent(onSwap = true), onSwapChange = {}, onRemove = {})
+            }
+            // Somebody else's offer: a badge saying so, and a way to answer it.
+            Labelled("somebody else's offer — I can cover it") {
+                DayEventRow(
+                    event = groupEvent(onSwap = true, assigneeIsMe = false, assigneeName = "Ana"),
+                    onTake = {},
+                )
+            }
+            // The read-only case: an offer on a colleague's shared calendar, or in a group this
+            // user was removed from. The badge shows; nothing is actionable.
+            Labelled("an offer I cannot answer") {
+                DayEventRow(
+                    event = groupEvent(
+                        onSwap = true,
+                        assigneeIsMe = false,
+                        assigneeName = "Ana",
+                        activeMember = false,
+                    ),
+                )
+            }
+        }
+    }
+}
+
+/** The chain, which is the whole point of the app and only shows once a shift has moved twice. */
+@Preview
+@Composable
+fun DayEventRowChainPreview() {
+    PreviewTurniaTheme {
+        PreviewRows {
+            Labelled("handed on once") {
+                DayEventRow(
+                    event = groupEvent(
+                        assigneeIsMe = false,
+                        assigneeName = "Bruno",
+                        transferChain = listOf(
+                            TransferHolderUi("Ana", isMe = true),
+                            TransferHolderUi("Bruno", isMe = false),
+                        ),
+                    ),
+                )
+            }
+            Labelled("A → B → C, and I am the C") {
+                DayEventRow(
+                    event = groupEvent(
+                        isOwner = false,
+                        transferChain = listOf(
+                            TransferHolderUi("Ana", isMe = false),
+                            TransferHolderUi("Bruno", isMe = false),
+                            TransferHolderUi("", isMe = true),
+                        ),
+                    ),
+                    onSwapChange = {},
+                )
+            }
+            Labelled("a link whose member has left the group") {
+                DayEventRow(
+                    event = groupEvent(
+                        assigneeIsMe = false,
+                        assigneeName = "Carla",
+                        transferChain = listOf(
+                            TransferHolderUi("Ana", isMe = false),
+                            TransferHolderUi("", isMe = false),
+                            TransferHolderUi("Carla", isMe = false),
+                        ),
+                    ),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PreviewRows(content: @Composable ColumnScope.() -> Unit) {
+    Column(
+        modifier = Modifier
+            .width(PreviewRowWidth)
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        content = content,
+    )
+}
+
+@Composable
+private fun Labelled(label: String, content: @Composable () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        content()
+    }
+}
+
+private val previewMe = UserId("me")
+private val previewDate = LocalDate(2026, 9, 10)
+
+private fun groupEvent(
+    acronym: String? = "M",
+    timeRange: String? = "07:00 – 15:00",
+    onSwap: Boolean = false,
+    assigneeIsMe: Boolean = true,
+    assigneeName: String = "",
+    isOwner: Boolean = true,
+    activeMember: Boolean = true,
+    transferChain: List<TransferHolderUi> = emptyList(),
+) = DayEventUi(
+    id = EventId("preview-group-$acronym-$onSwap-$assigneeIsMe-$activeMember-${transferChain.size}"),
+    groupId = GroupId("group"),
+    ownerId = previewMe,
+    assigneeId = previewMe,
+    source = EventSource.GROUP,
+    name = "Mañana",
+    acronym = acronym,
+    background = Color(0xFF4DB6AC),
+    date = previewDate,
+    timeRange = timeRange,
+    onSwap = onSwap,
+    swappable = true,
+    activeMember = activeMember,
+    isOwner = isOwner,
+    assigneeName = assigneeName,
+    assigneeIsMe = assigneeIsMe,
+    groupName = "Urgencias",
+    transferChain = transferChain,
+)
+
+private fun personalEvent(notes: String? = null) = DayEventUi(
+    id = EventId("preview-personal-${notes != null}"),
+    groupId = null,
+    ownerId = null,
+    assigneeId = null,
+    source = EventSource.PERSONAL,
+    name = "Dentista",
+    acronym = null,
+    background = Color(0xFFFFF176),
+    date = previewDate,
+    timeRange = "17:30 – 18:00",
+    removable = true,
+    notes = notes,
+    notesEditable = true,
+)
