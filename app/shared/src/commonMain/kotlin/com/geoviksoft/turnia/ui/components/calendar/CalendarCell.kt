@@ -9,6 +9,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -242,22 +243,80 @@ private fun OverflowRow() {
 @Composable
 fun CalendarCellPreview() {
     PreviewTurniaTheme {
-        Box(modifier = Modifier.size(60.dp, 100.dp)) {
-            CalendarCell(
-                Clock.System.todayIn(TimeZone.currentSystemDefault()),
-                true,
-                true,
-                false,
-                CalendarThemes.myCalendar(),
-                {},
-                events = listOf(demo_event.copy(assigneeId = demo_event.ownerId)))
+        Row {
+            Box(modifier = Modifier.size(60.dp, 100.dp)) {
+                CalendarCell(
+                    Clock.System.todayIn(TimeZone.currentSystemDefault()),
+                    true,
+                    true,
+                    false,
+                    CalendarThemes.myCalendar(),
+                    {},
+                    events = listOf(demo_event.copy(assigneeId = demo_event.ownerId))
+                )
+            }
+            Box(modifier = Modifier.size(60.dp, 100.dp)) {
+                CalendarCell(
+                    Clock.System.todayIn(TimeZone.currentSystemDefault()),
+                    true,
+                    false,
+                    true,
+                    CalendarThemes.myCalendar(),
+                    {},
+                    events = listOf(demo_event.copy(assigneeId = demo_event.ownerId))
+                )
+            }
+            Box(modifier = Modifier.size(60.dp, 100.dp)) {
+                CalendarCell(
+                    Clock.System.todayIn(TimeZone.currentSystemDefault()),
+                    false,
+                    false,
+                    false,
+                    CalendarThemes.myCalendar(),
+                    {},
+                    events = listOf(demo_event.copy(assigneeId = demo_event.ownerId))
+                )
+            }
         }
+    }
+}
+
+@Preview
+@Composable
+fun CalendarCellEventPreview() {
+    PreviewTurniaTheme {
+        Column {
+            Row {
+                CalendarCellPreviewDemo(demo_event.copy(assigneeIsMe = false))
+                CalendarCellPreviewDemo(demo_event.copy(assigneeIsMe = true))
+            }
+            Row {
+                CalendarCellPreviewDemo(demo_event.copy(onSwap = false))
+                CalendarCellPreviewDemo(demo_event.copy(onSwap = true))
+            }
+        }
+
+    }
+}
+
+@Composable
+private fun CalendarCellPreviewDemo(vararg events: CalendarEventUi) {
+    Box(modifier = Modifier.size(60.dp, 100.dp)) {
+        CalendarCell(
+            Clock.System.todayIn(TimeZone.currentSystemDefault()),
+            false,
+            false,
+            false,
+            CalendarThemes.myCalendar(),
+            {},
+            events = events.toList()
+        )
     }
 }
 
 private val demo_event = CalendarEventUi(
     id = EventId(Random.nextInt().toString()),
-    groupId =null,
+    groupId = null,
     ownerId = UserId(Random.nextInt().toString()),
     assigneeId = UserId(Random.nextInt().toString()),
     source = EventSource.GROUP,
@@ -268,7 +327,7 @@ private val demo_event = CalendarEventUi(
     textColor = Color.Black,
     timeRange = null,
     subtitle = "",
-    onSwap = true,
+    onSwap = false,
     swappable = true,
     activeMember = true,
     isOwner = true,
