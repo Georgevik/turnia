@@ -13,10 +13,10 @@ import kotlinx.datetime.LocalDate
  * brought back after the ones it already held, so a day's tiles would swap places the moment one of
  * them changed. Sorting down to the id is what stops that.
  */
-fun Map<LocalDate, List<CalendarEventUi>>.swapFirst(): Map<LocalDate, List<CalendarEventUi>> =
+fun Map<LocalDate, List<DayEventUi>>.swapFirst(): Map<LocalDate, List<DayEventUi>> =
     mapValues { (_, events) ->
         events.sortedWith(
-            compareByDescending<CalendarEventUi> { it.onSwap }
+            compareByDescending<DayEventUi> { it.onSwap }
                 .thenBy { it.timeRange.orEmpty() }
                 .thenBy { it.id.value },
         )

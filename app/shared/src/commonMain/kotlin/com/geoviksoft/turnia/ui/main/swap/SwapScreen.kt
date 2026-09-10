@@ -35,7 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.geoviksoft.turnia.ui.components.calendar.model.CalendarEventUi
+import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
 import com.geoviksoft.turnia.ui.components.daydetail.components.DayEventRow
 import com.geoviksoft.turnia.ui.main.swap.components.SwapGroupFilterSheet
 import com.geoviksoft.turnia.ui.main.swap.model.SwapMessage
@@ -79,7 +79,7 @@ import turnia.app.shared.generated.resources.swap_title
 fun SwapScreen(viewModel: SwapViewModel = koinViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var filterOpen by remember { mutableStateOf(false) }
-    var pendingTake by remember { mutableStateOf<CalendarEventUi?>(null) }
+    var pendingTake by remember { mutableStateOf<DayEventUi?>(null) }
     val sheetState = rememberModalBottomSheetState()
 
     Column(
@@ -191,7 +191,7 @@ fun SwapScreen(viewModel: SwapViewModel = koinViewModel()) {
  * three months and the date is the first thing anyone looks for.
  */
 @Composable
-private fun SwapEventRow(event: CalendarEventUi, onTake: (() -> Unit)?) {
+private fun SwapEventRow(event: DayEventUi, onTake: (() -> Unit)?) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
             text = event.date.toString(),

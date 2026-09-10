@@ -38,7 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.geoviksoft.turnia.ui.components.calendar.diagonalHatch
-import com.geoviksoft.turnia.ui.components.calendar.model.CalendarEventUi
+import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
 import com.geoviksoft.turnia.ui.components.calendar.model.EventSource
 import com.geoviksoft.turnia.ui.components.calendar.model.TransferHolderUi
 import org.jetbrains.compose.resources.stringResource
@@ -55,7 +55,7 @@ import turnia.app.shared.generated.resources.group_member_former
 
 @Composable
 fun DayEventRow(
-    event: CalendarEventUi,
+    event: DayEventUi,
     onRemove: (() -> Unit)? = null,
     onEditNotes: (() -> Unit)? = null,
     onSwapChange: ((Boolean) -> Unit)? = null,

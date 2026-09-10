@@ -39,18 +39,13 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.geoviksoft.turnia.core.domain.model.EventId
-import com.geoviksoft.turnia.core.domain.model.UserId
-import com.geoviksoft.turnia.ui.components.calendar.model.CalendarEventUi
-import com.geoviksoft.turnia.ui.components.calendar.model.EventSource
+import com.geoviksoft.turnia.ui.components.calendar.model.CalendarCellEventUi
 import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.todayIn
-import kotlin.random.Random
-import kotlin.time.Clock
 
 /** Height reserved at the top of a cell for the day number. */
 private val CalendarCellNumberHeight = 24.dp
@@ -75,7 +70,7 @@ fun CalendarCell(
     theme: CalendarTheme,
     onClick: () -> Unit,
     modifier: Modifier = Modifier.Companion,
-    events: List<CalendarEventUi> = emptyList(),
+    events: List<CalendarCellEventUi> = emptyList(),
 ) {
     val indicatorColor = if (isToday) theme.accentColor else Color.Transparent
     val numberColor = when {
@@ -171,7 +166,7 @@ fun CalendarCell(
 
 @Composable
 private fun EventRow(
-    event: CalendarEventUi,
+    event: CalendarCellEventUi,
     modifier: Modifier = Modifier,
 ) {
     val swapMarkerAngle by rememberInfiniteTransition(label = "swapMarker_${event.id}").animateFloat(
@@ -197,7 +192,7 @@ private fun EventRow(
         }
 
         BasicText(
-            text = event.gridLabel,
+            text = event.label,
             maxLines = 1,
             style = TextStyle(
                 color = event.textColor,
@@ -239,103 +234,113 @@ private fun OverflowRow() {
     }
 }
 
+// Previews. The labels are developer-facing, so they stay here rather than in composeResources.
+
+/** The tile size the month grid gives a cell on a phone, near enough to preview at. */
+private val PreviewCellSize = DpSize(56.dp, 92.dp)
+
+private val today = LocalDate(2026, 9, 10)
+
+/** The chrome around the events: whether the day is today, chosen, or spilling in from next month. */
 @Preview
 @Composable
 fun CalendarCellPreview() {
     PreviewTurniaTheme {
         Row {
-            Box(modifier = Modifier.size(60.dp, 100.dp)) {
-                CalendarCell(
-                    Clock.System.todayIn(TimeZone.currentSystemDefault()),
-                    true,
-                    true,
-                    false,
-                    CalendarThemes.myCalendar(),
-                    {},
-                    events = listOf(demo_event.copy(assigneeId = demo_event.ownerId))
-                )
-            }
-            Box(modifier = Modifier.size(60.dp, 100.dp)) {
-                CalendarCell(
-                    Clock.System.todayIn(TimeZone.currentSystemDefault()),
-                    true,
-                    false,
-                    true,
-                    CalendarThemes.myCalendar(),
-                    {},
-                    events = listOf(demo_event.copy(assigneeId = demo_event.ownerId))
-                )
-            }
-            Box(modifier = Modifier.size(60.dp, 100.dp)) {
-                CalendarCell(
-                    Clock.System.todayIn(TimeZone.currentSystemDefault()),
-                    false,
-                    false,
-                    false,
-                    CalendarThemes.myCalendar(),
-                    {},
-                    events = listOf(demo_event.copy(assigneeId = demo_event.ownerId))
-                )
-            }
+            LabelledCell("today", isToday = true, events = listOf(demoCell()))
+            LabelledCell("selected", isSelected = true, events = listOf(demoCell()))
+            LabelledCell("in month", inMonth = true, events = listOf(demoCell()))
+            LabelledCell("other month", events = listOf(demoCell()))
         }
     }
 }
 
+/**
+ * Every state a tile can be in, which is the whole of what [CalendarCellEventUi] decides: the label,
+ * the colour it is painted, whether it is hatched, whether the corner marker turns, and how many of
+ * them fit before the cell gives up and shows an ellipsis.
+ *
+ * The marker is a still frame here — a preview does not run the animation — so the row it is in only
+ * shows that it is *there* and in the corner, not that it turns.
+ */
 @Preview
 @Composable
 fun CalendarCellEventPreview() {
     PreviewTurniaTheme {
         Column {
             Row {
-                CalendarCellPreviewDemo(demo_event.copy(assigneeIsMe = false))
-                CalendarCellPreviewDemo(demo_event.copy(assigneeIsMe = true))
+                LabelledCell("plain", events = listOf(demoCell()))
+                LabelledCell("on swap", events = listOf(demoCell(onSwap = true)))
+                LabelledCell("covered by other", events = listOf(demoCell(assignedToOther = true)))
+                LabelledCell(
+                    label = "both",
+                    events = listOf(demoCell(onSwap = true, assignedToOther = true)),
+                )
             }
             Row {
-                CalendarCellPreviewDemo(demo_event.copy(onSwap = false))
-                CalendarCellPreviewDemo(demo_event.copy(onSwap = true))
+                // The text colour is derived from the background, so a user's colour choice can
+                // never leave a tile unreadable. These four are the extremes of that.
+                LabelledCell("light bg", events = listOf(demoCell(background = Color(0xFFFFF176))))
+                LabelledCell("dark bg", events = listOf(demoCell(background = Color(0xFF1A237E))))
+                LabelledCell("no acronym", events = listOf(demoCell(label = "Guardia")))
+                LabelledCell("long label", events = listOf(demoCell(label = "REFUERZO")))
+            }
+            Row {
+                // A cell draws two and hides the rest, which is why `swapFirst` exists: the third
+                // one here is the one nobody would see.
+                LabelledCell("one", events = listOf(demoCell()))
+                LabelledCell("two", events = List(2) { demoCell(label = "T$it") })
+                LabelledCell(
+                    label = "three",
+                    events = List(3) { demoCell(label = "T$it") },
+                )
+                LabelledCell("empty", events = emptyList())
             }
         }
-
     }
 }
 
 @Composable
-private fun CalendarCellPreviewDemo(vararg events: CalendarEventUi) {
-    Box(modifier = Modifier.size(60.dp, 100.dp)) {
-        CalendarCell(
-            Clock.System.todayIn(TimeZone.currentSystemDefault()),
-            false,
-            false,
-            false,
-            CalendarThemes.myCalendar(),
-            {},
-            events = events.toList()
+private fun LabelledCell(
+    label: String,
+    events: List<CalendarCellEventUi>,
+    inMonth: Boolean = false,
+    isToday: Boolean = false,
+    isSelected: Boolean = false,
+) {
+    Column(
+        modifier = Modifier.padding(4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(modifier = Modifier.size(PreviewCellSize)) {
+            CalendarCell(
+                date = today,
+                inMonth = inMonth,
+                isToday = isToday,
+                isSelected = isSelected,
+                theme = CalendarThemes.myCalendar(),
+                onClick = {},
+                events = events,
+            )
+        }
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
 
-private val demo_event = CalendarEventUi(
-    id = EventId(Random.nextInt().toString()),
-    groupId = null,
-    ownerId = UserId(Random.nextInt().toString()),
-    assigneeId = UserId(Random.nextInt().toString()),
-    source = EventSource.GROUP,
-    name = "Demo Event",
-    acronym = "DE",
-    background = Color.Yellow,
-    date = LocalDate(2023, 1, 1),
-    textColor = Color.Black,
-    timeRange = null,
-    subtitle = "",
-    onSwap = false,
-    swappable = true,
-    activeMember = true,
-    isOwner = true,
-    assigneeName = "Ricardo",
-    assigneeIsMe = true,
-    groupName = "MyGroup",
-    transferChain = emptyList(),
-    removable = false,
-    notes = null,
-    notesEditable = false,
+private fun demoCell(
+    label: String = "DE",
+    background: Color = Color(0xFF4DB6AC),
+    onSwap: Boolean = false,
+    assignedToOther: Boolean = false,
+) = CalendarCellEventUi(
+    // Only the animation's debug label reads it, so a repeat across previews costs nothing.
+    id = EventId("preview-$label"),
+    label = label,
+    background = background,
+    onSwap = onSwap,
+    assignedToOther = assignedToOther,
 )

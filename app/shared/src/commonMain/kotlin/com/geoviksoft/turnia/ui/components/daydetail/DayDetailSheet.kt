@@ -31,7 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.geoviksoft.turnia.ui.components.calendar.model.CalendarEventUi
+import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
 import com.geoviksoft.turnia.ui.components.daydetail.components.DayDetailAddEvent
 import com.geoviksoft.turnia.ui.components.daydetail.components.DayDetailHeader
 import com.geoviksoft.turnia.ui.components.daydetail.components.DayEventRow
@@ -72,7 +72,7 @@ import turnia.app.shared.generated.resources.event_swap_take_confirm_title
 @Composable
 fun DayDetailSheet(
     date: LocalDate,
-    events: List<CalendarEventUi>,
+    events: List<DayEventUi>,
     addMode: DayAddMode,
     openEditTypeScreen: (groupId: String, groupName: String) -> Unit,
     openNewPersonalTypeScreen: () -> Unit,
@@ -84,9 +84,9 @@ fun DayDetailSheet(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var adding by rememberSaveable { mutableStateOf(false) }
-    var pendingDelete by remember { mutableStateOf<CalendarEventUi?>(null) }
-    var editingNotes by remember { mutableStateOf<CalendarEventUi?>(null) }
-    var pendingTake by remember { mutableStateOf<CalendarEventUi?>(null) }
+    var pendingDelete by remember { mutableStateOf<DayEventUi?>(null) }
+    var editingNotes by remember { mutableStateOf<DayEventUi?>(null) }
+    var pendingTake by remember { mutableStateOf<DayEventUi?>(null) }
 
     val noteError by viewModel.noteError.collectAsStateWithLifecycle()
     val snackbar = LocalSnackbar.current

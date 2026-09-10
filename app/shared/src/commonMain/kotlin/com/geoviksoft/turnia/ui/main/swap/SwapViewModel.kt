@@ -10,7 +10,7 @@ import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.domain.repository.GroupRepository
 import com.geoviksoft.turnia.core.domain.repository.UserRepository
 import com.geoviksoft.turnia.core.system.onFailure
-import com.geoviksoft.turnia.ui.components.calendar.model.CalendarEventUi
+import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
 import com.geoviksoft.turnia.ui.components.calendar.model.toUi
 import com.geoviksoft.turnia.ui.main.swap.model.SwapGroupFilterUi
 import com.geoviksoft.turnia.ui.main.swap.model.SwapMessage
@@ -73,7 +73,7 @@ class SwapViewModel(
 
     fun allGroupsSelected() = deselectedGroups.update { emptySet() }
 
-    fun takeEvent(event: CalendarEventUi) {
+    fun takeEvent(event: DayEventUi) {
         val groupId = event.groupId ?: return
 
         viewModelScope.launch {

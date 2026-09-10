@@ -3,7 +3,7 @@ package com.geoviksoft.turnia.ui.main.swap.model
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import com.geoviksoft.turnia.core.domain.model.GroupId
-import com.geoviksoft.turnia.ui.components.calendar.model.CalendarEventUi
+import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
 
 /**
  * Which of the four ways a shift can relate to the user is on screen.
@@ -32,12 +32,12 @@ sealed interface SwapUi {
 
     @Immutable
     data class Success(
-        val segments: Map<SwapSegment, List<CalendarEventUi>>,
+        val segments: Map<SwapSegment, List<DayEventUi>>,
         val segment: SwapSegment,
         val groups: List<SwapGroupFilterUi>,
         val userMessage: SwapMessage? = null,
     ) : SwapUi {
-        val events: List<CalendarEventUi> get() = segments[segment].orEmpty()
+        val events: List<DayEventUi> get() = segments[segment].orEmpty()
 
         /** The row of chips only earns its place once there is more than one group to choose between. */
         val filterable: Boolean get() = groups.size > 1

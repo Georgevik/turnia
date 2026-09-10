@@ -9,7 +9,7 @@ import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.domain.repository.GroupRepository
 import com.geoviksoft.turnia.core.domain.repository.PersonalEventRepository
 import com.geoviksoft.turnia.core.domain.repository.UserRepository
-import com.geoviksoft.turnia.ui.components.calendar.model.CalendarEventUi
+import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
 import com.geoviksoft.turnia.ui.components.calendar.model.swapFirst
 import com.geoviksoft.turnia.ui.components.calendar.model.toUi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -31,7 +31,7 @@ import kotlin.time.Clock
 @Immutable
 data class MyCalendarUiState(
     val isLoading: Boolean = false,
-    val eventsByDate: Map<LocalDate, List<CalendarEventUi>> = emptyMap(),
+    val eventsByDate: Map<LocalDate, List<DayEventUi>> = emptyMap(),
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -66,7 +66,7 @@ class MyCalendarViewModel(
     private fun events(
         userId: UserId,
         date: LocalDate,
-    ): Flow<Map<LocalDate, List<CalendarEventUi>>> = combine(
+    ): Flow<Map<LocalDate, List<DayEventUi>>> = combine(
         personalRepository.getEvents(userId, date, monthDelta = 2),
         groupRepository.getEventsByUser(userId, date, monthDelta = 2),
         // The groups the user was removed from. Their leftover shifts still belong on the calendar,
@@ -83,8 +83,8 @@ class MyCalendarViewModel(
         groupEvents: List<GroupEvent>,
         personalEvents: List<PersonalEvent>,
         revokedGroups: Set<GroupId>,
-    ): Map<LocalDate, List<CalendarEventUi>> {
-        val eventsByDate: Map<LocalDate, MutableList<CalendarEventUi>> = buildMap {
+    ): Map<LocalDate, List<DayEventUi>> {
+        val eventsByDate: Map<LocalDate, MutableList<DayEventUi>> = buildMap {
             groupEvents.forEach { ev ->
                 val removable = ev.ownerId == userId && ev.assigneeId == userId
                 getOrPut(ev.date) { mutableListOf() }.add(

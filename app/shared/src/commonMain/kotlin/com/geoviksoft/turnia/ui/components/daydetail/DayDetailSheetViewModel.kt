@@ -15,7 +15,7 @@ import com.geoviksoft.turnia.core.domain.repository.PersonalEventRepository
 import com.geoviksoft.turnia.core.domain.repository.UserRepository
 import com.geoviksoft.turnia.core.system.onFailure
 import com.geoviksoft.turnia.core.system.toInstant
-import com.geoviksoft.turnia.ui.components.calendar.model.CalendarEventUi
+import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
 import com.geoviksoft.turnia.ui.components.calendar.model.EventSource
 import com.geoviksoft.turnia.ui.components.daydetail.components.EventTypeChipUi
 import com.geoviksoft.turnia.ui.components.daydetail.model.AddEventTypesUi
@@ -63,7 +63,7 @@ class DayDetailSheetViewModel(
 
     fun retry() = Unit //loadEventTypes()
 
-    fun removeEvent(event: CalendarEventUi) {
+    fun removeEvent(event: DayEventUi) {
         viewModelScope.launch {
             when (event.source) {
                 EventSource.GROUP -> deleteGroupEvent(event)
@@ -72,7 +72,7 @@ class DayDetailSheetViewModel(
         }
     }
 
-    private suspend fun deleteGroupEvent(event: CalendarEventUi) {
+    private suspend fun deleteGroupEvent(event: DayEventUi) {
         val groupId = event.groupId ?: return
         val ownerId = event.ownerId ?: return
         val assigneeId = event.assigneeId ?: return
@@ -82,7 +82,7 @@ class DayDetailSheetViewModel(
     private val _noteError = MutableStateFlow(false)
     val noteError = _noteError.asStateFlow()
 
-    fun saveNotes(event: CalendarEventUi, notes: String) {
+    fun saveNotes(event: DayEventUi, notes: String) {
         if (event.source != EventSource.PERSONAL) return
 
         viewModelScope.launch {
@@ -99,7 +99,7 @@ class DayDetailSheetViewModel(
     private val _swapMessage = MutableStateFlow<DaySwapMessage?>(null)
     val swapMessage = _swapMessage.asStateFlow()
 
-    fun setOnSwap(event: CalendarEventUi, onSwap: Boolean) {
+    fun setOnSwap(event: DayEventUi, onSwap: Boolean) {
         val groupId = event.groupId ?: return
         val assigneeId = event.assigneeId ?: return
 
@@ -119,7 +119,7 @@ class DayDetailSheetViewModel(
         _swapMessage.value = null
     }
 
-    fun takeEvent(event: CalendarEventUi) {
+    fun takeEvent(event: DayEventUi) {
         val groupId = event.groupId ?: return
 
         viewModelScope.launch {

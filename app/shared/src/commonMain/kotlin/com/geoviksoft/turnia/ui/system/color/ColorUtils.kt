@@ -5,6 +5,17 @@ import androidx.compose.ui.graphics.luminance
 import kotlin.math.max
 import kotlin.math.min
 
+/**
+ * Black or white, whichever can be read on top of this colour.
+ *
+ * Event backgrounds are chosen by users, so nothing about them is known at build time and every
+ * surface painted with one has to pick its own text colour.
+ */
+fun Color.readableTextColor(): Color =
+    if (luminance() > READABLE_ON_LIGHT) Color.Black else Color.White
+
+private const val READABLE_ON_LIGHT = 0.5f
+
 object ColorUtils {
     fun getContrastingColor(backgroundColor: Color): Color {
         val (hue, _, _) = backgroundColor.toHsl()

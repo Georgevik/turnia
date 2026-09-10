@@ -11,7 +11,7 @@ import com.geoviksoft.turnia.core.domain.repository.UserRepository
 import com.geoviksoft.turnia.core.system.Outcome
 import com.geoviksoft.turnia.core.system.valueOrEmpty
 import com.geoviksoft.turnia.navigation.main.routes.ExternalCalendarData
-import com.geoviksoft.turnia.ui.components.calendar.model.CalendarEventUi
+import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
 import com.geoviksoft.turnia.ui.components.calendar.model.swapFirst
 import com.geoviksoft.turnia.ui.components.calendar.model.toUi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -72,7 +72,7 @@ class ExternalCalendarViewModel(
      * A group's events come from the cache first and again once the server has something newer, so
      * the month paints without waiting on a round trip. A colleague's cannot: see [sharedCalendar].
      */
-    private fun events(date: LocalDate): Flow<Map<LocalDate, List<CalendarEventUi>>> =
+    private fun events(date: LocalDate): Flow<Map<LocalDate, List<DayEventUi>>> =
         userRepository.loggedUserFlow.flatMapLatest { user ->
             val uid = user.id
             val events = when (data) {
@@ -106,7 +106,7 @@ class ExternalCalendarViewModel(
         ownerId: UserId,
         viewerId: UserId,
         date: LocalDate,
-    ): Flow<List<CalendarEventUi>> =
+    ): Flow<List<DayEventUi>> =
         flow {
             val outcome = sharedCalendarRepository.getSharedCalendar(
                 ownerId = ownerId,
@@ -143,7 +143,7 @@ class ExternalCalendarViewModel(
 }
 
 data class GroupCalendarUi(
-    val events: Map<LocalDate, List<CalendarEventUi>> = emptyMap(),
+    val events: Map<LocalDate, List<DayEventUi>> = emptyMap(),
     val loading: Boolean = true,
     /** The user was removed from this group: the leftover events show, nothing can be added. */
     val isRevoked: Boolean = false,
