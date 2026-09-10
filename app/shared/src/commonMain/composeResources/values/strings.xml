@@ -329,6 +329,8 @@
     <string name="day_detail_group_events">EVENTOS DE GRUPO</string>
     <string name="day_detail_add_event">Añadir</string>
     <string name="day_detail_load_error">No hemos podido cargar tus tipos de evento.</string>
+    <string name="event_group_no_types">Este grupo todavía no tiene tipos de turno, así que aquí no hay nada que añadir.</string>
+    <string name="event_group_no_types_action">Gestionar el grupo</string>
 
     <!-- Swap -->
     <string name="event_swap_toggle">Ofrecer para cambio</string>

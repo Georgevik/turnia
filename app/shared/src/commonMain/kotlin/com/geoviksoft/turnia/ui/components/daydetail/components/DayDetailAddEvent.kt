@@ -12,7 +12,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.Surface
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -25,6 +27,8 @@ import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.day_detail_group_events
 import turnia.app.shared.generated.resources.day_detail_personal_events
+import turnia.app.shared.generated.resources.event_group_no_types
+import turnia.app.shared.generated.resources.event_group_no_types_action
 import turnia.app.shared.generated.resources.event_group_only_banner
 
 @Composable
@@ -53,7 +57,13 @@ fun DayDetailAddEvent(
                     trailing = { AddEventChip(onClick = onAddPersonalEventType) },
                 )
             }
-            is DayAddMode.GroupOnly -> InfoBanner(text = stringResource(Res.string.event_group_only_banner))
+            is DayAddMode.GroupOnly -> if (groupSections.isEmpty()) {
+                // An empty section is filtered out above, so a group whose types have all been
+                // deleted would otherwise render an add pane with nothing in it and no way out.
+                NoTypesPrompt(onManage = { onEditGroup(addMode.groupId.value, "") })
+            } else {
+                InfoBanner(text = stringResource(Res.string.event_group_only_banner))
+            }
         }
 
         if (groupSections.isNotEmpty()) {
@@ -118,6 +128,30 @@ private fun EventTypeChipRow(
             EventTypeChip(chipUi = eventType.chipUi, onClick = { onPick(eventType) })
         }
         trailing?.invoke()
+    }
+}
+
+/** A group with no event types: nothing to add, and the way to fix it is the group's own screen. */
+@Composable
+private fun NoTypesPrompt(onManage: () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = stringResource(Res.string.event_group_no_types),
+                style = MaterialTheme.typography.bodySmall,
+            )
+            TextButton(onClick = onManage, contentPadding = PaddingValues(0.dp)) {
+                Text(stringResource(Res.string.event_group_no_types_action))
+            }
+        }
     }
 }
 
