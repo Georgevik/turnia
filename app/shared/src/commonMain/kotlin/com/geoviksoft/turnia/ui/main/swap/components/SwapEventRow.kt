@@ -32,6 +32,7 @@ import com.geoviksoft.turnia.ui.components.calendar.model.EventSource
 import com.geoviksoft.turnia.ui.components.calendar.model.TransferHolderUi
 import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
 import com.geoviksoft.turnia.ui.components.event.AcronymChip
+import com.geoviksoft.turnia.ui.components.event.GroupLabel
 import com.geoviksoft.turnia.ui.components.event.TransferTrail
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
@@ -102,12 +103,8 @@ fun SwapEventRow(
                 }
 
                 event.groupName?.let { groupName ->
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        text = groupName,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    Spacer(Modifier.height(4.dp))
+                    GroupLabel(name = groupName)
                 }
 
                 event.timeRange?.let { time ->
