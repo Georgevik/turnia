@@ -76,7 +76,7 @@ fun App(vm: RootViewModel = koinViewModel()) {
 @Composable
 private fun HandleJoinGroupDeeplink(code: String?, backStack: NavBackStack<NavKey>) {
     LaunchedEffect(code, backStack.size) {
-        if (code == null && RootRoute.MainKey !in backStack) return@LaunchedEffect
+        if (code == null || RootRoute.MainKey !in backStack) return@LaunchedEffect
         while (backStack.last() != RootRoute.MainKey) backStack.removeLastOrNull()
     }
 }
