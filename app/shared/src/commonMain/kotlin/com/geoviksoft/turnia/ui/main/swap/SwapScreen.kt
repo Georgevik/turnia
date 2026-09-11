@@ -1,7 +1,9 @@
 package com.geoviksoft.turnia.ui.main.swap
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,6 +19,7 @@ import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -30,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
@@ -43,10 +47,17 @@ import com.geoviksoft.turnia.ui.main.system.EmptyState
 import com.geoviksoft.turnia.ui.main.system.ScreenHeader
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
 import com.geoviksoft.turnia.ui.system.toErrorSnackbar
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.YearMonth
+import kotlinx.datetime.todayIn
+import kotlinx.datetime.yearMonth
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import turnia.app.shared.generated.resources.Res
+import turnia.app.shared.generated.resources.calendar_month_year
+import turnia.app.shared.generated.resources.calendar_months
 import turnia.app.shared.generated.resources.event_swap_error_not_found
 import turnia.app.shared.generated.resources.event_swap_error_not_member
 import turnia.app.shared.generated.resources.event_swap_error_not_swappable
@@ -63,6 +74,7 @@ import turnia.app.shared.generated.resources.swap_empty_offered_body
 import turnia.app.shared.generated.resources.swap_empty_offered_title
 import turnia.app.shared.generated.resources.swap_filter_title
 import turnia.app.shared.generated.resources.swap_title
+import kotlin.time.Clock
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -110,21 +122,10 @@ fun SwapScreen(viewModel: SwapViewModel = koinViewModel()) {
                             body = stringResource(body),
                         )
                     } else {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            items(state.events, key = { it.id.value }) { event ->
-                                SwapEventRow(
-                                    event = event,
-                                    onTake = if (event.canTake) {
-                                        { pendingTake = event }
-                                    } else {
-                                        null
-                                    },
-                                )
-                            }
-                        }
+                        SwapEventList(
+                            events = state.events,
+                            onTake = { event -> pendingTake = event },
+                        )
                     }
 
                     if (filterOpen) {
@@ -164,6 +165,51 @@ fun SwapScreen(viewModel: SwapViewModel = koinViewModel()) {
             },
         )
     }
+}
+
+@Composable
+private fun SwapEventList(events: List<DayEventUi>, onTake: (DayEventUi) -> Unit) {
+    val today = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()) }
+    val byMonth = remember(events) { events.groupBy { it.date.yearMonth } }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(bottom = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        byMonth.forEach { (month, monthEvents) ->
+            stickyHeader(key = month.toString(), contentType = "month") {
+                MonthHeader(month)
+            }
+            items(monthEvents, key = { it.id.value }, contentType = { "event" }) { event ->
+                SwapEventRow(
+                    event = event,
+                    today = today,
+                    onTake = if (event.canTake) {
+                        { onTake(event) }
+                    } else {
+                        null
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MonthHeader(month: YearMonth) {
+    val months = stringArrayResource(Res.array.calendar_months)
+    Text(
+        text = stringResource(Res.string.calendar_month_year, months[month.month.ordinal], month.year),
+        modifier = Modifier
+            .fillMaxWidth()
+            // Sticky, so it needs a ground of its own or the rows scroll through the letters.
+            .background(MaterialTheme.colorScheme.background)
+            .padding(top = 8.dp, bottom = 4.dp),
+        style = MaterialTheme.typography.titleSmall,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
 }
 
 @Composable

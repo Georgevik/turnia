@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.geoviksoft.turnia.core.data.logger.Logger
 import com.geoviksoft.turnia.core.domain.model.Group
 import com.geoviksoft.turnia.core.domain.model.GroupEvent
+import com.geoviksoft.turnia.core.domain.model.GroupEventType
 import com.geoviksoft.turnia.core.domain.model.GroupId
 import com.geoviksoft.turnia.core.domain.model.SwapError
 import com.geoviksoft.turnia.core.domain.model.UserId
@@ -40,7 +41,6 @@ class SwapViewModel(
     private val _uiState = MutableStateFlow<SwapUi>(SwapUi.Loading)
     val uiState = _uiState.asStateFlow()
 
-    /** The groups the user has unticked. Empty means they have not touched the filter. */
     private val deselectedGroups = MutableStateFlow<Set<GroupId>>(emptySet())
     private val segment = MutableStateFlow(SwapSegment.OFFERED)
     private val userMessage = MutableStateFlow<SwapMessage?>(null)
@@ -99,7 +99,10 @@ class SwapViewModel(
             segments = SwapSegment.entries.associateWith { segment ->
                 visible.filter { segment.holds(it, userId) }
                     .sortedWith(compareBy({ it.date }, { it.id.value }))
-                    .map { it.toUi(currentUserId = userId, activeMember = it.groupId !in revoked) }
+                    .map {
+                        it.toUi(currentUserId = userId, activeMember = it.groupId !in revoked)
+                            .copy(timeRange = it.type.hours())
+                    }
             },
             segment = segment,
             groups = groups.map { group ->
@@ -112,6 +115,11 @@ class SwapViewModel(
             },
             userMessage = message,
         )
+    }
+
+    private fun GroupEventType.hours(): String? = when {
+        startTime != null && endTime != null -> "$startTime – $endTime"
+        else -> startTime
     }
 
     private fun SwapSegment.holds(event: GroupEvent, userId: UserId): Boolean = when (this) {

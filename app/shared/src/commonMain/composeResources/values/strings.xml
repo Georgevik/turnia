@@ -348,6 +348,8 @@
     <string name="swap_segment_offered">Los ofrezco</string>
     <string name="swap_segment_covered">Los cubre otro</string>
     <string name="swap_filter_title">Filtrar por grupo</string>
+    <string name="swap_date_today">Hoy</string>
+    <string name="swap_date_tomorrow">Mañana</string>
     <string name="swap_filter_subtitle">Elige de qué grupos quieres ver los turnos.</string>
     <string name="swap_filter_all">Todos los grupos</string>
     <string name="swap_empty_offered_title">Nada en el escaparate</string>
