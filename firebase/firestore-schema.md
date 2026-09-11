@@ -408,7 +408,7 @@ it, and the rejoin path soft-deletes it.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `code` | string | Invitation code embedded in the join link. The app shows it to admins only. **A house rule, not a boundary**: the whole group document is readable by every member, so a member who reads Firestore directly reads the code too (see *No private fields on shared docs*). |
+| `code` | string | Invitation code embedded in the join link. Every member can share that link; only an admin is shown the code itself. Not a secret from members: the whole group document is readable by all of them (see *No private fields on shared docs*). |
 | `active` | boolean | Whether the code can currently be used to request access. |
 | `autoApprove` | boolean | `true`: whoever knows the code is added to the group by `requestToJoinGroup` on the spot. `false`: it lands in `joinRequests` and an admin decides. |
 | `expiresAt` | timestamp \| null | Expiration; `null` = no expiry. |

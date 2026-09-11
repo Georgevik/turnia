@@ -63,9 +63,7 @@ class GroupMapper {
             // The uids are the source of truth for membership; the names are a copy that a member
             // who joined before the group started keeping them may still be missing from.
             memberCount = doc.memberUids.size,
-            // Only an admin hands the code out. Hiding it from everyone else is a house rule, not a
-            // boundary: every member can read the group document it lives on.
-            invitationCode = if (isAdmin) invitation.code else "",
+            invitationCode = invitation.code,
             autoApprove = invitation.autoApprove,
             isAdmin = isAdmin,
             color = doc.color,

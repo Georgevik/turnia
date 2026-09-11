@@ -48,8 +48,9 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
 - Each group has a **single invitation**. Anyone with the code can **request** to join; a group **admin must accept** the request.
 - **Auto-approve** (whoever knows the code walks straight in) is decided when the group is created,
   alongside the code itself, and means the same thing before and after saving.
-- **Only admins see and share the code.** Members are told so instead. A house rule, not a boundary:
-  the code lives on the group document, which every member can read.
+- **Any member can invite** with the share button on the group's screen, which sends the invitation
+  link — code included. Only an admin sees the code itself, regenerates it or sets auto-approve;
+  the rest of the group never sees the Invitación section.
 - A user can put a group event **up for swap**; another member can take it (it moves to the taker).
 - A user can **delete their own** event; an **admin** can delete any group event. Deleting removes it (there is no cancelled state).
 - **Personal events** can carry notes (on the event); group event docs are shared with all members, so they hold no private notes.

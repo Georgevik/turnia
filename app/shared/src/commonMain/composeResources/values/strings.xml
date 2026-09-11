@@ -139,7 +139,6 @@
     <string name="group_detail_types_add">Añadir tipo de evento</string>
     <string name="group_detail_types_empty">Aún no hay tipos de evento</string>
     <string name="group_detail_types_empty_body">Sin al menos uno, nadie puede añadir turnos a este grupo.</string>
-    <string name="group_detail_readonly">Solo un administrador puede editar los datos del grupo.</string>
     <string name="group_detail_save">Guardar</string>
     <string name="group_detail_error_not_found">No hemos encontrado el grupo. Puede que ya no exista o que hayas salido de él.</string>
     <string name="group_detail_error_load">No hemos podido cargar el grupo.</string>
@@ -150,10 +149,9 @@
     <string name="group_detail_code_regenerate">Generar un código nuevo</string>
     <string name="group_detail_code_copy">Copiar el código</string>
     <string name="group_detail_code_copied">Código copiado</string>
-    <string name="group_detail_code_share">Compartir el código</string>
-    <string name="group_detail_code_share_text">Únete al grupo «%1$s» en Turnia: %2$s</string>
+    <string name="group_detail_share_invitation">Invitar al grupo</string>
+    <string name="group_detail_share_invitation_text">Únete al grupo «%1$s» en Turnia: %2$s</string>
     <string name="group_detail_code_changed">Guarda para que el código nuevo empiece a funcionar.</string>
-    <string name="group_detail_code_hidden">Solo los administradores pueden compartir el código de invitación.</string>
     <string name="group_detail_section_members">Miembros</string>
     <string name="group_detail_members_sheet_title">Miembros del grupo</string>
     <string name="group_detail_requests_title">Solicitudes de acceso</string>

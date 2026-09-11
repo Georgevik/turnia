@@ -115,10 +115,7 @@ import turnia.app.shared.generated.resources.group_detail_auto_approve_on
 import turnia.app.shared.generated.resources.group_detail_code_changed
 import turnia.app.shared.generated.resources.group_detail_code_copied
 import turnia.app.shared.generated.resources.group_detail_code_copy
-import turnia.app.shared.generated.resources.group_detail_code_hidden
 import turnia.app.shared.generated.resources.group_detail_code_regenerate
-import turnia.app.shared.generated.resources.group_detail_code_share
-import turnia.app.shared.generated.resources.group_detail_code_share_text
 import turnia.app.shared.generated.resources.group_detail_create
 import turnia.app.shared.generated.resources.group_detail_error_load
 import turnia.app.shared.generated.resources.group_detail_error_not_found
@@ -132,7 +129,6 @@ import turnia.app.shared.generated.resources.group_detail_member_remove_confirm
 import turnia.app.shared.generated.resources.group_detail_member_remove_message
 import turnia.app.shared.generated.resources.group_detail_member_remove_title
 import turnia.app.shared.generated.resources.group_detail_members_sheet_title
-import turnia.app.shared.generated.resources.group_detail_readonly
 import turnia.app.shared.generated.resources.group_detail_request_accept
 import turnia.app.shared.generated.resources.group_detail_request_reject
 import turnia.app.shared.generated.resources.group_detail_requests_title
@@ -141,6 +137,8 @@ import turnia.app.shared.generated.resources.group_detail_section_color
 import turnia.app.shared.generated.resources.group_detail_section_invitation
 import turnia.app.shared.generated.resources.group_detail_section_members
 import turnia.app.shared.generated.resources.group_detail_section_types
+import turnia.app.shared.generated.resources.group_detail_share_invitation
+import turnia.app.shared.generated.resources.group_detail_share_invitation_text
 import turnia.app.shared.generated.resources.group_detail_title_new
 import turnia.app.shared.generated.resources.group_detail_types_add
 import turnia.app.shared.generated.resources.group_detail_types_empty
@@ -203,6 +201,9 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
                 },
                 actions = {
                     val state = uiState
+                    if (state is GroupDetailUi.Success && state.form.canPassOnCode) {
+                        ShareInvitationAction(state.form)
+                    }
                     if (state is GroupDetailUi.Success && !state.isNew) {
                         GroupExitAction(
                             isAdmin = state.form.editable,
@@ -467,18 +468,18 @@ private fun GroupDetailContent(
             )
         }
 
-        InvitationSection(
-            form = form,
-            onAutoApproveChanged = onAutoApproveChanged,
-            onRegenerateCode = onRegenerateCode,
-        )
+        // A member invites through the share button in the top bar; the code and its settings are
+        // the admin's to manage.
+        if (form.editable) {
+            InvitationSection(
+                form = form,
+                onAutoApproveChanged = onAutoApproveChanged,
+                onRegenerateCode = onRegenerateCode,
+            )
+        }
 
         if (!state.isNew) {
             MembersSection(memberCount = form.memberCount, onClick = onMembersClick)
-        }
-
-        if (!form.editable) {
-            Caption(stringResource(Res.string.group_detail_readonly))
         }
 
         EventTypesSection(
@@ -607,19 +608,17 @@ private fun InvitationSection(
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         TFieldLabel(stringResource(Res.string.group_detail_section_invitation))
 
-        if (form.editable) {
-            ToggleRow(
-                title = stringResource(Res.string.group_detail_auto_approve),
-                subtitle = if (form.autoApprove) {
-                    stringResource(Res.string.group_detail_auto_approve_on)
-                } else {
-                    stringResource(Res.string.group_detail_auto_approve_off)
-                },
-                checked = form.autoApprove,
-                enabled = true,
-                onCheckedChange = onAutoApproveChanged,
-            )
-        }
+        ToggleRow(
+            title = stringResource(Res.string.group_detail_auto_approve),
+            subtitle = if (form.autoApprove) {
+                stringResource(Res.string.group_detail_auto_approve_on)
+            } else {
+                stringResource(Res.string.group_detail_auto_approve_off)
+            },
+            checked = form.autoApprove,
+            enabled = true,
+            onCheckedChange = onAutoApproveChanged,
+        )
 
         val invitationCode = form.invitationCode
         if (!invitationCode.isNullOrBlank()) {
@@ -627,11 +626,6 @@ private fun InvitationSection(
             val snackbar = LocalSnackbar.current
             val scope = rememberCoroutineScope()
             val copied = stringResource(Res.string.group_detail_code_copied)
-            val shareText = stringResource(
-                Res.string.group_detail_code_share_text,
-                form.name,
-                InvitationLink.of(invitationCode),
-            )
 
             InvitationCode(
                 code = invitationCode,
@@ -644,19 +638,31 @@ private fun InvitationSection(
                 } else {
                     null
                 },
-                onShare = if (form.canPassOnCode) {
-                    { sharer.share(shareText) }
-                } else {
-                    null
-                },
-                onRegenerate = onRegenerateCode.takeIf { form.editable && !form.autoApprove },
+                onRegenerate = onRegenerateCode.takeIf { !form.autoApprove },
             )
             if (form.codeChanged) {
                 Caption(stringResource(Res.string.group_detail_code_changed))
             }
-        } else {
-            Caption(stringResource(Res.string.group_detail_code_hidden))
         }
+    }
+}
+
+/** Any member can invite: the link carries the code, and an admin still answers the request. */
+@Composable
+private fun ShareInvitationAction(form: GroupDetailUi.GroupForm) {
+    val code = form.invitationCode ?: return
+    val sharer = rememberTextSharer()
+    val shareText = stringResource(
+        Res.string.group_detail_share_invitation_text,
+        form.name,
+        InvitationLink.of(code),
+    )
+
+    IconButton(onClick = { sharer.share(shareText) }) {
+        Icon(
+            imageVector = Icons.Default.Share,
+            contentDescription = stringResource(Res.string.group_detail_share_invitation),
+        )
     }
 }
 
@@ -664,7 +670,6 @@ private fun InvitationSection(
 private fun InvitationCode(
     code: String,
     onCopy: (() -> Unit)?,
-    onShare: (() -> Unit)?,
     onRegenerate: (() -> Unit)?,
 ) {
     Surface(
@@ -697,14 +702,6 @@ private fun InvitationCode(
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.SemiBold,
                 )
-            }
-            if (onShare != null) {
-                IconButton(onClick = onShare) {
-                    Icon(
-                        imageVector = Icons.Default.Share,
-                        contentDescription = stringResource(Res.string.group_detail_code_share),
-                    )
-                }
             }
             if (onRegenerate != null) {
                 IconButton(onClick = onRegenerate) {
