@@ -2,7 +2,6 @@ package com.geoviksoft.turnia.ui.signin
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,15 +33,14 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.geoviksoft.turnia.ui.signin.components.SignInButton
+import com.geoviksoft.turnia.ui.signin.components.SignInProvider
 import com.geoviksoft.turnia.ui.signin.model.SignInError
 import com.geoviksoft.turnia.ui.signin.model.SignInUi
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
 import com.geoviksoft.turnia.ui.system.toErrorSnackbar
 import com.mmk.kmpauth.apple.rememberAppleAuthState
 import com.mmk.kmpauth.google.rememberGoogleAuthState
-import com.mmk.kmpauth.uihelper.apple.AppleButtonMode
-import com.mmk.kmpauth.uihelper.apple.AppleSignInButton
-import com.mmk.kmpauth.uihelper.google.GoogleSignInButton
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -239,24 +237,25 @@ private fun SignInSection(uiState: SignInUi, viewModel: SignInViewModel) {
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                GoogleSignInButton(
-                    modifier = Modifier.fillMaxWidth().height(SignInButtonHeight),
+                SignInButton(
+                    provider = SignInProvider.Google,
                     text = stringResource(Res.string.signin_google),
-                ) {
-                    viewModel.onSignInStarted()
-                    googleAuth.launch()
-                }
-
-                AppleSignInButton(
+                    onClick = {
+                        viewModel.onSignInStarted()
+                        googleAuth.launch()
+                    },
                     modifier = Modifier.fillMaxWidth().height(SignInButtonHeight),
-                    // Apple's guideline is about contrast, not taste: the black button is for
-                    // light backgrounds and the white one for dark.
-                    mode = if (isSystemInDarkTheme()) AppleButtonMode.White else AppleButtonMode.Black,
+                )
+
+                SignInButton(
+                    provider = SignInProvider.Apple,
                     text = stringResource(Res.string.signin_apple),
-                ) {
-                    viewModel.onSignInStarted()
-                    appleAuth.launch()
-                }
+                    onClick = {
+                        viewModel.onSignInStarted()
+                        appleAuth.launch()
+                    },
+                    modifier = Modifier.fillMaxWidth().height(SignInButtonHeight),
+                )
             }
         }
     }
