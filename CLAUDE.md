@@ -379,6 +379,20 @@ Use the run configurations provided by the run widget in your IDE's toolbar. You
 - Android app: `./gradlew :app:androidApp:assembleDebug`
 - iOS app: open the [/app/iosApp](./app/iosApp) directory in Xcode and run it from there.
 
+### Android release build
+
+Release builds are minified and obfuscated by R8, and signed with the **upload key** from
+`keystore.properties` at the project root (git-ignored; copy
+[`keystore.properties.example`](keystore.properties.example)) or the `TURNIA_UPLOAD_*` environment
+variables on CI. Without either the build still runs and produces an unsigned APK.
+
+- Build the bundle for Play with `./gradlew :app:androidApp:bundleRelease`. It also uploads R8's
+  mapping file to Crashlytics, which is what turns obfuscated crash reports back into readable ones.
+- Play App Signing re-signs the app with Google's key, so two things need **that** key's
+  fingerprints, from Play Console → *App integrity*: its SHA-1 in the Firebase project settings, or
+  Google Sign-In fails in production, and its SHA-256 in `firebase/hosting/.well-known/assetlinks.json`,
+  or invitation links open the web page instead of the app.
+
 ## Pending: the paid Apple Developer Program
 
 Three features are written and shipped but cannot work yet, all for the same reason: the project is
