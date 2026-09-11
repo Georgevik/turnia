@@ -20,11 +20,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.contentColorFor
@@ -34,7 +31,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -59,7 +55,10 @@ private val CellOuterMargin = 2.dp
 /** Inner padding between the tile edge and its content. */
 private val CellContentPadding = 2.dp
 
-private const val SWAP_MARKER_SPIN_MS = 2200
+private val ChipCornerRadius = 4.dp
+
+/** One lap of the swap arrows round an event's chip. */
+private const val SWAP_ARROWS_LAP_MS = 3000
 
 @Composable
 fun CalendarCell(
@@ -169,21 +168,33 @@ private fun EventRow(
     event: CalendarCellEventUi,
     modifier: Modifier = Modifier,
 ) {
-    val swapMarkerAngle by rememberInfiniteTransition(label = "swapMarker_${event.id}").animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(SWAP_MARKER_SPIN_MS, easing = LinearEasing),
-        ),
-        label = "swapMarkerAngle",
-    )
+    // A shift on offer is circled by two arrows in its label's colour. Only those chips run an
+    // animation at all; the rest of the month stays still.
+    val swapArrows = if (event.onSwap) {
+        val progress by rememberInfiniteTransition(label = "swapArrows").animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(SWAP_ARROWS_LAP_MS, easing = LinearEasing),
+            ),
+            label = "swapArrowsProgress",
+        )
+        Modifier.swapArrows(
+            color = event.textColor,
+            cornerRadius = ChipCornerRadius,
+            progress = { progress },
+        )
+    } else {
+        Modifier
+    }
 
     Box(
         modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 1.dp)
-            .clip(RoundedCornerShape(4.dp))
+            .clip(RoundedCornerShape(ChipCornerRadius))
             .background(event.background)
+            .then(swapArrows)
             .padding(horizontal = 4.dp),
         contentAlignment = Alignment.Center,
     ) {
@@ -205,18 +216,6 @@ private fun EventRow(
                 stepSize = 1.sp,
             ),
         )
-
-        if (event.onSwap) {
-            Icon(
-                imageVector = Icons.Default.Autorenew,
-                contentDescription = null,
-                tint = event.textColor,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .size(11.dp)
-                    .graphicsLayer { rotationZ = swapMarkerAngle },
-            )
-        }
     }
 }
 
@@ -255,14 +254,6 @@ fun CalendarCellPreview() {
     }
 }
 
-/**
- * Every state a tile can be in, which is the whole of what [CalendarCellEventUi] decides: the label,
- * the colour it is painted, whether it is hatched, whether the corner marker turns, and how many of
- * them fit before the cell gives up and shows an ellipsis.
- *
- * The marker is a still frame here — a preview does not run the animation — so the row it is in only
- * shows that it is *there* and in the corner, not that it turns.
- */
 @Preview
 @Composable
 fun CalendarCellEventPreview() {
@@ -333,11 +324,11 @@ private fun LabelledCell(
 
 private fun demoCell(
     label: String = "DE",
-    background: Color = Color(0xFF4DB6AC),
+    background: Color = Color(0xFF3949AB),
     onSwap: Boolean = false,
     assignedToOther: Boolean = false,
 ) = CalendarCellEventUi(
-    // Only the animation's debug label reads it, so a repeat across previews costs nothing.
+    // The cell never reads it, so a repeat across previews costs nothing.
     id = EventId("preview-$label"),
     label = label,
     background = background,

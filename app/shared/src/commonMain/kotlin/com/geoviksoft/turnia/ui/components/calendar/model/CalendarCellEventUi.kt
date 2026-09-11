@@ -20,7 +20,7 @@ data class CalendarCellEventUi(
     /** The acronym where there is one, since a tile is too small for a name. */
     val label: String,
     val background: Color,
-    /** Turns the marker in the corner. */
+    /** Sends the swap arrows round the chip. */
     val onSwap: Boolean,
     /** Hatches the tile: this user created the shift but somebody else covers it now. */
     val assignedToOther: Boolean,
