@@ -12,16 +12,13 @@ import com.geoviksoft.turnia.core.domain.model.GroupId
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.system.Outcome
 import com.geoviksoft.turnia.core.system.outcomeCatching
-import com.geoviksoft.turnia.core.system.toFailure
 import com.geoviksoft.turnia.core.system.toInstantOrNull
-import com.geoviksoft.turnia.core.system.toSuccess
 import com.geoviksoft.turnia.core.system.toTimestamp
 import com.geoviksoft.turnia.core.system.toYearMonth
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Source
 import dev.gitlive.firebase.firestore.Timestamp
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.mapNotNull
@@ -48,25 +45,36 @@ class GroupEventFirestore(
         from: Instant,
         until: Instant,
         assigneeId: UserId? = null,
-    ): Flow<Outcome<List<DocHolder<GroupEventDocument>>, GenericFirestoreError>> =
-        flow<Outcome<List<DocHolder<GroupEventDocument>>, GenericFirestoreError>> {
+    ): Flow<List<DocHolder<GroupEventDocument>>> =
+        flow {
             val months = YearMonthRange(from.toYearMonth(), until.toYearMonth())
             val cachedEvents =
                 queryEvents(groupId, months.associateWith { null }, Source.CACHE, assigneeId)
-            emit(cachedEvents.filterNot { it.doc.isDeleted }.toSuccess())
+
+            cachedEvents.visible().takeIf { it.isNotEmpty() }?.let {
+                emit(cachedEvents.visible())
+            }
 
             var known = cachedEvents
             // An empty cache is fetched whole once, and only once: a range with no events of its
             // own has no markers either, and would otherwise ask again on every emission.
             var fetched = cachedEvents.isNotEmpty()
+            var settled = false
 
             emitAll(
                 groupSyncFirestore.observe(groupId).mapNotNull { sync ->
                     val staleMonths =
                         if (!fetched) months.associateWith { null }
                         else staleEventMonths(months, sync, known.updatedByMonth())
-                    // Nothing moved: the emission before this one still stands.
-                    if (staleMonths.isEmpty()) return@mapNotNull null
+
+                    if (staleMonths.isEmpty()) {
+                        if (settled) {
+                            return@mapNotNull null
+                        }
+
+                        settled = true
+                        return@mapNotNull known.visible()
+                    }
 
                     val serverEvents = queryEvents(
                         groupId,
@@ -78,12 +86,10 @@ class GroupEventFirestore(
                     val merged = known.map { cached -> serverEvents.remove(cached.id) ?: cached }
                     known = merged + serverEvents.values
                     fetched = true
-                    known.filterNot { it.doc.isDeleted }.toSuccess()
+                    settled = true
+                    known.visible()
                 }
             )
-        }.catch { throwable ->
-            Logger.e(TAG, "Failed to read group events", throwable)
-            emit(GenericFirestoreError(throwable).toFailure())
         }
 
     suspend fun set(
@@ -181,6 +187,8 @@ class GroupEventFirestore(
             DocHolder(id = it.reference.id, doc = it.data(GroupEventDocument.serializer()))
         }
     }
+
+    private fun List<DocHolder<GroupEventDocument>>.visible() = filterNot { it.doc.isDeleted }
 
     private fun List<DocHolder<GroupEventDocument>>.updatedByMonth(): Map<YearMonth, Instant> =
         groupBy { YearMonth.parse(it.doc.yearMonth) }

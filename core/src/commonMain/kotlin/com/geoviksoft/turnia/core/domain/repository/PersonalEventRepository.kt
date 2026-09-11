@@ -37,5 +37,10 @@ interface PersonalEventRepository {
 
     suspend fun deleteEventType(typeId: EventTypeId): Outcome<Unit, Unit>
 
-    fun getEvents(uid: UserId, date: LocalDate, monthDelta: Int = 1): Flow<List<PersonalEvent>>
+    /** Cached events first, still loading, then the server's if it had anything newer. */
+    fun getEvents(
+        uid: UserId,
+        date: LocalDate,
+        monthDelta: Int = 1,
+    ): Flow<List<PersonalEvent>>
 }

@@ -348,27 +348,31 @@ class GroupRepositoryImpl(
         groupId: GroupId,
         date: LocalDate,
         monthDelta: Int,
-    ): Flow<Outcome<List<GroupEvent>, Unit>> = userRepository.loggedUserFlow.flatMapLatest { user ->
+    ): Flow<List<GroupEvent>> = userRepository.loggedUserFlow.flatMapLatest { user ->
         val userId = user.id
-        userPrivateFirestore.observePreferences(userId).map { it.groupEventTypeColors }.flatMapLatest { colors ->
-            revokedGroupFirestore.observe(userId).flatMapLatest { revoked ->
-                val snapshot = revoked.find { it.id == groupId.value }
-                if (snapshot != null) {
-                    val group = groupMapper.map(snapshot, colors)
-                    eventsOf(group, emptyMap(), userId, date, monthDelta).map { it.toSuccess() }
-                } else {
-                    groupFirestore.observe(groupId).flatMapLatest { holder ->
-                        if (holder == null) flowOf(Unit.toFailure())
-                        else eventsOf(
-                            holder,
-                            userId,
-                            colors,
-                            date,
-                            monthDelta
-                        ).map { it.toSuccess() }
-                    }
-                }
+
+        combine(
+            userPrivateFirestore.observePreferences(userId).map { it.groupEventTypeColors },
+            revokedGroupFirestore.observe(userId)
+        ) { colors, revoked ->
+            Pair(colors, revoked)
+        }.flatMapLatest { (colors, revoked) ->
+            revoked.find { it.id == groupId.value }?.let { revokedDoc ->
+                val group = groupMapper.map(revokedDoc, colors)
+                return@flatMapLatest eventsOf(group, emptyMap(), userId, date, monthDelta)
             }
+
+            groupFirestore.observe(groupId).flatMapLatest { holder ->
+                if (holder == null) flowOf(emptyList())
+                else eventsOf(
+                    holder,
+                    userId,
+                    colors,
+                    date,
+                    monthDelta
+                )
+            }
+
         }
     }
 
@@ -376,29 +380,22 @@ class GroupRepositoryImpl(
         userId: UserId,
         date: LocalDate,
         monthDelta: Int,
-    ): Flow<List<GroupEvent>> = flow {
-        val viewer = userRepository.loggedUser?.id
-        if (viewer == null) {
-            emit(emptyList())
-            return@flow
-        }
+    ): Flow<List<GroupEvent>> = userRepository.loggedUserFlow.flatMapLatest { viewer ->
 
         // Following the groups too: joining one, or an admin renaming a type, reaches the calendar
         // without a reload — the shifts are drawn from the group as much as from the events.
-        emitAll(
-            getGroups().flatMapLatest { groups ->
-                if (groups.isEmpty()) return@flatMapLatest flowOf(emptyList())
+        getGroups().flatMapLatest { groups ->
+            if (groups.isEmpty()) return@flatMapLatest flowOf(emptyList<GroupEvent>())
 
-                // Combined, so a group answering from cache paints while another is on the wire.
-                val perGroup = groups.map { group ->
-                    eventsOf(group, group.memberNames(), viewer, date, monthDelta)
-                }
-                combine(perGroup) { events ->
-                    events.toList().flatten()
-                        .filter { it.assigneeId == userId || it.ownerId == userId }
-                }
+            // Combined, so a group answering from cache paints while another is on the wire.
+            val perGroup: List<Flow<List<GroupEvent>>> = groups.map { group ->
+                eventsOf(group, group.memberNames(), viewer.id, date, monthDelta)
             }
-        )
+
+            combine(perGroup) { events ->
+                events.toList().flatten().filter { it.assigneeId == userId || it.ownerId == userId }
+            }
+        }
     }
 
     override fun getSwapEvents(date: LocalDate, monthsAhead: Int): Flow<List<GroupEvent>> = flow {
@@ -472,8 +469,8 @@ class GroupRepositoryImpl(
         from = from.toInstant(),
         until = until.toInstant(),
         assigneeId = viewer.takeIf { group.isRevoked },
-    ).map { outcome ->
-        outcome.valueOrNull().orEmpty().mapNotNull { groupMapper.map(it, group, memberNames) }
+    ).map { events ->
+        events.mapNotNull { groupMapper.map(it, group, memberNames) }
     }
 
     private suspend fun typeColors(userId: UserId): Map<String, String> =

@@ -2,6 +2,7 @@ package com.geoviksoft.turnia.ui.main.swap
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.geoviksoft.turnia.core.data.logger.Logger
 import com.geoviksoft.turnia.core.domain.model.Group
 import com.geoviksoft.turnia.core.domain.model.GroupEvent
 import com.geoviksoft.turnia.core.domain.model.GroupId
@@ -21,11 +22,11 @@ import com.geoviksoft.turnia.ui.system.color.toComposeColorOr
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 import kotlin.time.Clock
@@ -57,6 +58,8 @@ class SwapViewModel(
                     userMessage,
                 ) { events, groups, deselected, segment, message ->
                     build(user.id, events, groups, deselected, segment, message)
+                }.catch { throwable ->
+                    Logger.e(TAG, "Failed to read the swap events", throwable)
                 }
             }.collect { state -> _uiState.value = state }
         }
@@ -123,5 +126,9 @@ class SwapViewModel(
         SwapError.TakenBySomeoneElse -> SwapMessage.TakenBySomeoneElse
         SwapError.NotSwappable -> SwapMessage.NotSwappable
         SwapError.NotAssignee, SwapError.SaveFailed -> SwapMessage.SaveFailed
+    }
+
+    companion object {
+        private const val TAG = "SwapViewModel"
     }
 }

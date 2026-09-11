@@ -74,6 +74,7 @@ fun ExternalCalendar(viewModel: ExternalCalendarViewModel) {
             rootNavigator.goTo(RootRoute.EventTypeDetailKey(EventTypeDetailData.NewGroup(groupId)))
         },
         eventsByDate = uiState.events,
+        isLoading = uiState.loading,
     )
 }
 

@@ -16,7 +16,6 @@ import com.geoviksoft.turnia.core.system.errorOrNull
 import com.geoviksoft.turnia.core.system.toFailure
 import com.geoviksoft.turnia.core.system.toInstant
 import com.geoviksoft.turnia.core.system.toSuccess
-import com.geoviksoft.turnia.core.system.valueOrNull
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
@@ -34,8 +33,7 @@ class PersonalEventRepositoryImpl(
 ) : PersonalEventRepository {
 
     override fun getMyEventTypes(includeDeleted: Boolean): Flow<List<PersonalEventType>> {
-        return userRepository.loggedUserFlow
-            .flatMapLatest { user -> getAllEventTypes(user.id) }
+        return userRepository.loggedUserFlow.flatMapLatest { user -> getAllEventTypes(user.id) }
             .map { types -> types.filterNot { !includeDeleted && it.isDeleted } }
     }
 
@@ -50,9 +48,7 @@ class PersonalEventRepositoryImpl(
     }
 
     override suspend fun saveNotes(
-        eventId: EventId,
-        eventDate: LocalDate,
-        notes: String?
+        eventId: EventId, eventDate: LocalDate, notes: String?
     ): Outcome<Unit, Unit> {
         val uid = userRepository.loggedUser?.id ?: return Unit.toFailure()
 
@@ -83,21 +79,18 @@ class PersonalEventRepositoryImpl(
     }
 
     override fun getEvents(
-        uid: UserId,
-        date: LocalDate,
-        monthDelta: Int
+        uid: UserId, date: LocalDate, monthDelta: Int
     ): Flow<List<PersonalEvent>> = combine(
         getAllEventTypes(uid), personalEventFirestore.get(
             uid,
             from = date.minus(monthDelta, DateTimeUnit.MONTH).toInstant(),
             until = date.plus(monthDelta, DateTimeUnit.MONTH).toInstant(),
         )
-    ) { types, eventsDocs ->
-        val eventList = eventsDocs.valueOrNull() ?: return@combine emptyList()
-
+    ) { types, docs ->
         val typesMap = types.associateBy { it.id }
-        eventList.mapNotNull { personalEventMapper.map(it, typesMap) }
+        docs.mapNotNull { personalEventMapper.map(it, typesMap) }
     }
+
 
     private fun getAllEventTypes(uid: UserId): Flow<List<PersonalEventType>> =
         personalEventTypesFirestore.observe(uid)
