@@ -42,7 +42,11 @@ sealed interface GroupDetailUi {
         val codeChanged: Boolean = false,
         /** Only an admin may change the group's data; everyone else reads it. */
         val editable: Boolean,
-    )
+    ) {
+        /** A code only lets anyone in once it is saved: passing it on before then invites no one. */
+        val canPassOnCode: Boolean
+            get() = groupId != null && !codeChanged && !invitationCode.isNullOrBlank()
+    }
 }
 
 @Immutable

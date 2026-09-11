@@ -1,5 +1,6 @@
 package com.geoviksoft.turnia.ui.group.detail
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +28,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.PersonRemove
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -48,6 +50,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -71,6 +74,7 @@ import com.geoviksoft.turnia.ui.group.detail.model.GroupMemberUi
 import com.geoviksoft.turnia.ui.group.detail.model.GroupTypeRowUi
 import com.geoviksoft.turnia.ui.group.detail.model.JoinRequestUi
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
+import com.geoviksoft.turnia.ui.system.TurniaSnackbarVisual
 import com.geoviksoft.turnia.ui.system.color.EntityPalette
 import com.geoviksoft.turnia.ui.system.components.AcronymBadge
 import com.geoviksoft.turnia.ui.system.components.AdminBadge
@@ -87,8 +91,10 @@ import com.geoviksoft.turnia.ui.system.components.TurniaErrorContent
 import com.geoviksoft.turnia.ui.system.components.UserAvatar
 import com.geoviksoft.turnia.ui.system.components.UserAvatarSize
 import com.geoviksoft.turnia.ui.system.keyboardAware
+import com.geoviksoft.turnia.ui.system.rememberTextSharer
 import com.geoviksoft.turnia.ui.system.toErrorSnackbar
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
@@ -106,8 +112,12 @@ import turnia.app.shared.generated.resources.group_detail_auto_approve
 import turnia.app.shared.generated.resources.group_detail_auto_approve_off
 import turnia.app.shared.generated.resources.group_detail_auto_approve_on
 import turnia.app.shared.generated.resources.group_detail_code_changed
+import turnia.app.shared.generated.resources.group_detail_code_copied
+import turnia.app.shared.generated.resources.group_detail_code_copy
 import turnia.app.shared.generated.resources.group_detail_code_hidden
 import turnia.app.shared.generated.resources.group_detail_code_regenerate
+import turnia.app.shared.generated.resources.group_detail_code_share
+import turnia.app.shared.generated.resources.group_detail_code_share_text
 import turnia.app.shared.generated.resources.group_detail_create
 import turnia.app.shared.generated.resources.group_detail_error_load
 import turnia.app.shared.generated.resources.group_detail_error_not_found
@@ -617,8 +627,29 @@ private fun InvitationSection(
 
         val invitationCode = form.invitationCode
         if (!invitationCode.isNullOrBlank()) {
+            val sharer = rememberTextSharer()
+            val snackbar = LocalSnackbar.current
+            val scope = rememberCoroutineScope()
+            val copied = stringResource(Res.string.group_detail_code_copied)
+            val shareText =
+                stringResource(Res.string.group_detail_code_share_text, form.name, invitationCode)
+
             InvitationCode(
                 code = invitationCode,
+                onCopy = if (form.canPassOnCode) {
+                    {
+                        sharer.copy(invitationCode)
+                        // iOS copies without a word, so the app is the only one that can say so.
+                        scope.launch { snackbar.showSnackbar(TurniaSnackbarVisual(copied)) }
+                    }
+                } else {
+                    null
+                },
+                onShare = if (form.canPassOnCode) {
+                    { sharer.share(shareText) }
+                } else {
+                    null
+                },
                 onRegenerate = onRegenerateCode.takeIf { form.editable && !form.autoApprove },
             )
             if (form.codeChanged) {
@@ -641,17 +672,31 @@ private fun InvitationSection(
 }
 
 @Composable
-private fun InvitationCode(code: String, onRegenerate: (() -> Unit)?) {
+private fun InvitationCode(
+    code: String,
+    onCopy: (() -> Unit)?,
+    onShare: (() -> Unit)?,
+    onRegenerate: (() -> Unit)?,
+) {
     Surface(
         shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Row(
-            modifier = Modifier.padding(start = 16.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+            modifier = Modifier.padding(end = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable(
+                        enabled = onCopy != null,
+                        onClickLabel = stringResource(Res.string.group_detail_code_copy),
+                        onClick = { onCopy?.invoke() },
+                    )
+                    .padding(start = 16.dp, top = 8.dp, bottom = 8.dp),
+            ) {
                 Text(
                     text = stringResource(Res.string.group_detail_field_invitation),
                     style = MaterialTheme.typography.labelMedium,
@@ -663,6 +708,14 @@ private fun InvitationCode(code: String, onRegenerate: (() -> Unit)?) {
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.SemiBold,
                 )
+            }
+            if (onShare != null) {
+                IconButton(onClick = onShare) {
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = stringResource(Res.string.group_detail_code_share),
+                    )
+                }
             }
             if (onRegenerate != null) {
                 IconButton(onClick = onRegenerate) {
