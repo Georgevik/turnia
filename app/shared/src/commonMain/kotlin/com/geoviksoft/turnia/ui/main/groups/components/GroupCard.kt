@@ -24,7 +24,7 @@ import turnia.app.shared.generated.resources.group_member_count
 import turnia.app.shared.generated.resources.group_revoked_banner
 
 @Composable
-fun GroupCard(group: GroupRowUi, showAdminBadge: Boolean = true, onClick: () -> Unit) {
+fun GroupCard(group: GroupRowUi, onClick: () -> Unit) {
     TListItem(
         title = group.name,
         // A group they were removed from has no roster to count: what is left is the reason it
@@ -42,7 +42,7 @@ fun GroupCard(group: GroupRowUi, showAdminBadge: Boolean = true, onClick: () -> 
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 if (group.isRevoked) RevokedBadge()
-                else if (group.isAdmin && showAdminBadge) AdminBadge()
+                else if (group.isAdmin) AdminBadge()
                 Chevron()
             }
         },

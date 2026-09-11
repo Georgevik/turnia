@@ -12,11 +12,13 @@ import com.geoviksoft.turnia.ui.main.groups.model.GroupsFilter
 import com.geoviksoft.turnia.ui.main.groups.model.JoinRequestRowUi
 import com.geoviksoft.turnia.ui.system.color.entityColor
 import com.geoviksoft.turnia.ui.system.color.toComposeColorOrNull
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -27,47 +29,68 @@ class GroupsViewModel(
     private val _uiState = MutableStateFlow<GroupsUi>(GroupsUi.Loading)
     val uiState: StateFlow<GroupsUi> = _uiState.asStateFlow()
 
+    private val filter = MutableStateFlow(GroupsFilter.ALL)
+
     init {
         viewModelScope.launch {
-            combine(
-                groupRepository.getMyJoinRequests()
-                    .map { requests ->
-                        requests
-                            .mapNotNull { request ->
-                                when (request.status) {
-                                    JoinRequestStatus.REJECTED -> null
-                                    JoinRequestStatus.ACCEPTED -> null
-                                    JoinRequestStatus.PENDING -> JoinRequestRowUi(
-                                        groupId = request.groupId,
-                                        groupName = request.groupName,
-                                        isPending = true,
-                                    )
-                                }
-                            }
-                    },
-                groupRepository.getGroups().map { groups ->
-                    groups.map {
-                        GroupRowUi(
-                            id = it.id,
-                            name = it.name,
-                            color = it.color?.toComposeColorOrNull() ?: entityColor(it.id.value),
-                            members = it.memberCount,
-                            isAdmin = it.isAdmin,
-                            isRevoked = it.isRevoked,
-                        )
-                    }
-                }
-            ) { requestsUi, groupsUi ->
+            combine(pendingRequests(), groups(), filter) { requests, groups, filter ->
                 _uiState.update { state ->
                     val current = state as? GroupsUi.Success ?: GroupsUi.Success()
-                    current.withRequests(requestsUi).copy(groups = groupsUi)
+                    current.copy(
+                        groups = when (filter) {
+                            GroupsFilter.ALL, GroupsFilter.MINE -> groups
+                            GroupsFilter.PENDING -> emptyList()
+                        },
+                        requests = when (filter) {
+                            GroupsFilter.ALL, GroupsFilter.PENDING -> requests
+                            GroupsFilter.MINE -> emptyList()
+                        },
+                        filter = filter,
+                        pendingCount = requests.size,
+                        isEmpty = groups.isEmpty() && requests.isEmpty(),
+                    )
                 }
-
             }.collect {}
         }
     }
 
-    fun filterSelected(filter: GroupsFilter) = updateSuccess { it.copy(filter = filter) }
+    fun filterSelected(filter: GroupsFilter) {
+        this.filter.value = filter
+    }
+
+    private suspend fun pendingRequests(): Flow<List<JoinRequestRowUi>> =
+        groupRepository.getMyJoinRequests()
+            .map { requests ->
+                requests.mapNotNull { request ->
+                    when (request.status) {
+                        JoinRequestStatus.REJECTED -> null
+                        JoinRequestStatus.ACCEPTED -> null
+                        JoinRequestStatus.PENDING -> JoinRequestRowUi(
+                            groupId = request.groupId,
+                            groupName = request.groupName,
+                            isPending = true,
+                        )
+                    }
+                }
+            }
+            // The pending chip goes with the last request, so the filter it selected goes too.
+            .onEach { requests ->
+                if (requests.isEmpty()) filter.compareAndSet(GroupsFilter.PENDING, GroupsFilter.ALL)
+            }
+
+    private fun groups(): Flow<List<GroupRowUi>> =
+        groupRepository.getGroups().map { groups ->
+            groups.map {
+                GroupRowUi(
+                    id = it.id,
+                    name = it.name,
+                    color = it.color?.toComposeColorOrNull() ?: entityColor(it.id.value),
+                    members = it.memberCount,
+                    isAdmin = it.isAdmin,
+                    isRevoked = it.isRevoked,
+                )
+            }
+        }
 
     fun joinCodeChanged(code: String) =
         updateSuccess { it.copy(joinCode = code.uppercase()) }
@@ -114,12 +137,6 @@ class GroupsViewModel(
         JoinGroupError.InvitationExpired -> GroupsMessage.JoinInvitationExpired
         JoinGroupError.RequestFailed -> GroupsMessage.JoinFailed
     }
-
-    private fun GroupsUi.Success.withRequests(requests: List<JoinRequestRowUi>) = copy(
-        requests = requests,
-        filter = if (filter == GroupsFilter.PENDING && requests.isEmpty()) GroupsFilter.ALL
-        else filter,
-    )
 
     private fun updateSuccess(block: (GroupsUi.Success) -> GroupsUi.Success) =
         _uiState.update { state -> if (state is GroupsUi.Success) block(state) else state }

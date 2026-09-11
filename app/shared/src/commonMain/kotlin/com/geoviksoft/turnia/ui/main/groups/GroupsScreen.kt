@@ -34,7 +34,6 @@ import com.geoviksoft.turnia.ui.main.groups.components.GroupsFilterChips
 import com.geoviksoft.turnia.ui.main.groups.components.JoinGroupSheet
 import com.geoviksoft.turnia.ui.main.groups.components.JoinRequestCard
 import com.geoviksoft.turnia.ui.main.groups.model.GroupRowUi
-import com.geoviksoft.turnia.ui.main.groups.model.GroupsFilter
 import com.geoviksoft.turnia.ui.main.groups.model.JoinRequestRowUi
 import com.geoviksoft.turnia.ui.main.system.EmptyState
 import com.geoviksoft.turnia.ui.main.system.ScreenHeader
@@ -113,9 +112,7 @@ fun GroupsScreen(viewModel: GroupsViewModel = koinViewModel()) {
                 }
 
                 is GroupsUi.Success -> {
-                    // A request outstanding is not an empty screen: it is the one thing the user
-                    // is waiting on, and the empty state would cover it.
-                    if (current.groups.isEmpty() && current.requests.isEmpty()) {
+                    if (current.isEmpty) {
                         EmptyState(
                             icon = Icons.Default.GroupAdd,
                             title = stringResource(Res.string.groups_empty_title),
@@ -129,22 +126,15 @@ fun GroupsScreen(viewModel: GroupsViewModel = koinViewModel()) {
                     } else {
                         GroupsFilterChips(
                             selected = current.filter,
-                            pendingCount = current.requests.size,
+                            pendingCount = current.pendingCount,
                             onSelected = viewModel::filterSelected,
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                         )
 
-                        val groups = current.groups
-                            .takeIf { current.filter != GroupsFilter.PENDING }
-                            .orEmpty()
-                        val requests = current.requests
-                            .takeIf { current.filter != GroupsFilter.MINE }
-                            .orEmpty()
-
-                        if (groups.isEmpty() && requests.isEmpty()) {
+                        if (current.groups.isEmpty() && current.requests.isEmpty()) {
                             NoGroupsYet()
                         } else {
-                            GroupList(groups = groups, requests = requests)
+                            GroupList(groups = current.groups, requests = current.requests)
                         }
                     }
                 }
