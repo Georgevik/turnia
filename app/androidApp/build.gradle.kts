@@ -1,6 +1,6 @@
 import groovy.json.JsonSlurper
-import java.util.Properties
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.androidApplication)
@@ -23,6 +23,9 @@ dependencies {
     implementation(libs.koin.android)
     implementation(libs.firebase.messaging.android)
     implementation(libs.firebase.crashlytics)
+    // App Check: Play Integrity attests the Play build; the debug provider never ships in it.
+    releaseImplementation(libs.firebase.appcheck.playintegrity)
+    debugImplementation(libs.firebase.appcheck.debug)
 
     implementation(libs.compose.uiToolingPreview)
     debugImplementation(libs.compose.uiTooling)

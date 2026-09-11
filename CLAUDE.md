@@ -209,6 +209,13 @@ Build one with `value.toSuccess()` / `error.toFailure()` — both work on any re
     to start it. It has no GitLive wrapper, so only the **Android** `Logger` reports through it
     (breadcrumbs for every line, a non-fatal for every error carrying a throwable) — on iOS it
     catches crashes on its own and hears nothing from shared code.
+  - **App Check** — proves requests come from the genuine app. Installed in platform code before
+    Firebase is touched (`TurniaApplication`, `iOSApp.init`); the native SDKs under GitLive then
+    attach the token on their own. Android release builds attest with **Play Integrity**, iOS
+    release builds with **App Attest**; debug builds use a **debug token**, printed on first launch,
+    that has to be registered in the console once per device. Not enforced yet: enforce each service
+    (Firestore, Functions, Auth) in the console only once its metrics show current traffic verified.
+    Enforcing before iOS can attest locks out every iOS release user.
   - **Cloud Scheduler** — triggers the periodic retention cleanup of old events.
 - **GitLive Firebase Kotlin SDK** (`dev.gitlive:firebase-*`) — Firebase access from `commonMain`.
 - **Native FCM per platform** — push reception uses the native SDK on each platform (iOS involves APNs, `AppDelegate` and permissions).
@@ -395,11 +402,11 @@ variables on CI. Without either the build still runs and produces an unsigned AP
 
 ## Pending: the paid Apple Developer Program
 
-Three features are written and shipped but cannot work yet, all for the same reason: the project is
+Four features are written and shipped but cannot work yet, all for the same reason: the project is
 signed with a **Personal Team**, which cannot sign any of these capabilities. Xcode does not even
 list them under *Signing & Capabilities → + Capability*, and writing the entitlement by hand only
 breaks the build — Xcode fails to generate a profile. All are blocked on an Apple Developer Program
-membership; only the last has a workaround.
+membership; only Universal Links has a workaround.
 
 - **Push (FCM)** — `aps-environment` is missing from
   [iosApp.entitlements](app/iosApp/iosApp/iosApp.entitlements). Without it iOS receives nothing.
@@ -412,6 +419,11 @@ membership; only the last has a workaround.
   live: the page's *Abrir en Turnia* button opens the app through its custom scheme. The site already
   serves the `apple-app-site-association` this needs, and `onOpenURL` already hands every URL to the
   shared code, so adding the entitlement is the only step.
+- **App Check on iOS** — release builds use App Attest, which needs the
+  `com.apple.developer.devicecheck.appattest-environment` entitlement (`production`) and the app
+  registered for App Attest in the console. Until then an iOS release build sends no valid token, so
+  **no service can be enforced** without locking iOS users out. Debug builds are unaffected: they use
+  a registered debug token.
 
 ### Sign in with Apple — what is left
 

@@ -2,9 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- TODO Three capabilities belong here and none can be added yet: a Personal Team cannot sign
+	<!-- TODO Four capabilities belong here and none can be added yet: a Personal Team cannot sign
 	     them, so Xcode does not offer them under Signing & Capabilities, and writing the key by
 	     hand only breaks the build. All wait on the paid Apple Developer Program.
+
+	       · com.apple.developer.devicecheck.appattest-environment (production) — App Check's
+	         App Attest in release builds. Without it their requests carry no valid token.
 
 	       · aps-environment (development) — without it there is no FCM on iOS.
 	       · com.apple.developer.applesignin — without it the Apple button on the sign-in screen
