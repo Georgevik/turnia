@@ -1,0 +1,9 @@
+<resources>
+    <string name="notification_channel_name">Turnos y grupos</string>
+
+    <string name="push_swap_requested">%1$s pide cambio: %2$s del %3$s. ¿Le echas una mano?</string>
+    <string name="push_swap_covered">%1$s cubre tu turno: %2$s del %3$s.</string>
+    <string name="push_join_requested">%1$s quiere unirse al grupo.</string>
+    <string name="push_join_accepted">Ya formas parte del grupo.</string>
+    <string name="push_calendar_shared">%1$s ha compartido su calendario contigo.</string>
+</resources>

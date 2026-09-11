@@ -4,6 +4,13 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<!-- iOS only reports a device language the bundle declares; without this Compose resources
+	     would always see English and never load values-es. Keep it in step with composeResources. -->
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>es</string>
+	</array>
 	<!-- iOS OAuth client id (from GoogleService-Info.plist CLIENT_ID). The GoogleSignIn
 	     SDK reads this to build its active configuration; KMPAuth never sets one itself,
 	     so without this key signInWithPresentingViewController has no configuration and fails.

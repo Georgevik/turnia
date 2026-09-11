@@ -2,368 +2,368 @@
 <resources>
     <string name="app_name">Turnia</string>
     <string-array name="loading_phrases">
-        <item>Negociando con el destino (y con tu compañero del turno de noche)…</item>
-        <item>Alineando los astros… y las agendas del equipo.</item>
-        <item>Descifrando la compleja física cuántica de cuadrar un fin de semana libre.</item>
-        <item>Encajando los turnos mejor que en una partida de Tetris.</item>
-        <item>Buscando el milagro de que a todos les cuadre el horario…</item>
-        <item>Calculando cuántos cafés harán falta para esta semana.</item>
-        <item>Cambiando mañanas por tardes y salvando planes de última hora…</item>
-        <item>Reorganizando el tiempo para que por fin tengas vida social.</item>
-        <item>Poniendo en marcha la diplomacia del cambio de turnos…</item>
-        <item>Validando cuadrantes: un segundo, que casi lo tenemos.</item>
-        <item>Negociando el turno de noche por un trozo de tarta...</item>
-        <item>Buscando a la persona valiente que cubra el festivo...</item>
-        <item>Reorganizando las fichas del puzle semanal.</item>
-        <item>Sincronizando relojes y evitando solapamientos misteriosos.</item>
-        <item>Comprobando si el viernes libre es un mito o una realidad.</item>
-        <item>Convirtiendo el caos de horarios en paz mental.</item>
-        <item>Haciendo encajar las piezas antes de que alguien pida cambio.</item>
-        <item>Calculando la probabilidad matemática de librar dos días seguidos.</item>
-        <item>Ajustando la plantilla para que todo el mundo pueda respirar.</item>
-        <item>Desplegando la alfombra roja para tu próximo turno libre.</item>
+        <item>Negotiating with fate (and with your night-shift colleague)…</item>
+        <item>Aligning the stars… and the team's schedules.</item>
+        <item>Cracking the quantum physics of getting a whole weekend off.</item>
+        <item>Fitting shifts together better than a game of Tetris.</item>
+        <item>Waiting for the miracle of a schedule that works for everyone…</item>
+        <item>Working out how many coffees this week is going to take.</item>
+        <item>Trading mornings for afternoons and rescuing last-minute plans…</item>
+        <item>Rearranging time so you finally get a social life.</item>
+        <item>Launching shift-swap diplomacy…</item>
+        <item>Checking the rota: one second, we've almost got it.</item>
+        <item>Trading the night shift for a slice of cake...</item>
+        <item>Looking for the brave soul who'll cover the bank holiday...</item>
+        <item>Rearranging the pieces of the weekly puzzle.</item>
+        <item>Syncing clocks and avoiding mysterious overlaps.</item>
+        <item>Checking whether a Friday off is a myth or a reality.</item>
+        <item>Turning schedule chaos into peace of mind.</item>
+        <item>Fitting the pieces together before someone asks for a swap.</item>
+        <item>Calculating the odds of two days off in a row.</item>
+        <item>Adjusting the roster so everyone can breathe.</item>
+        <item>Rolling out the red carpet for your next day off.</item>
     </string-array>
 
     <!-- Calendar -->
-    <string name="calendar_previous_month">Mes anterior</string>
-    <string name="calendar_next_month">Mes siguiente</string>
-    <string name="calendar_back">Volver</string>
+    <string name="calendar_previous_month">Previous month</string>
+    <string name="calendar_next_month">Next month</string>
+    <string name="calendar_back">Back</string>
     <string name="calendar_month_year">%1$s %2$d</string>
     <string-array name="calendar_weekday_initials">
-        <item>L</item>
         <item>M</item>
-        <item>X</item>
-        <item>J</item>
-        <item>V</item>
+        <item>T</item>
+        <item>W</item>
+        <item>T</item>
+        <item>F</item>
         <item>S</item>
-        <item>D</item>
+        <item>S</item>
     </string-array>
     <!-- Event details bottom sheet -->
     <string name="event_full_date">%2$s %1$d, %3$d</string>
     <plurals name="event_details_count">
-        <item quantity="one">%1$d evento</item>
-        <item quantity="other">%1$d eventos</item>
+        <item quantity="one">%1$d event</item>
+        <item quantity="other">%1$d events</item>
     </plurals>
-    <string name="event_details_empty">No hay eventos este día</string>
-    <string name="event_status_on_swap">Pidiendo cambio</string>
-    <string name="event_assigned_to">Asignado a %1$s</string>
-    <string name="event_assigned_to_me">Asignado a mí</string>
-    <string name="event_holder_me">Yo</string>
-    <string name="event_manage">Gestionar</string>
-    <string name="event_add">Añadir evento</string>
-    <string name="event_add_close">Cerrar</string>
-    <string name="event_group_only_banner">Solo puedes añadir eventos definidos para este grupo.</string>
-    <string name="event_note_add">Añadir nota</string>
-    <string name="event_note_edit">Nota</string>
-    <string name="event_note_dialog_title">Nota</string>
-    <string name="event_note_hint">Escribe una nota para este evento</string>
-    <string name="event_note_save">Guardar</string>
-    <string name="event_note_cancel">Cancelar</string>
-    <string name="event_note_error">No se pudo guardar la nota</string>
-    <string name="event_remove">Eliminar evento</string>
-    <string name="event_remove_confirm_title">¿Eliminar evento?</string>
-    <string name="event_remove_confirm_body">Esta acción no se puede deshacer.</string>
-    <string name="event_remove_confirm">Eliminar</string>
-    <string name="event_remove_cancel">Cancelar</string>
-    <string name="event_details_new_title">Nuevo tipo de evento</string>
+    <string name="event_details_empty">No events on this day</string>
+    <string name="event_status_on_swap">Up for swap</string>
+    <string name="event_assigned_to">Assigned to %1$s</string>
+    <string name="event_assigned_to_me">Assigned to me</string>
+    <string name="event_holder_me">Me</string>
+    <string name="event_manage">Manage</string>
+    <string name="event_add">Add event</string>
+    <string name="event_add_close">Close</string>
+    <string name="event_group_only_banner">You can only add events defined for this group.</string>
+    <string name="event_note_add">Add note</string>
+    <string name="event_note_edit">Note</string>
+    <string name="event_note_dialog_title">Note</string>
+    <string name="event_note_hint">Write a note for this event</string>
+    <string name="event_note_save">Save</string>
+    <string name="event_note_cancel">Cancel</string>
+    <string name="event_note_error">Couldn't save the note</string>
+    <string name="event_remove">Delete event</string>
+    <string name="event_remove_confirm_title">Delete event?</string>
+    <string name="event_remove_confirm_body">This can't be undone.</string>
+    <string name="event_remove_confirm">Delete</string>
+    <string name="event_remove_cancel">Cancel</string>
+    <string name="event_details_new_title">New event type</string>
 
     <string-array name="calendar_months">
-        <item>Enero</item>
-        <item>Febrero</item>
-        <item>Marzo</item>
-        <item>Abril</item>
-        <item>Mayo</item>
-        <item>Junio</item>
-        <item>Julio</item>
-        <item>Agosto</item>
-        <item>Septiembre</item>
-        <item>Octubre</item>
-        <item>Noviembre</item>
-        <item>Diciembre</item>
+        <item>January</item>
+        <item>February</item>
+        <item>March</item>
+        <item>April</item>
+        <item>May</item>
+        <item>June</item>
+        <item>July</item>
+        <item>August</item>
+        <item>September</item>
+        <item>October</item>
+        <item>November</item>
+        <item>December</item>
     </string-array>
 
     <!-- Short forms, for where a date has to fit beside something else. Monday first, like the grid. -->
     <string-array name="calendar_weekdays_short">
-        <item>Lun</item>
-        <item>Mar</item>
-        <item>Mié</item>
-        <item>Jue</item>
-        <item>Vie</item>
-        <item>Sáb</item>
-        <item>Dom</item>
+        <item>Mon</item>
+        <item>Tue</item>
+        <item>Wed</item>
+        <item>Thu</item>
+        <item>Fri</item>
+        <item>Sat</item>
+        <item>Sun</item>
     </string-array>
     <string-array name="calendar_months_short">
-        <item>ene</item>
-        <item>feb</item>
-        <item>mar</item>
-        <item>abr</item>
-        <item>may</item>
-        <item>jun</item>
-        <item>jul</item>
-        <item>ago</item>
-        <item>sep</item>
-        <item>oct</item>
-        <item>nov</item>
-        <item>dic</item>
+        <item>Jan</item>
+        <item>Feb</item>
+        <item>Mar</item>
+        <item>Apr</item>
+        <item>May</item>
+        <item>Jun</item>
+        <item>Jul</item>
+        <item>Aug</item>
+        <item>Sep</item>
+        <item>Oct</item>
+        <item>Nov</item>
+        <item>Dec</item>
     </string-array>
 
     <!-- Welcome / Sign in -->
-    <string name="welcome_headline">Tus turnos, sin líos</string>
-    <string name="welcome_body">Cambios de última hora, coberturas y favores entre compañeros… por fin en un solo sitio. Se acabó perderse entre mensajes de WhatsApp.</string>
-    <string name="welcome_feature_trace_title">Cada cambio, siempre trazado</string>
-    <string name="welcome_feature_trace_body">Sigue el rastro de un turno de principio a fin, aunque pase por varias manos.</string>
-    <string name="welcome_feature_clear_title">Sin dobles turnos ni sorpresas</string>
-    <string name="welcome_feature_clear_body">Siempre sabrás quién cubre cada turno.</string>
-    <string name="welcome_feature_notify_title">Te avisamos cuando importa</string>
-    <string name="welcome_feature_notify_body">Una notificación en cuanto algo afecta a tu horario.</string>
-    <string name="welcome_signin_hint">Inicia sesión para empezar</string>
-    <string name="signin_google">Continuar con Google</string>
-    <string name="signin_apple">Continuar con Apple</string>
-    <string name="signin_error_failed">No hemos podido iniciar sesión. Inténtalo de nuevo.</string>
+    <string name="welcome_headline">Your shifts, minus the mess</string>
+    <string name="welcome_body">Last-minute swaps, cover and favours between colleagues… finally in one place. No more getting lost in WhatsApp messages.</string>
+    <string name="welcome_feature_trace_title">Every swap, always tracked</string>
+    <string name="welcome_feature_trace_body">Follow a shift from start to finish, even when it changes hands several times.</string>
+    <string name="welcome_feature_clear_title">No double shifts, no surprises</string>
+    <string name="welcome_feature_clear_body">You'll always know who's covering each shift.</string>
+    <string name="welcome_feature_notify_title">We let you know when it matters</string>
+    <string name="welcome_feature_notify_body">A notification as soon as something affects your schedule.</string>
+    <string name="welcome_signin_hint">Sign in to get started</string>
+    <string name="signin_google">Continue with Google</string>
+    <string name="signin_apple">Continue with Apple</string>
+    <string name="signin_error_failed">We couldn't sign you in. Please try again.</string>
 
     <!-- Groups tab -->
-    <string name="group_search_hint">Buscar personas o grupos...</string>
-    <string name="group_people_header">PERSONAS</string>
-    <string name="group_groups_header">GRUPOS</string>
-    <string name="group_see_all">Ver todos</string>
+    <string name="group_search_hint">Search people or groups...</string>
+    <string name="group_people_header">PEOPLE</string>
+    <string name="group_groups_header">GROUPS</string>
+    <string name="group_see_all">See all</string>
     <plurals name="group_member_count">
-        <item quantity="one">%1$d miembro</item>
-        <item quantity="other">%1$d miembros</item>
+        <item quantity="one">%1$d member</item>
+        <item quantity="other">%1$d members</item>
     </plurals>
 
     <!-- Group detail: view / edit / create a group -->
-    <string name="group_detail_title_new">Nuevo grupo</string>
-    <string name="group_detail_create">Crear grupo</string>
-    <string name="group_detail_open">Ver el grupo</string>
-    <string name="group_detail_field_name">Nombre del grupo</string>
-    <string name="group_detail_field_members">Miembros</string>
-    <string name="group_detail_field_invitation">Código de invitación</string>
-    <string name="group_detail_section_color">Color</string>
-    <string name="group_detail_section_types">Tipos de evento</string>
-    <string name="group_detail_types_add">Añadir tipo de evento</string>
-    <string name="group_detail_types_empty">Aún no hay tipos de evento</string>
-    <string name="group_detail_types_empty_body">Sin al menos uno, nadie puede añadir turnos a este grupo.</string>
-    <string name="group_detail_save">Guardar</string>
-    <string name="group_detail_error_not_found">No hemos encontrado el grupo. Puede que ya no exista o que hayas salido de él.</string>
-    <string name="group_detail_error_load">No hemos podido cargar el grupo.</string>
-    <string name="group_detail_section_invitation">Invitación</string>
-    <string name="group_detail_auto_approve">Aprobación automática</string>
-    <string name="group_detail_auto_approve_on">Cualquiera con el código entra en el grupo al momento.</string>
-    <string name="group_detail_auto_approve_off">Con el código se pide acceso y tú decides quién entra.</string>
-    <string name="group_detail_code_regenerate">Generar un código nuevo</string>
-    <string name="group_detail_code_copy">Copiar el código</string>
-    <string name="group_detail_code_copied">Código copiado</string>
-    <string name="group_detail_share_invitation">Invitar al grupo</string>
-    <string name="group_detail_share_invitation_text">Únete al grupo «%1$s» en Turnia: %2$s</string>
-    <string name="group_detail_code_changed">Guarda para que el código nuevo empiece a funcionar.</string>
-    <string name="group_detail_section_members">Miembros</string>
-    <string name="group_detail_members_sheet_title">Miembros del grupo</string>
-    <string name="group_detail_requests_title">Solicitudes de acceso</string>
-    <string name="group_detail_request_accept">Aceptar</string>
-    <string name="group_detail_request_reject">Rechazar</string>
-    <string name="group_detail_error_request">No hemos podido responder a la solicitud. Inténtalo de nuevo.</string>
-    <string name="group_detail_error_save">No se ha podido guardar el grupo. Inténtalo de nuevo.</string>
-    <string name="group_detail_member_remove">Explulsar del grupo</string>
-    <string name="group_detail_member_remove_title">¿Sacar a %1$s del grupo?</string>
-    <string name="group_detail_member_remove_message">Dejará de ver el calendario del grupo. Los turnos que tenga asignados se quedan y solo los verá esa persona.</string>
-    <string name="group_detail_member_remove_confirm">Expulsar del grupo</string>
-    <string name="group_detail_error_remove_member">No hemos podido sacar a esa persona del grupo.</string>
+    <string name="group_detail_title_new">New group</string>
+    <string name="group_detail_create">Create group</string>
+    <string name="group_detail_open">View group</string>
+    <string name="group_detail_field_name">Group name</string>
+    <string name="group_detail_field_members">Members</string>
+    <string name="group_detail_field_invitation">Invitation code</string>
+    <string name="group_detail_section_color">Colour</string>
+    <string name="group_detail_section_types">Event types</string>
+    <string name="group_detail_types_add">Add event type</string>
+    <string name="group_detail_types_empty">No event types yet</string>
+    <string name="group_detail_types_empty_body">Without at least one, nobody can add shifts to this group.</string>
+    <string name="group_detail_save">Save</string>
+    <string name="group_detail_error_not_found">We couldn't find the group. It may no longer exist, or you may have left it.</string>
+    <string name="group_detail_error_load">We couldn't load the group.</string>
+    <string name="group_detail_section_invitation">Invitation</string>
+    <string name="group_detail_auto_approve">Auto-approve</string>
+    <string name="group_detail_auto_approve_on">Anyone with the code joins the group straight away.</string>
+    <string name="group_detail_auto_approve_off">The code sends a request, and you decide who gets in.</string>
+    <string name="group_detail_code_regenerate">Generate a new code</string>
+    <string name="group_detail_code_copy">Copy code</string>
+    <string name="group_detail_code_copied">Code copied</string>
+    <string name="group_detail_share_invitation">Invite to group</string>
+    <string name="group_detail_share_invitation_text">Join the group “%1$s” on Turnia: %2$s</string>
+    <string name="group_detail_code_changed">Save so the new code starts working.</string>
+    <string name="group_detail_section_members">Members</string>
+    <string name="group_detail_members_sheet_title">Group members</string>
+    <string name="group_detail_requests_title">Join requests</string>
+    <string name="group_detail_request_accept">Accept</string>
+    <string name="group_detail_request_reject">Decline</string>
+    <string name="group_detail_error_request">We couldn't answer the request. Please try again.</string>
+    <string name="group_detail_error_save">Couldn't save the group. Please try again.</string>
+    <string name="group_detail_member_remove">Remove from group</string>
+    <string name="group_detail_member_remove_title">Remove %1$s from the group?</string>
+    <string name="group_detail_member_remove_message">They'll stop seeing the group's calendar. Any shifts assigned to them stay, and only they will see them.</string>
+    <string name="group_detail_member_remove_confirm">Remove from group</string>
+    <string name="group_detail_error_remove_member">We couldn't remove that person from the group.</string>
 
     <!-- Leaving a group -->
-    <string name="group_member_former">Antiguo miembro</string>
-    <string name="group_revoked_badge">HAS SALIDO</string>
-    <string name="group_revoked_banner">Ya no estás en este grupo. Solo ves los turnos que tenías asignados.</string>
-    <string name="group_leave_action">Salir del grupo</string>
-    <string name="group_leave_title">¿Salir del grupo?</string>
-    <string name="group_leave_message">Dejarás de ver el calendario del grupo. Los turnos que tengas asignados se quedan y solo los verás tú.</string>
-    <string name="group_leave_confirm">Salir</string>
-    <string name="group_leave_error">No hemos podido sacarte del grupo.</string>
-    <string name="group_leave_last_admin_error">Eres el único admin. Antes de salir, el grupo necesita a alguien que lo administre.</string>
-    <string name="group_delete_action">Eliminar grupo</string>
-    <string name="group_delete_title">¿Eliminar el grupo?</string>
-    <string name="group_delete_message">Se borrarán el grupo, sus tipos de turno y todos sus turnos. No se puede deshacer.</string>
-    <string name="group_delete_confirm">Eliminar</string>
-    <string name="group_delete_error">No hemos podido eliminar el grupo.</string>
-    <string name="group_delete_not_empty_error">Todavía queda gente en el grupo. Tienen que salir, o tienes que sacarlos, antes de eliminarlo.</string>
+    <string name="group_member_former">Former member</string>
+    <string name="group_revoked_badge">YOU LEFT</string>
+    <string name="group_revoked_banner">You're no longer in this group. You only see the shifts you were assigned.</string>
+    <string name="group_leave_action">Leave group</string>
+    <string name="group_leave_title">Leave the group?</string>
+    <string name="group_leave_message">You'll stop seeing the group's calendar. Any shifts assigned to you stay, and only you will see them.</string>
+    <string name="group_leave_confirm">Leave</string>
+    <string name="group_leave_error">We couldn't take you out of the group.</string>
+    <string name="group_leave_last_admin_error">You're the only admin. Before you leave, the group needs someone else to run it.</string>
+    <string name="group_delete_action">Delete group</string>
+    <string name="group_delete_title">Delete the group?</string>
+    <string name="group_delete_message">The group, its shift types and all its shifts will be deleted. This can't be undone.</string>
+    <string name="group_delete_confirm">Delete</string>
+    <string name="group_delete_error">We couldn't delete the group.</string>
+    <string name="group_delete_not_empty_error">There are still people in the group. They have to leave, or you have to remove them, before you can delete it.</string>
 
     <!-- Event types: detail (edit color / manage) -->
-    <string name="event_types_section_group">GRUPO</string>
-    <string name="event_type_detail_title_group">Evento de grupo</string>
-    <string name="event_type_detail_title_personal">Evento personal</string>
-    <string name="event_type_detail_new_personal">Nuevo evento personal</string>
-    <string name="event_type_field_name">Nombre</string>
-    <string name="event_type_name_hint_group">Mañana, Tarde, Noche, Guardia…</string>
-    <string name="event_type_field_acronym">Siglas en el calendario</string>
-    <string name="event_type_acronym_hint">Hasta %1$d letras. Es lo que se ve en cada día del calendario.</string>
-    <string name="event_type_field_optional">Opcional</string>
-    <string name="event_type_field_description">Descripción</string>
-    <string name="event_type_field_start">Inicio</string>
-    <string name="event_type_field_end">Fin</string>
-    <string name="event_type_field_color">Color</string>
-    <string name="event_type_pick_color">Elegir color</string>
-    <string name="event_type_swap_allowed">Cambio permitido</string>
-    <string name="event_type_swap_not_allowed">Cambio no permitido</string>
-    <string name="event_type_group_readonly">Solo el administrador del grupo puede editar estos campos. Tú puedes cambiar el color.</string>
-    <string name="event_type_save">Guardar</string>
+    <string name="event_types_section_group">GROUP</string>
+    <string name="event_type_detail_title_group">Group event</string>
+    <string name="event_type_detail_title_personal">Personal event</string>
+    <string name="event_type_detail_new_personal">New personal event</string>
+    <string name="event_type_field_name">Name</string>
+    <string name="event_type_name_hint_group">Morning, Afternoon, Night, On call…</string>
+    <string name="event_type_field_acronym">Calendar abbreviation</string>
+    <string name="event_type_acronym_hint">Up to %1$d letters. It's what shows on each day of the calendar.</string>
+    <string name="event_type_field_optional">Optional</string>
+    <string name="event_type_field_description">Description</string>
+    <string name="event_type_field_start">Start</string>
+    <string name="event_type_field_end">End</string>
+    <string name="event_type_field_color">Colour</string>
+    <string name="event_type_pick_color">Pick a colour</string>
+    <string name="event_type_swap_allowed">Swaps allowed</string>
+    <string name="event_type_swap_not_allowed">Swaps not allowed</string>
+    <string name="event_type_group_readonly">Only the group admin can edit these fields. You can change the colour.</string>
+    <string name="event_type_save">Save</string>
     <string name="event_type_not_set">—</string>
-    <string name="event_type_error_required">Este campo es obligatorio.</string>
-    <string name="event_type_error_group_not_found">No hemos encontrado el grupo. Puede que ya no exista o que hayas salido de él.</string>
-    <string name="event_type_error_type_not_found">No hemos encontrado este tipo de evento. Puede que se haya eliminado.</string>
-    <string name="event_type_error_pick_color">No se ha podido guardar el color. Inténtalo de nuevo.</string>
-    <string name="event_type_error_save_personal">No se ha podido guardar el evento. Inténtalo de nuevo.</string>
-    <string name="event_type_error_save_group">No se ha podido guardar el tipo de evento. Inténtalo de nuevo.</string>
-    <string name="event_type_error_not_implemented">Esta función todavía no está disponible.</string>
+    <string name="event_type_error_required">This field is required.</string>
+    <string name="event_type_error_group_not_found">We couldn't find the group. It may no longer exist, or you may have left it.</string>
+    <string name="event_type_error_type_not_found">We couldn't find this event type. It may have been deleted.</string>
+    <string name="event_type_error_pick_color">Couldn't save the colour. Please try again.</string>
+    <string name="event_type_error_save_personal">Couldn't save the event. Please try again.</string>
+    <string name="event_type_error_save_group">Couldn't save the event type. Please try again.</string>
+    <string name="event_type_error_not_implemented">This feature isn't available yet.</string>
 
-    <!-- Personal event types: "Mis eventos" -->
-    <string name="personal_event_types_title">Mis eventos</string>
-    <string name="personal_event_types_add">Nuevo evento</string>
-    <string name="personal_event_types_empty">Todavía no has creado ningún evento personal.</string>
-    <string name="personal_event_types_delete">Eliminar</string>
-    <string name="personal_event_types_delete_dialog_title">¿Eliminar el evento?</string>
-    <string name="personal_event_types_delete_dialog_message">Se eliminará «%1$s» de tus eventos personales.</string>
-    <string name="personal_event_types_error_delete">No se ha podido eliminar el evento. Inténtalo de nuevo.</string>
+    <!-- Personal event types: "My events" -->
+    <string name="personal_event_types_title">My events</string>
+    <string name="personal_event_types_add">New event</string>
+    <string name="personal_event_types_empty">You haven't created any personal events yet.</string>
+    <string name="personal_event_types_delete">Delete</string>
+    <string name="personal_event_types_delete_dialog_title">Delete the event?</string>
+    <string name="personal_event_types_delete_dialog_message">“%1$s” will be removed from your personal events.</string>
+    <string name="personal_event_types_error_delete">Couldn't delete the event. Please try again.</string>
 
     <!-- Components -->
     <string name="time_field_hint">HH:mm</string>
-    <string name="color_selected">Color seleccionado</string>
+    <string name="color_selected">Selected colour</string>
 
     <!-- Dialogs -->
-    <string name="dialog_cancel">Cancelar</string>
-    <string name="dialog_error_title">Algo ha ido mal</string>
-    <string name="dialog_error_close">Cerrar</string>
-    <string name="dialog_error_retry">Reintentar</string>
+    <string name="dialog_cancel">Cancel</string>
+    <string name="dialog_error_title">Something went wrong</string>
+    <string name="dialog_error_close">Close</string>
+    <string name="dialog_error_retry">Retry</string>
 
     <!-- Profile -->
-    <string name="profile_my_events">Mis eventos</string>
-    <string name="profile_logout">Cerrar sesión</string>
-    <string name="profile_logout_dialog_title">¿Cerrar sesión?</string>
-    <string name="profile_logout_dialog_message">Tendrás que iniciar sesión de nuevo para acceder a tus turnos.</string>
+    <string name="profile_my_events">My events</string>
+    <string name="profile_logout">Sign out</string>
+    <string name="profile_logout_dialog_title">Sign out?</string>
+    <string name="profile_logout_dialog_message">You'll have to sign in again to see your shifts.</string>
     <!-- My profile -->
-    <string name="profile_title">Mi perfil</string>
-    <string name="settings_my_profile">Mi perfil</string>
-    <string name="settings_notifications">Notificaciones</string>
-    <string name="notifications_title">Notificaciones</string>
-    <string name="notifications_enable">Recibir notificaciones</string>
-    <string name="notifications_enable_description">Avisos de solicitudes de grupo y calendarios compartidos</string>
-    <string name="notifications_system_hint">Si las desactivaste en los ajustes del sistema, no recibirás avisos aunque esta opción esté activada.</string>
-    <string name="notifications_save_error">No se pudo guardar el ajuste de notificaciones</string>
-    <string name="profile_field_name">Nombre</string>
-    <string name="profile_field_username">Nombre de usuario</string>
-    <string name="profile_field_email">Correo</string>
-    <string name="profile_save">Guardar</string>
-    <string name="profile_error_name_required">Escribe tu nombre.</string>
-    <string name="profile_error_username_invalid">Entre 3 y 20 caracteres: letras, números, guion bajo o punto.</string>
-    <string name="profile_error_username_taken">Ese nombre de usuario ya está en uso.</string>
-    <string name="profile_error_save">No hemos podido guardar los cambios.</string>
-    <string name="profile_avatar_change">Cambiar avatar</string>
-    <string name="profile_avatar_title">Elige tu avatar</string>
+    <string name="profile_title">My profile</string>
+    <string name="settings_my_profile">My profile</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="notifications_title">Notifications</string>
+    <string name="notifications_enable">Receive notifications</string>
+    <string name="notifications_enable_description">Alerts about group requests and shared calendars</string>
+    <string name="notifications_system_hint">If you turned them off in the system settings, you won't get any alerts even with this option on.</string>
+    <string name="notifications_save_error">Couldn't save the notification setting</string>
+    <string name="profile_field_name">Name</string>
+    <string name="profile_field_username">Username</string>
+    <string name="profile_field_email">Email</string>
+    <string name="profile_save">Save</string>
+    <string name="profile_error_name_required">Enter your name.</string>
+    <string name="profile_error_username_invalid">3 to 20 characters: letters, numbers, underscore or full stop.</string>
+    <string name="profile_error_username_taken">That username is already taken.</string>
+    <string name="profile_error_save">We couldn't save your changes.</string>
+    <string name="profile_avatar_change">Change avatar</string>
+    <string name="profile_avatar_title">Choose your avatar</string>
     <string name="profile_avatar_animal">Animal</string>
-    <string name="profile_avatar_color">Color</string>
-    <string name="profile_avatar_done">Listo</string>
+    <string name="profile_avatar_color">Colour</string>
+    <string name="profile_avatar_done">Done</string>
 
     <!-- Bottom bar -->
-    <string name="tab_calendar">Calendario</string>
-    <string name="tab_people">Personas</string>
-    <string name="tab_groups">Grupos</string>
-    <string name="tab_swap">Cambios</string>
-    <string name="tab_settings">Ajustes</string>
+    <string name="tab_calendar">Calendar</string>
+    <string name="tab_people">People</string>
+    <string name="tab_groups">Groups</string>
+    <string name="tab_swap">Swaps</string>
+    <string name="tab_settings">Settings</string>
 
     <string name="group_admin_badge">ADMIN</string>
-    <string name="people_title">Personas</string>
-    <string name="people_empty_title">Aquí no hay nadie todavía</string>
-    <string name="people_empty_body">Pide a un compañero que comparta su calendario contigo. Funciona bastante mejor que preguntarle «¿tú libras el sábado?» a las once de la noche.</string>
-    <string name="people_shared_empty_title">Tu calendario es solo tuyo</string>
-    <string name="people_filter_shared_by_me">Comparto con</string>
-    <string name="people_filter_shared_with_me">Comparten conmigo</string>
-    <string name="groups_title">Grupos</string>
-    <string name="groups_empty_title">Ningún grupo por aquí</string>
-    <string name="groups_empty_body">Crea uno y que los turnos dejen de vivir en un chat de WhatsApp.</string>
-    <string name="groups_load_error">No hemos podido cargar tus grupos.</string>
-    <string name="groups_filter_all">Todos</string>
-    <string name="groups_filter_mine">Tus grupos</string>
-    <string name="groups_filter_pending">Pendientes (%1$d)</string>
-    <string name="groups_filter_mine_empty_title">Ningún grupo todavía</string>
-    <string name="groups_filter_mine_empty_body">En cuanto un admin acepte tu petición, el grupo saldrá aquí.</string>
-    <string name="groups_join_title">¿Tienes un código de invitación?</string>
-    <string name="groups_join_menu">Unirme a un grupo</string>
-    <string name="groups_join_body">Únete al grupo de tu unidad con el código que te haya pasado un compañero.</string>
-    <string name="groups_join_hint">Código</string>
-    <string name="groups_join_action">Enviar</string>
-    <string name="groups_join_requested">Petición enviada. Un admin del grupo tiene que aceptarla.</string>
-    <string name="groups_join_joined">¡Dentro! Ya formas parte del grupo.</string>
-    <string name="groups_join_already_member">Ya estás en ese grupo.</string>
-    <string name="groups_join_code_not_found">Ese código no existe.</string>
-    <string name="groups_join_invitation_inactive">Esa invitación ya no está activa.</string>
-    <string name="groups_join_invitation_expired">Esa invitación ha caducado.</string>
-    <string name="groups_join_error">No hemos podido enviar la petición.</string>
-    <string name="groups_request_pending">Esperando a que un admin acepte tu petición.</string>
-    <string name="groups_request_rejected">No han aceptado tu petición.</string>
-    <string name="groups_request_unknown_group">Grupo</string>
-    <string name="groups_request_cancel">Cancelar la petición</string>
-    <string name="groups_request_dismiss">Quitar de la lista</string>
-    <string name="groups_request_dismiss_error">No hemos podido quitar la petición.</string>
-    <string name="people_load_error">No hemos podido cargar quién comparte su calendario contigo.</string>
+    <string name="people_title">People</string>
+    <string name="people_empty_title">Nobody here yet</string>
+    <string name="people_empty_body">Ask a colleague to share their calendar with you. It works a lot better than texting “are you off on Saturday?” at eleven at night.</string>
+    <string name="people_shared_empty_title">Your calendar is yours alone</string>
+    <string name="people_filter_shared_by_me">Shared by me</string>
+    <string name="people_filter_shared_with_me">Shared with me</string>
+    <string name="groups_title">Groups</string>
+    <string name="groups_empty_title">No groups around here</string>
+    <string name="groups_empty_body">Create one, and let your shifts stop living in a WhatsApp chat.</string>
+    <string name="groups_load_error">We couldn't load your groups.</string>
+    <string name="groups_filter_all">All</string>
+    <string name="groups_filter_mine">Your groups</string>
+    <string name="groups_filter_pending">Pending (%1$d)</string>
+    <string name="groups_filter_mine_empty_title">No groups yet</string>
+    <string name="groups_filter_mine_empty_body">As soon as an admin accepts your request, the group will show up here.</string>
+    <string name="groups_join_title">Got an invitation code?</string>
+    <string name="groups_join_menu">Join a group</string>
+    <string name="groups_join_body">Join your unit's group with the code a colleague gave you.</string>
+    <string name="groups_join_hint">Code</string>
+    <string name="groups_join_action">Send</string>
+    <string name="groups_join_requested">Request sent. A group admin has to accept it.</string>
+    <string name="groups_join_joined">You're in! You're now part of the group.</string>
+    <string name="groups_join_already_member">You're already in that group.</string>
+    <string name="groups_join_code_not_found">That code doesn't exist.</string>
+    <string name="groups_join_invitation_inactive">That invitation is no longer active.</string>
+    <string name="groups_join_invitation_expired">That invitation has expired.</string>
+    <string name="groups_join_error">We couldn't send the request.</string>
+    <string name="groups_request_pending">Waiting for an admin to accept your request.</string>
+    <string name="groups_request_rejected">Your request wasn't accepted.</string>
+    <string name="groups_request_unknown_group">Group</string>
+    <string name="groups_request_cancel">Cancel request</string>
+    <string name="groups_request_dismiss">Remove from list</string>
+    <string name="groups_request_dismiss_error">We couldn't remove the request.</string>
+    <string name="people_load_error">We couldn't load who shares their calendar with you.</string>
 
     <!-- Share calendar -->
-    <string name="share_calendar_empty">Todavía no compartes tu calendario con nadie.</string>
-    <string name="shared_calendar_error_not_shared">Esta persona ya no comparte su calendario contigo.</string>
-    <string name="shared_calendar_error_range">No hemos podido cargar tantos días a la vez.</string>
-    <string name="shared_calendar_error_load">No hemos podido cargar el calendario.</string>
-    <string name="share_calendar_unknown_user">Usuario sin perfil</string>
-    <string name="share_calendar_load_error">No hemos podido cargar con quién compartes tu calendario.</string>
-    <string name="share_calendar_add">Compartir con alguien</string>
-    <string name="share_calendar_search_hint">nombre de usuario</string>
-    <string name="share_calendar_search_min">Escribe al menos 3 caracteres del nombre de usuario.</string>
-    <string name="share_calendar_search_empty">Nadie con ese nombre de usuario.</string>
-    <string name="share_calendar_already_shared">Ya ve tu calendario</string>
-    <string name="share_calendar_grant_error">No hemos podido compartir tu calendario.</string>
-    <string name="share_calendar_revoke">Dejar de compartir</string>
-    <string name="share_calendar_revoke_title">¿Dejar de compartir?</string>
-    <string name="share_calendar_revoke_message">%1$s dejará de ver tu calendario.</string>
-    <string name="share_calendar_revoke_confirm">Dejar de compartir</string>
-    <string name="share_calendar_revoke_error">No hemos podido dejar de compartir.</string>
-    <string name="calendar_more_options">Más opciones</string>
+    <string name="share_calendar_empty">You're not sharing your calendar with anyone yet.</string>
+    <string name="shared_calendar_error_not_shared">This person no longer shares their calendar with you.</string>
+    <string name="shared_calendar_error_range">We couldn't load that many days at once.</string>
+    <string name="shared_calendar_error_load">We couldn't load the calendar.</string>
+    <string name="share_calendar_unknown_user">User without a profile</string>
+    <string name="share_calendar_load_error">We couldn't load who you share your calendar with.</string>
+    <string name="share_calendar_add">Share with someone</string>
+    <string name="share_calendar_search_hint">username</string>
+    <string name="share_calendar_search_min">Type at least 3 characters of the username.</string>
+    <string name="share_calendar_search_empty">Nobody with that username.</string>
+    <string name="share_calendar_already_shared">Already sees your calendar</string>
+    <string name="share_calendar_grant_error">We couldn't share your calendar.</string>
+    <string name="share_calendar_revoke">Stop sharing</string>
+    <string name="share_calendar_revoke_title">Stop sharing?</string>
+    <string name="share_calendar_revoke_message">%1$s will no longer see your calendar.</string>
+    <string name="share_calendar_revoke_confirm">Stop sharing</string>
+    <string name="share_calendar_revoke_error">We couldn't stop sharing.</string>
+    <string name="calendar_more_options">More options</string>
 
     <!-- Day detail sheet -->
-    <string name="day_detail_personal_events">EVENTOS PERSONALES</string>
-    <string name="day_detail_group_events">EVENTOS DE GRUPO</string>
-    <string name="day_detail_add_event">Añadir</string>
-    <string name="day_detail_load_error">No hemos podido cargar tus tipos de evento.</string>
-    <string name="event_group_no_types">Este grupo todavía no tiene tipos de turno, así que aquí no hay nada que añadir.</string>
-    <string name="event_group_no_types_action">Gestionar el grupo</string>
+    <string name="day_detail_personal_events">PERSONAL EVENTS</string>
+    <string name="day_detail_group_events">GROUP EVENTS</string>
+    <string name="day_detail_add_event">Add</string>
+    <string name="day_detail_load_error">We couldn't load your event types.</string>
+    <string name="event_group_no_types">This group has no shift types yet, so there's nothing to add here.</string>
+    <string name="event_group_no_types_action">Manage the group</string>
 
     <!-- Swap -->
-    <string name="event_swap_toggle">Pedir cambio</string>
-    <string name="event_swap_error_not_assignee">Solo puede pedir cambio quien hace el turno.</string>
-    <string name="event_swap_error_not_swappable">Este tipo de turno no admite cambios.</string>
-    <string name="event_swap_error_save">No hemos podido cambiarlo. Inténtalo otra vez.</string>
-    <string name="event_swap_take">Yo lo cubro</string>
-    <string name="event_swap_take_confirm_title">¿Cubres este turno?</string>
-    <string name="event_swap_take_confirm_body">Pasará a ser tuyo y avisaremos a tu compañero de que ya tiene quien le cubra.</string>
-    <string name="event_swap_take_confirm">Cubrirlo</string>
-    <string name="event_swap_take_cancel">Mejor no</string>
-    <string name="event_swap_error_taken_by_someone">Alguien se te ha adelantado: este turno ya tiene quien lo cubra.</string>
-    <string name="event_swap_error_not_member">Ya no estás en este grupo.</string>
-    <string name="event_swap_error_own_shift">Este turno ya es tuyo.</string>
-    <string name="event_swap_error_not_found">Este turno ya no existe.</string>
+    <string name="event_swap_toggle">Ask for a swap</string>
+    <string name="event_swap_error_not_assignee">Only the person working the shift can ask for a swap.</string>
+    <string name="event_swap_error_not_swappable">This shift type doesn't allow swaps.</string>
+    <string name="event_swap_error_save">We couldn't change it. Please try again.</string>
+    <string name="event_swap_take">I'll cover it</string>
+    <string name="event_swap_take_confirm_title">Cover this shift?</string>
+    <string name="event_swap_take_confirm_body">It will become yours, and we'll let your colleague know someone is covering for them.</string>
+    <string name="event_swap_take_confirm">Cover it</string>
+    <string name="event_swap_take_cancel">Not now</string>
+    <string name="event_swap_error_taken_by_someone">Someone beat you to it: this shift is already covered.</string>
+    <string name="event_swap_error_not_member">You're no longer in this group.</string>
+    <string name="event_swap_error_own_shift">This shift is already yours.</string>
+    <string name="event_swap_error_not_found">This shift no longer exists.</string>
 
     <!-- Swap tab -->
-    <string name="swap_title">Mis cambios</string>
-    <string name="swap_segment_mine">Mis peticiones</string>
-    <string name="swap_segment_colleagues">De mis compañeros</string>
-    <string name="swap_requested_by">pide cambio</string>
-    <string name="swap_covered_by">Lo cubre %1$s</string>
-    <string name="swap_covered_by_former">Lo cubre un antiguo miembro</string>
-    <string name="swap_filter_uncovered">Solo sin cubrir</string>
-    <string name="swap_filter_title">Filtrar por grupo</string>
-    <string name="swap_date_today">Hoy</string>
-    <string name="swap_filter_subtitle">Elige de qué grupos quieres ver los turnos.</string>
-    <string name="swap_filter_all">Todos los grupos</string>
-    <string name="swap_empty_mine_title">Sin peticiones</string>
-    <string name="swap_empty_mine_body">No has pedido cambio de ningún turno. Tu tiempo libre sigue siendo teórico.</string>
-    <string name="swap_empty_uncovered_title">Todo cubierto</string>
-    <string name="swap_empty_uncovered_body">Todos los turnos que pediste cambiar ya tienen quien los cubra. Quita el filtro para verlos.</string>
-    <string name="swap_empty_colleagues_title">Nadie necesita cambio</string>
-    <string name="swap_empty_colleagues_body">Ningún compañero ha pedido cambio. Cuando alguien necesite que le cubran, lo verás aquí.</string>
+    <string name="swap_title">My swaps</string>
+    <string name="swap_segment_mine">My requests</string>
+    <string name="swap_segment_colleagues">From colleagues</string>
+    <string name="swap_requested_by">wants a swap</string>
+    <string name="swap_covered_by">Covered by %1$s</string>
+    <string name="swap_covered_by_former">Covered by a former member</string>
+    <string name="swap_filter_uncovered">Uncovered only</string>
+    <string name="swap_filter_title">Filter by group</string>
+    <string name="swap_date_today">Today</string>
+    <string name="swap_filter_subtitle">Choose which groups' shifts you want to see.</string>
+    <string name="swap_filter_all">All groups</string>
+    <string name="swap_empty_mine_title">No requests</string>
+    <string name="swap_empty_mine_body">You haven't asked for a swap on any shift. Your free time is still purely theoretical.</string>
+    <string name="swap_empty_uncovered_title">All covered</string>
+    <string name="swap_empty_uncovered_body">Every shift you asked to swap already has someone covering it. Clear the filter to see them.</string>
+    <string name="swap_empty_colleagues_title">Nobody needs a swap</string>
+    <string name="swap_empty_colleagues_body">No colleague has asked for a swap. When someone needs cover, you'll see it here.</string>
 
 </resources>

@@ -1,7 +1,7 @@
 /*
   Push text. The server sends only the key and the values (APNs `loc-key` / `loc-args`); iOS fills
   them in here, even with the app closed. Every key and its arguments must match firebase/functions'
-  notifications.ts and the Android app's res/values/strings.xml.
+  notifications.ts, en.lproj and the Android app's res/values(-es)/strings.xml.
 */
 "push_swap_requested" = "%1$@ pide cambio: %2$@ del %3$@. ¿Le echas una mano?";
 "push_swap_covered" = "%1$@ cubre tu turno: %2$@ del %3$@.";

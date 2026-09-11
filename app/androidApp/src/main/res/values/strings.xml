@@ -7,11 +7,11 @@
     <!--
         Push text. The server sends only the key and the values; the system fills them in here,
         even with the app closed. Every key and its arguments must match firebase/functions'
-        notifications.ts and the iOS app's Localizable.strings.
+        notifications.ts, values-es and the iOS app's Localizable.strings (en.lproj and es.lproj).
     -->
-    <string name="push_swap_requested">%1$s pide cambio: %2$s del %3$s. ¿Le echas una mano?</string>
-    <string name="push_swap_covered">%1$s cubre tu turno: %2$s del %3$s.</string>
-    <string name="push_join_requested">%1$s quiere unirse al grupo.</string>
-    <string name="push_join_accepted">Ya formas parte del grupo.</string>
-    <string name="push_calendar_shared">%1$s ha compartido su calendario contigo.</string>
+    <string name="push_swap_requested">%1$s asked for a swap: %2$s on %3$s. Can you help out?</string>
+    <string name="push_swap_covered">%1$s is covering your shift: %2$s on %3$s.</string>
+    <string name="push_join_requested">%1$s asked to join the group.</string>
+    <string name="push_join_accepted">You are now a member of the group.</string>
+    <string name="push_calendar_shared">%1$s shared their calendar with you.</string>
 </resources>

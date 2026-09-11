@@ -16,10 +16,11 @@ type PushType =
  * The sentence a push shows, by name rather than in words.
  *
  * A push has to render while the app is not running, so the operating system draws it — and both
- * can look the words up in the app itself: Android in the app's `res/values/strings.xml`, iOS in
- * its `Localizable.strings`. The server sends the key and the values to fill in, so it stays in
- * English whatever language the app speaks. Every key here must exist, with the same arguments in
- * the same order, in both of those files. `fallback` is only for an app that predates the key.
+ * can look the words up in the app itself: Android in the app's `res/values(-es)/strings.xml`, iOS
+ * in its `{en,es}.lproj/Localizable.strings`. The server sends the key and the values to fill in, so
+ * it stays in English whatever language the app speaks. Every key here must exist, with the same
+ * arguments in the same order, in all four of those files. `fallback` is only for an app that
+ * predates the key.
  */
 type PushText = {
   key: string;
