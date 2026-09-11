@@ -35,13 +35,17 @@ import androidx.compose.ui.unit.sp
 import com.geoviksoft.turnia.core.domain.model.EventId
 import com.geoviksoft.turnia.core.domain.model.GroupId
 import com.geoviksoft.turnia.core.domain.model.UserId
+import com.geoviksoft.turnia.core.domain.model.UserProfile
 import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
 import com.geoviksoft.turnia.ui.components.calendar.model.EventSource
 import com.geoviksoft.turnia.ui.components.calendar.model.TransferHolderUi
 import com.geoviksoft.turnia.ui.components.event.AcronymChip
 import com.geoviksoft.turnia.ui.components.event.GroupLabel
 import com.geoviksoft.turnia.ui.components.event.TransferTrail
+import com.geoviksoft.turnia.ui.main.swap.model.SwapOffererUi
 import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
+import com.geoviksoft.turnia.ui.system.components.UserAvatar
+import com.geoviksoft.turnia.ui.system.components.UserAvatarSize
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -53,8 +57,10 @@ import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.calendar_months_short
 import turnia.app.shared.generated.resources.calendar_weekdays_short
 import turnia.app.shared.generated.resources.event_swap_take
+import turnia.app.shared.generated.resources.group_member_former
 import turnia.app.shared.generated.resources.swap_date_today
 import turnia.app.shared.generated.resources.swap_date_tomorrow
+import turnia.app.shared.generated.resources.swap_offered_by
 import kotlin.time.Clock
 
 /** Sized so "Mañana" and a two-digit day both sit centred without wrapping. */
@@ -72,11 +78,15 @@ private val DateTileGap = 12.dp
  * - No "pidiendo cambio" badge. Every row under that tab is on offer; saying so on each one is noise.
  * - No "assigned to" chip. Where a shift has moved, [TransferTrail] already names who holds it and
  *   shows how it got there; where it has not, the holder is the reader.
+ *
+ * The one exception is a shift somebody else offers: there the holder is exactly what the reader
+ * has to know before taking it, so [offeredBy] heads the card, above the date.
  */
 @Composable
 fun SwapEventRow(
     event: DayEventUi,
     modifier: Modifier = Modifier,
+    offeredBy: SwapOffererUi? = null,
     today: LocalDate = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
     onTake: (() -> Unit)? = null,
 ) {
@@ -87,6 +97,11 @@ fun SwapEventRow(
         shadowElevation = 1.dp,
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
+            offeredBy?.let { offerer ->
+                OffererHeader(offerer)
+                Spacer(Modifier.height(10.dp))
+            }
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(DateTileGap),
@@ -151,6 +166,31 @@ fun SwapEventRow(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun OffererHeader(offerer: SwapOffererUi) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        UserAvatar(avatar = offerer.avatar, size = UserAvatarSize.S)
+        Text(
+            text = offerer.name.ifBlank { stringResource(Res.string.group_member_former) },
+            modifier = Modifier.weight(1f, fill = false),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Text(
+            text = stringResource(Res.string.swap_offered_by),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+        )
     }
 }
 
@@ -278,6 +318,14 @@ private fun SwapEventRowPreview() {
                         TransferHolderUi("Bruno", isMe = false),
                     ),
                 ),
+                today = today,
+                onTake = {},
+            )
+            // "Los ofrecen otros": Carla's shift, so her name heads the card above the button.
+            SwapEventRow(
+                event = previewEvent(name = "Tarde", acronym = "T", date = LocalDate(2026, 9, 18))
+                    .copy(assigneeIsMe = false, isOwner = false, assigneeName = "Carla"),
+                offeredBy = SwapOffererUi(name = "Carla", avatar = UserProfile.AnimalAvatar.PREVIEW),
                 today = today,
                 onTake = {},
             )

@@ -41,6 +41,7 @@ import com.geoviksoft.turnia.ui.main.swap.components.SwapEventRow
 import com.geoviksoft.turnia.ui.main.swap.components.SwapGroupFilterSheet
 import com.geoviksoft.turnia.ui.main.swap.components.SwapSegmentChips
 import com.geoviksoft.turnia.ui.main.swap.model.SwapMessage
+import com.geoviksoft.turnia.ui.main.swap.model.SwapRowUi
 import com.geoviksoft.turnia.ui.main.swap.model.SwapSegment
 import com.geoviksoft.turnia.ui.main.swap.model.SwapUi
 import com.geoviksoft.turnia.ui.main.system.EmptyState
@@ -68,6 +69,8 @@ import turnia.app.shared.generated.resources.event_swap_take_cancel
 import turnia.app.shared.generated.resources.event_swap_take_confirm
 import turnia.app.shared.generated.resources.event_swap_take_confirm_body
 import turnia.app.shared.generated.resources.event_swap_take_confirm_title
+import turnia.app.shared.generated.resources.swap_empty_available_body
+import turnia.app.shared.generated.resources.swap_empty_available_title
 import turnia.app.shared.generated.resources.swap_empty_covered_body
 import turnia.app.shared.generated.resources.swap_empty_covered_title
 import turnia.app.shared.generated.resources.swap_empty_offered_body
@@ -114,7 +117,7 @@ fun SwapScreen(viewModel: SwapViewModel = koinViewModel()) {
 
                     SwapMessageSnackbar(state.userMessage, viewModel::userMessageShown)
 
-                    if (state.events.isEmpty()) {
+                    if (state.rows.isEmpty()) {
                         val (title, body) = state.segment.emptyState()
                         EmptyState(
                             icon = Icons.Default.SwapHoriz,
@@ -123,7 +126,7 @@ fun SwapScreen(viewModel: SwapViewModel = koinViewModel()) {
                         )
                     } else {
                         SwapEventList(
-                            events = state.events,
+                            rows = state.rows,
                             onTake = { event -> pendingTake = event },
                         )
                     }
@@ -168,25 +171,26 @@ fun SwapScreen(viewModel: SwapViewModel = koinViewModel()) {
 }
 
 @Composable
-private fun SwapEventList(events: List<DayEventUi>, onTake: (DayEventUi) -> Unit) {
+private fun SwapEventList(rows: List<SwapRowUi>, onTake: (DayEventUi) -> Unit) {
     val today = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()) }
-    val byMonth = remember(events) { events.groupBy { it.date.yearMonth } }
+    val byMonth = remember(rows) { rows.groupBy { it.event.date.yearMonth } }
 
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        byMonth.forEach { (month, monthEvents) ->
+        byMonth.forEach { (month, monthRows) ->
             stickyHeader(key = month.toString(), contentType = "month") {
                 MonthHeader(month)
             }
-            items(monthEvents, key = { it.id.value }, contentType = { "event" }) { event ->
+            items(monthRows, key = { it.event.id.value }, contentType = { "event" }) { row ->
                 SwapEventRow(
-                    event = event,
+                    event = row.event,
+                    offeredBy = row.offeredBy,
                     today = today,
-                    onTake = if (event.canTake) {
-                        { onTake(event) }
+                    onTake = if (row.event.canTake) {
+                        { onTake(row.event) }
                     } else {
                         null
                     },
@@ -250,6 +254,9 @@ private fun SwapSegment.emptyState(): Pair<StringResource, StringResource> = whe
 
     SwapSegment.COVERED ->
         Res.string.swap_empty_covered_title to Res.string.swap_empty_covered_body
+
+    SwapSegment.AVAILABLE ->
+        Res.string.swap_empty_available_title to Res.string.swap_empty_available_body
 }
 
 private fun SwapMessage.resource(): StringResource = when (this) {
