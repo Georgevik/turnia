@@ -10,8 +10,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.geoviksoft.turnia.core.domain.model.GroupId
 import com.geoviksoft.turnia.core.domain.model.SharedCalendarError
 import com.geoviksoft.turnia.navigation.LocalNavigator
+import com.geoviksoft.turnia.navigation.LocalRootNavigator
 import com.geoviksoft.turnia.navigation.main.routes.ExternalCalendarData
 import com.geoviksoft.turnia.navigation.main.routes.MainRoute
+import com.geoviksoft.turnia.navigation.root.routes.RootRoute
+import com.geoviksoft.turnia.navigation.routes.EventTypeDetailData
 import com.geoviksoft.turnia.ui.components.calendar.CalendarThemes
 import com.geoviksoft.turnia.ui.components.calendar.CalendarViewer
 import com.geoviksoft.turnia.ui.components.calendar.components.CalendarTitleBar
@@ -32,18 +35,13 @@ import turnia.app.shared.generated.resources.shared_calendar_error_range
 fun ExternalCalendar(viewModel: ExternalCalendarViewModel) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigator = LocalNavigator.current
+    val rootNavigator = LocalRootNavigator.current
     val snackbar = LocalSnackbar.current
     val data = viewModel.data
     val isGroup = data is ExternalCalendarData.Group
     val theme = if (isGroup) CalendarThemes.group() else CalendarThemes.colleague()
 
-    // Someone removed from the group keeps their leftover shifts on screen but adds nothing more,
-    // and the group's detail is closed to them along with the group document it reads.
-    val addMode = when {
-        data !is ExternalCalendarData.Group -> DayAddMode.Disabled
-        uiState.isRevoked -> DayAddMode.Disabled
-        else -> DayAddMode.GroupOnly(GroupId(data.id))
-    }
+    val addMode = addModeOf(data, isRevoked = uiState.isRevoked)
 
     uiState.userMessage?.let { message ->
         val text = message.message()
@@ -70,11 +68,20 @@ fun ExternalCalendar(viewModel: ExternalCalendarViewModel) {
             )
         },
         onMonthChanged = viewModel::onMonthChanged,
-        // Without this the pencil beside the group's types in the add pane does nothing, and a group
-        // with no types has no way out of an empty pane at all.
+        // Without this a group with no types has no way out of an empty add pane at all.
         onEditGroup = { groupId, _ -> navigator.goTo(MainRoute.GroupDetail(groupId)) },
+        onAddGroupType = { groupId ->
+            rootNavigator.goTo(RootRoute.EventTypeDetailKey(EventTypeDetailData.NewGroup(groupId)))
+        },
         eventsByDate = uiState.events,
+        isLoading = uiState.loading,
     )
+}
+
+private fun addModeOf(data: ExternalCalendarData, isRevoked: Boolean): DayAddMode = when {
+    data !is ExternalCalendarData.Group -> DayAddMode.Disabled
+    isRevoked -> DayAddMode.Disabled
+    else -> DayAddMode.GroupOnly(GroupId(data.id))
 }
 
 @Composable

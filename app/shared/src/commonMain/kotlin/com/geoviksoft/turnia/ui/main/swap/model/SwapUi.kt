@@ -3,9 +3,14 @@ package com.geoviksoft.turnia.ui.main.swap.model
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import com.geoviksoft.turnia.core.domain.model.GroupId
+import com.geoviksoft.turnia.core.domain.model.UserProfile
 import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
 
-enum class SwapSegment { OFFERED, COVERED }
+/**
+ * [MINE] holds every shift the viewer asked to swap in the window: the ones still waiting and
+ * the ones somebody has since taken, told apart on the row by [SwapRowUi.coveredBy].
+ */
+enum class SwapSegment { MINE, COLLEAGUES }
 
 @Immutable
 data class SwapGroupFilterUi(
@@ -15,20 +20,38 @@ data class SwapGroupFilterUi(
     val selected: Boolean,
 )
 
+
+@Immutable
+data class SwapRequesterUi(
+    val name: String,
+    val avatar: UserProfile.AnimalAvatar,
+)
+
+@Immutable
+data class SwapRowUi(
+    val event: DayEventUi,
+    val requestedBy: SwapRequesterUi? = null,
+    /** Who covers it now, on a request somebody took up. Blank is a member who has since left. */
+    val coveredBy: String? = null,
+)
+
 sealed interface SwapUi {
 
     data object Loading : SwapUi
 
     @Immutable
     data class Success(
-        val segments: Map<SwapSegment, List<DayEventUi>>,
+        val segments: Map<SwapSegment, List<SwapRowUi>>,
         val segment: SwapSegment,
         val groups: List<SwapGroupFilterUi>,
+        /** [SwapSegment.MINE] without the requests somebody already covered. */
+        val onlyUncovered: Boolean = false,
+        /** Whether any request was covered at all: with none, hiding them would change nothing. */
+        val hasCovered: Boolean = false,
         val userMessage: SwapMessage? = null,
     ) : SwapUi {
-        val events: List<DayEventUi> get() = segments[segment].orEmpty()
+        val rows: List<SwapRowUi> get() = segments[segment].orEmpty()
         val filterable: Boolean get() = groups.size > 1
-        val allGroupsSelected: Boolean get() = groups.all { it.selected }
     }
 }
 

@@ -6,10 +6,10 @@ data class Group(
     val types: List<GroupEventType>,
     val members: List<GroupMember>,
     val memberCount: Int,
+    /** Every member can invite with it, through the link; only an admin sees it or changes it. */
     val invitationCode: String,
     /** Whoever knows the code walks in; otherwise an admin has to accept the request. */
     val autoApprove: Boolean,
-    val membersCanSeeCode: Boolean,
     val isAdmin: Boolean,
     val color: String? = null,
     /**
@@ -29,7 +29,6 @@ data class NewGroup(
     val types: List<GroupEventType>,
     val invitationCode: String,
     val autoApprove: Boolean,
-    val membersCanSeeCode: Boolean,
 )
 
 data class GroupMember(

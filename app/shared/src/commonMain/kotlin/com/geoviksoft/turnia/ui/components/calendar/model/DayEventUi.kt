@@ -3,6 +3,7 @@ package com.geoviksoft.turnia.ui.components.calendar.model
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import com.geoviksoft.turnia.core.domain.model.EventId
+import com.geoviksoft.turnia.core.domain.model.EventType
 import com.geoviksoft.turnia.core.domain.model.GroupEvent
 import com.geoviksoft.turnia.core.domain.model.GroupId
 import com.geoviksoft.turnia.core.domain.model.PersonalEvent
@@ -119,8 +120,15 @@ fun GroupEvent.toUi(
     assigneeIsMe = assigneeId == currentUserId,
     groupName = groupName,
     removable = removable,
+    timeRange = type.hours(),
     transferChain = buildTransferChain(currentUserId),
 )
+
+/** Only clock times, which need no translating — so a lone start is shown bare, with no "from". */
+private fun EventType.hours(): String? = when {
+    startTime != null && endTime != null -> "$startTime – $endTime"
+    else -> startTime
+}
 
 private fun GroupEvent.buildTransferChain(currentUserId: UserId?): List<TransferHolderUi> {
     if (history.size < 2) return emptyList()
@@ -142,6 +150,7 @@ fun PersonalEvent.toUi(
     acronym = type.acronym,
     date = date.toLocalDate(),
     background = type.color.toComposeColorOrNull() ?: Color.Unspecified,
+    timeRange = type.hours(),
     removable = removable,
     notes = notes,
     notesEditable = notesEditable,

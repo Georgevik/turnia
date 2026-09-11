@@ -4,6 +4,13 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<!-- iOS only reports a device language the bundle declares; without this Compose resources
+	     would always see English and never load values-es. Keep it in step with composeResources. -->
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>es</string>
+	</array>
 	<!-- iOS OAuth client id (from GoogleService-Info.plist CLIENT_ID). The GoogleSignIn
 	     SDK reads this to build its active configuration; KMPAuth never sets one itself,
 	     so without this key signInWithPresentingViewController has no configuration and fails.
@@ -21,6 +28,19 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>com.googleusercontent.apps.570433560233-085g4o2j74b7fh5n5fhcp3pse3ptbc3e</string>
+			</array>
+		</dict>
+		<!-- How the invitation link's landing page opens the app. The https link itself cannot,
+		     until Universal Links are signed (paid Apple Developer Program). Must match
+		     InvitationLinkConfig.SCHEME. -->
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>InvitationLink</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>turnia</string>
 			</array>
 		</dict>
 	</array>

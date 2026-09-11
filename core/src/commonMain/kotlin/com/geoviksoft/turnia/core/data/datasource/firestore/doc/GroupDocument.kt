@@ -60,15 +60,10 @@ data class GroupEventTypeDocument(
     @SerialName("color") val color: String? = null,
 )
 
-/**
- * [membersCanSeeCode] only hides the code in the UI: the group document is readable by every
- * member, so it is a house rule, not a boundary.
- */
 @Serializable
 data class InvitationDocument(
     @SerialName("code") val code: String,
     @SerialName("active") val active: Boolean = true,
     @SerialName("autoApprove") val autoApprove: Boolean = false,
-    @SerialName("membersCanSeeCode") val membersCanSeeCode: Boolean = false,
     @SerialName("expiresAt") val expiresAt: BaseTimestamp? = null,
 )

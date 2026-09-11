@@ -12,6 +12,8 @@ sealed interface GroupsUi {
         val groups: List<GroupRowUi> = emptyList(),
         val requests: List<JoinRequestRowUi> = emptyList(),
         val filter: GroupsFilter = GroupsFilter.ALL,
+        val pendingCount: Int = 0,
+        val isEmpty: Boolean = true,
         val joinCode: String = "",
         val joinInProgress: Boolean = false,
         val userMessage: GroupsMessage? = null,

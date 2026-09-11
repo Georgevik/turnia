@@ -46,9 +46,11 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
   never existing without them. The rule is about the moment of creation: an existing group is not stopped from
   deleting its last type.
 - Each group has a **single invitation**. Anyone with the code can **request** to join; a group **admin must accept** the request.
-- Both invitation settings — **auto-approve** (whoever knows the code walks straight in) and whether
-  **members can see the code** — are decided when the group is created, alongside the code itself,
-  and mean the same thing before and after saving.
+- **Auto-approve** (whoever knows the code walks straight in) is decided when the group is created,
+  alongside the code itself, and means the same thing before and after saving.
+- **Any member can invite** with the share button on the group's screen, which sends the invitation
+  link — code included. Only an admin sees the code itself, regenerates it or sets auto-approve;
+  the rest of the group never sees the Invitación section.
 - A user can put a group event **up for swap**; another member can take it (it moves to the taker).
 - A user can **delete their own** event; an **admin** can delete any group event. Deleting removes it (there is no cancelled state).
 - **Personal events** can carry notes (on the event); group event docs are shared with all members, so they hold no private notes.
@@ -111,7 +113,8 @@ Firebase must **not** accumulate every past event forever. The backend keeps onl
   inline comments and `TODO`s alike, in Kotlin and in the Cloud Functions' TypeScript. The code,
   its identifiers and this document are in English, so a comment in any other language forces the
   reader to switch language mid-file. User-facing strings are a different matter and stay in
-  `composeResources` — Spanish belongs there, never in the source.
+  `composeResources`, never in the source: English in `values/` (the default, so any other device
+  language falls back to it) and Spanish in `values-es/`. A new string goes into both.
 
 - **Comments** — do **not** add a comment to every file, function or header. Comments belong only on **non-obvious, non-logic** code (a business rule, a workaround, a subtle invariant, a "why"). A comment that restates what the code already says is redundant — omit it.
 
@@ -207,6 +210,13 @@ Build one with `value.toSuccess()` / `error.toFailure()` — both work on any re
     to start it. It has no GitLive wrapper, so only the **Android** `Logger` reports through it
     (breadcrumbs for every line, a non-fatal for every error carrying a throwable) — on iOS it
     catches crashes on its own and hears nothing from shared code.
+  - **App Check** — proves requests come from the genuine app. Installed in platform code before
+    Firebase is touched (`TurniaApplication`, `iOSApp.init`); the native SDKs under GitLive then
+    attach the token on their own. Android release builds attest with **Play Integrity**, iOS
+    release builds with **App Attest**; debug builds use a **debug token**, printed on first launch,
+    that has to be registered in the console once per device. Not enforced yet: enforce each service
+    (Firestore, Functions, Auth) in the console only once its metrics show current traffic verified.
+    Enforcing before iOS can attest locks out every iOS release user.
   - **Cloud Scheduler** — triggers the periodic retention cleanup of old events.
 - **GitLive Firebase Kotlin SDK** (`dev.gitlive:firebase-*`) — Firebase access from `commonMain`.
 - **Native FCM per platform** — push reception uses the native SDK on each platform (iOS involves APNs, `AppDelegate` and permissions).
@@ -284,6 +294,31 @@ Functions  Calls: 3
   earlier tap from a device that was offline longer wins nothing, and a waiting list would cost a
   claims subcollection, a trigger and rules to protect them for a race that settles in milliseconds.
 
+## Invitation links
+
+- A group's code is shared as `https://turnia.club/join/CODE` ([`InvitationLink`](core/src/commonMain/kotlin/com/geoviksoft/turnia/core/domain/model/InvitationLink.kt)):
+  an https link because it is the only kind that still leads somewhere without the app. The page
+  behind it (`firebase/hosting/join.html`) shows the code, points at the store, and opens an
+  installed app through `turnia://join/CODE`.
+- **Host, scheme and path live in [`InvitationLinkConfig`](core/src/commonMain/kotlin/com/geoviksoft/turnia/core/domain/model/InvitationLinkConfig.kt).**
+  Files outside Kotlin repeat them and must change with it: `AndroidManifest.xml`, `Info.plist`, the
+  entitlements, and `firebase/hosting` (`join.html`, `apple-app-site-association`, the rewrite in
+  `firebase.json`).
+- An opened link is **state, not an event**, exactly like a tapped notification:
+  `InvitationLinkRepository` holds the code — through a cold start, or until the user has signed in —
+  `MainScreen` brings the Groups tab up, and the Groups tab puts it in the join sheet and marks it
+  handled. The code only prefills the sheet; joining still goes through `requestToJoinGroup`.
+- **The code survives an install on Android only**: the page hands Play `referrer=code=CODE`, and
+  `InstallReferrer` reads it once on first launch. iOS has no equivalent, so there the page tells the
+  user to paste the code.
+- `assetlinks.json` lists the **debug** signing key only. Before a release, add the SHA-256 of the
+  Play App Signing key (Play Console → *App integrity*), or Android opens the page instead of the app.
+- The landing page is deployed on its own: `firebase deploy --only hosting`. `turnia.club` is a
+  custom domain on the project's Hosting site (Console → Hosting → *Add custom domain*, then the DNS
+  records it asks for at the registrar). The apps only verify against it, so links do not open the
+  app until the domain serves `/.well-known/assetlinks.json` and `apple-app-site-association` over
+  https.
+
 ## Permissions (Security Rules)
 
 - **read** `groups/{g}/events`: only members of the group.
@@ -311,7 +346,7 @@ Functions  Calls: 3
 
    It carries **no name**: the profile it points at is public, so the name lives in one place. What it carries instead is `updateAt`, a copy of the profile's own — the marker a searcher compares their cached `users/{uid}` against, arriving free inside the query they already paid for, so the second search of a prefix costs nothing beyond it. **A profile write and its marker must land in the same commit**, or the marker is always the later of the two and no cache ever settles. The marker only pays where it arrives free: resolving a known list of uids reads `users/{uid}` directly, since fetching a marker per uid would cost exactly the read it was meant to save.
 4. **Joining a group is two steps via Cloud Functions** — `requestToJoinGroup` validates the code/expiration and creates a `joinRequests` doc; `acceptJoinRequest` / `rejectJoinRequest` (admin only) answer it by writing `status`, and accepting also adds the uid to `members`. Do **not** let the client write directly to `members`, and do not let it answer a request: `status` is frozen by the rules. An answered request is **kept** as a receipt, because it is the only thing the requester can read to learn the outcome — a `collectionGroup` query over `joinRequests` cannot satisfy a rule that authorizes by document id, which is why `requestToJoinGroup` also writes a pointer into `users/{uid}/private/joinRequests`. Their app deletes the request and the pointer once it has shown the answer.
-5. **Taking / push are server-only** — `takeEvent` reassigns the event in a transaction that verifies `onSwap` first; **push** is sent only from Cloud Functions, never from the client. The notification wording is written server-side, because a push has to render while the app is not running; the data payload carries a `type` for routing the tap. `users/{uid}/private/account.fcmTokens` is one entry per device, touched only through `arrayUnion` / `arrayRemove`, and the server prunes the tokens FCM reports as unregistered.
+5. **Taking / push are server-only** — `takeEvent` reassigns the event in a transaction that verifies `onSwap` first; **push** is sent only from Cloud Functions, never from the client. The notification wording is **not** written server-side: a push has to render while the app is not running, so the server sends a localization key and its arguments (`bodyLocKey` on Android, `loc-key` on iOS) and the operating system fills in the words from the app's own `res/values(-es)/strings.xml` and `{en,es}.lproj/Localizable.strings`. That keeps the server in English whatever the app speaks; a new push needs its key, with the same arguments, in all four files. The data payload carries a `type` for routing the tap. `users/{uid}/private/account.fcmTokens` is one entry per device, touched only through `arrayUnion` / `arrayRemove`, and the server prunes the tokens FCM reports as unregistered.
 
    **A tapped notification is state, not an event.** The platform delivers the tap whenever it likes — on a cold start, long before the UI that has to act on it exists — so `NotificationRepository` holds the `PushDestination` until a screen says it has navigated, exactly as a `userMessage` is held until it has been shown. A `Channel` would drop precisely the cold-start case. The destinations are split by the back stack that owns them: `GroupDetail` is `RootScreen`'s, the tabs are `MainScreen`'s, and each consumes only its own.
 6. **Denormalized names have a keeper** — a group carries its members' names so the calendar costs no read to show them, and `onUserRenamed` is the only thing keeping those copies true. A document and the sync marker that gates it must be written in the **same commit**, or the marker is always the later of the two and no cache ever settles.
@@ -331,7 +366,8 @@ turnia/
 ├── core/               # Shared domain + business logic (KMP)
 └── firebase/           # Firebase project: config + Cloud Functions (deployed separately)
     ├── firebase.json · .firebaserc · firestore.rules · firestore.indexes.json · firestore-schema.md
-    └── functions/      # Cloud Functions (TypeScript): join requests, taking events, push, subscription verification, retention cleanup
+    ├── functions/      # Cloud Functions (TypeScript): join requests, taking events, push, subscription verification, retention cleanup
+    └── hosting/        # Firebase Hosting: the invitation-link landing page + Android/iOS link verification files
 ```
 
 > `firebase/` holds everything Firebase. `firebase/functions/` is a standalone Node.js/TypeScript project (Firebase CLI, deployed with `firebase deploy`). It runs on Google's servers, not inside the KMP app, and is not part of the Gradle build. Run all `firebase` CLI commands from the `firebase/` directory (where `firebase.json` lives). It exists only to hold backend logic the client must not do itself (see *Sensitive points*).
@@ -351,13 +387,27 @@ Use the run configurations provided by the run widget in your IDE's toolbar. You
 - Android app: `./gradlew :app:androidApp:assembleDebug`
 - iOS app: open the [/app/iosApp](./app/iosApp) directory in Xcode and run it from there.
 
+### Android release build
+
+Release builds are minified and obfuscated by R8, and signed with the **upload key** from
+`keystore.properties` at the project root (git-ignored; copy
+[`keystore.properties.example`](keystore.properties.example)) or the `TURNIA_UPLOAD_*` environment
+variables on CI. Without either the build still runs and produces an unsigned APK.
+
+- Build the bundle for Play with `./gradlew :app:androidApp:bundleRelease`. It also uploads R8's
+  mapping file to Crashlytics, which is what turns obfuscated crash reports back into readable ones.
+- Play App Signing re-signs the app with Google's key, so two things need **that** key's
+  fingerprints, from Play Console → *App integrity*: its SHA-1 in the Firebase project settings, or
+  Google Sign-In fails in production, and its SHA-256 in `firebase/hosting/.well-known/assetlinks.json`,
+  or invitation links open the web page instead of the app.
+
 ## Pending: the paid Apple Developer Program
 
-Two features are written and shipped but cannot work yet, both for the same reason: the project is
-signed with a **Personal Team**, which cannot sign either capability. Xcode does not even list them
-under *Signing & Capabilities → + Capability*, and writing the entitlement by hand only breaks the
-build — Xcode fails to generate a profile. Both are blocked on an Apple Developer Program
-membership; neither has a workaround.
+Four features are written and shipped but cannot work yet, all for the same reason: the project is
+signed with a **Personal Team**, which cannot sign any of these capabilities. Xcode does not even
+list them under *Signing & Capabilities → + Capability*, and writing the entitlement by hand only
+breaks the build — Xcode fails to generate a profile. All are blocked on an Apple Developer Program
+membership; only Universal Links has a workaround.
 
 - **Push (FCM)** — `aps-environment` is missing from
   [iosApp.entitlements](app/iosApp/iosApp/iosApp.entitlements). Without it iOS receives nothing.
@@ -365,6 +415,16 @@ membership; neither has a workaround.
   but every attempt fails until the setup below is complete. App Store guideline 4.8 requires it
   once an app offers third-party sign-in, and Turnia already offers Google, so this is release
   blocking rather than optional.
+- **Universal Links** — `com.apple.developer.associated-domains` with
+  `applinks:turnia.club` is missing, so an invitation link opens the web page instead of the app. The workaround is already
+  live: the page's *Abrir en Turnia* button opens the app through its custom scheme. The site already
+  serves the `apple-app-site-association` this needs, and `onOpenURL` already hands every URL to the
+  shared code, so adding the entitlement is the only step.
+- **App Check on iOS** — release builds use App Attest, which needs the
+  `com.apple.developer.devicecheck.appattest-environment` entitlement (`production`) and the app
+  registered for App Attest in the console. Until then an iOS release build sends no valid token, so
+  **no service can be enforced** without locking iOS users out. Debug builds are unaffected: they use
+  a registered debug token.
 
 ### Sign in with Apple — what is left
 

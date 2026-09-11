@@ -1,5 +1,6 @@
 import SwiftUI
 import Shared
+import FirebaseAppCheck
 import FirebaseCore
 import FirebaseMessaging
 import GoogleSignIn
@@ -55,6 +56,21 @@ class AppDelegate: NSObject, UIApplicationDelegate, MessagingDelegate,
     }
 }
 
+/// App Check's attestation. A debug build — the simulator above all — cannot attest, so it sends a
+/// debug token instead: the SDK prints it on first launch, and it goes into the console (App Check →
+/// Apps → Manage debug tokens) once per device. A release build uses App Attest, which needs the
+/// `appattest-environment` entitlement and therefore the paid Apple Developer Program: until then its
+/// requests carry no valid token.
+final class TurniaAppCheckProviderFactory: NSObject, AppCheckProviderFactory {
+    func createProvider(with app: FirebaseApp) -> AppCheckProvider? {
+        #if DEBUG
+        return AppCheckDebugProvider(app: app)
+        #else
+        return AppAttestProvider(app: app)
+        #endif
+    }
+}
+
 @main
 struct iOSApp: App {
 
@@ -64,16 +80,30 @@ struct iOSApp: App {
 
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
+    /// Made-up data instead of Firebase, for store screenshots: launch a debug build with
+    /// `-TurniaDemo` (`xcrun simctl launch booted com.geoviksoft.turnia.Turnia -TurniaDemo`).
+    #if DEBUG
+    private static let demo = ProcessInfo.processInfo.arguments.contains("-TurniaDemo")
+    #else
+    private static let demo = false
+    #endif
+
     init() {
+        // Before configure(): the factory is read when Firebase starts, and a call made without it
+        // goes out with no App Check token.
+        AppCheck.setAppCheckProviderFactory(TurniaAppCheckProviderFactory())
         FirebaseApp.configure()
-        KoinIOSKt.doInitKoin(webClientId: Self.webClientId)
+        KoinIOSKt.doInitKoin(webClientId: Self.webClientId, demo: Self.demo)
     }
 
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .onOpenURL { url in
-                    GIDSignIn.sharedInstance.handle(url)
+                    if GIDSignIn.sharedInstance.handle(url) { return }
+                    // The invitation link's custom scheme today; also the https Universal Link once
+                    // it is signed, which SwiftUI delivers through this same handler.
+                    InvitationLinkBridgeKt.onLinkOpened(link: url.absoluteString)
                 }
         }
     }

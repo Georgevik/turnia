@@ -19,3 +19,12 @@ captures
 node_modules/
 .swiftpm-locks/
 /firebase/firebase-debug.log
+
+# Release signing: the upload key and its credentials never go into git
+keystore.properties
+*.jks
+*.keystore
+
+# Store screenshots: rebuilt by store/screenshots/generate.py from demo-mode captures
+/store/screenshots/*
+!/store/screenshots/generate.py

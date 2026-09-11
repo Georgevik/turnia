@@ -57,14 +57,14 @@ interface GroupRepository {
      */
     suspend fun takeEvent(groupId: GroupId, eventId: EventId): Outcome<Unit, SwapError>
 
-    /** Cached events first, then the server's if it had anything newer. */
+    /** Cached events first, still loading, then the server's if it had anything newer. */
     fun getEventsByGroup(
         groupId: GroupId,
         date: LocalDate,
         monthDelta: Int = 1,
-    ): Flow<Outcome<List<GroupEvent>, Unit>>
+    ): Flow<List<GroupEvent>>
 
-    /** Cached events first, then the server's if it had anything newer. */
+    /** Cached events first, still loading, then the server's if it had anything newer. */
     fun getEventsByUser(
         userId: UserId,
         date: LocalDate,

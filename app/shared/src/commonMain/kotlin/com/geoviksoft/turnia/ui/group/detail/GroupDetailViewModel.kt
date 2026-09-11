@@ -131,10 +131,6 @@ class GroupDetailViewModel(
         it.copy(autoApprove = autoApprove)
     }
 
-    fun onMembersCanSeeCodeChanged(canSee: Boolean) = updateForm {
-        it.copy(membersCanSeeCode = canSee)
-    }
-
     /** The new code only reaches the group when the form is saved. */
     fun onRegenerateCode() = updateForm {
         it.copy(invitationCode = groupRepository.createInvitationCode(), codeChanged = true)
@@ -163,7 +159,6 @@ class GroupDetailViewModel(
                         types = groupRepository.pendingEventTypes.value,
                         invitationCode = form.invitationCode.orEmpty(),
                         autoApprove = form.autoApprove,
-                        membersCanSeeCode = form.membersCanSeeCode,
                     )
                 )
             } else {
@@ -173,7 +168,6 @@ class GroupDetailViewModel(
                         color = form.color.toHex(),
                         invitationCode = form.invitationCode.orEmpty(),
                         autoApprove = form.autoApprove,
-                        membersCanSeeCode = form.membersCanSeeCode,
                     )
                 )
             }
@@ -306,7 +300,6 @@ class GroupDetailViewModel(
             memberCount = 1,
             invitationCode = groupRepository.createInvitationCode(),
             autoApprove = false,
-            membersCanSeeCode = false,
             editable = true,
         ),
         eventTypes = emptyList(),
@@ -341,7 +334,6 @@ class GroupDetailViewModel(
             memberCount = memberCount,
             invitationCode = invitationCode,
             autoApprove = autoApprove,
-            membersCanSeeCode = membersCanSeeCode,
             editable = isAdmin,
         ),
         eventTypes = types.map { it.toUiRow() },

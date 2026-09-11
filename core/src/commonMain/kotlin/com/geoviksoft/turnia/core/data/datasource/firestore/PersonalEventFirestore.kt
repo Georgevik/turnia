@@ -13,16 +13,13 @@ import com.geoviksoft.turnia.core.domain.model.PersonalEvent
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.system.Outcome
 import com.geoviksoft.turnia.core.system.outcomeCatching
-import com.geoviksoft.turnia.core.system.toFailure
 import com.geoviksoft.turnia.core.system.toInstantOrNull
-import com.geoviksoft.turnia.core.system.toSuccess
 import com.geoviksoft.turnia.core.system.toTimestamp
 import com.geoviksoft.turnia.core.system.toYearMonth
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Source
 import dev.gitlive.firebase.firestore.Timestamp
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.mapNotNull
@@ -45,24 +42,28 @@ class PersonalEventFirestore(
         userId: UserId,
         from: Instant,
         until: Instant
-    ): Flow<Outcome<List<DocHolder<PersonalEventDocument>>, GenericFirestoreError>> =
-        flow<Outcome<List<DocHolder<PersonalEventDocument>>, GenericFirestoreError>> {
+    ): Flow<List<DocHolder<PersonalEventDocument>>> =
+        flow {
             val months = YearMonthRange(from.toYearMonth(), until.toYearMonth())
             val cachedEvents = queryEvents(userId, months.associateWith { null }, Source.CACHE)
-            emit(cachedEvents.filterNot { it.doc.isDeleted }.toSuccess())
+
+            cachedEvents.areNotDeleted().takeIf { it.isNotEmpty() }?.let { events ->
+                emit(events)
+            }
 
             var known = cachedEvents
-            // An empty cache is fetched whole once, and only once: a range with no events of its
-            // own has no markers either, and would otherwise ask again on every emission.
-            var fetched = cachedEvents.isNotEmpty()
+            var settled = false
 
             emitAll(
                 userSyncFirestore.observe(userId).mapNotNull { sync ->
-                    val staleMonths =
-                        if (!fetched) months.associateWith { null }
-                        else staleEventMonths(months, sync, known.updatedByMonth())
-                    // Nothing moved: the emission before this one still stands.
-                    if (staleMonths.isEmpty()) return@mapNotNull null
+                    val staleMonths = staleEventMonths(months, sync, known.updatedByMonth())
+
+                    if (staleMonths.isEmpty()) {
+                        // Nothing moved: the emission before this one still stands
+                        if (settled) return@mapNotNull null
+                        settled = true
+                        return@mapNotNull known.areNotDeleted()
+                    }
 
                     val serverEvents = queryEvents(
                         userId,
@@ -72,13 +73,10 @@ class PersonalEventFirestore(
 
                     val merged = known.map { cached -> serverEvents.remove(cached.id) ?: cached }
                     known = merged + serverEvents.values
-                    fetched = true
-                    known.filterNot { it.doc.isDeleted }.toSuccess()
+                    settled = true
+                    known.areNotDeleted()
                 }
             )
-        }.catch { throwable ->
-            Logger.e(TAG, "Failed to read personal events", throwable)
-            emit(GenericFirestoreError(throwable).toFailure())
         }
 
     suspend fun set(uid: UserId, event: PersonalEvent): Outcome<Unit, GenericFirestoreError> =
@@ -165,6 +163,9 @@ class PersonalEventFirestore(
         )
         return snapshot.documents.map { personalEventMapper.map(it) }
     }
+
+    private fun List<DocHolder<PersonalEventDocument>>.areNotDeleted() =
+        filterNot { it.doc.isDeleted }
 
     private fun List<DocHolder<PersonalEventDocument>>.updatedByMonth(): Map<YearMonth, Instant> =
         this

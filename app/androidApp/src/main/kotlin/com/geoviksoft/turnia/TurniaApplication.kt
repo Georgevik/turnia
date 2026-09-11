@@ -4,7 +4,10 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
+import com.geoviksoft.turnia.di.AndroidAppModule
 import com.geoviksoft.turnia.di.initKoin
+import com.google.firebase.Firebase
+import com.google.firebase.appcheck.appCheck
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.logger.Level
@@ -12,9 +15,12 @@ import org.koin.core.logger.Level
 class TurniaApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        initKoin(webClientId = BuildConfig.WEB_CLIENT_ID) {
+        // Before anything reaches Firebase: a call made earlier would go out with no App Check token.
+        Firebase.appCheck.installAppCheckProviderFactory(appCheckProviderFactory())
+        initKoin(webClientId = BuildConfig.WEB_CLIENT_ID, demo = isDemoMode(this)) {
             androidLogger(Level.INFO)
             androidContext(this@TurniaApplication)
+            modules(AndroidAppModule)
         }
         createNotificationChannel()
     }

@@ -8,43 +8,34 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import com.geoviksoft.turnia.core.domain.repository.NotificationRepository
 import com.geoviksoft.turnia.ui.root.App
-import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MainActivity : ComponentActivity() {
 
-    private val notifications: NotificationRepository by inject()
+    private val vm: MainActivityViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        openNotification(intent)
+        vm.openNotification(intent)
+        // A recreated activity gets the same intent back, and the join sheet would open again.
+        if (savedInstanceState == null) {
+            vm.openLink(intent)
+        }
+        vm.readInstallReferrer(applicationContext)
 
         setContent {
             App()
         }
     }
 
-    /** The app was already open, so the tap is delivered here instead — see `singleTop`. */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        openNotification(intent)
-    }
-
-    /**
-     * Hands the message's data payload to the domain, which decides whether it leads anywhere.
-     */
-    private fun openNotification(intent: Intent?) {
-        val extras = intent?.extras ?: return
-
-        notifications.opened(
-            extras.keySet().mapNotNull { key ->
-                extras.getString(key)?.let { value -> key to value }
-            }.toMap()
-        )
+        vm.openNotification(intent)
+        vm.openLink(intent)
     }
 }
 

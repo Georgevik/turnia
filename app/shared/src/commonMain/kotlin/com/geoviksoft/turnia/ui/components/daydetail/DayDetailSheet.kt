@@ -58,9 +58,9 @@ import turnia.app.shared.generated.resources.event_remove_confirm
 import turnia.app.shared.generated.resources.event_remove_confirm_body
 import turnia.app.shared.generated.resources.event_remove_confirm_title
 import turnia.app.shared.generated.resources.event_swap_error_not_assignee
-import turnia.app.shared.generated.resources.event_swap_error_not_swappable
 import turnia.app.shared.generated.resources.event_swap_error_not_found
 import turnia.app.shared.generated.resources.event_swap_error_not_member
+import turnia.app.shared.generated.resources.event_swap_error_not_swappable
 import turnia.app.shared.generated.resources.event_swap_error_own_shift
 import turnia.app.shared.generated.resources.event_swap_error_save
 import turnia.app.shared.generated.resources.event_swap_error_taken_by_someone
@@ -76,6 +76,7 @@ fun DayDetailSheet(
     addMode: DayAddMode,
     openEditTypeScreen: (groupId: String, groupName: String) -> Unit,
     openNewPersonalTypeScreen: () -> Unit,
+    openNewGroupTypeScreen: (groupId: String) -> Unit,
     onClose: (shouldRefresh: Boolean) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: DayDetailSheetViewModel = koinViewModel(key = date.toString()) {
@@ -202,6 +203,7 @@ fun DayDetailSheet(
                                 },
                                 onEditGroup = openEditTypeScreen,
                                 onAddPersonalEventType = openNewPersonalTypeScreen,
+                                onAddGroupEventType = openNewGroupTypeScreen,
                             )
                         }
                     } else if (events.isEmpty()) {

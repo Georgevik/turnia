@@ -4,11 +4,7 @@ import { DocumentSnapshot, FieldValue, getFirestore } from "firebase-admin/fires
 import { BatchResponse, getMessaging } from "firebase-admin/messaging";
 import { PushTarget, pushTargetsOf } from "./users";
 
-/**
- * What the notification is about, carried in the data payload so a tap can open the right screen.
- * The visible text is built here and not on the device: a push has to render while the app is not
- * running, and on both platforms that means the server wrote the words.
- */
+/** What the notification is about, carried in the data payload so a tap can open the right screen. */
 type PushType =
   | "join_requested"
   | "join_accepted"
@@ -16,9 +12,26 @@ type PushType =
   | "event_on_swap"
   | "event_taken";
 
+/**
+ * The sentence a push shows, by name rather than in words.
+ *
+ * A push has to render while the app is not running, so the operating system draws it — and both
+ * can look the words up in the app itself: Android in the app's `res/values(-es)/strings.xml`, iOS
+ * in its `{en,es}.lproj/Localizable.strings`. The server sends the key and the values to fill in, so
+ * it stays in English whatever language the app speaks. Every key here must exist, with the same
+ * arguments in the same order, in all four of those files. `fallback` is only for an app that
+ * predates the key.
+ */
+type PushText = {
+  key: string;
+  args: string[];
+  fallback: string;
+};
+
 type Push = {
+  /** The group's name, or the app's: a name rather than a sentence, so it needs no key. */
   title: string;
-  body: string;
+  body: PushText;
   type: PushType;
   /** Ids the client needs to route the tap. FCM only carries strings. */
   data?: Record<string, string>;
@@ -46,9 +59,12 @@ async function notify(uids: string[], push: Push): Promise<void> {
     const targets = await pushTargetsOf(uids);
     if (targets.length === 0) return;
 
+    const { key, args, fallback } = push.body;
     const response = await getMessaging().sendEachForMulticast({
       tokens: targets.map((target) => target.token),
-      notification: { title: push.title, body: push.body },
+      notification: { title: push.title, body: fallback },
+      android: { notification: { bodyLocKey: key, bodyLocArgs: args } },
+      apns: { payload: { aps: { alert: { title: push.title, locKey: key, locArgs: args } } } },
       data: { type: push.type, ...(push.data ?? {}) },
     });
 
@@ -92,6 +108,29 @@ function displayName(name: unknown, username: unknown): string {
   return (name as string) || (username as string) || "Somebody";
 }
 
+/** A member's name from the group's own roster, which every group document already carries. */
+function memberName(group: DocumentSnapshot, uid: string): string {
+  const members =
+    (group.get("members") as Record<string, { name?: string; username?: string }> | undefined) ?? {};
+  return displayName(members[uid]?.name, members[uid]?.username);
+}
+
+/** The name of a shift's type, which is the group's own words — so it goes to the device as is. */
+function shiftTypeName(group: DocumentSnapshot, typeId: unknown): string | undefined {
+  const types = (group.get("groupEventTypes") as { id: string; name?: string }[] | undefined) ?? [];
+  return types.find((type) => type.id === typeId)?.name || undefined;
+}
+
+/**
+ * "21/09" from a group event's `YYYY-MM-DD`. Day and month only, and in numbers: the device only
+ * slots values into a fixed sentence, so a weekday or a month name would have to be in the
+ * reader's language, which the server does not know.
+ */
+function shortDate(date: unknown): string {
+  const [, month, day] = String(date ?? "").split("-");
+  return month && day ? `${day}/${month}` : "";
+}
+
 /**
  * Tells a group's admins that somebody is waiting to be let in.
  *
@@ -102,9 +141,14 @@ export async function notifyJoinRequested(
   requester: { name: string; username: string },
 ) {
   const adminUids = (group.get("adminUids") as string[] | undefined) ?? [];
+  const name = displayName(requester.name, requester.username);
   await notify(adminUids, {
     title: group.get("name") ?? "Turnia",
-    body: `${displayName(requester.name, requester.username)} asked to join the group.`,
+    body: {
+      key: "push_join_requested",
+      args: [name],
+      fallback: `${name} asked to join the group.`,
+    },
     type: "join_requested",
     data: { groupId: group.id },
   });
@@ -114,19 +158,40 @@ export async function notifyJoinRequested(
 export async function notifyJoinAccepted(groupId: string, groupName: string, uid: string) {
   await notify([uid], {
     title: groupName || "Turnia",
-    body: "You are now a member of the group.",
+    body: {
+      key: "push_join_accepted",
+      args: [],
+      fallback: "You are now a member of the group.",
+    },
     type: "join_accepted",
     data: { groupId },
   });
 }
 
-/** Tells the member who offered a shift that somebody has taken it, so they know they are free. */
-export async function notifyEventTaken(groupId: string, eventId: string, fromUid: string) {
+/**
+ * Tells whoever asked for the swap that a colleague is covering it, so they know they are free —
+ * and who to thank.
+ */
+export async function notifyEventTaken(
+  group: DocumentSnapshot,
+  eventId: string,
+  shift: { groupEventTypeId?: string; date?: string },
+  fromUid: string,
+  takerUid: string,
+) {
+  const taker = memberName(group, takerUid);
+  // Covered through the app, so its type was there a moment ago; blank only if it just went.
+  const type = shiftTypeName(group, shift.groupEventTypeId) ?? "";
+  const date = shortDate(shift.date);
   await notify([fromUid], {
-    title: "Turnia",
-    body: "Your shift was taken.",
+    title: group.get("name") ?? "Turnia",
+    body: {
+      key: "push_swap_covered",
+      args: [taker, type, date],
+      fallback: `${taker} is covering your shift: ${type} on ${date}.`,
+    },
     type: "event_taken",
-    data: { groupId, eventId },
+    data: { groupId: group.id, eventId },
   });
 }
 
@@ -155,9 +220,19 @@ export const onEventPutOnSwap = onDocumentWritten(
     const memberUids = (group.get("memberUids") as string[] | undefined) ?? [];
     const recipients = memberUids.filter((uid) => uid !== after.assigneeId);
 
+    // A shift whose type the admin removed does not render in the app, so nobody could cover it.
+    const type = shiftTypeName(group, after.groupEventTypeId);
+    if (!type) return;
+
+    const requester = memberName(group, after.assigneeId as string);
+    const date = shortDate(after.date);
     await notify(recipients, {
       title: group.get("name") ?? "Turnia",
-      body: "A shift was put up for swap.",
+      body: {
+        key: "push_swap_requested",
+        args: [requester, type, date],
+        fallback: `${requester} asked for a swap: ${type} on ${date}. Can you help out?`,
+      },
       type: "event_on_swap",
       data: { groupId, eventId },
     });
@@ -186,7 +261,11 @@ export const onCalendarShared = onDocumentWritten("users/{uid}", async (event) =
   const owner = displayName(event.data?.after.get("name"), event.data?.after.get("username"));
   await notify(granted, {
     title: "Turnia",
-    body: `${owner} shared their calendar with you.`,
+    body: {
+      key: "push_calendar_shared",
+      args: [owner],
+      fallback: `${owner} shared their calendar with you.`,
+    },
     type: "calendar_shared",
     data: { ownerUid: event.params.uid },
   });

@@ -9,7 +9,6 @@ import com.geoviksoft.turnia.core.domain.repository.GroupRepository
 import com.geoviksoft.turnia.core.domain.repository.SharedCalendarRepository
 import com.geoviksoft.turnia.core.domain.repository.UserRepository
 import com.geoviksoft.turnia.core.system.Outcome
-import com.geoviksoft.turnia.core.system.valueOrEmpty
 import com.geoviksoft.turnia.navigation.main.routes.ExternalCalendarData
 import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
 import com.geoviksoft.turnia.ui.components.calendar.model.swapFirst
@@ -80,8 +79,8 @@ class ExternalCalendarViewModel(
                 // calendar is open must lose the swap controls, not keep them until a reload.
                 is ExternalCalendarData.Group -> isRevoked().flatMapLatest { revoked ->
                     groupRepository.getEventsByGroup(GroupId(data.id), date, monthDelta = 2)
-                        .map { outcome ->
-                            outcome.valueOrEmpty().map {
+                        .map { list ->
+                            list.map {
                                 it.toUi(
                                     currentUserId = uid,
                                     removable = it.ownerId == uid && it.assigneeId == uid,
@@ -96,6 +95,7 @@ class ExternalCalendarViewModel(
             }
 
             events.map { list -> list.groupBy { event -> event.date }.swapFirst() }
+
         }
 
     private fun isRevoked(): Flow<Boolean> = groupRepository.getGroups()
@@ -108,6 +108,9 @@ class ExternalCalendarViewModel(
         date: LocalDate,
     ): Flow<List<DayEventUi>> =
         flow {
+            // Flagged here rather than emitted: an empty emission would wipe the month on screen
+            // while the next one is on its way, and one callable answers for both.
+            _uiState.update { it.copy(loading = true) }
             val outcome = sharedCalendarRepository.getSharedCalendar(
                 ownerId = ownerId,
                 from = date.minus(SHARED_MONTH_DELTA, DateTimeUnit.MONTH),
@@ -115,14 +118,14 @@ class ExternalCalendarViewModel(
             )
 
             when (outcome) {
-                is Outcome.Success -> emit(
-                    // `activeMember` stays false: these shifts belong to groups the viewer may not
-                    // be in at all, and every swap write would be refused. Offering the controls
-                    // would only produce failures.
-                    outcome.value.groupEvents.map {
+                is Outcome.Success -> {
+                    val groupEvents = outcome.value.groupEvents.map {
                         it.toUi(currentUserId = viewerId, removable = false)
-                    } + outcome.value.personalEvents.map { it.toUi(removable = false) }
-                )
+                    }
+                    val personalEvents =
+                        outcome.value.personalEvents.map { it.toUi(removable = false) }
+                    emit(groupEvents + personalEvents)
+                }
 
                 is Outcome.Failure -> {
                     _uiState.update { it.copy(userMessage = outcome.error) }
@@ -141,6 +144,7 @@ class ExternalCalendarViewModel(
         const val SHARED_MONTH_DELTA = 1
     }
 }
+
 
 data class GroupCalendarUi(
     val events: Map<LocalDate, List<DayEventUi>> = emptyMap(),

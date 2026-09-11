@@ -41,7 +41,7 @@ export const takeEvent = onCall(async (request) => {
   const eventRef = db.doc(`groups/${groupId}/events/${eventId}`);
   const syncRef = db.doc(`groups/${groupId}/sync/updates`);
 
-  const fromUid = await db.runTransaction(async (tx) => {
+  const taken = await db.runTransaction(async (tx) => {
     const snap = await tx.get(eventRef);
     if (!snap.exists) {
       throw TurniaError.TakeEventNotFound;
@@ -76,10 +76,14 @@ export const takeEvent = onCall(async (request) => {
     const yearMonth = (snap.get("yearMonth") as string | undefined) ?? "";
     tx.set(syncRef, { events: { [yearMonth]: { updatedAt: FieldValue.serverTimestamp() } } }, { merge: true });
 
-    return assigneeId;
+    return {
+      fromUid: assigneeId,
+      groupEventTypeId: snap.get("groupEventTypeId") as string | undefined,
+      date: snap.get("date") as string | undefined,
+    };
   });
 
-  await notifyEventTaken(groupId, eventId, fromUid);
+  await notifyEventTaken(group, eventId, taken, taken.fromUid, taker);
 
   return { groupId, eventId, assigneeId: taker, status: "taken" as const };
 });

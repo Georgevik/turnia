@@ -23,7 +23,8 @@ fun MyCalendarScreen(viewModel: MyCalendarViewModel = koinViewModel()) {
     val rootNavigator = LocalRootNavigator.current
 
     CalendarViewer(
-        eventsByDate = uiState.eventsByDate,
+        eventsByDate = (uiState as? MyCalendarUiState.Success)?.eventsByDate.orEmpty(),
+        isLoading = uiState is MyCalendarUiState.Loading,
         onMonthChanged = viewModel::onMonthChanged,
         addMode = DayAddMode.Full,
         onEditGroup = { groupId, _ ->
@@ -31,6 +32,9 @@ fun MyCalendarScreen(viewModel: MyCalendarViewModel = koinViewModel()) {
         },
         onAddPersonalType = {
             rootNavigator.goTo(RootRoute.EventTypeDetailKey(EventTypeDetailData.NewPersonal))
+        },
+        onAddGroupType = { groupId ->
+            rootNavigator.goTo(RootRoute.EventTypeDetailKey(EventTypeDetailData.NewGroup(groupId)))
         },
     )
 }

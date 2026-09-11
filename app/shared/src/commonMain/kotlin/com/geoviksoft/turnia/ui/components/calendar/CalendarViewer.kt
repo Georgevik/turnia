@@ -1,5 +1,8 @@
 package com.geoviksoft.turnia.ui.components.calendar
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,6 +23,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -49,6 +53,7 @@ import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
 import com.geoviksoft.turnia.ui.components.calendar.model.ThreeDotsOption
 import com.geoviksoft.turnia.ui.components.daydetail.DayAddMode
 import com.geoviksoft.turnia.ui.components.daydetail.DayDetailSheet
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
@@ -67,8 +72,11 @@ import turnia.app.shared.generated.resources.calendar_previous_month
 import turnia.app.shared.generated.resources.calendar_weekday_initials
 import kotlin.math.abs
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
 
 private const val WEEKS = 6
+
+private val LOADING_DELAY = 300.milliseconds
 
 // The month pager can't be infinite, so it spans a large fixed range of months
 // centered on an "anchor" page that maps to the current month. ~200 years each way
@@ -82,12 +90,14 @@ fun CalendarViewer(
     modifier: Modifier = Modifier,
     theme: CalendarTheme = CalendarThemes.myCalendar(),
     eventsByDate: Map<LocalDate, List<DayEventUi>> = emptyMap(),
+    isLoading: Boolean = false,
     addMode: DayAddMode,
     titleBar: @Composable () -> Unit = {},
     contextualOptions: List<ThreeDotsOption> = emptyList(),
     onMonthChanged: (LocalDate) -> Unit,
     onEditGroup: (groupId: String, groupName: String) -> Unit = { _, _ -> },
     onAddPersonalType: () -> Unit = {},
+    onAddGroupType: (groupId: String) -> Unit = {},
 ) {
     val anchorMonth = remember {
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
@@ -184,6 +194,11 @@ fun CalendarViewer(
                             },
                         )
                     }
+                    CalendarLoading(
+                        isLoading = isLoading,
+                        theme = theme,
+                        modifier = Modifier.matchParentSize(),
+                    )
                 }
             }
 
@@ -203,9 +218,44 @@ fun CalendarViewer(
                         dismissSheet()
                     },
                     openNewPersonalTypeScreen = { onAddPersonalType() },
+                    openNewGroupTypeScreen = onAddGroupType,
                     onClose = { dismissSheet() },
                 )
             }
+        }
+    }
+}
+
+/**
+ * Laid over the grid rather than in its place: the cache has usually painted most of the month
+ * already, and the days stay tappable underneath. It waits [LOADING_DELAY] before appearing, so a
+ * read that settles straight away — the usual case — never flashes it.
+ */
+@Composable
+private fun CalendarLoading(
+    isLoading: Boolean,
+    theme: CalendarTheme,
+    modifier: Modifier = Modifier,
+) {
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(isLoading) {
+        if (isLoading) delay(LOADING_DELAY)
+        visible = isLoading
+    }
+
+    AnimatedVisibility(
+        visible = visible,
+        modifier = modifier,
+        enter = fadeIn(),
+        exit = fadeOut(),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(theme.background.copy(alpha = 0.6f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            CircularProgressIndicator(color = theme.accentColor)
         }
     }
 }

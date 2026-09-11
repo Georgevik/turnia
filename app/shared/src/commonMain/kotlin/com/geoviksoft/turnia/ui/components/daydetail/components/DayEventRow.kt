@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,7 +15,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.NoteAdd
 import androidx.compose.material.icons.filled.StickyNote2
@@ -34,7 +32,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -54,7 +51,7 @@ import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.event_assigned_to
-import turnia.app.shared.generated.resources.event_holder_me
+import turnia.app.shared.generated.resources.event_assigned_to_me
 import turnia.app.shared.generated.resources.event_note_add
 import turnia.app.shared.generated.resources.event_note_edit
 import turnia.app.shared.generated.resources.event_remove
@@ -153,14 +150,18 @@ fun DayEventRow(
                         ) {
                             if (event.onSwap) SwapChip()
                             if (showAssignee) {
-                                val assignee = when {
+                                val assignment = when {
                                     event.assigneeIsMe ->
-                                        stringResource(Res.string.event_holder_me)
+                                        stringResource(Res.string.event_assigned_to_me)
 
-                                    event.assigneeName.isNotBlank() -> event.assigneeName
-                                    else -> stringResource(Res.string.group_member_former)
+                                    else -> stringResource(
+                                        Res.string.event_assigned_to,
+                                        event.assigneeName.ifBlank {
+                                            stringResource(Res.string.group_member_former)
+                                        },
+                                    )
                                 }
-                                AssignedToChip(name = assignee)
+                                AssignedToChip(text = assignment)
                             }
                         }
                     }
@@ -305,7 +306,7 @@ private fun SwapChip() {
 }
 
 @Composable
-private fun AssignedToChip(name: String) {
+private fun AssignedToChip(text: String) {
     Surface(
         shape = RoundedCornerShape(8.dp),
         color = MaterialTheme.colorScheme.secondaryContainer,
@@ -317,7 +318,7 @@ private fun AssignedToChip(name: String) {
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
-                text = stringResource(Res.string.event_assigned_to, name),
+                text = text,
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
             )

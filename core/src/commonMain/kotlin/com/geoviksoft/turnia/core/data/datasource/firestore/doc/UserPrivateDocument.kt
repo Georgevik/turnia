@@ -12,7 +12,6 @@ data class UserPrivateDocument(
     @SerialName(FIELD_EMAIL) val email: String,
     @SerialName(FIELD_FCM_TOKENS) val fcmTokens: List<String> = emptyList(),
     @SerialName(FIELD_NOTIFICATIONS_ENABLED) val notificationsEnabled: Boolean = true,
-    /** Contra qué se compara `private` en `users/{uid}/sync/updates` para saber si la caché sirve. */
     @SerialName(FIELD_UPDATE_AT) val updateAt: BaseTimestamp? = null,
 ) {
     companion object {

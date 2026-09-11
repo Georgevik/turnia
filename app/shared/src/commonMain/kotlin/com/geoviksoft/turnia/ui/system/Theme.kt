@@ -7,7 +7,10 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavKey
 import com.geoviksoft.turnia.navigation.LocalNavigator
@@ -17,6 +20,10 @@ import com.geoviksoft.turnia.ui.system.color.Amber300
 import com.geoviksoft.turnia.ui.system.color.Amber500
 import com.geoviksoft.turnia.ui.system.color.Amber700
 import com.geoviksoft.turnia.ui.system.color.Amber800
+import com.geoviksoft.turnia.ui.system.color.Green100
+import com.geoviksoft.turnia.ui.system.color.Green200
+import com.geoviksoft.turnia.ui.system.color.Green700
+import com.geoviksoft.turnia.ui.system.color.Green900
 import com.geoviksoft.turnia.ui.system.color.Grey100
 import com.geoviksoft.turnia.ui.system.color.Grey150
 import com.geoviksoft.turnia.ui.system.color.Grey200
@@ -147,11 +154,31 @@ fun TurniaTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
-    MaterialTheme(
-        colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme,
-        content = content,
-    )
+    CompositionLocalProvider(
+        LocalSuccessColors provides if (darkTheme) DarkSuccessColors else LightSuccessColors,
+    ) {
+        MaterialTheme(
+            colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme,
+            content = content,
+        )
+    }
 }
+
+/** Something done and settled, like a shift somebody has already agreed to cover. */
+@Immutable
+data class SuccessColors(
+    val container: Color,
+    val onContainer: Color,
+)
+
+private val LightSuccessColors = SuccessColors(container = Green100, onContainer = Green700)
+private val DarkSuccessColors = SuccessColors(container = Green900, onContainer = Green200)
+
+private val LocalSuccessColors = staticCompositionLocalOf { LightSuccessColors }
+
+/** Beside the Material scheme rather than in it: Material has no success role. */
+val MaterialTheme.successColors: SuccessColors
+    @Composable @ReadOnlyComposable get() = LocalSuccessColors.current
 
 @Composable
 fun PreviewTurniaTheme(content: @Composable () -> Unit) {
