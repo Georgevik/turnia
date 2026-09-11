@@ -1,0 +1,10 @@
+/*
+  Push text. The server sends only the key and the values (APNs `loc-key` / `loc-args`); iOS fills
+  them in here, even with the app closed. Every key and its arguments must match firebase/functions'
+  notifications.ts and the Android app's res/values/strings.xml.
+*/
+"push_swap_requested" = "%1$@ pide cambio: %2$@ del %3$@. ¿Le echas una mano?";
+"push_swap_covered" = "%1$@ cubre tu turno: %2$@ del %3$@.";
+"push_join_requested" = "%1$@ quiere unirse al grupo.";
+"push_join_accepted" = "Ya formas parte del grupo.";
+"push_calendar_shared" = "%1$@ ha compartido su calendario contigo.";

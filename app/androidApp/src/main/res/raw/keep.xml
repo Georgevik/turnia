@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The push strings are looked up by name, from the key the server sends, by the Firebase SDK
+    rather than by any code of ours. Resource shrinking cannot see that lookup and would strip
+    them from a release build, leaving every push in its English fallback.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@string/push_*" />
