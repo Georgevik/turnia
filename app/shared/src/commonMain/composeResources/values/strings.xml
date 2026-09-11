@@ -148,6 +148,10 @@
     <string name="group_detail_auto_approve_on">Cualquiera con el código entra en el grupo al momento.</string>
     <string name="group_detail_auto_approve_off">Con el código se pide acceso y tú decides quién entra.</string>
     <string name="group_detail_code_regenerate">Generar un código nuevo</string>
+    <string name="group_detail_code_copy">Copiar el código</string>
+    <string name="group_detail_code_copied">Código copiado</string>
+    <string name="group_detail_code_share">Compartir el código</string>
+    <string name="group_detail_code_share_text">Únete al grupo «%1$s» en Turnia con el código de invitación %2$s</string>
     <string name="group_detail_code_changed">Guarda para que el código nuevo empiece a funcionar.</string>
     <string name="group_detail_code_hidden">El administrador no comparte el código de invitación.</string>
     <string name="group_detail_members_can_see_code">Los miembros pueden ver el código</string>
@@ -279,10 +283,6 @@
     <string name="groups_filter_pending">Pendientes (%1$d)</string>
     <string name="groups_filter_mine_empty_title">Ningún grupo todavía</string>
     <string name="groups_filter_mine_empty_body">En cuanto un admin acepte tu petición, el grupo saldrá aquí.</string>
-    <string name="admin_groups_title">Grupos que administras</string>
-    <string name="admin_groups_caption">Solo salen los grupos de los que eres admin. Toca uno para editarlo.</string>
-    <string name="admin_groups_empty_title">Ningún grupo a tu cargo</string>
-    <string name="admin_groups_empty_body">Crea uno y empieza a organizar los turnos con tus compañeros.</string>
     <string name="groups_join_title">¿Tienes un código de invitación?</string>
     <string name="groups_join_menu">Unirme a un grupo</string>
     <string name="groups_join_body">Únete al grupo de tu unidad con el código que te haya pasado un compañero.</string>

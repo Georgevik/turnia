@@ -17,7 +17,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Event
-import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.WorkspacePremium
@@ -39,9 +38,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.geoviksoft.turnia.core.domain.model.UserProfile
-import com.geoviksoft.turnia.navigation.LocalNavigator
 import com.geoviksoft.turnia.navigation.LocalRootNavigator
-import com.geoviksoft.turnia.navigation.main.routes.MainRoute
 import com.geoviksoft.turnia.navigation.root.routes.RootRoute
 import com.geoviksoft.turnia.ui.system.LocalPaddings
 import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
@@ -51,7 +48,6 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.dialog_cancel
-import turnia.app.shared.generated.resources.groups_title
 import turnia.app.shared.generated.resources.profile_logout
 import turnia.app.shared.generated.resources.profile_logout_dialog_message
 import turnia.app.shared.generated.resources.profile_logout_dialog_title
@@ -61,7 +57,7 @@ import turnia.app.shared.generated.resources.settings_notifications
 
 /**
  * "Perfil" tab — a draft account screen: the signed-in user header plus entry
- * points to groups, shared calendars, subscription and settings.
+ * points to shared calendars, subscription and settings.
  */
 
 @Composable
@@ -74,7 +70,6 @@ fun SettingsMenuScreen(vm: SettingsMenuViewModel = koinViewModel()) {
 @Composable
 private fun SettingsMenuScreenContent(uiState: SettingsMenuUi, onLogoutClicked: () -> Unit = {}) {
     var showLogoutDialog by remember { mutableStateOf(false) }
-    val navigator = LocalNavigator.current
     val rootNavigator = LocalRootNavigator.current
     val details = uiState.userDetails
 
@@ -151,9 +146,6 @@ private fun SettingsMenuScreenContent(uiState: SettingsMenuUi, onLogoutClicked: 
         }
         ProfileRow(Icons.Default.Event, stringResource(Res.string.profile_my_events)) {
             rootNavigator.goTo(RootRoute.PersonalEventTypesKey)
-        }
-        ProfileRow(Icons.Default.Groups, stringResource(Res.string.groups_title)) {
-            navigator.goTo(MainRoute.AdminGroups)
         }
         ProfileRow(
             Icons.Default.Notifications,
