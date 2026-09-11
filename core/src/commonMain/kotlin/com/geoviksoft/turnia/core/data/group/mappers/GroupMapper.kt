@@ -63,10 +63,10 @@ class GroupMapper {
             // The uids are the source of truth for membership; the names are a copy that a member
             // who joined before the group started keeping them may still be missing from.
             memberCount = doc.memberUids.size,
-            invitationCode = invitation.code
-                .takeIf { isAdmin || invitation.membersCanSeeCode }.orEmpty(),
+            // Only an admin hands the code out. Hiding it from everyone else is a house rule, not a
+            // boundary: every member can read the group document it lives on.
+            invitationCode = if (isAdmin) invitation.code else "",
             autoApprove = invitation.autoApprove,
-            membersCanSeeCode = invitation.membersCanSeeCode,
             isAdmin = isAdmin,
             color = doc.color,
         )
@@ -91,7 +91,6 @@ class GroupMapper {
             // nothing to hand out. Their snapshot does not carry the invitation either.
             invitationCode = "",
             autoApprove = false,
-            membersCanSeeCode = false,
             isAdmin = false,
             color = doc.color,
             isRevoked = true,
@@ -113,7 +112,6 @@ class GroupMapper {
         invitation = InvitationDocument(
             code = group.invitationCode,
             autoApprove = group.autoApprove,
-            membersCanSeeCode = group.membersCanSeeCode,
         ),
     )
 

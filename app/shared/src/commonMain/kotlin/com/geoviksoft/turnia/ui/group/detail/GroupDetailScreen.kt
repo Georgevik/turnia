@@ -131,7 +131,6 @@ import turnia.app.shared.generated.resources.group_detail_member_remove
 import turnia.app.shared.generated.resources.group_detail_member_remove_confirm
 import turnia.app.shared.generated.resources.group_detail_member_remove_message
 import turnia.app.shared.generated.resources.group_detail_member_remove_title
-import turnia.app.shared.generated.resources.group_detail_members_can_see_code
 import turnia.app.shared.generated.resources.group_detail_members_sheet_title
 import turnia.app.shared.generated.resources.group_detail_readonly
 import turnia.app.shared.generated.resources.group_detail_request_accept
@@ -260,7 +259,6 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
                     onNameChanged = viewModel::onNameChanged,
                     onPickColor = viewModel::onPickColor,
                     onAutoApproveChanged = viewModel::onAutoApproveChanged,
-                    onMembersCanSeeCodeChanged = viewModel::onMembersCanSeeCodeChanged,
                     onRegenerateCode = viewModel::onRegenerateCode,
                     onAcceptRequest = viewModel::onAcceptRequest,
                     onRejectRequest = viewModel::onRejectRequest,
@@ -412,7 +410,6 @@ private fun GroupDetailContent(
     onNameChanged: (String) -> Unit,
     onPickColor: (Color) -> Unit,
     onAutoApproveChanged: (Boolean) -> Unit,
-    onMembersCanSeeCodeChanged: (Boolean) -> Unit,
     onRegenerateCode: () -> Unit,
     onAcceptRequest: (UserId) -> Unit,
     onRejectRequest: (UserId) -> Unit,
@@ -473,7 +470,6 @@ private fun GroupDetailContent(
         InvitationSection(
             form = form,
             onAutoApproveChanged = onAutoApproveChanged,
-            onMembersCanSeeCodeChanged = onMembersCanSeeCodeChanged,
             onRegenerateCode = onRegenerateCode,
         )
 
@@ -606,7 +602,6 @@ private fun JoinRequestsSection(
 private fun InvitationSection(
     form: GroupDetailUi.GroupForm,
     onAutoApproveChanged: (Boolean) -> Unit,
-    onMembersCanSeeCodeChanged: (Boolean) -> Unit,
     onRegenerateCode: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -661,16 +656,6 @@ private fun InvitationSection(
             }
         } else {
             Caption(stringResource(Res.string.group_detail_code_hidden))
-        }
-
-        if (form.editable) {
-            ToggleRow(
-                title = stringResource(Res.string.group_detail_members_can_see_code),
-                subtitle = null,
-                checked = form.membersCanSeeCode,
-                enabled = true,
-                onCheckedChange = onMembersCanSeeCodeChanged,
-            )
         }
     }
 }

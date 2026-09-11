@@ -46,9 +46,10 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
   never existing without them. The rule is about the moment of creation: an existing group is not stopped from
   deleting its last type.
 - Each group has a **single invitation**. Anyone with the code can **request** to join; a group **admin must accept** the request.
-- Both invitation settings — **auto-approve** (whoever knows the code walks straight in) and whether
-  **members can see the code** — are decided when the group is created, alongside the code itself,
-  and mean the same thing before and after saving.
+- **Auto-approve** (whoever knows the code walks straight in) is decided when the group is created,
+  alongside the code itself, and means the same thing before and after saving.
+- **Only admins see and share the code.** Members are told so instead. A house rule, not a boundary:
+  the code lives on the group document, which every member can read.
 - A user can put a group event **up for swap**; another member can take it (it moves to the taker).
 - A user can **delete their own** event; an **admin** can delete any group event. Deleting removes it (there is no cancelled state).
 - **Personal events** can carry notes (on the event); group event docs are shared with all members, so they hold no private notes.

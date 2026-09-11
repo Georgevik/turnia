@@ -34,10 +34,9 @@ sealed interface GroupDetailUi {
         /** The group's accent, the same for every member: only an admin changes it. */
         val color: Color,
         val memberCount: Int,
-        /** Null when the admin keeps the code to themselves. */
+        /** Blank for anyone but an admin: only they hand out the code. */
         val invitationCode: String?,
         val autoApprove: Boolean,
-        val membersCanSeeCode: Boolean,
         /** A regenerated code only reaches the group when the form is saved. */
         val codeChanged: Boolean = false,
         /** Only an admin may change the group's data; everyone else reads it. */

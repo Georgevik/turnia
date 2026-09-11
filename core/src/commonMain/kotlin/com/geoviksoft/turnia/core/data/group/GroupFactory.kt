@@ -21,7 +21,6 @@ class GroupFactory {
         memberCount = 1,
         invitationCode = invitationCode,
         autoApprove = group.autoApprove,
-        membersCanSeeCode = group.membersCanSeeCode,
         isAdmin = true,
     )
 }
