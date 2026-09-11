@@ -18,6 +18,7 @@ dependencies {
 
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.splashscreen)
+    implementation(libs.installreferrer)
     implementation(libs.koin.android)
     implementation(libs.firebase.messaging.android)
     implementation(libs.firebase.crashlytics)

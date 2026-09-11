@@ -23,6 +23,7 @@ import com.geoviksoft.turnia.core.data.group.GroupRepositoryImpl
 import com.geoviksoft.turnia.core.data.group.InvitationCodeFactory
 import com.geoviksoft.turnia.core.data.group.mappers.GroupErrorMapper
 import com.geoviksoft.turnia.core.data.group.mappers.GroupMapper
+import com.geoviksoft.turnia.core.data.invitation.InvitationLinkRepositoryImpl
 import com.geoviksoft.turnia.core.data.notification.NotificationRepositoryImpl
 import com.geoviksoft.turnia.core.data.sharedcalendar.SharedCalendarRepositoryImpl
 import com.geoviksoft.turnia.core.data.sharedcalendar.mappers.SharedCalendarErrorMapper
@@ -39,6 +40,7 @@ import com.geoviksoft.turnia.core.domain.analytics.Analytics
 import com.geoviksoft.turnia.core.domain.repository.AppConfigRepository
 import com.geoviksoft.turnia.core.domain.repository.FcmDelegate
 import com.geoviksoft.turnia.core.domain.repository.GroupRepository
+import com.geoviksoft.turnia.core.domain.repository.InvitationLinkRepository
 import com.geoviksoft.turnia.core.domain.repository.NotificationRepository
 import com.geoviksoft.turnia.core.domain.repository.PersonalEventRepository
 import com.geoviksoft.turnia.core.domain.repository.SharedCalendarRepository
@@ -128,6 +130,7 @@ val dataModule: Module = module {
     }
     single<AppConfigRepository> { AppConfigRepositoryImpl() }
     single<NotificationRepository> { NotificationRepositoryImpl() }
+    single<InvitationLinkRepository> { InvitationLinkRepositoryImpl() }
     single<GroupRepository> {
         GroupRepositoryImpl(
             get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(),

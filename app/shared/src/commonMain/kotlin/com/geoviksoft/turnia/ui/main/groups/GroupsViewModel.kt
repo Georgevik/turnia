@@ -6,6 +6,7 @@ import com.geoviksoft.turnia.core.domain.model.JoinGroupError
 import com.geoviksoft.turnia.core.domain.model.JoinGroupStatus
 import com.geoviksoft.turnia.core.domain.model.JoinRequestStatus
 import com.geoviksoft.turnia.core.domain.repository.GroupRepository
+import com.geoviksoft.turnia.core.domain.repository.InvitationLinkRepository
 import com.geoviksoft.turnia.core.system.fold
 import com.geoviksoft.turnia.ui.main.groups.model.GroupRowUi
 import com.geoviksoft.turnia.ui.main.groups.model.GroupsFilter
@@ -24,10 +25,14 @@ import kotlinx.coroutines.launch
 
 class GroupsViewModel(
     private val groupRepository: GroupRepository,
+    private val invitationLinkRepository: InvitationLinkRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<GroupsUi>(GroupsUi.Loading)
     val uiState: StateFlow<GroupsUi> = _uiState.asStateFlow()
+
+    /** The code of an invitation link the user opened, until this tab puts it in the join sheet. */
+    val pendingJoinCode: StateFlow<String?> = invitationLinkRepository.pendingCode
 
     private val filter = MutableStateFlow(GroupsFilter.ALL)
 
@@ -94,6 +99,11 @@ class GroupsViewModel(
 
     fun joinCodeChanged(code: String) =
         updateSuccess { it.copy(joinCode = code.uppercase()) }
+
+    fun joinCodeReceived(code: String) {
+        joinCodeChanged(code)
+        invitationLinkRepository.codeHandled()
+    }
 
     fun requestToJoin() {
         val code = (_uiState.value as? GroupsUi.Success)?.joinCode?.trim().orEmpty()

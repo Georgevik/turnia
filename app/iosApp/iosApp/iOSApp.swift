@@ -73,7 +73,10 @@ struct iOSApp: App {
         WindowGroup {
             ContentView()
                 .onOpenURL { url in
-                    GIDSignIn.sharedInstance.handle(url)
+                    if GIDSignIn.sharedInstance.handle(url) { return }
+                    // The invitation link's custom scheme today; also the https Universal Link once
+                    // it is signed, which SwiftUI delivers through this same handler.
+                    InvitationLinkBridgeKt.onLinkOpened(link: url.absoluteString)
                 }
         }
     }

@@ -72,6 +72,18 @@ fun GroupsScreen(viewModel: GroupsViewModel = koinViewModel()) {
     var joinSheetOpen by rememberSaveable { mutableStateOf(false) }
     val joinSheetState = rememberModalBottomSheetState()
 
+    // A code from an opened invitation link waits until there is a sheet to put it in: while the
+    // groups load there is none, and handing it over then would lose it.
+    val pendingJoinCode by viewModel.pendingJoinCode.collectAsStateWithLifecycle()
+    val loaded = success != null
+    LaunchedEffect(pendingJoinCode, loaded) {
+        val code = pendingJoinCode ?: return@LaunchedEffect
+        if (!loaded) return@LaunchedEffect
+
+        viewModel.joinCodeReceived(code)
+        joinSheetOpen = true
+    }
+
     success?.userMessage?.let { message ->
         val visual = TurniaSnackbarVisual(message.text(), isError = message.isError)
         LaunchedEffect(message) {

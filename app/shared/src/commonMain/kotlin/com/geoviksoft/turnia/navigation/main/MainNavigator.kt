@@ -15,6 +15,13 @@ class MainNavigator(private val state: MainNavigationState) : Navigator {
         }
     }
 
+    /** Switches to [tab] showing its own screen, not whatever was left stacked on top of it. */
+    fun goToRoot(tab: MainRoute) {
+        val stack = state.backStacks.getValue(tab)
+        while (stack.size > 1) stack.removeLastOrNull()
+        state.topLevelRoute = tab
+    }
+
     override fun goBack() {
         val currentStack = state.backStacks.getValue(state.topLevelRoute)
         if (currentStack.last() == state.topLevelRoute) {

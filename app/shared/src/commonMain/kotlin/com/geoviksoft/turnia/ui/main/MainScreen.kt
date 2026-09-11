@@ -31,12 +31,12 @@ import com.geoviksoft.turnia.navigation.main.MainNavigator
 import com.geoviksoft.turnia.navigation.main.rememberMainNavigationState
 import com.geoviksoft.turnia.navigation.main.routes.MainRoute
 import com.geoviksoft.turnia.ui.group.detail.navigation.groupDetailNavigation
-import com.geoviksoft.turnia.ui.main.swap.navigation.swapNavigation
 import com.geoviksoft.turnia.ui.main.group.navigation.externalCalendarNavigation
 import com.geoviksoft.turnia.ui.main.groups.navigation.groupsNavigation
 import com.geoviksoft.turnia.ui.main.mycalendar.navigation.calendarNavigation
 import com.geoviksoft.turnia.ui.main.people.navigation.peopleNavigation
 import com.geoviksoft.turnia.ui.main.settings.navigation.settingsNavigation
+import com.geoviksoft.turnia.ui.main.swap.navigation.swapNavigation
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
 import com.geoviksoft.turnia.ui.system.TurniaSnackbarHost
 import org.jetbrains.compose.resources.StringResource
@@ -44,10 +44,10 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.tab_calendar
-import turnia.app.shared.generated.resources.tab_swap
 import turnia.app.shared.generated.resources.tab_groups
 import turnia.app.shared.generated.resources.tab_people
 import turnia.app.shared.generated.resources.tab_settings
+import turnia.app.shared.generated.resources.tab_swap
 
 private data class MainTabBarItem(
     val route: MainRoute,
@@ -82,6 +82,13 @@ fun MainScreen(viewModel: MainViewModel = koinViewModel()) {
     // takes care of itself: this screen only exists once the splash has handed over to Main.
     val pendingDestination by viewModel.pendingDestination.collectAsStateWithLifecycle()
     HandleNotificationTapped(pendingDestination, viewModel::destinationHandled, navigator)
+
+    // An opened invitation link only needs the Groups tab on screen: the tab puts the code in its
+    // join sheet and marks it handled, so it stays pending until the sheet actually has it.
+    val pendingJoinCode by viewModel.pendingJoinCode.collectAsStateWithLifecycle()
+    LaunchedEffect(pendingJoinCode) {
+        if (pendingJoinCode != null) navigator.goToRoot(MainRoute.GroupsTab)
+    }
 
     TrackScreen(state.backStacks[state.topLevelRoute]?.lastOrNull())
 

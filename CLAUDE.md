@@ -284,6 +284,31 @@ Functions  Calls: 3
   earlier tap from a device that was offline longer wins nothing, and a waiting list would cost a
   claims subcollection, a trigger and rules to protect them for a race that settles in milliseconds.
 
+## Invitation links
+
+- A group's code is shared as `https://turnia.club/join/CODE` ([`InvitationLink`](core/src/commonMain/kotlin/com/geoviksoft/turnia/core/domain/model/InvitationLink.kt)):
+  an https link because it is the only kind that still leads somewhere without the app. The page
+  behind it (`firebase/hosting/join.html`) shows the code, points at the store, and opens an
+  installed app through `turnia://join/CODE`.
+- **Host, scheme and path live in [`InvitationLinkConfig`](core/src/commonMain/kotlin/com/geoviksoft/turnia/core/domain/model/InvitationLinkConfig.kt).**
+  Files outside Kotlin repeat them and must change with it: `AndroidManifest.xml`, `Info.plist`, the
+  entitlements, and `firebase/hosting` (`join.html`, `apple-app-site-association`, the rewrite in
+  `firebase.json`).
+- An opened link is **state, not an event**, exactly like a tapped notification:
+  `InvitationLinkRepository` holds the code — through a cold start, or until the user has signed in —
+  `MainScreen` brings the Groups tab up, and the Groups tab puts it in the join sheet and marks it
+  handled. The code only prefills the sheet; joining still goes through `requestToJoinGroup`.
+- **The code survives an install on Android only**: the page hands Play `referrer=code=CODE`, and
+  `InstallReferrer` reads it once on first launch. iOS has no equivalent, so there the page tells the
+  user to paste the code.
+- `assetlinks.json` lists the **debug** signing key only. Before a release, add the SHA-256 of the
+  Play App Signing key (Play Console → *App integrity*), or Android opens the page instead of the app.
+- The landing page is deployed on its own: `firebase deploy --only hosting`. `turnia.club` is a
+  custom domain on the project's Hosting site (Console → Hosting → *Add custom domain*, then the DNS
+  records it asks for at the registrar). The apps only verify against it, so links do not open the
+  app until the domain serves `/.well-known/assetlinks.json` and `apple-app-site-association` over
+  https.
+
 ## Permissions (Security Rules)
 
 - **read** `groups/{g}/events`: only members of the group.
@@ -331,7 +356,8 @@ turnia/
 ├── core/               # Shared domain + business logic (KMP)
 └── firebase/           # Firebase project: config + Cloud Functions (deployed separately)
     ├── firebase.json · .firebaserc · firestore.rules · firestore.indexes.json · firestore-schema.md
-    └── functions/      # Cloud Functions (TypeScript): join requests, taking events, push, subscription verification, retention cleanup
+    ├── functions/      # Cloud Functions (TypeScript): join requests, taking events, push, subscription verification, retention cleanup
+    └── hosting/        # Firebase Hosting: the invitation-link landing page + Android/iOS link verification files
 ```
 
 > `firebase/` holds everything Firebase. `firebase/functions/` is a standalone Node.js/TypeScript project (Firebase CLI, deployed with `firebase deploy`). It runs on Google's servers, not inside the KMP app, and is not part of the Gradle build. Run all `firebase` CLI commands from the `firebase/` directory (where `firebase.json` lives). It exists only to hold backend logic the client must not do itself (see *Sensitive points*).
@@ -353,11 +379,11 @@ Use the run configurations provided by the run widget in your IDE's toolbar. You
 
 ## Pending: the paid Apple Developer Program
 
-Two features are written and shipped but cannot work yet, both for the same reason: the project is
-signed with a **Personal Team**, which cannot sign either capability. Xcode does not even list them
-under *Signing & Capabilities → + Capability*, and writing the entitlement by hand only breaks the
-build — Xcode fails to generate a profile. Both are blocked on an Apple Developer Program
-membership; neither has a workaround.
+Three features are written and shipped but cannot work yet, all for the same reason: the project is
+signed with a **Personal Team**, which cannot sign any of these capabilities. Xcode does not even
+list them under *Signing & Capabilities → + Capability*, and writing the entitlement by hand only
+breaks the build — Xcode fails to generate a profile. All are blocked on an Apple Developer Program
+membership; only the last has a workaround.
 
 - **Push (FCM)** — `aps-environment` is missing from
   [iosApp.entitlements](app/iosApp/iosApp/iosApp.entitlements). Without it iOS receives nothing.
@@ -365,6 +391,11 @@ membership; neither has a workaround.
   but every attempt fails until the setup below is complete. App Store guideline 4.8 requires it
   once an app offers third-party sign-in, and Turnia already offers Google, so this is release
   blocking rather than optional.
+- **Universal Links** — `com.apple.developer.associated-domains` with
+  `applinks:turnia.club` is missing, so an invitation link opens the web page instead of the app. The workaround is already
+  live: the page's *Abrir en Turnia* button opens the app through its custom scheme. The site already
+  serves the `apple-app-site-association` this needs, and `onOpenURL` already hands every URL to the
+  shared code, so adding the entitlement is the only step.
 
 ### Sign in with Apple — what is left
 

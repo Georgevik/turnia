@@ -1,0 +1,10 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["83GQ2T4N4H.com.geoviksoft.turnia.Turnia"],
+        "components": [{ "/": "/join/*" }]
+      }
+    ]
+  }
+}

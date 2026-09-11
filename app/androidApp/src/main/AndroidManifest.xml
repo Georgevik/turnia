@@ -27,6 +27,33 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- An invitation link opens the app directly once Android has checked the site's
+                 assetlinks.json (firebase/hosting) against this build's signing key. Unverified,
+                 it opens the web page, whose button comes back through the custom scheme below.
+                 Host, scheme and path must match InvitationLinkConfig. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                        android:host="turnia.club"
+                        android:pathPrefix="/join/"
+                        android:scheme="https" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                        android:host="join"
+                        android:scheme="turnia" />
+            </intent-filter>
         </activity>
 
         <service

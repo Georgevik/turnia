@@ -23,6 +23,19 @@
 				<string>com.googleusercontent.apps.570433560233-085g4o2j74b7fh5n5fhcp3pse3ptbc3e</string>
 			</array>
 		</dict>
+		<!-- How the invitation link's landing page opens the app. The https link itself cannot,
+		     until Universal Links are signed (paid Apple Developer Program). Must match
+		     InvitationLinkConfig.SCHEME. -->
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>InvitationLink</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>turnia</string>
+			</array>
+		</dict>
 	</array>
 </dict>
 </plist>

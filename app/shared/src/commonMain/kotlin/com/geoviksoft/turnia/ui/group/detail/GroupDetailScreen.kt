@@ -61,6 +61,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.geoviksoft.turnia.core.domain.model.InvitationLink
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.navigation.LocalNavigator
 import com.geoviksoft.turnia.navigation.LocalRootNavigator
@@ -631,8 +632,11 @@ private fun InvitationSection(
             val snackbar = LocalSnackbar.current
             val scope = rememberCoroutineScope()
             val copied = stringResource(Res.string.group_detail_code_copied)
-            val shareText =
-                stringResource(Res.string.group_detail_code_share_text, form.name, invitationCode)
+            val shareText = stringResource(
+                Res.string.group_detail_code_share_text,
+                form.name,
+                InvitationLink.of(invitationCode),
+            )
 
             InvitationCode(
                 code = invitationCode,

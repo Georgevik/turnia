@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.geoviksoft.turnia",
+      "sha256_cert_fingerprints": [
+        "FF:08:60:F3:97:EC:AF:A1:0C:26:1D:51:0B:61:5A:52:46:4C:BF:67:C0:9B:F4:F3:83:A0:3F:CD:52:0F:E1:5D"
+      ]
+    }
+  }
+]

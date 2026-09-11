@@ -4,6 +4,7 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
+import com.geoviksoft.turnia.di.AndroidAppModule
 import com.geoviksoft.turnia.di.initKoin
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
@@ -15,6 +16,7 @@ class TurniaApplication : Application() {
         initKoin(webClientId = BuildConfig.WEB_CLIENT_ID) {
             androidLogger(Level.INFO)
             androidContext(this@TurniaApplication)
+            modules(AndroidAppModule)
         }
         createNotificationChannel()
     }
