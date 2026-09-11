@@ -203,12 +203,12 @@ class DayDetailSheetViewModel(
         }
         val groupSections = visibleGroups.map { group ->
             EventTypeSectionUi(
-                source = EventTypeSectionUi.Source.Group(group.id.value, group.name),
+                source = EventTypeSectionUi.Source.Group(group.id.value, group.name, group.isAdmin),
                 events = group.types.map { it.toUi() },
             )
         }
 
-        return (personalSection + groupSections).filter { it.events.isNotEmpty() }
+        return personalSection + groupSections
     }
 
     private fun EventType.toUi() = EventTypeUi(

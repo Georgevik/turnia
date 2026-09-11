@@ -32,5 +32,8 @@ fun MyCalendarScreen(viewModel: MyCalendarViewModel = koinViewModel()) {
         onAddPersonalType = {
             rootNavigator.goTo(RootRoute.EventTypeDetailKey(EventTypeDetailData.NewPersonal))
         },
+        onAddGroupType = { groupId ->
+            rootNavigator.goTo(RootRoute.EventTypeDetailKey(EventTypeDetailData.NewGroup(groupId)))
+        },
     )
 }

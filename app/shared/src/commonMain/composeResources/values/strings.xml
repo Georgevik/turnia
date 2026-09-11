@@ -182,7 +182,6 @@
     <string name="group_delete_not_empty_error">Todavía queda gente en el grupo. Tienen que salir, o tienes que sacarlos, antes de eliminarlo.</string>
 
     <!-- Event types: detail (edit color / manage) -->
-    <string name="event_types_edit">Editar eventos</string>
     <string name="event_types_section_group">GRUPO</string>
     <string name="event_type_detail_title_group">Evento de grupo</string>
     <string name="event_type_detail_title_personal">Evento personal</string>

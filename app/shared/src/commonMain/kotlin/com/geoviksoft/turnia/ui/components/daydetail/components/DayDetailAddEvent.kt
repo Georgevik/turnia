@@ -3,6 +3,7 @@ package com.geoviksoft.turnia.ui.components.daydetail.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -12,13 +13,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.Surface
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.geoviksoft.turnia.ui.components.daydetail.DayAddMode
 import com.geoviksoft.turnia.ui.components.daydetail.model.EventTypeSectionUi
@@ -38,11 +39,14 @@ fun DayDetailAddEvent(
     onPickEventType: (eventType: EventTypeUi) -> Unit,
     onEditGroup: (groupId: String, groupName: String) -> Unit,
     onAddPersonalEventType: () -> Unit,
+    onAddGroupEventType: (groupId: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val filled = sections.filter { it.events.isNotEmpty() }
-    val personalSection = filled.firstOrNull { it.source is EventTypeSectionUi.Source.Personal }
-    val groupSections = filled.filter { it.source is EventTypeSectionUi.Source.Group }
+    val personalSection = sections.firstOrNull { it.source is EventTypeSectionUi.Source.Personal }
+    val groupSections = sections.filter { section ->
+        val source = section.source as? EventTypeSectionUi.Source.Group ?: return@filter false
+        section.events.isNotEmpty() || source.isAdmin
+    }
 
     Column(
         modifier = modifier.padding(vertical = 8.dp),
@@ -58,8 +62,6 @@ fun DayDetailAddEvent(
                 )
             }
             is DayAddMode.GroupOnly -> if (groupSections.isEmpty()) {
-                // An empty section is filtered out above, so a group whose types have all been
-                // deleted would otherwise render an add pane with nothing in it and no way out.
                 NoTypesPrompt(onManage = { onEditGroup(addMode.groupId.value, "") })
             } else {
                 InfoBanner(text = stringResource(Res.string.event_group_only_banner))
@@ -70,11 +72,16 @@ fun DayDetailAddEvent(
             CategoryArea(label = stringResource(Res.string.day_detail_group_events)) {
                 groupSections.forEach { section ->
                     val group = section.source as? EventTypeSectionUi.Source.Group ?: return@forEach
-                    GroupArea(
-                        title = group.groupName,
-                        onEdit = { onEditGroup(group.groupId, group.groupName) },
-                    ) {
-                        EventTypeChipRow(section.events, onPickEventType)
+                    GroupArea(title = group.groupName) {
+                        EventTypeChipRow(
+                            events = section.events,
+                            onPick = onPickEventType,
+                            trailing = if (group.isAdmin) {
+                                { AddEventChip(onClick = { onAddGroupEventType(group.groupId) }) }
+                            } else {
+                                null
+                            },
+                        )
                     }
                 }
             }
@@ -96,7 +103,6 @@ private fun CategoryArea(
 @Composable
 private fun GroupArea(
     title: String,
-    onEdit: () -> Unit,
     content: @Composable () -> Unit,
 ) {
     Surface(
@@ -108,7 +114,12 @@ private fun GroupArea(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            DaySectionHeader(title = title, onEdit = onEdit)
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
             content()
         }
     }

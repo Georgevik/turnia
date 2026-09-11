@@ -88,6 +88,7 @@ fun CalendarViewer(
     onMonthChanged: (LocalDate) -> Unit,
     onEditGroup: (groupId: String, groupName: String) -> Unit = { _, _ -> },
     onAddPersonalType: () -> Unit = {},
+    onAddGroupType: (groupId: String) -> Unit = {},
 ) {
     val anchorMonth = remember {
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
@@ -203,6 +204,7 @@ fun CalendarViewer(
                         dismissSheet()
                     },
                     openNewPersonalTypeScreen = { onAddPersonalType() },
+                    openNewGroupTypeScreen = onAddGroupType,
                     onClose = { dismissSheet() },
                 )
             }

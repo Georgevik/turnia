@@ -9,6 +9,11 @@ data class EventTypeSectionUi(
 ) {
     sealed interface Source {
         data object Personal : Source
-        data class Group(var groupId: String, var groupName: String) : Source
+
+        data class Group(
+            val groupId: String,
+            val groupName: String,
+            val isAdmin: Boolean,
+        ) : Source
     }
 }
