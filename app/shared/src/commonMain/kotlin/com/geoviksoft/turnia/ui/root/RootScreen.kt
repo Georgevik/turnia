@@ -37,12 +37,14 @@ import org.koin.compose.viewmodel.koinViewModel
 fun App(vm: RootViewModel = koinViewModel()) {
     val backStack = rememberNavBackStack(rootRouteSavedStateConfiguration, RootRoute.SplashKey)
     val userSession by vm.userSession.collectAsStateWithLifecycle(UserSession.Loading)
+    val pendingJoinCode by vm.pendingJoinCode.collectAsStateWithLifecycle()
 
     // Only once there is somebody to notify: asked on the sign-in screen it would be a dialog about
     // an app the user has not seen yet, and a refusal there is one the system will not ask again.
     if (userSession is UserSession.Authenticated) RequestNotificationPermission()
 
-    handleLogoutSignal(userSession, backStack)
+    HandleLogoutSignal(userSession, backStack)
+    HandleJoinGroupDeeplink(pendingJoinCode, backStack)
 
     TurniaTheme {
         val snackbarHostState = remember { SnackbarHostState() }
@@ -66,8 +68,21 @@ fun App(vm: RootViewModel = koinViewModel()) {
     }
 }
 
+/**
+ * An invitation link lands on Main's Groups tab, which a full-screen page opened from Main
+ * (an event type, a settings page) would otherwise keep covered. Before sign-in there is no Main
+ * yet, and the code simply waits for it.
+ */
 @Composable
-private fun handleLogoutSignal(userSession: UserSession, backStack: NavBackStack<NavKey>) {
+private fun HandleJoinGroupDeeplink(code: String?, backStack: NavBackStack<NavKey>) {
+    LaunchedEffect(code, backStack.size) {
+        if (code == null && RootRoute.MainKey !in backStack) return@LaunchedEffect
+        while (backStack.last() != RootRoute.MainKey) backStack.removeLastOrNull()
+    }
+}
+
+@Composable
+private fun HandleLogoutSignal(userSession: UserSession, backStack: NavBackStack<NavKey>) {
     LaunchedEffect(userSession) {
         if (backStack.lastOrNull() == RootRoute.SplashKey) return@LaunchedEffect
         when (userSession) {
