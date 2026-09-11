@@ -1,5 +1,5 @@
 import { onCall } from "firebase-functions/v2/https";
-import { getFirestore } from "firebase-admin/firestore";
+import { DocumentSnapshot, getFirestore } from "firebase-admin/firestore";
 import { TurniaError } from "./errors";
 import { requireFields, requireUid } from "./requests";
 
@@ -12,7 +12,8 @@ const MAX_RANGE_DAYS = 92; // ~3 months
  * directly. This callable runs with admin privileges: it checks the caller is
  * allowed (owner, or listed in the owner's `calendarSharedWith`), then gathers
  * the owner's group events (across all their groups) and personal events for a
- * bounded date range, plus the lookups needed to render them. Nothing is stored
+ * bounded date range, plus the lookups needed to render them — each shift's chain
+ * of holders included, since the chain is part of the owner's calendar. Nothing is stored
  * — no mirror, no duplication.
  *
  * Request data: `{ ownerUid: string, from: "YYYY-MM-DD", to: "YYYY-MM-DD" }`
@@ -72,10 +73,30 @@ export const getSharedCalendar = onCall(async (request) => {
           onSwap: doc.get("onSwap"),
           ownerId: doc.get("ownerId"),
           assigneeId: doc.get("assigneeId"),
+          holderUids: holdersOf(doc),
         }));
     })
   );
   const groupEvents = groupEventsPerGroup.flat();
+
+  // Names for the chains, and only for the uids in them: the rest of each roster stays out. A group
+  // the owner was revoked from gives none — they cannot read its roster themselves, and sharing a
+  // calendar is not a way around that — so those holders render as former members, as they do for
+  // the owner. The owner's own name comes from their profile, which covers the revoked case too.
+  const userNames: Record<string, string> = {};
+  ownerGroups.docs.forEach((group) => {
+    if (revokedGroupIds.has(group.id)) return;
+    const members = (group.get("members") as Record<string, { name?: string }> | undefined) ?? {};
+    groupEvents
+      .filter((event) => event.groupId === group.id)
+      .flatMap((event) => event.holderUids)
+      .forEach((uid) => {
+        const name = members[uid]?.name;
+        if (name) userNames[uid] = name;
+      });
+  });
+  const ownerName = (ownerDoc.get("name") as string | undefined) ?? "";
+  if (ownerName) userNames[ownerUid] = ownerName;
 
   // Personal events in range. Their `date` is a full ISO instant, not the plain "YYYY-MM-DD" a
   // group event carries, and it is the start of the day in the *writer's* timezone — so string
@@ -140,5 +161,15 @@ export const getSharedCalendar = onCall(async (request) => {
     groupEventTypeColors,
     groupEventTypes,
     groupNames,
+    userNames,
   };
 });
+
+/** Who has held the shift, in order: the creator, then whoever each transfer handed it to. */
+function holdersOf(doc: DocumentSnapshot): string[] {
+  const history = (doc.get("history") as { type?: string; toUid?: string }[] | undefined) ?? [];
+  const transfers = history
+    .filter((entry) => entry.type === "transferred" && entry.toUid)
+    .map((entry) => entry.toUid as string);
+  return [doc.get("ownerId") as string, ...transfers];
+}

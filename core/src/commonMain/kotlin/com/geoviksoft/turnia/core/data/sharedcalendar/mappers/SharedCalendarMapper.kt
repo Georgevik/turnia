@@ -5,6 +5,7 @@ import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.requests.Sh
 import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.requests.SharedGroupEventResponse
 import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.requests.SharedPersonalEventResponse
 import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.requests.SharedPersonalEventTypeResponse
+import com.geoviksoft.turnia.core.domain.model.EventHistoryEntry
 import com.geoviksoft.turnia.core.domain.model.EventId
 import com.geoviksoft.turnia.core.domain.model.EventTypeId
 import com.geoviksoft.turnia.core.domain.model.GroupEvent
@@ -31,7 +32,9 @@ class SharedCalendarMapper {
         }
 
         return SharedCalendar(
-            groupEvents = response.groupEvents.mapNotNull { map(it, groupTypes) },
+            groupEvents = response.groupEvents.mapNotNull {
+                map(it, groupTypes, response.userNames)
+            },
             personalEvents = response.personalEvents.mapNotNull { map(it, personalTypes) },
         )
     }
@@ -63,6 +66,7 @@ class SharedCalendarMapper {
     private fun map(
         event: SharedGroupEventResponse,
         types: Map<String, Map<EventTypeId, GroupEventType>>,
+        names: Map<String, String>,
     ): GroupEvent? {
         val type = types[event.groupId]?.get(EventTypeId(event.groupEventTypeId)) ?: return null
 
@@ -72,16 +76,14 @@ class SharedCalendarMapper {
             groupName = type.groupName,
             ownerId = UserId(event.ownerId),
             assigneeId = UserId(event.assigneeId),
-            // Every shift here is the owner's own, and the screen is already titled with their
-            // name: repeating it on each row would say nothing.
-            assigneeName = "",
+            assigneeName = names[event.assigneeId].orEmpty(),
             type = type,
             date = LocalDate.parse(event.date),
             onSwap = event.onSwap,
             colorHex = type.color,
-            // Only a group's own members may read the chain, and this viewer may be in none of the
-            // groups: the aggregation does not carry it.
-            history = emptyList(),
+            history = event.holderUids.map { uid ->
+                EventHistoryEntry(userId = UserId(uid), userName = names[uid].orEmpty())
+            },
         )
     }
 
