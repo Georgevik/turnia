@@ -5,7 +5,8 @@ package com.geoviksoft.turnia.di
  * Exposed as `KoinIOSKt.doInitKoin(webClientId:)` in the `Shared` framework.
  *
  * @param webClientId the Google OAuth **web** client id used as `serverId`.
+ * @param demo runs on made-up data; Swift only passes true from a debug build.
  */
-fun doInitKoin(webClientId: String) {
-    initKoin(webClientId)
+fun doInitKoin(webClientId: String, demo: Boolean) {
+    initKoin(webClientId, demo)
 }

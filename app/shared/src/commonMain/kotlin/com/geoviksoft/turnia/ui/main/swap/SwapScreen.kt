@@ -75,10 +75,10 @@ import turnia.app.shared.generated.resources.event_swap_take_cancel
 import turnia.app.shared.generated.resources.event_swap_take_confirm
 import turnia.app.shared.generated.resources.event_swap_take_confirm_body
 import turnia.app.shared.generated.resources.event_swap_take_confirm_title
-import turnia.app.shared.generated.resources.swap_empty_available_body
-import turnia.app.shared.generated.resources.swap_empty_available_title
-import turnia.app.shared.generated.resources.swap_empty_offered_body
-import turnia.app.shared.generated.resources.swap_empty_offered_title
+import turnia.app.shared.generated.resources.swap_empty_colleagues_body
+import turnia.app.shared.generated.resources.swap_empty_colleagues_title
+import turnia.app.shared.generated.resources.swap_empty_mine_body
+import turnia.app.shared.generated.resources.swap_empty_mine_title
 import turnia.app.shared.generated.resources.swap_empty_uncovered_body
 import turnia.app.shared.generated.resources.swap_empty_uncovered_title
 import turnia.app.shared.generated.resources.swap_filter_title
@@ -128,8 +128,8 @@ fun SwapScreen(viewModel: SwapViewModel = koinViewModel()) {
                     )
 
                     // Kept while it is on, even with nothing covered left, so it can be turned off.
-                    val offered = state.segment == SwapSegment.OFFERED
-                    if (offered && (state.hasCovered || state.onlyUncovered)) {
+                    val mine = state.segment == SwapSegment.MINE
+                    if (mine && (state.hasCovered || state.onlyUncovered)) {
                         UncoveredFilterChip(
                             selected = state.onlyUncovered,
                             onClick = viewModel::onlyUncoveredToggled,
@@ -139,7 +139,7 @@ fun SwapScreen(viewModel: SwapViewModel = koinViewModel()) {
                     SwapMessageSnackbar(state.userMessage, viewModel::userMessageShown)
 
                     if (state.rows.isEmpty()) {
-                        val (title, body) = if (offered && state.onlyUncovered && state.hasCovered) {
+                        val (title, body) = if (mine && state.onlyUncovered && state.hasCovered) {
                             Res.string.swap_empty_uncovered_title to Res.string.swap_empty_uncovered_body
                         } else {
                             state.segment.emptyState()
@@ -152,7 +152,7 @@ fun SwapScreen(viewModel: SwapViewModel = koinViewModel()) {
                     } else {
                         SwapEventList(
                             rows = state.rows,
-                            onTake = if (offered) null else { event -> pendingTake = event },
+                            onTake = if (mine) null else { event -> pendingTake = event },
                         )
                     }
 
@@ -210,7 +210,7 @@ private fun SwapEventList(rows: List<SwapRowUi>, onTake: ((DayEventUi) -> Unit)?
             items(monthRows, key = { it.event.id.value }, contentType = { "event" }) { row ->
                 SwapEventRow(
                     event = row.event,
-                    offeredBy = row.offeredBy,
+                    requestedBy = row.requestedBy,
                     coveredBy = row.coveredBy,
                     today = today,
                     onTake = if (onTake != null && row.event.canTake) {
@@ -287,11 +287,11 @@ private fun SwapMessageSnackbar(message: SwapMessage?, onShown: () -> Unit) {
 
 
 private fun SwapSegment.emptyState(): Pair<StringResource, StringResource> = when (this) {
-    SwapSegment.OFFERED ->
-        Res.string.swap_empty_offered_title to Res.string.swap_empty_offered_body
+    SwapSegment.MINE ->
+        Res.string.swap_empty_mine_title to Res.string.swap_empty_mine_body
 
-    SwapSegment.AVAILABLE ->
-        Res.string.swap_empty_available_title to Res.string.swap_empty_available_body
+    SwapSegment.COLLEAGUES ->
+        Res.string.swap_empty_colleagues_title to Res.string.swap_empty_colleagues_body
 }
 
 private fun SwapMessage.resource(): StringResource = when (this) {

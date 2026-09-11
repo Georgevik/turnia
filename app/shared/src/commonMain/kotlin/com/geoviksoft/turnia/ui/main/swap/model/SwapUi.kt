@@ -7,10 +7,10 @@ import com.geoviksoft.turnia.core.domain.model.UserProfile
 import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
 
 /**
- * [OFFERED] holds every shift the viewer put up for swap in the window: the ones still waiting and
+ * [MINE] holds every shift the viewer asked to swap in the window: the ones still waiting and
  * the ones somebody has since taken, told apart on the row by [SwapRowUi.coveredBy].
  */
-enum class SwapSegment { OFFERED, AVAILABLE }
+enum class SwapSegment { MINE, COLLEAGUES }
 
 @Immutable
 data class SwapGroupFilterUi(
@@ -22,7 +22,7 @@ data class SwapGroupFilterUi(
 
 
 @Immutable
-data class SwapOffererUi(
+data class SwapRequesterUi(
     val name: String,
     val avatar: UserProfile.AnimalAvatar,
 )
@@ -30,8 +30,8 @@ data class SwapOffererUi(
 @Immutable
 data class SwapRowUi(
     val event: DayEventUi,
-    val offeredBy: SwapOffererUi? = null,
-    /** Who covers it now, on an offer somebody took. Blank is a member who has since left. */
+    val requestedBy: SwapRequesterUi? = null,
+    /** Who covers it now, on a request somebody took up. Blank is a member who has since left. */
     val coveredBy: String? = null,
 )
 
@@ -44,9 +44,9 @@ sealed interface SwapUi {
         val segments: Map<SwapSegment, List<SwapRowUi>>,
         val segment: SwapSegment,
         val groups: List<SwapGroupFilterUi>,
-        /** [SwapSegment.OFFERED] without the offers somebody already took. */
+        /** [SwapSegment.MINE] without the requests somebody already covered. */
         val onlyUncovered: Boolean = false,
-        /** Whether any offer was taken at all: with none, hiding them would change nothing. */
+        /** Whether any request was covered at all: with none, hiding them would change nothing. */
         val hasCovered: Boolean = false,
         val userMessage: SwapMessage? = null,
     ) : SwapUi {

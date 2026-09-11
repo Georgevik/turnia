@@ -17,7 +17,7 @@ class TurniaApplication : Application() {
         super.onCreate()
         // Before anything reaches Firebase: a call made earlier would go out with no App Check token.
         Firebase.appCheck.installAppCheckProviderFactory(appCheckProviderFactory())
-        initKoin(webClientId = BuildConfig.WEB_CLIENT_ID) {
+        initKoin(webClientId = BuildConfig.WEB_CLIENT_ID, demo = isDemoMode(this)) {
             androidLogger(Level.INFO)
             androidContext(this@TurniaApplication)
             modules(AndroidAppModule)

@@ -43,7 +43,7 @@ import com.geoviksoft.turnia.ui.components.calendar.model.TransferHolderUi
 import com.geoviksoft.turnia.ui.components.event.AcronymChip
 import com.geoviksoft.turnia.ui.components.event.GroupLabel
 import com.geoviksoft.turnia.ui.components.event.TransferTrail
-import com.geoviksoft.turnia.ui.main.swap.model.SwapOffererUi
+import com.geoviksoft.turnia.ui.main.swap.model.SwapRequesterUi
 import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
 import com.geoviksoft.turnia.ui.system.components.UserAvatar
 import com.geoviksoft.turnia.ui.system.components.UserAvatarSize
@@ -63,37 +63,21 @@ import turnia.app.shared.generated.resources.group_member_former
 import turnia.app.shared.generated.resources.swap_covered_by
 import turnia.app.shared.generated.resources.swap_covered_by_former
 import turnia.app.shared.generated.resources.swap_date_today
-import turnia.app.shared.generated.resources.swap_date_tomorrow
-import turnia.app.shared.generated.resources.swap_offered_by
+import turnia.app.shared.generated.resources.swap_requested_by
 import kotlin.time.Clock
 
-/** Sized so "Mañana" and a two-digit day both sit centred without wrapping. */
+/** Sized so a weekday, "Hoy" and a two-digit day all sit centred without wrapping. */
 private val DateTileWidth = 52.dp
 private val DateTileGap = 12.dp
 
 /**
  * A shift in the swap tab.
- *
- * Not the day sheet's row: the lists here span three months, so **the date is what the reader is
- * looking for** and it leads, weekday included — "the tenth" is useless without knowing it is a
- * Thursday. Today and tomorrow are named instead, and lit: a shift about to happen is the one
- * whose swap is urgent. What the day sheet says and this deliberately does not:
- *
- * - No "pidiendo cambio" badge. Every row under that tab is on offer; saying so on each one is noise.
- * - No "assigned to" chip. Where a shift has moved, [TransferTrail] already names who holds it and
- *   shows how it got there; where it has not, the holder is the reader.
- *
- * The one exception is a shift somebody else offers: there the holder is exactly what the reader
- * has to know before taking it, so [offeredBy] heads the card, above the date.
- *
- * An offer somebody took turns green, with a tick and [coveredBy]'s name: among the offers still
- * waiting, the ones already settled have to stand out without reading a word.
  */
 @Composable
 fun SwapEventRow(
     event: DayEventUi,
     modifier: Modifier = Modifier,
-    offeredBy: SwapOffererUi? = null,
+    requestedBy: SwapRequesterUi? = null,
     coveredBy: String? = null,
     today: LocalDate = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
     onTake: (() -> Unit)? = null,
@@ -111,8 +95,8 @@ fun SwapEventRow(
         shadowElevation = 1.dp,
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
-            offeredBy?.let { offerer ->
-                OffererHeader(offerer)
+            requestedBy?.let { requester ->
+                RequesterHeader(requester)
                 Spacer(Modifier.height(10.dp))
             }
 
@@ -157,7 +141,7 @@ fun SwapEventRow(
             // Indented to the text column, so the tile stays the only thing on the left edge.
             val contentStart = Modifier.padding(start = DateTileWidth + DateTileGap)
 
-            // On a covered offer a two-link chain is only "me → them", which the tick already says.
+            // On a covered request a two-link chain is only "me → them", which the tick already says.
             val trailAddsSomething = coveredBy == null || event.transferChain.size > 2
             if (event.transferChain.isNotEmpty() && trailAddsSomething) {
                 HorizontalDivider(
@@ -188,14 +172,14 @@ fun SwapEventRow(
 }
 
 @Composable
-private fun OffererHeader(offerer: SwapOffererUi) {
+private fun RequesterHeader(requester: SwapRequesterUi) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        UserAvatar(avatar = offerer.avatar, size = UserAvatarSize.S)
+        UserAvatar(avatar = requester.avatar, size = UserAvatarSize.S)
         Text(
-            text = offerer.name.ifBlank { stringResource(Res.string.group_member_former) },
+            text = requester.name.ifBlank { stringResource(Res.string.group_member_former) },
             modifier = Modifier.weight(1f, fill = false),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.SemiBold,
@@ -204,7 +188,7 @@ private fun OffererHeader(offerer: SwapOffererUi) {
             overflow = TextOverflow.Ellipsis,
         )
         Text(
-            text = stringResource(Res.string.swap_offered_by),
+            text = stringResource(Res.string.swap_requested_by),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
@@ -283,18 +267,19 @@ private fun DateTile(date: LocalDate, today: LocalDate, tint: Color, ground: Col
     val months = stringArrayResource(Res.array.calendar_months_short)
     val colors = MaterialTheme.colorScheme
 
-    val soon = when (date) {
-        today -> stringResource(Res.string.swap_date_today)
-        today.plus(1, DateTimeUnit.DAY) -> stringResource(Res.string.swap_date_tomorrow)
-        else -> null
+    val soon = date == today || date == today.plus(1, DateTimeUnit.DAY)
+    val label = if (date == today) {
+        stringResource(Res.string.swap_date_today)
+    } else {
+        weekdays[date.dayOfWeek.ordinal]
     }
     val background = when {
-        soon != null -> colors.primaryContainer
+        soon -> colors.primaryContainer
         tint.isSpecified -> tint.copy(alpha = 0.14f).compositeOver(ground)
         else -> colors.surfaceContainerHigh
     }
-    val content = if (soon != null) colors.onPrimaryContainer else colors.onSurface
-    val secondary = if (soon != null) colors.onPrimaryContainer else colors.onSurfaceVariant
+    val content = if (soon) colors.onPrimaryContainer else colors.onSurface
+    val secondary = if (soon) colors.onPrimaryContainer else colors.onSurfaceVariant
 
     Surface(
         modifier = Modifier.width(DateTileWidth),
@@ -306,7 +291,7 @@ private fun DateTile(date: LocalDate, today: LocalDate, tint: Color, ground: Col
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = soon ?: weekdays[date.dayOfWeek.ordinal],
+                text = label,
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.SemiBold,
                 color = secondary,
@@ -342,7 +327,7 @@ private fun SwapEventRowPreview() {
             SwapEventRow(event = previewEvent(), today = today)
             // Tomorrow, so the tile is lit.
             SwapEventRow(event = previewEvent(date = LocalDate(2026, 9, 10)), today = today)
-            // One I took from Ana and now offer on: the trail says where it came from.
+            // One I took from Ana and now need swapped again: the trail says where it came from.
             SwapEventRow(
                 event = previewEvent(
                     chain = listOf(
@@ -371,7 +356,7 @@ private fun SwapEventRowPreview() {
             SwapEventRow(
                 event = previewEvent(name = "Tarde", acronym = "T", date = LocalDate(2026, 9, 18))
                     .copy(assigneeIsMe = false, isOwner = false, assigneeName = "Carla"),
-                offeredBy = SwapOffererUi(name = "Carla", avatar = UserProfile.AnimalAvatar.PREVIEW),
+                requestedBy = SwapRequesterUi(name = "Carla", avatar = UserProfile.AnimalAvatar.PREVIEW),
                 today = today,
                 onTake = {},
             )

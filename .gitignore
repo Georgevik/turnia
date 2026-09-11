@@ -24,3 +24,7 @@ node_modules/
 keystore.properties
 *.jks
 *.keystore
+
+# Store screenshots: rebuilt by store/screenshots/generate.py from demo-mode captures
+/store/screenshots/*
+!/store/screenshots/generate.py

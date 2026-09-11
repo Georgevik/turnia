@@ -80,12 +80,20 @@ struct iOSApp: App {
 
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
+    /// Made-up data instead of Firebase, for store screenshots: launch a debug build with
+    /// `-TurniaDemo` (`xcrun simctl launch booted com.geoviksoft.turnia.Turnia -TurniaDemo`).
+    #if DEBUG
+    private static let demo = ProcessInfo.processInfo.arguments.contains("-TurniaDemo")
+    #else
+    private static let demo = false
+    #endif
+
     init() {
         // Before configure(): the factory is read when Firebase starts, and a call made without it
         // goes out with no App Check token.
         AppCheck.setAppCheckProviderFactory(TurniaAppCheckProviderFactory())
         FirebaseApp.configure()
-        KoinIOSKt.doInitKoin(webClientId: Self.webClientId)
+        KoinIOSKt.doInitKoin(webClientId: Self.webClientId, demo: Self.demo)
     }
 
     var body: some Scene {

@@ -14,8 +14,8 @@ import com.geoviksoft.turnia.ui.main.swap.model.SwapSegment
 import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
-import turnia.app.shared.generated.resources.swap_segment_available
-import turnia.app.shared.generated.resources.swap_segment_offered
+import turnia.app.shared.generated.resources.swap_segment_colleagues
+import turnia.app.shared.generated.resources.swap_segment_mine
 
 /** Which of the lists is showing. Chips rather than tabs, as everywhere else that filters a list. */
 @Composable
@@ -40,14 +40,14 @@ fun SwapSegmentChips(
 
 @Composable
 private fun SwapSegment.label(): String = when (this) {
-    SwapSegment.OFFERED -> stringResource(Res.string.swap_segment_offered)
-    SwapSegment.AVAILABLE -> stringResource(Res.string.swap_segment_available)
+    SwapSegment.MINE -> stringResource(Res.string.swap_segment_mine)
+    SwapSegment.COLLEAGUES -> stringResource(Res.string.swap_segment_colleagues)
 }
 
 @Preview
 @Composable
 private fun SwapSegmentChipsPreview() {
     PreviewTurniaTheme {
-        SwapSegmentChips(selected = SwapSegment.OFFERED, onSelected = {})
+        SwapSegmentChips(selected = SwapSegment.MINE, onSelected = {})
     }
 }
