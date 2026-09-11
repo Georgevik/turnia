@@ -52,16 +52,11 @@ class PersonalEventFirestore(
             }
 
             var known = cachedEvents
-            // An empty cache is fetched whole once, and only once: a range with no events of its
-            // own has no markers either, and would otherwise ask again on every emission.
-            var fetched = cachedEvents.isNotEmpty()
             var settled = false
 
             emitAll(
                 userSyncFirestore.observe(userId).mapNotNull { sync ->
-                    val staleMonths =
-                        if (!fetched) months.associateWith { null }
-                        else staleEventMonths(months, sync, known.updatedByMonth())
+                    val staleMonths = staleEventMonths(months, sync, known.updatedByMonth())
 
                     if (staleMonths.isEmpty()) {
                         // Nothing moved: the emission before this one still stands
@@ -78,7 +73,6 @@ class PersonalEventFirestore(
 
                     val merged = known.map { cached -> serverEvents.remove(cached.id) ?: cached }
                     known = merged + serverEvents.values
-                    fetched = true
                     settled = true
                     known.areNotDeleted()
                 }

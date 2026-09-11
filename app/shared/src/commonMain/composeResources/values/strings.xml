@@ -345,10 +345,12 @@
 
     <!-- Swap tab -->
     <string name="swap_title">Mis cambios</string>
-    <string name="swap_segment_offered">Los ofrezco</string>
-    <string name="swap_segment_covered">Los cubre otro</string>
+    <string name="swap_segment_offered">Mis ofertas</string>
     <string name="swap_segment_available">Los ofrecen otros</string>
     <string name="swap_offered_by">lo ofrece</string>
+    <string name="swap_covered_by">Lo cubre %1$s</string>
+    <string name="swap_covered_by_former">Lo cubre un antiguo miembro</string>
+    <string name="swap_filter_uncovered">Solo sin cubrir</string>
     <string name="swap_filter_title">Filtrar por grupo</string>
     <string name="swap_date_today">Hoy</string>
     <string name="swap_date_tomorrow">Mañana</string>
@@ -356,8 +358,8 @@
     <string name="swap_filter_all">Todos los grupos</string>
     <string name="swap_empty_offered_title">Nada en el escaparate</string>
     <string name="swap_empty_offered_body">No has puesto ningún turno para cambiar. Tu tiempo libre sigue siendo teórico.</string>
-    <string name="swap_empty_covered_title">Todo sigue siendo tuyo</string>
-    <string name="swap_empty_covered_body">Nadie te ha cubierto nada todavía. Paciencia, o una tarta bien colocada.</string>
+    <string name="swap_empty_uncovered_title">Todo cubierto</string>
+    <string name="swap_empty_uncovered_body">Todas tus ofertas ya tienen quien las cubra. Quita el filtro para verlas.</string>
     <string name="swap_empty_available_title">Nadie suelta nada</string>
     <string name="swap_empty_available_body">Ningún compañero ofrece turnos ahora mismo. Cuando alguien ponga uno, lo verás aquí.</string>
 

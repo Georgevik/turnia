@@ -42,6 +42,12 @@ val Amber500 = Color(0xFFC0873E)
 val Amber700 = Color(0xFF6E4A1E)
 val Amber800 = Color(0xFF543200)
 
+// Green — success. Not a Material role: a covered shift has to read as settled at a glance, and
+val Green100 = Color(0xFFDCF3E3)
+val Green200 = Color(0xFFA3DDB5)
+val Green700 = Color(0xFF1E6B3C)
+val Green900 = Color(0xFF15311F)
+
 // Red — error
 val Red100 = Color(0xFFFFDAD6)
 val Red200 = Color(0xFFFFB4AB)

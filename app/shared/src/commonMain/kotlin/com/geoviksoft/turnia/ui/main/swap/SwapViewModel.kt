@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
@@ -52,6 +53,7 @@ class SwapViewModel(
 
     private val deselectedGroups = MutableStateFlow<Set<GroupId>>(emptySet())
     private val segment = MutableStateFlow(SwapSegment.OFFERED)
+    private val onlyUncovered = MutableStateFlow(false)
     private val userMessage = MutableStateFlow<SwapMessage?>(null)
 
     private val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
@@ -71,14 +73,16 @@ class SwapViewModel(
                 swapEvents,
                 groupRepository.getGroups(),
                 avatars,
-                combine(deselectedGroups, segment, ::Pair),
+                combine(deselectedGroups, segment, onlyUncovered, ::Filters),
                 userMessage,
-            ) { (userId, events), groups, avatars, (deselected, segment), message ->
-                build(userId, events, groups, avatars, deselected, segment, message)
+            ) { (userId, events), groups, avatars, filters, message ->
+                build(userId, events, groups, avatars, filters, message)
             }.collect { state -> _uiState.value = state }
         }
 
+        // Only the other members' offers show a face, so nothing is read until that list is opened.
         viewModelScope.launch {
+            segment.first { it == SwapSegment.AVAILABLE }
             swapEvents
                 .map { (userId, events) ->
                     events.filter { it.offeredByOther(userId) }.map { it.assigneeId }.toSet()
@@ -95,6 +99,8 @@ class SwapViewModel(
     }
 
     fun allGroupsSelected() = deselectedGroups.update { emptySet() }
+
+    fun onlyUncoveredToggled() = onlyUncovered.update { !it }
 
     fun takeEvent(event: DayEventUi) {
         val groupId = event.groupId ?: return
@@ -120,45 +126,57 @@ class SwapViewModel(
         events: List<GroupEvent>,
         groups: List<Group>,
         avatars: Map<UserId, UserProfile.AnimalAvatar>,
-        deselected: Set<GroupId>,
-        segment: SwapSegment,
+        filters: Filters,
         message: SwapMessage?,
     ): SwapUi.Success {
         val revoked = groups.filter { it.isRevoked }.map { it.id }.toSet()
-        val visible = events.filter { it.groupId !in deselected }
+        val visible = events.filter { it.groupId !in filters.deselected }
+        val hasCovered = visible.any { it.handedAwayBy(userId) }
 
         return SwapUi.Success(
             segments = SwapSegment.entries.associateWith { segment ->
                 visible.filter { segment.holds(it, userId, revoked) }
-                    .sortedWith(compareBy({ it.date }, { it.id.value }))
-                    .map { event ->
-                        SwapRowUi(
-                            event = event
-                                .toUi(currentUserId = userId, activeMember = event.groupId !in revoked)
-                                .copy(timeRange = event.type.hours()),
-                            offeredBy = if (event.offeredByOther(userId)) {
-                                SwapOffererUi(
-                                    name = event.assigneeName,
-                                    avatar = avatars[event.assigneeId] ?: UserProfile.AnimalAvatar.NONE,
-                                )
-                            } else {
-                                null
-                            },
-                        )
+                    .filterNot {
+                        segment == SwapSegment.OFFERED && filters.onlyUncovered &&
+                            it.handedAwayBy(userId)
                     }
+                    .sortedWith(compareBy({ it.date }, { it.id.value }))
+                    .map { event -> row(event, userId, revoked, avatars) }
             },
-            segment = segment,
+            segment = filters.segment,
+            onlyUncovered = filters.onlyUncovered,
+            hasCovered = hasCovered,
             groups = groups.map { group ->
                 SwapGroupFilterUi(
                     id = group.id,
                     name = group.name,
                     color = group.color.orEmpty().toComposeColorOr(entityColor(group.id.value)),
-                    selected = group.id !in deselected,
+                    selected = group.id !in filters.deselected,
                 )
             },
             userMessage = message,
         )
     }
+
+    private fun row(
+        event: GroupEvent,
+        userId: UserId,
+        revoked: Set<GroupId>,
+        avatars: Map<UserId, UserProfile.AnimalAvatar>,
+    ) = SwapRowUi(
+        event = event
+            .toUi(currentUserId = userId, activeMember = event.groupId !in revoked)
+            .copy(timeRange = event.type.hours()),
+        offeredBy = if (event.offeredByOther(userId)) {
+            SwapOffererUi(
+                name = event.assigneeName,
+                avatar = avatars[event.assigneeId] ?: UserProfile.AnimalAvatar.NONE,
+            )
+        } else {
+            null
+        },
+        coveredBy = event.assigneeName.takeIf { event.handedAwayBy(userId) },
+    )
 
     private fun GroupEventType.hours(): String? = when {
         startTime != null && endTime != null -> "$startTime – $endTime"
@@ -170,14 +188,30 @@ class SwapViewModel(
         userId: UserId,
         revoked: Set<GroupId>,
     ): Boolean = when (this) {
-        SwapSegment.OFFERED -> event.assigneeId == userId && event.onSwap
-        SwapSegment.COVERED -> event.ownerId == userId && event.assigneeId != userId
+        SwapSegment.OFFERED -> (event.assigneeId == userId && event.onSwap) ||
+            event.handedAwayBy(userId)
+        // Not from a group the viewer was removed from: they could see the offer but never take it.
         SwapSegment.AVAILABLE -> event.offeredByOther(userId) && event.groupId !in revoked
     }
 
     private fun GroupEvent.offeredByOther(userId: UserId) = onSwap && assigneeId != userId
 
+    /**
+     * The viewer held this shift once and somebody took it from them. A shift only ever moves by
+     * being taken, so every holder in its chain but the last put it on offer — including one who
+     * had taken it from somebody else first. Read off the chain the event already carries: no
+     * extra query, and the name comes from the group's own member list.
+     */
+    private fun GroupEvent.handedAwayBy(userId: UserId) =
+        assigneeId != userId && history.any { it.userId == userId }
+
     private data class ViewerEvents(val userId: UserId, val events: List<GroupEvent>)
+
+    private data class Filters(
+        val deselected: Set<GroupId>,
+        val segment: SwapSegment,
+        val onlyUncovered: Boolean,
+    )
 
     private fun SwapError.toMessage(): SwapMessage = when (this) {
         SwapError.NotMember -> SwapMessage.NotMember

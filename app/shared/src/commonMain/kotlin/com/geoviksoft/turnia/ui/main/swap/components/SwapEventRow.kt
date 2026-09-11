@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Button
@@ -46,6 +47,7 @@ import com.geoviksoft.turnia.ui.main.swap.model.SwapOffererUi
 import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
 import com.geoviksoft.turnia.ui.system.components.UserAvatar
 import com.geoviksoft.turnia.ui.system.components.UserAvatarSize
+import com.geoviksoft.turnia.ui.system.successColors
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -58,6 +60,8 @@ import turnia.app.shared.generated.resources.calendar_months_short
 import turnia.app.shared.generated.resources.calendar_weekdays_short
 import turnia.app.shared.generated.resources.event_swap_take
 import turnia.app.shared.generated.resources.group_member_former
+import turnia.app.shared.generated.resources.swap_covered_by
+import turnia.app.shared.generated.resources.swap_covered_by_former
 import turnia.app.shared.generated.resources.swap_date_today
 import turnia.app.shared.generated.resources.swap_date_tomorrow
 import turnia.app.shared.generated.resources.swap_offered_by
@@ -81,19 +85,29 @@ private val DateTileGap = 12.dp
  *
  * The one exception is a shift somebody else offers: there the holder is exactly what the reader
  * has to know before taking it, so [offeredBy] heads the card, above the date.
+ *
+ * An offer somebody took turns green, with a tick and [coveredBy]'s name: among the offers still
+ * waiting, the ones already settled have to stand out without reading a word.
  */
 @Composable
 fun SwapEventRow(
     event: DayEventUi,
     modifier: Modifier = Modifier,
     offeredBy: SwapOffererUi? = null,
+    coveredBy: String? = null,
     today: LocalDate = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
     onTake: (() -> Unit)? = null,
 ) {
+    val cardColor = if (coveredBy != null) {
+        MaterialTheme.successColors.container
+    } else {
+        MaterialTheme.colorScheme.surfaceContainerLowest
+    }
+
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        color = cardColor,
         shadowElevation = 1.dp,
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
@@ -106,7 +120,7 @@ fun SwapEventRow(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(DateTileGap),
             ) {
-                DateTile(date = event.date, today = today, tint = event.background)
+                DateTile(date = event.date, today = today, tint = event.background, ground = cardColor)
 
                 Column(
                     modifier = Modifier.weight(1f),
@@ -135,13 +149,17 @@ fun SwapEventRow(
                     }
 
                     MetaLine(groupName = event.groupName, timeRange = event.timeRange)
+
+                    coveredBy?.let { CoveredLine(name = it) }
                 }
             }
 
             // Indented to the text column, so the tile stays the only thing on the left edge.
             val contentStart = Modifier.padding(start = DateTileWidth + DateTileGap)
 
-            if (event.transferChain.isNotEmpty()) {
+            // On a covered offer a two-link chain is only "me → them", which the tick already says.
+            val trailAddsSomething = coveredBy == null || event.transferChain.size > 2
+            if (event.transferChain.isNotEmpty() && trailAddsSomething) {
                 HorizontalDivider(
                     modifier = contentStart.padding(vertical = 10.dp),
                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
@@ -194,6 +212,33 @@ private fun OffererHeader(offerer: SwapOffererUi) {
     }
 }
 
+@Composable
+private fun CoveredLine(name: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Icon(
+            imageVector = Icons.Default.CheckCircle,
+            contentDescription = null,
+            modifier = Modifier.size(18.dp),
+            tint = MaterialTheme.successColors.onContainer,
+        )
+        Text(
+            text = if (name.isBlank()) {
+                stringResource(Res.string.swap_covered_by_former)
+            } else {
+                stringResource(Res.string.swap_covered_by, name)
+            },
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.successColors.onContainer,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
 /** Group and hours on one line: both are context, and neither is worth a line of its own. */
 @Composable
 private fun MetaLine(groupName: String?, timeRange: String?) {
@@ -233,7 +278,7 @@ private fun MetaLine(groupName: String?, timeRange: String?) {
  * beside it read as one thing.
  */
 @Composable
-private fun DateTile(date: LocalDate, today: LocalDate, tint: Color) {
+private fun DateTile(date: LocalDate, today: LocalDate, tint: Color, ground: Color) {
     val weekdays = stringArrayResource(Res.array.calendar_weekdays_short)
     val months = stringArrayResource(Res.array.calendar_months_short)
     val colors = MaterialTheme.colorScheme
@@ -245,7 +290,7 @@ private fun DateTile(date: LocalDate, today: LocalDate, tint: Color) {
     }
     val background = when {
         soon != null -> colors.primaryContainer
-        tint.isSpecified -> tint.copy(alpha = 0.14f).compositeOver(colors.surfaceContainerLowest)
+        tint.isSpecified -> tint.copy(alpha = 0.14f).compositeOver(ground)
         else -> colors.surfaceContainerHigh
     }
     val content = if (soon != null) colors.onPrimaryContainer else colors.onSurface
@@ -293,21 +338,21 @@ private fun SwapEventRowPreview() {
             modifier = Modifier.width(360.dp).padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            // "Los ofrezco": mine, still mine, no chain — so nothing but the shift and its date.
+            // "Mis ofertas": mine, still mine, no chain — so nothing but the shift and its date.
             SwapEventRow(event = previewEvent(), today = today)
             // Tomorrow, so the tile is lit.
             SwapEventRow(event = previewEvent(date = LocalDate(2026, 9, 10)), today = today)
-            // "Los cubre otro": one transfer, so the trail names who has it now.
+            // One I took from Ana and now offer on: the trail says where it came from.
             SwapEventRow(
                 event = previewEvent(
                     chain = listOf(
+                        TransferHolderUi("Ana", isMe = false),
                         TransferHolderUi("Yo", isMe = true),
-                        TransferHolderUi("Bruno", isMe = false),
                     ),
                 ),
                 today = today,
             )
-            // The same, offered onward by Bruno — which is the one row here that can be acted on.
+            // Mine, taken by Bruno and passed on to Carla: green, and the trail shows the whole way.
             SwapEventRow(
                 event = previewEvent(
                     name = "Noche",
@@ -316,10 +361,11 @@ private fun SwapEventRowPreview() {
                     chain = listOf(
                         TransferHolderUi("Yo", isMe = true),
                         TransferHolderUi("Bruno", isMe = false),
+                        TransferHolderUi("Carla", isMe = false),
                     ),
-                ),
+                ).copy(assigneeIsMe = false, assigneeName = "Carla"),
+                coveredBy = "Carla",
                 today = today,
-                onTake = {},
             )
             // "Los ofrecen otros": Carla's shift, so her name heads the card above the button.
             SwapEventRow(
@@ -328,6 +374,13 @@ private fun SwapEventRowPreview() {
                 offeredBy = SwapOffererUi(name = "Carla", avatar = UserProfile.AnimalAvatar.PREVIEW),
                 today = today,
                 onTake = {},
+            )
+            // "Mis ofertas", taken by Bruno: green, with his name by the tick.
+            SwapEventRow(
+                event = previewEvent(date = LocalDate(2026, 9, 20))
+                    .copy(assigneeIsMe = false, assigneeName = "Bruno"),
+                coveredBy = "Bruno",
+                today = today,
             )
             // A shift with no acronym and no hours, to check the layout does not collapse.
             SwapEventRow(
