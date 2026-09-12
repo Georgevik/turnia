@@ -11,8 +11,7 @@ import com.geoviksoft.turnia.core.system.fold
 import com.geoviksoft.turnia.ui.main.groups.model.GroupRowUi
 import com.geoviksoft.turnia.ui.main.groups.model.GroupsFilter
 import com.geoviksoft.turnia.ui.main.groups.model.JoinRequestRowUi
-import com.geoviksoft.turnia.ui.system.color.entityColor
-import com.geoviksoft.turnia.ui.system.color.toComposeColorOrNull
+import com.geoviksoft.turnia.ui.main.groups.model.toRowUi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -84,18 +83,7 @@ class GroupsViewModel(
             }
 
     private fun groups(): Flow<List<GroupRowUi>> =
-        groupRepository.getGroups().map { groups ->
-            groups.map {
-                GroupRowUi(
-                    id = it.id,
-                    name = it.name,
-                    color = it.color?.toComposeColorOrNull() ?: entityColor(it.id.value),
-                    members = it.memberCount,
-                    isAdmin = it.isAdmin,
-                    isRevoked = it.isRevoked,
-                )
-            }
-        }
+        groupRepository.getGroups().map { groups -> groups.map { it.toRowUi() } }
 
     fun joinCodeChanged(code: String) =
         updateSuccess { it.copy(joinCode = code.uppercase()) }

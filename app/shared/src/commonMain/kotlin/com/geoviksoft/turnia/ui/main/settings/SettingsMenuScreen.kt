@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Tune
@@ -39,7 +40,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.geoviksoft.turnia.core.domain.model.UserProfile
+import com.geoviksoft.turnia.navigation.LocalNavigator
 import com.geoviksoft.turnia.navigation.LocalRootNavigator
+import com.geoviksoft.turnia.navigation.main.routes.MainRoute
 import com.geoviksoft.turnia.navigation.root.routes.RootRoute
 import com.geoviksoft.turnia.ui.system.LocalPaddings
 import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
@@ -54,6 +57,7 @@ import turnia.app.shared.generated.resources.profile_logout_dialog_message
 import turnia.app.shared.generated.resources.profile_logout_dialog_title
 import turnia.app.shared.generated.resources.profile_my_events
 import turnia.app.shared.generated.resources.settings_about
+import turnia.app.shared.generated.resources.settings_my_groups
 import turnia.app.shared.generated.resources.settings_my_profile
 import turnia.app.shared.generated.resources.settings_plan_free
 import turnia.app.shared.generated.resources.settings_plan_free_body
@@ -76,6 +80,7 @@ fun SettingsMenuScreen(vm: SettingsMenuViewModel = koinViewModel()) {
 private fun SettingsMenuScreenContent(uiState: SettingsMenuUi, onLogoutClicked: () -> Unit = {}) {
     var showLogoutDialog by remember { mutableStateOf(false) }
     val rootNavigator = LocalRootNavigator.current
+    val navigator = LocalNavigator.current
     val details = uiState.userDetails
 
     Column(
@@ -157,6 +162,9 @@ private fun SettingsMenuScreenContent(uiState: SettingsMenuUi, onLogoutClicked: 
         }
         ProfileRow(Icons.Default.Event, stringResource(Res.string.profile_my_events)) {
             rootNavigator.goTo(RootRoute.PersonalEventTypesKey)
+        }
+        ProfileRow(Icons.Default.Groups, stringResource(Res.string.settings_my_groups)) {
+            navigator.goTo(MainRoute.MyGroups)
         }
         ProfileRow(Icons.Default.Tune, stringResource(Res.string.settings_preferences)) {
             rootNavigator.goTo(RootRoute.PreferencesKey)

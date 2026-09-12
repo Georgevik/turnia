@@ -260,6 +260,7 @@
     <string name="profile_avatar_done">Listo</string>
 
     <string name="settings_preferences">Preferencias</string>
+    <string name="settings_my_groups">Mis grupos</string>
     <string name="settings_about">Acerca de</string>
     <string name="settings_plan_premium">Plan Premium</string>
     <string name="settings_plan_premium_body">Sin anuncios. Gracias por apoyar Turnia.</string>

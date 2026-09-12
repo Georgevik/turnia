@@ -83,6 +83,9 @@ import turnia.app.shared.generated.resources.event_type_save
 import turnia.app.shared.generated.resources.event_type_swap_allowed
 import turnia.app.shared.generated.resources.event_type_swap_not_allowed
 
+/** Hidden for now; an existing description is kept on save, just not shown. */
+private const val SHOW_DESCRIPTION = false
+
 @Composable
 fun EventTypeDetailScreen(viewModel: EventTypeDetailViewModel) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -248,10 +251,12 @@ private fun GroupDetail(ui: EventTypeForm) {
         }
     }
 
-    TReadOnlyField(
-        stringResource(Res.string.event_type_field_description),
-        ui.description,
-    )
+    if (SHOW_DESCRIPTION) {
+        TReadOnlyField(
+            stringResource(Res.string.event_type_field_description),
+            ui.description,
+        )
+    }
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         TReadOnlyField(
             stringResource(Res.string.event_type_field_start),
@@ -334,15 +339,17 @@ private fun PersonalForm(
     )
 
     val optional = stringResource(Res.string.event_type_field_optional)
-    OutlinedTextField(
-        value = ui.description,
-        onValueChange = { onFieldChanged(EventTypeField.Description, it) },
-        keyboardOptions = KeyboardOptions.Default.copy(capitalization = KeyboardCapitalization.Sentences),
-        label = { Text(stringResource(Res.string.event_type_field_description)) },
-        supportingText = { Text(optional) },
-        shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth(),
-    )
+    if (SHOW_DESCRIPTION) {
+        OutlinedTextField(
+            value = ui.description,
+            onValueChange = { onFieldChanged(EventTypeField.Description, it) },
+            keyboardOptions = KeyboardOptions.Default.copy(capitalization = KeyboardCapitalization.Sentences),
+            label = { Text(stringResource(Res.string.event_type_field_description)) },
+            supportingText = { Text(optional) },
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         TTimeField(
             value = ui.startTime,

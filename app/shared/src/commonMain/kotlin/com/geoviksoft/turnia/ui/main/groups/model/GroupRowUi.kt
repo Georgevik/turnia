@@ -2,7 +2,10 @@ package com.geoviksoft.turnia.ui.main.groups.model
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
+import com.geoviksoft.turnia.core.domain.model.Group
 import com.geoviksoft.turnia.core.domain.model.GroupId
+import com.geoviksoft.turnia.ui.system.color.entityColor
+import com.geoviksoft.turnia.ui.system.color.toComposeColorOrNull
 
 @Immutable
 data class GroupRowUi(
@@ -14,4 +17,13 @@ data class GroupRowUi(
     val isAdmin: Boolean,
     /** They left, or were removed, and only their own leftover shifts are still visible. */
     val isRevoked: Boolean = false,
+)
+
+fun Group.toRowUi() = GroupRowUi(
+    id = id,
+    name = name,
+    color = color?.toComposeColorOrNull() ?: entityColor(id.value),
+    members = memberCount,
+    isAdmin = isAdmin,
+    isRevoked = isRevoked,
 )
