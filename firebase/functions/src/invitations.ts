@@ -4,7 +4,8 @@ import { clearRevokedGroup } from "./membership";
 import { notifyJoinAccepted, notifyJoinRequested } from "./notifications";
 import { TurniaError } from "./errors";
 import { requireFields, requireUid } from "./requests";
-import { markJoinRequestsUpdated, writeJoinRequestPointer } from "./users";
+import { markGroupUpdated, markUserUpdated } from "./sync";
+import { writeJoinRequestPointer } from "./users";
 
 /**
  * Requests to join a group by validating its (single) invitation code.
@@ -67,11 +68,7 @@ export const requestToJoinGroup = onCall(async (request) => {
       updateAt: FieldValue.serverTimestamp(),
     });
     clearRevokedGroup(db, batch, groupDoc, uid);
-    batch.set(
-      db.doc(`groups/${groupDoc.id}/sync/updates`),
-      { group: FieldValue.serverTimestamp() },
-      { merge: true },
-    );
+    markGroupUpdated(db, batch, groupDoc.id);
     await batch.commit();
 
     return { groupId: groupDoc.id, status: "joined" as const };
@@ -146,13 +143,9 @@ export const acceptJoinRequest = onCall(async (request) => {
   });
   clearRevokedGroup(db, batch, group, uid);
   // Same commit as the group, so both resolve to one instant and a reader's cache can settle.
-  batch.set(
-    db.doc(`groups/${groupId}/sync/updates`),
-    { group: FieldValue.serverTimestamp() },
-    { merge: true },
-  );
+  markGroupUpdated(db, batch, groupId);
   batch.update(requestRef, { status: "accepted", respondedAt: FieldValue.serverTimestamp() });
-  markJoinRequestsUpdated(db, batch, uid);
+  markUserUpdated(db, batch, uid, "joinRequests");
   await batch.commit();
 
   await notifyJoinAccepted(groupId, group.get("name") ?? "", uid);
@@ -191,7 +184,7 @@ export const rejectJoinRequest = onCall(async (request) => {
 
   const batch = db.batch();
   batch.update(requestRef, { status: "rejected", respondedAt: FieldValue.serverTimestamp() });
-  markJoinRequestsUpdated(db, batch, uid);
+  markUserUpdated(db, batch, uid, "joinRequests");
   await batch.commit();
 
   return { groupId, uid, status: "rejected" as const };

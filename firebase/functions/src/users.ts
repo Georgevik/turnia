@@ -2,6 +2,7 @@ import { onCall } from "firebase-functions/v2/https";
 import { FieldValue, Firestore, WriteBatch, getFirestore } from "firebase-admin/firestore";
 import { TurniaError } from "./errors";
 import { requireFields, requireUid } from "./requests";
+import { markGroupUpdated, markUserUpdated } from "./sync";
 
 /**
  * Points a requester at a join request of theirs, on their own private document.
@@ -24,18 +25,7 @@ export function writeJoinRequestPointer(
     { groupIds, updateAt: FieldValue.serverTimestamp() },
     { merge: true },
   );
-  markJoinRequestsUpdated(db, batch, uid);
-}
-
-/**
- * Tells a user's app that one of their join requests has moved.
- */
-export function markJoinRequestsUpdated(db: Firestore, batch: WriteBatch, uid: string) {
-  batch.set(
-    db.doc(`users/${uid}/sync/updates`),
-    { joinRequests: FieldValue.serverTimestamp() },
-    { merge: true },
-  );
+  markUserUpdated(db, batch, uid, "joinRequests");
 }
 
 /** Mirrors `isValidUsername` in the app: 3-20 of a-z, 0-9, `_` or `.`. */
@@ -123,11 +113,7 @@ export const updateProfile = onCall(async (request) => {
         [`members.${uid}`]: { name, username },
         updateAt: FieldValue.serverTimestamp(),
       });
-      batch.set(
-        db.doc(`groups/${group.id}/sync/updates`),
-        { group: FieldValue.serverTimestamp() },
-        { merge: true },
-      );
+      markGroupUpdated(db, batch, group.id);
       return batch.commit();
     })
   );

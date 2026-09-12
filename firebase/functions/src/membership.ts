@@ -8,15 +8,8 @@ import {
 } from "firebase-admin/firestore";
 import { TurniaError } from "./errors";
 import { requireFields, requireUid } from "./requests";
+import { markGroupUpdated, markUserUpdated } from "./sync";
 import { writeJoinRequestPointer } from "./users";
-
-function markRevokedGroupsUpdated(db: Firestore, batch: WriteBatch, uid: string) {
-  batch.set(
-    db.doc(`users/${uid}/sync/updates`),
-    { revokedGroups: FieldValue.serverTimestamp() },
-    { merge: true },
-  );
-}
 
 export function clearRevokedGroup(
   db: Firestore,
@@ -32,7 +25,7 @@ export function clearRevokedGroup(
     { isDeleted: true, updateAt: FieldValue.serverTimestamp() },
     { merge: true },
   );
-  markRevokedGroupsUpdated(db, batch, uid);
+  markUserUpdated(db, batch, uid, "revokedGroups");
 }
 
 /**
@@ -80,15 +73,11 @@ async function revoke(db: Firestore, groupId: string, uid: string) {
       isDeleted: false,
       updateAt: FieldValue.serverTimestamp(),
     });
-    markRevokedGroupsUpdated(db, batch, uid);
+    markUserUpdated(db, batch, uid, "revokedGroups");
   }
 
   // Same commit as the group, so both resolve to one instant and a reader's cache can settle.
-  batch.set(
-    db.doc(`groups/${groupId}/sync/updates`),
-    { group: FieldValue.serverTimestamp() },
-    { merge: true },
-  );
+  markGroupUpdated(db, batch, groupId);
   await batch.commit();
 
   return held.length > 0 ? ("revoked" as const) : ("removed" as const);
@@ -230,7 +219,7 @@ export async function deleteGroupTree(db: Firestore, group: DocumentSnapshot) {
         { isDeleted: true, updateAt: FieldValue.serverTimestamp() },
         { merge: true },
       );
-      markRevokedGroupsUpdated(db, batch, revokedUid);
+      markUserUpdated(db, batch, revokedUid, "revokedGroups");
     }
     for (const requestDoc of requests.docs) {
       writeJoinRequestPointer(db, batch, requestDoc.id, FieldValue.arrayRemove(groupId));

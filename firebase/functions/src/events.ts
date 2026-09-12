@@ -3,6 +3,7 @@ import { FieldValue, Timestamp, getFirestore } from "firebase-admin/firestore";
 import { notifyEventTaken } from "./notifications";
 import { TurniaError } from "./errors";
 import { requireFields, requireUid } from "./requests";
+import { markGroupEventsUpdated } from "./sync";
 
 /**
  * Takes a group event offered for swap — the one write a member may not do themselves, since it
@@ -39,7 +40,6 @@ export const takeEvent = onCall(async (request) => {
   }
 
   const eventRef = db.doc(`groups/${groupId}/events/${eventId}`);
-  const syncRef = db.doc(`groups/${groupId}/sync/updates`);
 
   const taken = await db.runTransaction(async (tx) => {
     const snap = await tx.get(eventRef);
@@ -74,7 +74,7 @@ export const takeEvent = onCall(async (request) => {
     // Same commit as the event, so the marker and the document resolve to one instant and the
     // other members' caches can settle instead of refetching for ever.
     const yearMonth = (snap.get("yearMonth") as string | undefined) ?? "";
-    tx.set(syncRef, { events: { [yearMonth]: { updatedAt: FieldValue.serverTimestamp() } } }, { merge: true });
+    markGroupEventsUpdated(db, tx, groupId, yearMonth);
 
     return {
       fromUid: assigneeId,

@@ -1,0 +1,68 @@
+import {
+  DocumentData,
+  DocumentReference,
+  FieldValue,
+  Firestore,
+  SetOptions,
+} from "firebase-admin/firestore";
+
+/**
+ * Every write to a `sync/updates` marker, on users and on groups alike.
+ *
+ * A marker is only worth something if it moves in the **same commit** as the document it gates: a
+ * batch or a transaction resolves every server timestamp in it to one instant, so a reader sees both
+ * as equally old. Written apart, the marker is always the later of the two and no cache ever settles.
+ * That is why nothing here commits on its own — each function only adds a write to the caller's.
+ *
+ * Each writer merges only its own field, so markers never overwrite each other.
+ */
+
+/** A `WriteBatch` or a `Transaction`: both take the marker as one more write of their commit. */
+export interface SyncWriter {
+  set(ref: DocumentReference, data: DocumentData, options: SetOptions): unknown;
+}
+
+/**
+ * The markers on `users/{uid}/sync/updates`, one per document they gate.
+ *
+ * `private` is missing on purpose: it is the legacy marker `account` and `joinRequests` used to share,
+ * and it is never written again.
+ */
+export type UserMarker =
+  | "account"
+  | "joinRequests"
+  | "preferences"
+  | "revokedGroups"
+  | "personalEventsUpdatedAt"
+  | "personalEventTypesUpdatedAt";
+
+export function markUserUpdated(db: Firestore, writer: SyncWriter, uid: string, marker: UserMarker) {
+  writer.set(
+    db.doc(`users/${uid}/sync/updates`),
+    { [marker]: FieldValue.serverTimestamp() },
+    { merge: true },
+  );
+}
+
+/** The group document moved: its name, invitation, event types or member roster. */
+export function markGroupUpdated(db: Firestore, writer: SyncWriter, groupId: string) {
+  writer.set(
+    db.doc(`groups/${groupId}/sync/updates`),
+    { group: FieldValue.serverTimestamp() },
+    { merge: true },
+  );
+}
+
+/** An event of the given `YYYY-MM` moved. The merge is deep, so other months keep their own. */
+export function markGroupEventsUpdated(
+  db: Firestore,
+  writer: SyncWriter,
+  groupId: string,
+  yearMonth: string,
+) {
+  writer.set(
+    db.doc(`groups/${groupId}/sync/updates`),
+    { events: { [yearMonth]: { updatedAt: FieldValue.serverTimestamp() } } },
+    { merge: true },
+  );
+}

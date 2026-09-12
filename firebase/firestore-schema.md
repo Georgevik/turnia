@@ -315,6 +315,8 @@ what it already cached to decide whether it has to query the server at all.
 Every timestamp is written with a **server timestamp**, so readers on other devices compare against the same
 clock. A missing document (or field) means that part has never been written. Each writer merges **only its
 own field**, so the timestamps never overwrite each other.
+On the server every marker, on users and on groups, is written through `functions/src/sync.ts`, which
+only adds the write to the caller's batch or transaction so it lands in the same commit.
 
 **One marker per document, not one per subcollection.** `account` and `joinRequests` shared a single
 `private` field, so registering a push token invalidated the join-request cache and answering a request
