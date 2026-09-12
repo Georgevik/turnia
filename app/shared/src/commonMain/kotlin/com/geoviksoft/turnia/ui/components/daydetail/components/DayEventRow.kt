@@ -44,6 +44,7 @@ import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
 import com.geoviksoft.turnia.ui.components.calendar.model.EventSource
 import com.geoviksoft.turnia.ui.components.calendar.model.TransferHolderUi
 import com.geoviksoft.turnia.ui.components.event.AcronymChip
+import com.geoviksoft.turnia.ui.components.event.EventHours
 import com.geoviksoft.turnia.ui.components.event.GroupLabel
 import com.geoviksoft.turnia.ui.components.event.TransferTrail
 import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
@@ -115,10 +116,12 @@ fun DayEventRow(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
+                        event.timeRange?.let { EventHours(timeRange = it) }
                         if (onRemove != null) {
+                            // Kept clear of the hours, so a tap meant for neither lands on delete.
                             IconButton(
                                 onClick = onRemove,
-                                modifier = Modifier.size(28.dp),
+                                modifier = Modifier.padding(start = 4.dp).size(28.dp),
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
@@ -164,15 +167,6 @@ fun DayEventRow(
                                 AssignedToChip(text = assignment)
                             }
                         }
-                    }
-
-                    event.timeRange?.let { time ->
-                        Spacer(Modifier.height(10.dp))
-                        Text(
-                            text = time,
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
                     }
 
                     if (event.transferChain.isNotEmpty()) {

@@ -124,9 +124,12 @@ fun GroupEvent.toUi(
     transferChain = buildTransferChain(currentUserId),
 )
 
+/** Between the start and the end of [DayEventUi.timeRange]; `EventHours` splits on it to stack them. */
+const val HOURS_SEPARATOR = " – "
+
 /** Only clock times, which need no translating — so a lone start is shown bare, with no "from". */
 private fun EventType.hours(): String? = when {
-    startTime != null && endTime != null -> "$startTime – $endTime"
+    startTime != null && endTime != null -> "$startTime$HOURS_SEPARATOR$endTime"
     else -> startTime
 }
 

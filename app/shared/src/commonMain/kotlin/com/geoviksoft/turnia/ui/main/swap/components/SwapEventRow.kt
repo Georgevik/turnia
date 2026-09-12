@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -41,6 +40,7 @@ import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
 import com.geoviksoft.turnia.ui.components.calendar.model.EventSource
 import com.geoviksoft.turnia.ui.components.calendar.model.TransferHolderUi
 import com.geoviksoft.turnia.ui.components.event.AcronymChip
+import com.geoviksoft.turnia.ui.components.event.EventHours
 import com.geoviksoft.turnia.ui.components.event.GroupLabel
 import com.geoviksoft.turnia.ui.components.event.TransferTrail
 import com.geoviksoft.turnia.ui.main.swap.model.SwapRequesterUi
@@ -130,9 +130,10 @@ fun SwapEventRow(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
+                        event.timeRange?.let { EventHours(timeRange = it) }
                     }
 
-                    MetaLine(groupName = event.groupName, timeRange = event.timeRange)
+                    event.groupName?.let { GroupLabel(name = it) }
 
                     coveredBy?.let { CoveredLine(name = it) }
                 }
@@ -220,38 +221,6 @@ private fun CoveredLine(name: String) {
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
-    }
-}
-
-/** Group and hours on one line: both are context, and neither is worth a line of its own. */
-@Composable
-private fun MetaLine(groupName: String?, timeRange: String?) {
-    if (groupName == null && timeRange == null) return
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        groupName?.let { GroupLabel(name = it, modifier = Modifier.weight(1f, fill = false)) }
-        timeRange?.let { time ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Schedule,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    text = time,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                )
-            }
-        }
     }
 }
 
