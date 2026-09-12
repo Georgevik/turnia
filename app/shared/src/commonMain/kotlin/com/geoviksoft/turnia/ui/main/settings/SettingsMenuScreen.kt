@@ -120,7 +120,7 @@ private fun SettingsMenuScreenContent(uiState: SettingsMenuUi, onLogoutClicked: 
             }
         }
 
-        Card(
+        if (uiState.showPlanBanner) Card(
             modifier = Modifier.fillMaxWidth().padding(top = LocalPaddings.current.S),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.tertiaryContainer,
