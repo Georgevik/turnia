@@ -13,6 +13,7 @@ import { FunctionsErrorCode, HttpsError } from "firebase-functions/v2/https";
  *   2000–2999  notifications
  *   3000–3999  events (taking / transfers)
  *   4000–4999  shared calendar
+ *   5000–5999  account
  */
 export enum TurniaErrorCode {
   // generic — the only codes that are not unique to a throw site. The function that refused is
@@ -51,6 +52,9 @@ export enum TurniaErrorCode {
   // shared calendar
   SharedCalendarNotShared = 4003,
   SharedCalendarRangeTooWide = 4004,
+
+  // account
+  DeleteAccountLastAdmin = 5003,
 }
 
 /**
@@ -112,6 +116,9 @@ const SPECS: Record<keyof typeof TurniaErrorCode, [FunctionsErrorCode, string]> 
   // shared calendar
   SharedCalendarNotShared: ["permission-denied", "This calendar is not shared with you."],
   SharedCalendarRangeTooWide: ["failed-precondition", "Date range must be within 3 months."],
+
+  // account
+  DeleteAccountLastAdmin: ["failed-precondition", "You are the only admin of a group that still has members."],
 };
 
 /**

@@ -71,6 +71,7 @@ one copy now, here. Everything a stranger must not see lives under `private` (be
 | `animalIconId` | string \| null | The `animal_icon_*` drawable suffix the user picked (`"duck"`). Absent until they pick one. |
 | `backgroundColor` | string \| null | Hex behind the icon. Absent until they pick one. |
 | `calendarSharedWith` | string[] | UIDs this user grants read access to **their** calendar. Written only by the owner. |
+| `isDeleted` | boolean \| null | `true` once the account was deleted. Written only by `deleteAccount`, together with a blank `name` and `username` and an empty `calendarSharedWith`. |
 | `updateAt` | timestamp | Server timestamp of the last write. The marker on `usernames/{username}` is a copy of it; a reader compares the two to tell whether their cached profile is current. |
 
 > **Neither half of the avatar is stored until the user picks it.** Both fields are absent on a
@@ -78,6 +79,11 @@ one copy now, here. Everything a stranger must not see lives under `private` (be
 > — the first colour of the palette behind a default animal. The default lives in the client, not in
 > the document, so changing it re-skins every account that never picked instead of only the ones
 > created afterwards.
+
+> **A deleted account is anonymized, not removed.** `deleteAccount` keeps this document so the uid
+> still resolves — to nobody — wherever groups, events and `history` refer to it: it blanks the name
+> and username here and on every `groups/{g}.members` copy, drops the avatar and the `usernames`
+> reservation, deletes every subcollection, and then deletes the Auth user.
 
 > The avatar is written **straight from the client**, unlike the name. A rename goes through the
 > `updateProfile` Cloud Function because the name is copied into every group the user belongs to and

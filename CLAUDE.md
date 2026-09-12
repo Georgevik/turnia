@@ -79,6 +79,17 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
   able to see only their own events and only the event types those events use. They can no longer create
   events in that group. Someone with no events is simply removed, with no `revokedUids` entry.
 - The **last admin** of a group with other members cannot leave it, and an admin cannot remove another admin.
+- A user can **delete their account** from *About*. It is **anonymized, not erased**, by the `deleteAccount`
+  Cloud Function: the uid stays wherever it is referenced (`memberUids`, events, `history`), so no chain
+  loses a link, and what goes is everything that says who it was — name and username on the profile and
+  on every group's copy, avatar, username reservation, and everything under `users/{uid}/**`. A blank
+  name renders as a former member. A group the account is alone in is deleted, pending join requests
+  are withdrawn, and the Auth user is deleted last. The last-admin rule applies: the only admin of a
+  group with other members is refused.
+- The **app language** follows the device unless the user picks English or Spanish in *Preferences*.
+  The pick lives where the OS keeps it — Android's per-app language (through `AppCompatDelegate`,
+  which is why `MainActivity` is an `AppCompatActivity`) and iOS's `AppleLanguages` — so a push drawn
+  with the app closed is in the same language.
 
 ## Monetization — pricing and ads/premium business rules redacted from this repository's history; see CLAUDE.local.md.
 ## Data retention & local cache
@@ -203,6 +214,7 @@ Build one with `value.toSuccess()` / `error.toFailure()` — both work on any re
   - **Firestore** — data.
   - **Firebase Auth** — authentication.
   - **Cloud Functions (TypeScript)** — join requests, taking events, push, shared-calendar aggregation,
+    account deletion (anonymization),
     **subscription receipt verification** (Play RTDN / App Store Server Notifications) and the
     **scheduled retention cleanup** (see *Data retention & local cache*).
   - **FCM** — push notifications.

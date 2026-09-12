@@ -21,6 +21,10 @@ export { takeEvent } from "./events";
 // Renames a user everywhere their name is copied: the client may not write it itself.
 export { updateProfile } from "./users";
 
+// Deletes the caller's account by anonymizing it: the uid stays everywhere it is referenced, and
+// everything that says who it was goes, along with the Auth user.
+export { deleteAccount } from "./account";
+
 // Push. `onEventPutOnSwap` and `onCalendarShared` react to writes a client makes directly; the
 // join-request notifications are sent inline by the callables in `invitations.ts`, which already
 // hold everything they need.

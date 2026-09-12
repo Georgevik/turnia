@@ -114,8 +114,7 @@ export const leaveGroup = onCall(async (request) => {
     throw TurniaError.LeaveGroupNotMember;
   }
 
-  const adminUids = (group.get("adminUids") as string[] | undefined) ?? [];
-  if (adminUids.length === 1 && adminUids[0] === uid && memberUids.length > 1) {
+  if (isLastAdminOfOthers(group, uid)) {
     throw TurniaError.LeaveGroupLastAdmin;
   }
 
@@ -195,6 +194,21 @@ export const deleteGroup = onCall(async (request) => {
     throw TurniaError.DeleteGroupNotEmpty;
   }
 
+  await deleteGroupTree(db, group);
+
+  return { groupId, status: "deleted" as const };
+});
+
+/**
+ * Empties a group's whole tree and tells everyone outside it who still points at it.
+ *
+ * Shared by `deleteGroup` and `deleteAccount`, which reaches it for every group the account is the
+ * last member of. Neither checks anything here: by the time this runs, the caller has established
+ * that nobody else is left to be surprised.
+ */
+export async function deleteGroupTree(db: Firestore, group: DocumentSnapshot) {
+  const groupId = group.id;
+
   // Someone removed earlier may still be holding a snapshot of this group to render the shifts
   // they were left with. Those shifts go with the group, so the snapshot is tombstoned.
   const revokedUids = (group.get("revokedUids") as string[] | undefined) ?? [];
@@ -202,11 +216,11 @@ export const deleteGroup = onCall(async (request) => {
   // Anyone still waiting to be let in keeps a pointer to this group under their own private
   // document, and `recursiveDelete` cannot reach it: it is not under the group. Read them while
   // the requests still exist.
-  const requests = await groupRef.collection("joinRequests").get();
+  const requests = await group.ref.collection("joinRequests").get();
 
   // The group first: a tombstone written before a delete that then fails would take a group away
   // from people it still exists for. The other way round they keep a stale, empty entry at worst.
-  await db.recursiveDelete(groupRef);
+  await db.recursiveDelete(group.ref);
 
   if (revokedUids.length > 0 || !requests.empty) {
     const batch = db.batch();
@@ -223,6 +237,11 @@ export const deleteGroup = onCall(async (request) => {
     }
     await batch.commit();
   }
+}
 
-  return { groupId, status: "deleted" as const };
-});
+/** Whether leaving would strand a group with members and nobody to administer it. */
+export function isLastAdminOfOthers(group: DocumentSnapshot, uid: string): boolean {
+  const memberUids = (group.get("memberUids") as string[] | undefined) ?? [];
+  const adminUids = (group.get("adminUids") as string[] | undefined) ?? [];
+  return adminUids.length === 1 && adminUids[0] === uid && memberUids.length > 1;
+}

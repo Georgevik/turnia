@@ -8,6 +8,7 @@ import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.UserProfile
 import com.geoviksoft.turnia.core.data.logger.Logger
 import com.geoviksoft.turnia.core.data.user.mappers.UserDocumentMapper
 import com.geoviksoft.turnia.core.domain.analytics.Analytics
+import com.geoviksoft.turnia.core.domain.model.DeleteAccountError
 import com.geoviksoft.turnia.core.domain.model.User
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.domain.model.UserProfile
@@ -222,6 +223,14 @@ class UserRepositoryImpl(
         loggedUser?.id?.let { unregisterFcmToken(it) }
         auth.signOut()
     }
+
+    override suspend fun deleteAccount(): Outcome<Unit, DeleteAccountError> =
+        userProfileFunction.deleteAccount().onSuccess {
+            // Not `signOut()`: unregistering the push token writes to `private/account`, and the
+            // session's token is still valid for a while, so it would recreate a document the
+            // server has just deleted. There is nothing left to push to anyway.
+            auth.signOut()
+        }
 
     companion object {
         private const val TAG = "UserRepositoryImpl"

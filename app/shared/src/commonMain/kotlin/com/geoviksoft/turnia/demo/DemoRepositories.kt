@@ -2,6 +2,7 @@ package com.geoviksoft.turnia.demo
 
 import com.geoviksoft.turnia.core.domain.analytics.Analytics
 import com.geoviksoft.turnia.core.domain.analytics.AnalyticsEvent
+import com.geoviksoft.turnia.core.domain.model.DeleteAccountError
 import com.geoviksoft.turnia.core.domain.model.EventHistoryEntry
 import com.geoviksoft.turnia.core.domain.model.EventId
 import com.geoviksoft.turnia.core.domain.model.EventTypeId
@@ -64,6 +65,9 @@ internal class DemoUserRepository : UserRepository {
         session.filterIsInstance<UserSession.Authenticated>().map { it.user }
 
     override suspend fun signOut() = Unit
+
+    // Like signing out, a no-op: the demo account is made up, and there is nobody to sign in as next.
+    override suspend fun deleteAccount(): Outcome<Unit, DeleteAccountError> = Unit.toSuccess()
 
     override fun getCalendarsSharedWithMe(): Flow<Outcome<List<UserProfile>, Unit>> =
         flowOf(listOf(DemoPeople.javier.profile, DemoPeople.marta.profile).toSuccess())

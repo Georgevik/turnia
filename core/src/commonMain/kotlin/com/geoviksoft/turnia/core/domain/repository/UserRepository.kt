@@ -1,5 +1,6 @@
 package com.geoviksoft.turnia.core.domain.repository
 
+import com.geoviksoft.turnia.core.domain.model.DeleteAccountError
 import com.geoviksoft.turnia.core.domain.model.User
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.domain.model.UserProfile
@@ -15,6 +16,8 @@ interface UserRepository : FcmDelegate {
 
     val loggedUserFlow: Flow<User>
     suspend fun signOut()
+
+    suspend fun deleteAccount(): Outcome<Unit, DeleteAccountError>
 
     fun getCalendarsSharedWithMe(): Flow<Outcome<List<UserProfile>, Unit>>
 

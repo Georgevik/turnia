@@ -150,6 +150,7 @@ import turnia.app.shared.generated.resources.group_leave_last_admin_error
 import turnia.app.shared.generated.resources.group_leave_message
 import turnia.app.shared.generated.resources.group_leave_title
 import turnia.app.shared.generated.resources.group_member_count
+import turnia.app.shared.generated.resources.group_member_former
 
 /**
  * Group detail: view, edit or create a group, with its event types listed at the bottom. It sits on
@@ -319,7 +320,7 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
         ConfirmationDialog(
             title = stringResource(
                 Res.string.group_detail_member_remove_title,
-                member.name.ifBlank { member.username },
+                member.displayName(),
             ),
             message = stringResource(Res.string.group_detail_member_remove_message),
             confirmText = stringResource(Res.string.group_detail_member_remove_confirm),
@@ -791,7 +792,7 @@ private fun MembersSheet(
             val manageable = canManage && !member.isAdmin
 
             TListItem(
-                title = member.name.ifBlank { member.username },
+                title = member.displayName(),
                 subtitle = "@${member.username}".takeIf { member.username.isNotBlank() },
                 onLongClick = { onMemberLongPress(member) }.takeIf { manageable },
                 leading = { UserAvatar(avatar = member.avatar) },
@@ -954,3 +955,8 @@ private fun GroupDetailMessage.message(): String = stringResource(
         GroupDetailMessage.DeleteNotEmpty -> Res.string.group_delete_not_empty_error
     }
 )
+
+/** A deleted account keeps its place in the group with neither a name nor a username left. */
+@Composable
+private fun GroupMemberUi.displayName(): String =
+    name.ifBlank { username }.ifBlank { stringResource(Res.string.group_member_former) }
