@@ -25,6 +25,9 @@ sealed interface RootRoute : NavKey {
     data object MyProfileKey : RootRoute
 
     @Serializable
-    data object NotificationsKey : RootRoute
+    data object PreferencesKey : RootRoute
+
+    @Serializable
+    data object AboutKey : RootRoute
 
 }

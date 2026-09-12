@@ -17,8 +17,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Event
-import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -52,12 +53,16 @@ import turnia.app.shared.generated.resources.profile_logout
 import turnia.app.shared.generated.resources.profile_logout_dialog_message
 import turnia.app.shared.generated.resources.profile_logout_dialog_title
 import turnia.app.shared.generated.resources.profile_my_events
+import turnia.app.shared.generated.resources.settings_about
 import turnia.app.shared.generated.resources.settings_my_profile
-import turnia.app.shared.generated.resources.settings_notifications
+import turnia.app.shared.generated.resources.settings_plan_free
+import turnia.app.shared.generated.resources.settings_plan_free_body
+import turnia.app.shared.generated.resources.settings_plan_premium
+import turnia.app.shared.generated.resources.settings_plan_premium_body
+import turnia.app.shared.generated.resources.settings_preferences
 
 /**
- * "Perfil" tab — a draft account screen: the signed-in user header plus entry
- * points to shared calendars, subscription and settings.
+ * Settings tab
  */
 
 @Composable
@@ -125,15 +130,21 @@ private fun SettingsMenuScreenContent(uiState: SettingsMenuUi, onLogoutClicked: 
                 Icon(imageVector = Icons.Default.WorkspacePremium, contentDescription = null)
                 Column {
                     if (details?.isPremium == true) {
-                        Text("Plan Premium", style = MaterialTheme.typography.titleMedium)
                         Text(
-                            "Sin anuncios. Gracias por apoyar Turnia.",
+                            stringResource(Res.string.settings_plan_premium),
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                        Text(
+                            stringResource(Res.string.settings_plan_premium_body),
                             style = MaterialTheme.typography.bodyMedium,
                         )
                     } else {
-                        Text("Plan gratuito", style = MaterialTheme.typography.titleMedium)
                         Text(
-                            "Hazte Premium para quitar los anuncios.",
+                            stringResource(Res.string.settings_plan_free),
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                        Text(
+                            stringResource(Res.string.settings_plan_free_body),
                             style = MaterialTheme.typography.bodyMedium,
                         )
                     }
@@ -147,11 +158,11 @@ private fun SettingsMenuScreenContent(uiState: SettingsMenuUi, onLogoutClicked: 
         ProfileRow(Icons.Default.Event, stringResource(Res.string.profile_my_events)) {
             rootNavigator.goTo(RootRoute.PersonalEventTypesKey)
         }
-        ProfileRow(
-            Icons.Default.Notifications,
-            stringResource(Res.string.settings_notifications),
-        ) {
-            rootNavigator.goTo(RootRoute.NotificationsKey)
+        ProfileRow(Icons.Default.Tune, stringResource(Res.string.settings_preferences)) {
+            rootNavigator.goTo(RootRoute.PreferencesKey)
+        }
+        ProfileRow(Icons.Default.Info, stringResource(Res.string.settings_about)) {
+            rootNavigator.goTo(RootRoute.AboutKey)
         }
         ProfileRow(Icons.AutoMirrored.Filled.Logout, stringResource(Res.string.profile_logout)) {
             showLogoutDialog = true

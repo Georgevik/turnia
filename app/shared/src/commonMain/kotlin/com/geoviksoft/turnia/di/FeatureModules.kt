@@ -4,8 +4,8 @@ import com.geoviksoft.turnia.ui.group.detail.di.groupDetailModule
 import com.geoviksoft.turnia.ui.main.eventtypes.di.eventTypesModule
 import com.geoviksoft.turnia.ui.main.groups.di.groupsModule
 import com.geoviksoft.turnia.ui.main.mycalendar.di.calendarModule
-import com.geoviksoft.turnia.ui.main.notifications.di.notificationsModule
 import com.geoviksoft.turnia.ui.main.people.di.peopleModule
+import com.geoviksoft.turnia.ui.main.preferences.di.preferencesModule
 import com.geoviksoft.turnia.ui.main.settings.di.settingsModule
 import com.geoviksoft.turnia.ui.main.swap.di.swapModule
 import com.geoviksoft.turnia.ui.root.di.rootModule
@@ -24,5 +24,5 @@ val featureModules: List<Module> = listOf(
     peopleModule,
     settingsModule,
     swapModule,
-    notificationsModule,
+    preferencesModule,
 )

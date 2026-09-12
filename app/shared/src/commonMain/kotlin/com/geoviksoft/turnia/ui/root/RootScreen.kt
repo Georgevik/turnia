@@ -20,6 +20,7 @@ import com.geoviksoft.turnia.navigation.root.RootNavDisplay
 import com.geoviksoft.turnia.navigation.root.RootNavigator
 import com.geoviksoft.turnia.navigation.root.rootRouteSavedStateConfiguration
 import com.geoviksoft.turnia.navigation.root.routes.RootRoute
+import com.geoviksoft.turnia.ui.system.AppLanguageHost
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
 import com.geoviksoft.turnia.ui.system.RequestNotificationPermission
 import com.geoviksoft.turnia.ui.system.TurniaSnackbarHost
@@ -55,14 +56,16 @@ fun App(vm: RootViewModel = koinViewModel()) {
             LocalNavigator provides navigator,
             LocalSnackbar provides snackbarHostState,
         ) {
-            Scaffold(
-                contentWindowInsets = WindowInsets(0, 0, 0, 0),
-                snackbarHost = { TurniaSnackbarHost(snackbarHostState) }
-            ) {
-                RootNavDisplay(
-                    snackbarHostState = snackbarHostState,
-                    backStack = backStack,
-                )
+            AppLanguageHost {
+                Scaffold(
+                    contentWindowInsets = WindowInsets(0, 0, 0, 0),
+                    snackbarHost = { TurniaSnackbarHost(snackbarHostState) }
+                ) {
+                    RootNavDisplay(
+                        snackbarHostState = snackbarHostState,
+                        backStack = backStack,
+                    )
+                }
             }
         }
     }

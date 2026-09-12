@@ -241,8 +241,6 @@
     <!-- My profile -->
     <string name="profile_title">Mi perfil</string>
     <string name="settings_my_profile">Mi perfil</string>
-    <string name="settings_notifications">Notificaciones</string>
-    <string name="notifications_title">Notificaciones</string>
     <string name="notifications_enable">Recibir notificaciones</string>
     <string name="notifications_enable_description">Avisos de solicitudes de grupo y calendarios compartidos</string>
     <string name="notifications_system_hint">Si las desactivaste en los ajustes del sistema, no recibirás avisos aunque esta opción esté activada.</string>
@@ -260,6 +258,38 @@
     <string name="profile_avatar_animal">Animal</string>
     <string name="profile_avatar_color">Color</string>
     <string name="profile_avatar_done">Listo</string>
+
+    <string name="settings_preferences">Preferencias</string>
+    <string name="settings_about">Acerca de</string>
+    <string name="settings_plan_premium">Plan Premium</string>
+    <string name="settings_plan_premium_body">Sin anuncios. Gracias por apoyar Turnia.</string>
+    <string name="settings_plan_free">Plan gratuito</string>
+    <string name="settings_plan_free_body">Hazte Premium para quitar los anuncios.</string>
+
+    <!-- Preferences -->
+    <string name="preferences_title">Preferencias</string>
+    <string name="preferences_section_notifications">Notificaciones</string>
+    <string name="preferences_section_language">Idioma</string>
+    <string name="language_system">Idioma del dispositivo</string>
+    <string name="language_english">English</string>
+    <string name="language_spanish">Español</string>
+
+    <!-- About -->
+    <string name="about_title">Acerca de</string>
+    <string name="about_version">Versión %1$s (%2$s)</string>
+    <string name="about_section_legal">Legal</string>
+    <string name="about_terms">Términos de uso</string>
+    <string name="about_privacy">Política de privacidad</string>
+    <string name="about_section_account">Cuenta</string>
+    <string name="about_user_id">ID de usuario</string>
+    <string name="about_user_id_copy">Copiar el ID de usuario</string>
+    <string name="about_user_id_copied">ID de usuario copiado</string>
+    <string name="about_delete_account">Eliminar cuenta</string>
+    <string name="about_delete_account_title">¿Eliminar tu cuenta?</string>
+    <string name="about_delete_account_message">Se borrarán tu nombre, tu nombre de usuario, tu avatar, tus eventos personales y sus notas, y se cerrará la sesión. Los turnos que tengas en un grupo se quedan allí, a nombre de un antiguo miembro. No se puede deshacer.</string>
+    <string name="about_delete_account_confirm">Eliminar cuenta</string>
+    <string name="about_delete_account_error_last_admin">Eres el único admin de un grupo que todavía tiene miembros. Sácalos o elimina el grupo antes de eliminar tu cuenta.</string>
+    <string name="about_delete_account_error">No hemos podido eliminar tu cuenta. Inténtalo de nuevo.</string>
 
     <!-- Bottom bar -->
     <string name="tab_calendar">Calendario</string>

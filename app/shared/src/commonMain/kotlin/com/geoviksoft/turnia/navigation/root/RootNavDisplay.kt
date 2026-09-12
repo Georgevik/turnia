@@ -9,10 +9,11 @@ import com.geoviksoft.turnia.navigation.TrackScreen
 import com.geoviksoft.turnia.navigation.TurniaNavDisplay
 import com.geoviksoft.turnia.navigation.root.routes.RootRoute
 import com.geoviksoft.turnia.ui.main.MainScreen
+import com.geoviksoft.turnia.ui.main.about.AboutScreen
 import com.geoviksoft.turnia.ui.main.eventtypes.detail.EventTypeDetailScreen
 import com.geoviksoft.turnia.ui.main.eventtypes.detail.EventTypeDetailViewModel
 import com.geoviksoft.turnia.ui.main.eventtypes.personal.PersonalEventTypesScreen
-import com.geoviksoft.turnia.ui.main.notifications.NotificationsScreen
+import com.geoviksoft.turnia.ui.main.preferences.PreferencesScreen
 import com.geoviksoft.turnia.ui.main.profile.MyProfileScreen
 import com.geoviksoft.turnia.ui.signin.SignInScreen
 import com.geoviksoft.turnia.ui.splash.SplashScreen
@@ -45,7 +46,9 @@ fun RootNavDisplay(
 
             entry<RootRoute.MyProfileKey> { MyProfileScreen() }
 
-            entry<RootRoute.NotificationsKey> { NotificationsScreen() }
+            entry<RootRoute.PreferencesKey> { PreferencesScreen() }
+
+            entry<RootRoute.AboutKey> { AboutScreen() }
         },
     )
 }

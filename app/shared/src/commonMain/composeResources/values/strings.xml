@@ -241,8 +241,6 @@
     <!-- My profile -->
     <string name="profile_title">My profile</string>
     <string name="settings_my_profile">My profile</string>
-    <string name="settings_notifications">Notifications</string>
-    <string name="notifications_title">Notifications</string>
     <string name="notifications_enable">Receive notifications</string>
     <string name="notifications_enable_description">Alerts about group requests and shared calendars</string>
     <string name="notifications_system_hint">If you turned them off in the system settings, you won't get any alerts even with this option on.</string>
@@ -260,6 +258,38 @@
     <string name="profile_avatar_animal">Animal</string>
     <string name="profile_avatar_color">Colour</string>
     <string name="profile_avatar_done">Done</string>
+
+    <string name="settings_preferences">Preferences</string>
+    <string name="settings_about">About</string>
+    <string name="settings_plan_premium">Premium plan</string>
+    <string name="settings_plan_premium_body">No ads. Thanks for supporting Turnia.</string>
+    <string name="settings_plan_free">Free plan</string>
+    <string name="settings_plan_free_body">Go Premium to remove the ads.</string>
+
+    <!-- Preferences -->
+    <string name="preferences_title">Preferences</string>
+    <string name="preferences_section_notifications">Notifications</string>
+    <string name="preferences_section_language">Language</string>
+    <string name="language_system">Device language</string>
+    <string name="language_english">English</string>
+    <string name="language_spanish">Español</string>
+
+    <!-- About -->
+    <string name="about_title">About</string>
+    <string name="about_version">Version %1$s (%2$s)</string>
+    <string name="about_section_legal">Legal</string>
+    <string name="about_terms">Terms of use</string>
+    <string name="about_privacy">Privacy policy</string>
+    <string name="about_section_account">Account</string>
+    <string name="about_user_id">User ID</string>
+    <string name="about_user_id_copy">Copy user ID</string>
+    <string name="about_user_id_copied">User ID copied</string>
+    <string name="about_delete_account">Delete account</string>
+    <string name="about_delete_account_title">Delete your account?</string>
+    <string name="about_delete_account_message">Your name, username, avatar, personal events and notes will be erased, and you'll be signed out. Shifts you hold in a group stay there, shown as a former member's. This can't be undone.</string>
+    <string name="about_delete_account_confirm">Delete account</string>
+    <string name="about_delete_account_error_last_admin">You're the only admin of a group that still has members. Remove them or delete the group before deleting your account.</string>
+    <string name="about_delete_account_error">We couldn't delete your account. Please try again.</string>
 
     <!-- Bottom bar -->
     <string name="tab_calendar">Calendar</string>

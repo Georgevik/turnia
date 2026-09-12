@@ -45,6 +45,8 @@ kotlin {
 
     sourceSets {
         androidMain.dependencies {
+            // The per-app language: AppCompatDelegate stores it and applies it from API 24.
+            implementation(libs.androidx.appcompat)
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.compose.uiTooling)
         }
