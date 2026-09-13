@@ -245,6 +245,8 @@ See [firebase/firestore-schema.md](firebase/firestore-schema.md) — the single 
 
 Firestore bills **per document**: one read for every document the server returns, one write for every document sent to it. The local cache is the only lever we have on that bill, so its effect has to be measurable — a read served from cache is free, and we count those apart to see the caching working.
 
+What a user is expected to cost, per action and per day, is in [firebase/firestore-usage.md](firebase/firestore-usage.md) — update it when a change moves those numbers.
+
 **Every Firestore call must report itself** through [`FirestoreUsageMetrics.kt`](core/src/commonMain/kotlin/com/geoviksoft/turnia/core/data/datasource/firestore/analytics/FirestoreUsageMetrics.kt). A new datasource, or a new query in an existing one, is not finished until it does.
 
 | Call | How to report it |
