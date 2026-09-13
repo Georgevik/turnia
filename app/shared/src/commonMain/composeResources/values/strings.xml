@@ -284,8 +284,9 @@
     <string name="about_title">About</string>
     <string name="about_version">Version %1$s (%2$s)</string>
     <string name="about_section_legal">Legal</string>
-    <string name="about_terms">Terms of use</string>
     <string name="about_privacy">Privacy policy</string>
+    <!-- Path of the privacy policy on turnia.club, in this language. Not shown. -->
+    <string name="about_privacy_path">privacy</string>
     <string name="about_section_account">Account</string>
     <string name="about_user_id">User ID</string>
     <string name="about_user_id_copy">Copy user ID</string>

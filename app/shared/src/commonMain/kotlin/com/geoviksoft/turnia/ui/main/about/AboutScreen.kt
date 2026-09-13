@@ -19,7 +19,6 @@ import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.DeleteForever
-import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -66,9 +65,9 @@ import turnia.app.shared.generated.resources.about_delete_account_error_last_adm
 import turnia.app.shared.generated.resources.about_delete_account_message
 import turnia.app.shared.generated.resources.about_delete_account_title
 import turnia.app.shared.generated.resources.about_privacy
+import turnia.app.shared.generated.resources.about_privacy_path
 import turnia.app.shared.generated.resources.about_section_account
 import turnia.app.shared.generated.resources.about_section_legal
-import turnia.app.shared.generated.resources.about_terms
 import turnia.app.shared.generated.resources.about_title
 import turnia.app.shared.generated.resources.about_user_id
 import turnia.app.shared.generated.resources.about_user_id_copied
@@ -121,11 +120,9 @@ fun AboutScreen(viewModel: AboutViewModel = koinViewModel()) {
             AppHeader()
 
             SectionHeader(stringResource(Res.string.about_section_legal))
-            LinkRow(Icons.Default.Description, stringResource(Res.string.about_terms)) {
-                uriHandler.openUri(LegalLinks.TERMS)
-            }
+            val privacyUrl = LegalLinks.privacy(stringResource(Res.string.about_privacy_path))
             LinkRow(Icons.Default.PrivacyTip, stringResource(Res.string.about_privacy)) {
-                uriHandler.openUri(LegalLinks.PRIVACY)
+                uriHandler.openUri(privacyUrl)
             }
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
