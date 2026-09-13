@@ -143,10 +143,26 @@ class UserPrivateFirestore(
             else snapshot.data(UserPrivateDocument.serializer())
         }
 
+    /**
+     * The entitlement from the cache while the server-only `subscription` marker says it is current.
+     * No marker means the server never wrote one: an absent document, the free tier, and no read.
+     */
     suspend fun fetchSubscription(uid: UserId): Outcome<SubscriptionDocument?, UserProfileError> =
         outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
-            val snapshot = document(DOCUMENT_SUBSCRIPTION, uid).get().trackData(TAG, "subscription")
-            Logger.d(TAG, "Fetch subscription from cache: ${snapshot.metadata.isFromCache}")
+            val cached = document(DOCUMENT_SUBSCRIPTION, uid).getCached(TAG, "subscription(cache)")
+                ?.data(SubscriptionDocument.serializer())
+            val marker = userSyncFirestore.get(uid).valueOrNull()
+                ?.subscriptionUpdatedAt.toInstantOrNull()
+
+            val cachedAt = cached?.updatedAt
+            if (marker == null || (cachedAt != null && cachedAt >= marker)) {
+                Logger.d(TAG, "Subscription is settled, no read")
+                return@outcomeCatching cached
+            }
+
+            val snapshot = document(DOCUMENT_SUBSCRIPTION, uid).get(Source.SERVER)
+                .trackData(TAG, "subscription(server)")
+            Logger.i(TAG, "Subscription read from the server")
 
             if (!snapshot.exists) null
             else snapshot.data(SubscriptionDocument.serializer())

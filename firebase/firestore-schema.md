@@ -310,6 +310,7 @@ what it already cached to decide whether it has to query the server at all.
 | `account` | timestamp \| null | Last write to `private/account`. |
 | `joinRequests` | timestamp \| null | Last write to `private/joinRequests`, **or** to a `groups/{g}/joinRequests/{uid}` this user owns — answering a request changes no field of the pointer list, and this is the only thing that tells the requester to look again. |
 | `preferences` | timestamp \| null | Last write to `private/preferences`. |
+| `subscription` | timestamp \| null | Last write to `private/subscription`. **Server-only**: the rules refuse any client write that touches it. |
 | `private` | timestamp \| null | **Legacy, read-only.** The single marker `account` and `joinRequests` used to share. |
 
 Every timestamp is written with a **server timestamp**, so readers on other devices compare against the same
@@ -339,9 +340,12 @@ marker settles rather than forcing a read: a pick made on this device is in the 
 acknowledges it, so the colour repaints straight away, offline included. Only another of the user's
 devices leaves the cache genuinely behind, and only that costs a read.
 
-`private/subscription` is covered by no marker: only the receipt-verification Cloud Function writes that
-document, and gating it behind a marker the client also moves would keep an expired subscription looking
-valid.
+`private/subscription` has its own marker, `subscription`, and it is the one marker no client may move:
+the rules reject a create that carries it and an update that touches it. A marker the client could hold
+back would keep a refunded or downgraded entitlement looking settled in its cache. The receipt-verification
+Cloud Function must write it through `markUserUpdated(…, "subscription")` in the **same commit** as the
+document, and stamp the document's `updatedAt` with the same server timestamp. With no marker the server
+has never written an entitlement, so the client answers "free" from the cache without a read.
 
 **Access**: written by the owner; read by the owner and by UIDs in `calendarSharedWith`.
 

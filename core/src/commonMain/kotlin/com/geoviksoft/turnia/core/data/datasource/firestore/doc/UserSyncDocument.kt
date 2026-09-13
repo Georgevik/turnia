@@ -17,6 +17,8 @@ data class UserSyncDocument(
     @SerialName(FIELD_ACCOUNT) val accountUpdatedAt: BaseTimestamp? = null,
     @SerialName(FIELD_JOIN_REQUESTS) val joinRequestsUpdatedAt: BaseTimestamp? = null,
     @SerialName(FIELD_PREFERENCES) val preferencesUpdatedAt: BaseTimestamp? = null,
+    /** Moved only by the receipt-verification function, in the commit that writes the entitlement. */
+    @SerialName(FIELD_SUBSCRIPTION) val subscriptionUpdatedAt: BaseTimestamp? = null,
     @Deprecated("Remove at some point")
     @SerialName("private") val legacyPrivateUpdatedAt: BaseTimestamp? = null,
 ) {
@@ -27,5 +29,6 @@ data class UserSyncDocument(
         const val FIELD_ACCOUNT = "account"
         const val FIELD_JOIN_REQUESTS = "joinRequests"
         const val FIELD_PREFERENCES = "preferences"
+        const val FIELD_SUBSCRIPTION = "subscription"
     }
 }

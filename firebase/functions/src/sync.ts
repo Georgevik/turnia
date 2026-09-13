@@ -32,6 +32,9 @@ export type UserMarker =
   | "account"
   | "joinRequests"
   | "preferences"
+  // Server-only, and the rules keep it that way: the receipt-verification function commits it with
+  // `private/subscription`, and a client able to move it could pin a cached premium past a refund.
+  | "subscription"
   | "revokedGroups"
   | "personalEventsUpdatedAt"
   | "personalEventTypesUpdatedAt";

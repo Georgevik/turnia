@@ -72,9 +72,15 @@ service cloud.firestore {
         allow write: if isSignedIn() && request.auth.uid == uid;
       }
       // Sync timestamps the owner bumps on every write; readers use them to check their cache.
+      // `subscription` is the exception: it gates the cached entitlement, which only the server may
+      // declare stale — a client that could hold it back would keep a refunded premium cached.
       match /sync/{docId} {
         allow read: if ownerOrShared(uid);
-        allow write: if isSignedIn() && request.auth.uid == uid;
+        allow create: if isSignedIn() && request.auth.uid == uid &&
+          !('subscription' in request.resource.data);
+        allow update: if isSignedIn() && request.auth.uid == uid &&
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['subscription']);
+        allow delete: if isSignedIn() && request.auth.uid == uid;
       }
       // Groups the user was removed from, with the event types their leftover events use. It is
       // what lets them render those events without reading the group document they lost access to,
