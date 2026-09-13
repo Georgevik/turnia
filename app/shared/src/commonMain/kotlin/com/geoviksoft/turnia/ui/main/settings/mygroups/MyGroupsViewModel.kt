@@ -13,7 +13,8 @@ import kotlinx.coroutines.flow.stateIn
 class MyGroupsViewModel(groupRepository: GroupRepository) : ViewModel() {
 
     val uiState: StateFlow<MyGroupsUi> = groupRepository.getGroups()
-        .map { groups -> MyGroupsUi.Success(groups.map { it.toRowUi() }) }
+        // A group the user left is gone from here: it has no info to open, only leftover shifts.
+        .map { groups -> MyGroupsUi.Success(groups.filterNot { it.isRevoked }.map { it.toRowUi() }) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MyGroupsUi.Loading)
 }
 

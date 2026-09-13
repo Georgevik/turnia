@@ -24,7 +24,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.geoviksoft.turnia.navigation.LocalNavigator
-import com.geoviksoft.turnia.navigation.main.routes.ExternalCalendarData
 import com.geoviksoft.turnia.navigation.main.routes.MainRoute
 import com.geoviksoft.turnia.ui.main.groups.components.GroupCard
 import com.geoviksoft.turnia.ui.main.system.EmptyState
@@ -81,18 +80,7 @@ fun MyGroupsScreen(viewModel: MyGroupsViewModel = koinViewModel()) {
                     items(current.groups, key = { it.id.value }) { group ->
                         GroupCard(
                             group = group,
-                            onClick = {
-                                // A revoked user cannot read the group document, so there is no
-                                // info to open: what is left of the group is its calendar.
-                                val route = if (group.isRevoked) {
-                                    MainRoute.ExternalCalendar(
-                                        ExternalCalendarData.Group(id = group.id.value, name = group.name),
-                                    )
-                                } else {
-                                    MainRoute.GroupDetail(group.id.value)
-                                }
-                                navigator.goTo(route)
-                            },
+                            onClick = { navigator.goTo(MainRoute.GroupDetail(group.id.value)) },
                         )
                     }
                 }
