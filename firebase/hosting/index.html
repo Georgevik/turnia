@@ -211,7 +211,7 @@
 </main>
 
 <footer>
-  © Turnia · <a id="privacy" href="/privacy" data-i18n="privacy">Privacy Policy</a>
+  © Turnia · <a id="terms" href="/terms" data-i18n="terms">Terms of Use</a> · <a id="privacy" href="/privacy" data-i18n="privacy">Privacy Policy</a>
 </footer>
 
 <script>
@@ -241,6 +241,7 @@
       f2Text: "Ofrece un turno y un compañero lo coge con un toque. Sin dobles asignaciones.",
       f3Title: "Cada cambio, registrado",
       f3Text: "Aunque un turno cambie de manos dos veces, sabrás siempre quién lo cubre.",
+      terms: "Términos de uso",
       privacy: "Política de privacidad"
     },
     en: {
@@ -267,6 +268,7 @@
     document.querySelectorAll("[data-i18n]").forEach(function (el) {
       el.textContent = STRINGS.es[el.getAttribute("data-i18n")];
     });
+    document.getElementById("terms").href = "/terminos";
     document.getElementById("privacy").href = "/privacidad";
     document.getElementById("play-badge").src = BADGES.es.google;
     document.getElementById("play-badge").alt = BADGES.es.googleAlt;
