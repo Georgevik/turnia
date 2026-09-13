@@ -27,7 +27,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -51,10 +53,10 @@ class UserPrivateFirestore(
     fun observePreferences(uid: UserId): Flow<UserPreferencesDocument> =
         preferences.shared(uid) { preferenceUpdates(uid) }
 
-    /** From the cache: the picks are this device's own last word, and every group screen asks. */
+    /** The current picks, off the same marker-gated flow: every group screen asks. */
     suspend fun fetchCachedPreferences(uid: UserId): Outcome<UserPreferencesDocument, UserProfileError> =
         outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
-            cachedPreferences(uid) ?: serverPreferences(uid)
+            observePreferences(uid).first()
         }
 
     suspend fun updateTypeColor(
@@ -81,16 +83,10 @@ class UserPrivateFirestore(
             syncWrite.committed()
         }
 
-    private fun preferenceUpdates(uid: UserId): Flow<UserPreferencesDocument> = flow {
-        emit(cachedPreferences(uid) ?: serverPreferences(uid))
-
-        emitAll(
-            userSyncFirestore.observe(uid).mapNotNull { sync ->
-                currentPreferences(uid, sync.preferencesUpdatedAt)
-            }
-        )
-    }
-        .distinctUntilChanged()
+    private fun preferenceUpdates(uid: UserId): Flow<UserPreferencesDocument> =
+        userSyncFirestore.observe(uid)
+            .map { sync -> currentPreferences(uid, sync.preferencesUpdatedAt) }
+            .distinctUntilChanged()
         .catch { throwable ->
             Logger.e(TAG, "Preferences updates failed", throwable)
         }
@@ -101,12 +97,14 @@ class UserPrivateFirestore(
     private suspend fun currentPreferences(
         uid: UserId,
         marker: BaseTimestamp?,
-    ): UserPreferencesDocument? {
+    ): UserPreferencesDocument {
         val cached = cachedPreferences(uid)
         if (cached != null && cached.isSettledAgainst(marker)) return cached
 
-        // Nothing has ever been written: no marker to be behind, and no document to read.
-        if (marker.toInstantOrNull() == null) return cached
+        // Nothing has ever been written: no marker to be behind, and no document to read. The cache
+        // cannot say so itself — a missing document reads as a miss — so without this check a user
+        // who never picked a colour paid a server read on every call.
+        if (marker.toInstantOrNull() == null) return UserPreferencesDocument(updateAt = null)
 
         return serverPreferences(uid)
     }
@@ -125,8 +123,7 @@ class UserPrivateFirestore(
         val snapshot = document(DOCUMENT_PREFERENCES, uid).get(Source.SERVER)
             .trackData(TAG, "preferences(server)")
 
-        // A user who has never picked a colour has no document; `updateAt` null keeps it settled
-        // against the marker that does not exist either, so this is asked for once and not again.
+        // The marker says a document was written, yet it may since be gone: an empty one, then.
         return if (!snapshot.exists) UserPreferencesDocument(updateAt = null)
         else snapshot.data(UserPreferencesDocument.serializer())
     }
