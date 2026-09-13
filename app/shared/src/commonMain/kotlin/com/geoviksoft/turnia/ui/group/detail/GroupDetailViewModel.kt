@@ -52,6 +52,10 @@ class GroupDetailViewModel(
     /** Kept so saving can carry over the fields the form does not expose (the event types). */
     private var loadedGroup: Group? = null
 
+    // The screen's resume effect also fires on first display, right after `init` has loaded: a
+    // second load then would read the group's join requests from the server twice per open.
+    private var skipNextRefresh = true
+
     init {
         // Whatever a creation abandoned halfway left behind is not this group's.
         if (groupId == null) groupRepository.consumePendingEventTypes()
@@ -80,6 +84,10 @@ class GroupDetailViewModel(
         // A group being created has nothing to re-read — its types come from the repository —
         // and re-entering the initial state would throw away the form.
         if (groupId == null) return
+        if (skipNextRefresh) {
+            skipNextRefresh = false
+            return
+        }
 
         load(showLoading = false)
     }
