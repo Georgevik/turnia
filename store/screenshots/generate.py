@@ -34,7 +34,7 @@ PAGES = [
     ("4_requests", "Pide cambio sin perseguir a nadie",
      "En verde, los turnos que ya tienen quien te los cubra.", False),
     ("5_group", "Todo tu servicio en un calendario",
-     "Crea el grupo de tu unidad e invita a tu equipo con un código.", False),
+     "Crea el grupo de tu unidad e invita a tu equipo con un enlace.", False),
     ("6_shared", "Comparte tu cuadrante",
      "Que tu familia sepa cuándo trabajas, sin mandar fotos del calendario.", False),
     ("7_dark_calendar", "También para el turno de noche",
