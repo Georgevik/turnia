@@ -87,9 +87,9 @@ class UserPrivateFirestore(
         userSyncFirestore.observe(uid)
             .map { sync -> currentPreferences(uid, sync.preferencesUpdatedAt) }
             .distinctUntilChanged()
-        .catch { throwable ->
-            Logger.e(TAG, "Preferences updates failed", throwable)
-        }
+            .catch { throwable ->
+                Logger.e(TAG, "Preferences updates failed", throwable)
+            }
 
     /**
      * The cache whenever the marker says it is current, the server only when it is not.
