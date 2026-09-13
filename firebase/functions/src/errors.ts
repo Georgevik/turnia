@@ -44,6 +44,11 @@ export enum TurniaErrorCode {
   TakeEventSelf = 3004,
   TakeEventNotFound = 3005,
   TakeEventNotOnSwap = 3006,
+  ReturnEventNotMember = 3007,
+  ReturnEventNotFound = 3008,
+  ReturnEventNotAssignee = 3009,
+  ReturnEventNothingToReturn = 3010,
+  ReturnEventPreviousHolderLeft = 3011,
 
   // profile
   UpdateProfileUsernameInvalid = 2003,
@@ -108,6 +113,11 @@ const SPECS: Record<keyof typeof TurniaErrorCode, [FunctionsErrorCode, string]> 
   TakeEventSelf: ["failed-precondition", "You already hold this event."],
   TakeEventNotFound: ["not-found", "Event not found."],
   TakeEventNotOnSwap: ["failed-precondition", "Event is not offered for swap."],
+  ReturnEventNotMember: ["permission-denied", "You are not a member of this group."],
+  ReturnEventNotFound: ["not-found", "Event not found."],
+  ReturnEventNotAssignee: ["failed-precondition", "Only whoever holds the event can give it back."],
+  ReturnEventNothingToReturn: ["failed-precondition", "Nobody held this event before you."],
+  ReturnEventPreviousHolderLeft: ["failed-precondition", "Whoever held this event before you has left the group."],
 
   // profile
   UpdateProfileUsernameInvalid: ["invalid-argument", "Invalid username."],

@@ -154,19 +154,25 @@ class GroupMapper {
     }
 
     /**
-     * Who has held this shift, in order: the creator first, then whoever each transfer handed it
-     * to. The names come from the group's own member list, so the chain costs nothing to render.
+     * Every step of this shift's chain, in order: the creator first, then whoever each transfer
+     * handed it to or each hand-back returned it to. The names come from the group's own member
+     * list, so the chain costs nothing to render.
      */
     private fun chainOf(
         doc: GroupEventDocument,
         members: Map<String, String>
     ): List<EventHistoryEntry> {
-        val holders = listOf(doc.ownerId) + doc.history
-            .filter { it.type == EventHistoryDocument.TYPE_TRANSFERRED }
-            .mapNotNull { it.toUid }
+        val steps = doc.history.mapNotNull { entry ->
+            val toUid = entry.toUid ?: return@mapNotNull null
+            when (entry.type) {
+                EventHistoryDocument.TYPE_TRANSFERRED -> toUid to false
+                EventHistoryDocument.TYPE_RETURNED -> toUid to true
+                else -> null
+            }
+        }
 
-        return holders.map { uid ->
-            EventHistoryEntry(userId = UserId(uid), userName = members[uid].orEmpty())
+        return (listOf(doc.ownerId to false) + steps).map { (uid, returned) ->
+            EventHistoryEntry(userId = UserId(uid), userName = members[uid].orEmpty(), returned = returned)
         }
     }
 

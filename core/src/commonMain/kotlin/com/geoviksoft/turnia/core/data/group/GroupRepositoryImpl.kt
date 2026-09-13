@@ -344,6 +344,9 @@ class GroupRepositoryImpl(
     override suspend fun takeEvent(groupId: GroupId, eventId: EventId): Outcome<Unit, SwapError> =
         groupEventFunction.takeEvent(groupId, eventId)
 
+    override suspend fun returnEvent(groupId: GroupId, eventId: EventId): Outcome<Unit, SwapError> =
+        groupEventFunction.returnEvent(groupId, eventId)
+
     override fun getEventsByGroup(
         groupId: GroupId,
         date: LocalDate,

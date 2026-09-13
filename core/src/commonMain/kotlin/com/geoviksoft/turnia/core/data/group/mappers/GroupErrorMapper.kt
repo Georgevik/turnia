@@ -49,6 +49,20 @@ class GroupErrorMapper {
         }
     }
 
+    fun mapReturn(throwable: Throwable): SwapError {
+        val code = throwable.callableErrorCode
+        Logger.e(TAG, "Return event failed with code $code", throwable)
+
+        return when (code) {
+            CODE_RETURN_EVENT_NOT_MEMBER -> SwapError.NotMember
+            CODE_RETURN_EVENT_NOT_FOUND -> SwapError.NotFound
+            CODE_RETURN_EVENT_NOT_ASSIGNEE -> SwapError.NotAssignee
+            CODE_RETURN_EVENT_NOTHING_TO_RETURN -> SwapError.NothingToReturn
+            CODE_RETURN_EVENT_PREVIOUS_HOLDER_LEFT -> SwapError.PreviousHolderLeft
+            else -> SwapError.SaveFailed
+        }
+    }
+
     private companion object {
         const val TAG = "GroupErrorMapper"
         const val CODE_INVITATION_NOT_FOUND = 1003
@@ -61,5 +75,10 @@ class GroupErrorMapper {
         const val CODE_TAKE_EVENT_SELF = 3004
         const val CODE_TAKE_EVENT_NOT_FOUND = 3005
         const val CODE_TAKE_EVENT_NOT_ON_SWAP = 3006
+        const val CODE_RETURN_EVENT_NOT_MEMBER = 3007
+        const val CODE_RETURN_EVENT_NOT_FOUND = 3008
+        const val CODE_RETURN_EVENT_NOT_ASSIGNEE = 3009
+        const val CODE_RETURN_EVENT_NOTHING_TO_RETURN = 3010
+        const val CODE_RETURN_EVENT_PREVIOUS_HOLDER_LEFT = 3011
     }
 }

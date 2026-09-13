@@ -1,6 +1,7 @@
 import { onCall } from "firebase-functions/v2/https";
 import { DocumentSnapshot, getFirestore } from "firebase-admin/firestore";
 import { TurniaError } from "./errors";
+import { HistoryEntry } from "./events";
 import { requireFields, requireUid } from "./requests";
 
 const MAX_RANGE_DAYS = 92; // ~3 months
@@ -73,7 +74,7 @@ export const getSharedCalendar = onCall(async (request) => {
           onSwap: doc.get("onSwap"),
           ownerId: doc.get("ownerId"),
           assigneeId: doc.get("assigneeId"),
-          holderUids: holdersOf(doc),
+          ...holdersOf(doc),
         }));
     })
   );
@@ -165,11 +166,18 @@ export const getSharedCalendar = onCall(async (request) => {
   };
 });
 
-/** Who has held the shift, in order: the creator, then whoever each transfer handed it to. */
-function holdersOf(doc: DocumentSnapshot): string[] {
-  const history = (doc.get("history") as { type?: string; toUid?: string }[] | undefined) ?? [];
-  const transfers = history
-    .filter((entry) => entry.type === "transferred" && entry.toUid)
-    .map((entry) => entry.toUid as string);
-  return [doc.get("ownerId") as string, ...transfers];
+/**
+ * Every step of the shift's chain, in order: the creator, then whoever each transfer handed it to
+ * or each hand-back returned it to. `holderReturned[i]` says the shift came back to `holderUids[i]`,
+ * rather than being taken by them; the two lists always have the same length.
+ */
+function holdersOf(doc: DocumentSnapshot): { holderUids: string[]; holderReturned: boolean[] } {
+  const history = (doc.get("history") as HistoryEntry[] | undefined) ?? [];
+  const steps = history.filter(
+    (entry) => (entry.type === "transferred" || entry.type === "returned") && entry.toUid
+  );
+  return {
+    holderUids: [doc.get("ownerId") as string, ...steps.map((entry) => entry.toUid as string)],
+    holderReturned: [false, ...steps.map((entry) => entry.type === "returned")],
+  };
 }

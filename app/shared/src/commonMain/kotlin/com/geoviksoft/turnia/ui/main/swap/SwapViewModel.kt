@@ -198,13 +198,14 @@ class SwapViewModel(
     private fun GroupEvent.requestedByOther(userId: UserId) = onSwap && assigneeId != userId
 
     /**
-     * The viewer held this shift once and somebody took it from them. A shift only ever moves by
-     * being taken, so every holder in its chain but the last asked to swap it — including one who
-     * had taken it from somebody else first. Read off the chain the event already carries: no
-     * extra query, and the name comes from the group's own member list.
+     * The viewer held this shift and somebody took it from them. Every holder below the top of the
+     * stack asked to swap it — including one who had taken it from somebody else first. Someone who
+     * gave it back is off the stack: it was never taken from them, they returned it. Read off the
+     * chain the event already carries: no extra query, and the name comes from the group's own
+     * member list.
      */
     private fun GroupEvent.handedAwayBy(userId: UserId) =
-        assigneeId != userId && history.any { it.userId == userId }
+        assigneeId != userId && holders.any { it.userId == userId }
 
     private data class ViewerEvents(val userId: UserId, val events: List<GroupEvent>)
 
@@ -220,7 +221,9 @@ class SwapViewModel(
         SwapError.NotFound -> SwapMessage.NotFound
         SwapError.TakenBySomeoneElse -> SwapMessage.TakenBySomeoneElse
         SwapError.NotSwappable -> SwapMessage.NotSwappable
-        SwapError.NotAssignee, SwapError.SaveFailed -> SwapMessage.SaveFailed
+        // Only giving a shift back raises these, and that is done from the day sheet.
+        SwapError.NotAssignee, SwapError.NothingToReturn, SwapError.PreviousHolderLeft,
+        SwapError.SaveFailed -> SwapMessage.SaveFailed
     }
 
     companion object {

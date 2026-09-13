@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -21,10 +22,14 @@ import com.geoviksoft.turnia.ui.components.calendar.model.TransferHolderUi
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.event_holder_me
+import turnia.app.shared.generated.resources.event_holder_returned
 import turnia.app.shared.generated.resources.group_member_former
 
 /**
  * Who has held this shift, in order, with the current holder emphasised.
+ *
+ * It only ever reads forward: a shift given back is the next step, to whoever it went back to. Only
+ * the arrow into that step differs — curved forward and red — so a hand-back is not mistaken for a swap.
  *
  * The chain is the reason the app exists, so it is shown wherever a shift is listed rather than only
  * in the day sheet. It appears only once a shift has actually moved: a shift still with whoever
@@ -40,10 +45,22 @@ fun TransferTrail(chain: List<TransferHolderUi>, modifier: Modifier = Modifier) 
         chain.forEachIndexed { index, holder ->
             if (index > 0) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                    contentDescription = null,
+                    imageVector = if (holder.returned) {
+                        Icons.AutoMirrored.Filled.Redo
+                    } else {
+                        Icons.AutoMirrored.Filled.ArrowForward
+                    },
+                    contentDescription = if (holder.returned) {
+                        stringResource(Res.string.event_holder_returned)
+                    } else {
+                        null
+                    },
                     modifier = Modifier.size(14.dp).align(Alignment.CenterVertically),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint = if (holder.returned) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
                 )
             }
             val name = when {

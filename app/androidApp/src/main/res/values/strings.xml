@@ -11,6 +11,7 @@
     -->
     <string name="push_swap_requested">%1$s asked for a swap: %2$s on %3$s. Can you help out?</string>
     <string name="push_swap_covered">%1$s is covering your shift: %2$s on %3$s.</string>
+    <string name="push_swap_returned">%1$s gave your shift back: %2$s on %3$s. It is up for swap again.</string>
     <string name="push_join_requested">%1$s asked to join the group.</string>
     <string name="push_join_accepted">You are now a member of the group.</string>
     <string name="push_calendar_shared">%1$s shared their calendar with you.</string>

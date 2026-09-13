@@ -53,6 +53,10 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
   the rest of the group never sees the Invitación section.
 - A user can put a group event **up for swap**; another member can take it (it moves to the taker).
 - A user can **delete their own** event; an **admin** can delete any group event. Deleting removes it (there is no cancelled state).
+- Someone who **took** a shift cannot delete it — it was never theirs — but can **give it back** with the
+  same X: `returnEvent` hands it to whoever held it before them, **offered for swap again**, and tells them
+  with a push. Holders form a stack (A → B → C: C gives it back to B, B to A), and a shift whose previous
+  holder has left the group cannot be given back.
 - **Personal events** can carry notes (on the event); group event docs are shared with all members, so they hold no private notes.
 - A user can define their own **personal event types** and add **personal events** (no group), each colored by its type.
 - **Colors**: a group event type carries a **default color**, the one whoever created the type
@@ -292,11 +296,15 @@ Functions  Calls: 3
 
 - The `history` is **append-only** and lives **on the event document**, as an array: a subcollection would cost
   a read per event to show the chain, and the array is frozen for clients by the rules, so only `takeEvent`
-  can add to it.
+  and `returnEvent` can add to it.
 - A transfer changes `assigneeId` in place, so the event never moves and the history never has to be copied
   forward: the chain is simply the entries of that one event.
-- It records one thing only: `transferred` (with `fromUid`→`toUid`). Offering a shift writes no entry —
-  the `onSwap` flag already says so, and a client cannot append to a frozen array anyway.
+- It records two things: `transferred` (a member took it) and `returned` (the holder gave it back), both with
+  `fromUid`→`toUid`. Offering a shift writes no entry — the `onSwap` flag already says so, and a client cannot
+  append to a frozen array anyway.
+- A hand-back is appended, never an erasure: the chain keeps saying the taker had it. The app draws the chain
+  **forward only** — a hand-back is just the next step (A → B ↷ A), marked only by a red arrow that curves forward, since
+  the shift is then offered again like any other. `returned` still matters underneath: it is what tells who the next hand-back goes to.
 - Each entry points to `parentEventId`, so the full chain A→B→C can be reconstructed.
 - **Taking an event offered for swap** runs in a `takeEvent` transaction that checks `onSwap == true` before moving it, to prevent double assignment.
 - **Two members taking the same shift is resolved in arrival order, and that is all "FIFO" means here.**
@@ -310,11 +318,11 @@ Functions  Calls: 3
 
 - A group's code is shared as `https://turnia.club/join/CODE` ([`InvitationLink`](core/src/commonMain/kotlin/com/geoviksoft/turnia/core/domain/model/InvitationLink.kt)):
   an https link because it is the only kind that still leads somewhere without the app. The page
-  behind it (`firebase/hosting/join.html`) shows the code, points at the store, and opens an
+  behind it (`firebase/hosting/index.html`, the site's own landing page) shows the code, points at the store, and opens an
   installed app through `turnia://join/CODE`.
 - **Host, scheme and path live in [`InvitationLinkConfig`](core/src/commonMain/kotlin/com/geoviksoft/turnia/core/domain/model/InvitationLinkConfig.kt).**
   Files outside Kotlin repeat them and must change with it: `AndroidManifest.xml`, `Info.plist`, the
-  entitlements, and `firebase/hosting` (`join.html`, `apple-app-site-association`, the rewrite in
+  entitlements, and `firebase/hosting` (`index.html`, `apple-app-site-association`, the rewrite in
   `firebase.json`).
 - An opened link is **state, not an event**, exactly like a tapped notification:
   `InvitationLinkRepository` holds the code — through a cold start, or until the user has signed in —
@@ -336,7 +344,7 @@ Functions  Calls: 3
 - **read** `groups/{g}/events`: only members of the group.
 - **create** event: the member for themselves — `ownerId == assigneeId == auth.uid`.
 - **update** event: the assignee or an admin, with `ownerId`, `assigneeId` and `history` immutable from the
-  client (`takeEvent` is the only writer that reassigns or appends to the chain). `onSwap` is narrower
+  client (`takeEvent` and `returnEvent` are the only writers that reassign or append to the chain). `onSwap` is narrower
   still — **only the assignee** may move it, because offering a shift is a decision for whoever covers
   it, not for an admin. Whether the shift's *type* allows swapping is **not** enforced here: the flag
   lives inside the group's `groupEventTypes` array and the rules cannot search it by id, so that one

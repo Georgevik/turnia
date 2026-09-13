@@ -57,11 +57,16 @@ import turnia.app.shared.generated.resources.event_remove_cancel
 import turnia.app.shared.generated.resources.event_remove_confirm
 import turnia.app.shared.generated.resources.event_remove_confirm_body
 import turnia.app.shared.generated.resources.event_remove_confirm_title
+import turnia.app.shared.generated.resources.event_return_confirm
+import turnia.app.shared.generated.resources.event_return_confirm_body
+import turnia.app.shared.generated.resources.event_return_confirm_title
 import turnia.app.shared.generated.resources.event_swap_error_not_assignee
 import turnia.app.shared.generated.resources.event_swap_error_not_found
 import turnia.app.shared.generated.resources.event_swap_error_not_member
 import turnia.app.shared.generated.resources.event_swap_error_not_swappable
+import turnia.app.shared.generated.resources.event_swap_error_nothing_to_return
 import turnia.app.shared.generated.resources.event_swap_error_own_shift
+import turnia.app.shared.generated.resources.event_swap_error_previous_holder_left
 import turnia.app.shared.generated.resources.event_swap_error_save
 import turnia.app.shared.generated.resources.event_swap_error_taken_by_someone
 import turnia.app.shared.generated.resources.event_swap_take_cancel
@@ -86,6 +91,7 @@ fun DayDetailSheet(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var adding by rememberSaveable { mutableStateOf(false) }
     var pendingDelete by remember { mutableStateOf<DayEventUi?>(null) }
+    var pendingReturn by remember { mutableStateOf<DayEventUi?>(null) }
     var editingNotes by remember { mutableStateOf<DayEventUi?>(null) }
     var pendingTake by remember { mutableStateOf<DayEventUi?>(null) }
 
@@ -160,6 +166,27 @@ fun DayDetailSheet(
         )
     }
 
+    pendingReturn?.let { event ->
+        AlertDialog(
+            onDismissRequest = { pendingReturn = null },
+            title = { Text(stringResource(Res.string.event_return_confirm_title)) },
+            text = {
+                Text(stringResource(Res.string.event_return_confirm_body, event.returnsTo.orEmpty()))
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.returnEvent(event)
+                    pendingReturn = null
+                }) { Text(stringResource(Res.string.event_return_confirm)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingReturn = null }) {
+                    Text(stringResource(Res.string.event_remove_cancel))
+                }
+            },
+        )
+    }
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -219,10 +246,14 @@ fun DayDetailSheet(
                                 if (index > 0) Spacer(Modifier.height(12.dp))
                                 DayEventRow(
                                     event = event,
-                                    onRemove = if (event.removable) {
-                                        { pendingDelete = event }
-                                    } else {
-                                        null
+                                    onRemove = when {
+                                        event.removable -> {
+                                            { pendingDelete = event }
+                                        }
+                                        event.canReturn -> {
+                                            { pendingReturn = event }
+                                        }
+                                        else -> null
                                     },
                                     onEditNotes = if (event.notesEditable) {
                                         { editingNotes = event }
@@ -307,6 +338,8 @@ private fun DaySwapMessage.text(): String = stringResource(
         DaySwapMessage.OwnShift -> Res.string.event_swap_error_own_shift
         DaySwapMessage.NotFound -> Res.string.event_swap_error_not_found
         DaySwapMessage.TakenBySomeoneElse -> Res.string.event_swap_error_taken_by_someone
+        DaySwapMessage.NothingToReturn -> Res.string.event_swap_error_nothing_to_return
+        DaySwapMessage.PreviousHolderLeft -> Res.string.event_swap_error_previous_holder_left
         DaySwapMessage.SaveFailed -> Res.string.event_swap_error_save
     }
 )

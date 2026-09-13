@@ -56,6 +56,7 @@ import turnia.app.shared.generated.resources.event_assigned_to_me
 import turnia.app.shared.generated.resources.event_note_add
 import turnia.app.shared.generated.resources.event_note_edit
 import turnia.app.shared.generated.resources.event_remove
+import turnia.app.shared.generated.resources.event_return
 import turnia.app.shared.generated.resources.event_status_on_swap
 import turnia.app.shared.generated.resources.event_swap_take
 import turnia.app.shared.generated.resources.event_swap_toggle
@@ -125,7 +126,9 @@ fun DayEventRow(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
-                                    contentDescription = stringResource(Res.string.event_remove),
+                                    contentDescription = stringResource(
+                                        if (event.removable) Res.string.event_remove else Res.string.event_return
+                                    ),
                                     modifier = Modifier.size(18.dp),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )

@@ -49,6 +49,7 @@
     <string name="event_assigned_to">Assigned to %1$s</string>
     <string name="event_assigned_to_me">Assigned to me</string>
     <string name="event_holder_me">Me</string>
+    <string name="event_holder_returned">gave it back to</string>
     <string name="event_manage">Manage</string>
     <string name="event_add">Add event</string>
     <string name="event_add_close">Close</string>
@@ -65,6 +66,10 @@
     <string name="event_remove_confirm_body">This can't be undone.</string>
     <string name="event_remove_confirm">Delete</string>
     <string name="event_remove_cancel">Cancel</string>
+    <string name="event_return">Give shift back</string>
+    <string name="event_return_confirm_title">Give the shift back?</string>
+    <string name="event_return_confirm_body">It goes back to %1$s, up for swap again.</string>
+    <string name="event_return_confirm">Give back</string>
     <string name="event_details_new_title">New event type</string>
 
     <string-array name="calendar_months">
@@ -377,6 +382,8 @@
     <string name="event_swap_error_not_member">You're no longer in this group.</string>
     <string name="event_swap_error_own_shift">This shift is already yours.</string>
     <string name="event_swap_error_not_found">This shift no longer exists.</string>
+    <string name="event_swap_error_nothing_to_return">Nobody had this shift before you.</string>
+    <string name="event_swap_error_previous_holder_left">Whoever had this shift before has left the group, so it can't go back to them.</string>
 
     <!-- Swap tab -->
     <string name="swap_title">My swaps</string>

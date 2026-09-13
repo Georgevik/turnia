@@ -42,5 +42,6 @@ data class EventHistoryDocument(
 ) {
     companion object {
         const val TYPE_TRANSFERRED = "transferred"
+        const val TYPE_RETURNED = "returned"
     }
 }

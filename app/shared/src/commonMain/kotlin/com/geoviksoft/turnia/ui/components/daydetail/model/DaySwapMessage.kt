@@ -8,5 +8,7 @@ enum class DaySwapMessage {
     OwnShift,
     NotFound,
     TakenBySomeoneElse,
+    NothingToReturn,
+    PreviousHolderLeft,
     SaveFailed,
 }

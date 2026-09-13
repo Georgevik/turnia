@@ -81,8 +81,12 @@ class SharedCalendarMapper {
             date = LocalDate.parse(event.date),
             onSwap = event.onSwap,
             colorHex = type.color,
-            history = event.holderUids.map { uid ->
-                EventHistoryEntry(userId = UserId(uid), userName = names[uid].orEmpty())
+            history = event.holderUids.mapIndexed { index, uid ->
+                EventHistoryEntry(
+                    userId = UserId(uid),
+                    userName = names[uid].orEmpty(),
+                    returned = event.holderReturned.getOrElse(index) { false },
+                )
             },
         )
     }

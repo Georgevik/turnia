@@ -1,6 +1,7 @@
 package com.geoviksoft.turnia.core.data.datasource.firestorefunctions
 
 import com.geoviksoft.turnia.core.data.datasource.firestore.analytics.trackFunction
+import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.requests.ReturnEventRequest
 import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.requests.TakeEventRequest
 import com.geoviksoft.turnia.core.data.group.mappers.GroupErrorMapper
 import com.geoviksoft.turnia.core.data.logger.Logger
@@ -35,8 +36,22 @@ class GroupEventFunction(
             )
         }
 
+    /**
+     * Gives a taken shift back to whoever held it before, offered for swap again. A function for
+     * the same reason as [takeEvent]: it reassigns the shift and appends to its frozen history.
+     */
+    suspend fun returnEvent(groupId: GroupId, eventId: EventId): Outcome<Unit, SwapError> =
+        outcomeCatching(TAG, errorMapper::mapReturn) {
+            Logger.i(TAG, "Return group event")
+            trackFunction(FUNCTION_RETURN_EVENT)
+            functions.httpsCallable(FUNCTION_RETURN_EVENT)(
+                ReturnEventRequest(groupId = groupId.value, eventId = eventId.value)
+            )
+        }
+
     companion object {
         private const val TAG = "GroupEventFunction"
         private const val FUNCTION_TAKE_EVENT = "takeEvent"
+        private const val FUNCTION_RETURN_EVENT = "returnEvent"
     }
 }

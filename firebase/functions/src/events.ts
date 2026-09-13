@@ -1,6 +1,6 @@
 import { onCall } from "firebase-functions/v2/https";
 import { FieldValue, Timestamp, getFirestore } from "firebase-admin/firestore";
-import { notifyEventTaken } from "./notifications";
+import { notifyEventReturned, notifyEventTaken } from "./notifications";
 import { TurniaError } from "./errors";
 import { requireFields, requireUid } from "./requests";
 import { markGroupEventsUpdated } from "./sync";
@@ -86,4 +86,100 @@ export const takeEvent = onCall(async (request) => {
   await notifyEventTaken(group, eventId, taken, taken.fromUid, taker);
 
   return { groupId, eventId, assigneeId: taker, status: "taken" as const };
+});
+
+/** One entry of an event's `history`, as far as the chain of holders is concerned. */
+export type HistoryEntry = { type?: string; fromUid?: string; toUid?: string };
+
+/**
+ * Who holds the shift and who held it before them, as a stack: the creator at the bottom, each
+ * transfer pushing whoever took it, each hand-back popping whoever gave it back.
+ *
+ * A stack and not simply the entries in order because a hand-back undoes one step and nothing more:
+ * after A → B → C and C giving it back, the shift is B's, and should B give it back too it is A's.
+ */
+export function holderStack(ownerId: string, history: HistoryEntry[]): string[] {
+  const stack = [ownerId];
+  for (const entry of history) {
+    if (entry.type === "transferred" && entry.toUid) stack.push(entry.toUid);
+    else if (entry.type === "returned" && stack.length > 1) stack.pop();
+  }
+  return stack;
+}
+
+/**
+ * Gives a shift back to whoever held it before the caller took it.
+ *
+ * The taker's way out of a shift they no longer can cover. They cannot delete it — it was never
+ * theirs to delete, and the person who asked to swap it still needs it covered — so it goes back to
+ * that person, **offered for swap again**, since that is exactly where they had left it. That flag
+ * flipping is what makes `onEventPutOnSwap` ask the rest of the group once more.
+ *
+ * Append-only like the transfer: the history gains a `returned` entry and loses nothing, so the
+ * chain still tells that the caller took it and then gave it back.
+ *
+ * Refused when the previous holder has left the group: handing a shift to somebody who can no
+ * longer see the group would leave it with nobody able to act on it.
+ *
+ * Request data: `{ groupId: string, eventId: string }`
+ * Returns: `{ groupId, eventId, assigneeId, status: "returned" }`
+ */
+export const returnEvent = onCall(async (request) => {
+  const caller = requireUid(request);
+  const { groupId, eventId } = requireFields(request, "groupId", "eventId");
+
+  const db = getFirestore();
+  const group = await db.doc(`groups/${groupId}`).get();
+  const memberUids = (group.get("memberUids") as string[] | undefined) ?? [];
+  if (!memberUids.includes(caller)) {
+    throw TurniaError.ReturnEventNotMember;
+  }
+
+  const eventRef = db.doc(`groups/${groupId}/events/${eventId}`);
+
+  const returned = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(eventRef);
+    if (!snap.exists) {
+      throw TurniaError.ReturnEventNotFound;
+    }
+    if (snap.get("assigneeId") !== caller) {
+      throw TurniaError.ReturnEventNotAssignee;
+    }
+
+    const history = (snap.get("history") as HistoryEntry[] | undefined) ?? [];
+    const stack = holderStack(snap.get("ownerId") as string, history);
+    if (stack.length < 2) {
+      throw TurniaError.ReturnEventNothingToReturn;
+    }
+    const toUid = stack[stack.length - 2];
+    if (!memberUids.includes(toUid)) {
+      throw TurniaError.ReturnEventPreviousHolderLeft;
+    }
+
+    tx.update(eventRef, {
+      assigneeId: toUid,
+      onSwap: true,
+      updateAt: FieldValue.serverTimestamp(),
+      history: FieldValue.arrayUnion({
+        type: "returned",
+        actorUid: caller,
+        fromUid: caller,
+        toUid,
+        timestamp: Timestamp.now(),
+      }),
+    });
+
+    const yearMonth = (snap.get("yearMonth") as string | undefined) ?? "";
+    markGroupEventsUpdated(db, tx, groupId, yearMonth);
+
+    return {
+      toUid,
+      groupEventTypeId: snap.get("groupEventTypeId") as string | undefined,
+      date: snap.get("date") as string | undefined,
+    };
+  });
+
+  await notifyEventReturned(group, eventId, returned, caller, returned.toUid);
+
+  return { groupId, eventId, assigneeId: returned.toUid, status: "returned" as const };
 });

@@ -539,10 +539,10 @@ here it travels with the event for free. Each entry:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `type` | string | `transferred` — the only value written. |
+| `type` | string | `transferred` or `returned`. |
 | `actorUid` | string | Who performed the action. |
-| `fromUid` | string \| null | Previous assignee (for `transferred`). |
-| `toUid` | string \| null | New assignee (for `transferred`). |
+| `fromUid` | string \| null | Previous assignee. |
+| `toUid` | string \| null | New assignee. |
 | `timestamp` | timestamp | When it happened — a real timestamp, since Firestore forbids the server-timestamp sentinel inside an array. |
 
 **Append-only, and more firmly than before**: the rules freeze the whole field for clients, so only
@@ -559,6 +559,7 @@ Represented by the boolean `event.onSwap`.
 
 - `onSwap: false → true` — the current assignee offers the event.
 - `onSwap: true → false` — the offer is withdrawn, or a member takes it (moving the event to the new assignee).
+- `onSwap: false → true` by `returnEvent` — a taker gave it back, so it is offered again under the previous holder.
 
 ### History event type
 
@@ -567,6 +568,10 @@ Represented by the boolean `event.onSwap`.
 | Value | Emitted when | `fromUid` / `toUid` |
 |-------|--------------|---------------------|
 | `transferred` | A member takes the event; it moves to the new assignee. | `from` = previous assignee, `to` = new assignee |
+| `returned` | The assignee gives a taken event back (`returnEvent`); it moves to the holder before them and goes back on swap. | `from` = who gave it back, `to` = who it went back to |
+
+Who holds an event is a **stack** read off the entries: the owner at the bottom, `transferred` pushes
+`toUid`, `returned` pops. The holder below the top is who a hand-back goes to.
 
 Putting an event up for swap writes **no** history entry: `onSwap` already records it, and the array is
 frozen against clients, so only a function could append one — a write per offer for nothing new.

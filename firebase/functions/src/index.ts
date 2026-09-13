@@ -15,8 +15,9 @@ export { requestToJoinGroup, acceptJoinRequest, rejectJoinRequest } from "./invi
 // events keeps read access to their own through `revokedUids`.
 export { leaveGroup, removeMember, deleteGroup } from "./membership";
 
-// Takes an event offered for swap: verifies `onSwap` and reassigns it in a transaction.
-export { takeEvent } from "./events";
+// Takes an event offered for swap: verifies `onSwap` and reassigns it in a transaction. A taker
+// who can no longer cover it gives it back to the previous holder with `returnEvent`.
+export { takeEvent, returnEvent } from "./events";
 
 // Renames a user everywhere their name is copied: the client may not write it itself.
 export { updateProfile } from "./users";

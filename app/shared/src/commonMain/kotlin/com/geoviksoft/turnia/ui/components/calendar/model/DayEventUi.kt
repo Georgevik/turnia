@@ -19,6 +19,8 @@ enum class EventSource { GROUP, PERSONAL }
 data class TransferHolderUi(
     val name: String,
     val isMe: Boolean,
+    /** The shift reached this holder by being given back to them, not by them taking it. */
+    val returned: Boolean = false,
 )
 
 /**
@@ -61,6 +63,11 @@ data class DayEventUi(
     val groupName: String? = null,
     val transferChain: List<TransferHolderUi> = emptyList(),
     val removable: Boolean = false,
+    /**
+     * Who the shift would go back to if the viewer gave it back, or null when they cannot: only
+     * someone covering a shift they took, in a group they are still in, from someone still in it.
+     */
+    val returnsTo: String? = null,
     val notes: String? = null,
     val notesEditable: Boolean = false,
 ) {
@@ -87,6 +94,8 @@ data class DayEventUi(
      */
     val canTake: Boolean
         get() = source == EventSource.GROUP && activeMember && onSwap && !assigneeIsMe
+
+    val canReturn: Boolean get() = returnsTo != null
 
     /** The same event as the grid can draw it. */
     val cell: CalendarCellEventUi = CalendarCellEventUi(
@@ -120,6 +129,10 @@ fun GroupEvent.toUi(
     assigneeIsMe = assigneeId == currentUserId,
     groupName = groupName,
     removable = removable,
+    // A blank name is somebody no longer in the roster, whom `returnEvent` would refuse anyway.
+    returnsTo = previousHolder?.userName?.takeIf {
+        activeMember && assigneeId == currentUserId && ownerId != currentUserId && it.isNotBlank()
+    },
     timeRange = type.hours(),
     transferChain = buildTransferChain(currentUserId),
 )
@@ -136,7 +149,11 @@ private fun EventType.hours(): String? = when {
 private fun GroupEvent.buildTransferChain(currentUserId: UserId?): List<TransferHolderUi> {
     if (history.size < 2) return emptyList()
     return history.map { entry ->
-        TransferHolderUi(name = entry.userName, isMe = entry.userId == currentUserId)
+        TransferHolderUi(
+            name = entry.userName,
+            isMe = entry.userId == currentUserId,
+            returned = entry.returned,
+        )
     }
 }
 

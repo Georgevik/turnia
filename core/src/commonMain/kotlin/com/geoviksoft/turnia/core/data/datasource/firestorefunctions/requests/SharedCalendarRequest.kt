@@ -35,6 +35,8 @@ data class SharedGroupEventResponse(
     @SerialName("assigneeId") val assigneeId: String,
     /** The creator first, then whoever each transfer handed the shift to. */
     @SerialName("holderUids") val holderUids: List<String> = emptyList(),
+    /** Per entry of [holderUids], whether the shift was handed back to them rather than taken. */
+    @SerialName("holderReturned") val holderReturned: List<Boolean> = emptyList(),
 )
 
 @Serializable

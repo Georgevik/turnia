@@ -128,6 +128,15 @@ class DayDetailSheetViewModel(
         }
     }
 
+    fun returnEvent(event: DayEventUi) {
+        val groupId = event.groupId ?: return
+
+        viewModelScope.launch {
+            groupRepository.returnEvent(groupId, event.id)
+                .onFailure { error -> _swapMessage.value = error.toMessage() }
+        }
+    }
+
     private fun SwapError.toMessage(): DaySwapMessage = when (this) {
         SwapError.NotAssignee -> DaySwapMessage.NotAssignee
         SwapError.NotSwappable -> DaySwapMessage.NotSwappable
@@ -135,6 +144,8 @@ class DayDetailSheetViewModel(
         SwapError.OwnShift -> DaySwapMessage.OwnShift
         SwapError.NotFound -> DaySwapMessage.NotFound
         SwapError.TakenBySomeoneElse -> DaySwapMessage.TakenBySomeoneElse
+        SwapError.NothingToReturn -> DaySwapMessage.NothingToReturn
+        SwapError.PreviousHolderLeft -> DaySwapMessage.PreviousHolderLeft
         SwapError.SaveFailed -> DaySwapMessage.SaveFailed
     }
 

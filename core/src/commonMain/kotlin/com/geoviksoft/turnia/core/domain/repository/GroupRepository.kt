@@ -57,6 +57,12 @@ interface GroupRepository {
      */
     suspend fun takeEvent(groupId: GroupId, eventId: EventId): Outcome<Unit, SwapError>
 
+    /**
+     * Gives a shift the user took back to whoever held it before them, offered for swap again.
+     * The taker's way out: a shift they did not create is not theirs to delete.
+     */
+    suspend fun returnEvent(groupId: GroupId, eventId: EventId): Outcome<Unit, SwapError>
+
     /** Cached events first, still loading, then the server's if it had anything newer. */
     fun getEventsByGroup(
         groupId: GroupId,

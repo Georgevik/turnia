@@ -10,7 +10,8 @@ type PushType =
   | "join_accepted"
   | "calendar_shared"
   | "event_on_swap"
-  | "event_taken";
+  | "event_taken"
+  | "event_returned";
 
 /**
  * The sentence a push shows, by name rather than in words.
@@ -191,6 +192,34 @@ export async function notifyEventTaken(
       fallback: `${taker} is covering your shift: ${type} on ${date}.`,
     },
     type: "event_taken",
+    data: { groupId: group.id, eventId },
+  });
+}
+
+/**
+ * Tells whoever had asked to swap a shift that the colleague who covered it gave it back.
+ *
+ * It comes back to them offered for swap again, so `onEventPutOnSwap` separately asks the rest of
+ * the group to cover it; this one is only for the person it is suddenly back with.
+ */
+export async function notifyEventReturned(
+  group: DocumentSnapshot,
+  eventId: string,
+  shift: { groupEventTypeId?: string; date?: string },
+  returnerUid: string,
+  toUid: string,
+) {
+  const returner = memberName(group, returnerUid);
+  const type = shiftTypeName(group, shift.groupEventTypeId) ?? "";
+  const date = shortDate(shift.date);
+  await notify([toUid], {
+    title: group.get("name") ?? "Turnia",
+    body: {
+      key: "push_swap_returned",
+      args: [returner, type, date],
+      fallback: `${returner} gave your shift back: ${type} on ${date}. It is up for swap again.`,
+    },
+    type: "event_returned",
     data: { groupId: group.id, eventId },
   });
 }

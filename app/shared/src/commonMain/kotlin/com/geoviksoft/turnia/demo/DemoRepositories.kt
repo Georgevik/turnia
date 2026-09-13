@@ -176,6 +176,24 @@ internal class DemoGroupRepository(private val world: DemoWorld) : GroupReposito
         return Unit.toSuccess()
     }
 
+    override suspend fun returnEvent(groupId: GroupId, eventId: EventId): Outcome<Unit, SwapError> {
+        val event = events.value.firstOrNull { it.id == eventId } ?: return SwapError.NotFound.toFailure()
+        val previous = event.previousHolder ?: return SwapError.NothingToReturn.toFailure()
+
+        events.update { all ->
+            all.map {
+                if (it.id != eventId) it
+                else it.copy(
+                    assigneeId = previous.userId,
+                    assigneeName = previous.userName,
+                    onSwap = true,
+                    history = it.history + previous.copy(returned = true),
+                )
+            }
+        }
+        return Unit.toSuccess()
+    }
+
     override fun getEventsByGroup(
         groupId: GroupId,
         date: LocalDate,

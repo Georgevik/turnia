@@ -49,6 +49,7 @@
     <string name="event_assigned_to">Asignado a %1$s</string>
     <string name="event_assigned_to_me">Asignado a mí</string>
     <string name="event_holder_me">Yo</string>
+    <string name="event_holder_returned">se lo devolvió a</string>
     <string name="event_manage">Gestionar</string>
     <string name="event_add">Añadir evento</string>
     <string name="event_add_close">Cerrar</string>
@@ -65,6 +66,10 @@
     <string name="event_remove_confirm_body">Esta acción no se puede deshacer.</string>
     <string name="event_remove_confirm">Eliminar</string>
     <string name="event_remove_cancel">Cancelar</string>
+    <string name="event_return">Devolver turno</string>
+    <string name="event_return_confirm_title">¿Devolver el turno?</string>
+    <string name="event_return_confirm_body">Volverá a %1$s y quedará otra vez ofrecido para cambio.</string>
+    <string name="event_return_confirm">Devolver</string>
     <string name="event_details_new_title">Nuevo tipo de evento</string>
 
     <string-array name="calendar_months">
@@ -377,6 +382,8 @@
     <string name="event_swap_error_not_member">Ya no estás en este grupo.</string>
     <string name="event_swap_error_own_shift">Este turno ya es tuyo.</string>
     <string name="event_swap_error_not_found">Este turno ya no existe.</string>
+    <string name="event_swap_error_nothing_to_return">Nadie tenía este turno antes que tú.</string>
+    <string name="event_swap_error_previous_holder_left">Quien tenía este turno antes ya no está en el grupo, así que no se le puede devolver.</string>
 
     <!-- Swap tab -->
     <string name="swap_title">Mis cambios</string>

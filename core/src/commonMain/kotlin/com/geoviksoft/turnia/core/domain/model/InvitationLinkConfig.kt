@@ -5,7 +5,7 @@ package com.geoviksoft.turnia.core.domain.model
  * landing page opens an installed app with.
  *
  * Files outside Kotlin cannot read this and repeat the values; change them together:
- * `AndroidManifest.xml`, `Info.plist`, the entitlements, and `firebase/hosting` (`join.html`,
+ * `AndroidManifest.xml`, `Info.plist`, the entitlements, and `firebase/hosting` (`index.html`,
  * `apple-app-site-association`, and the rewrite in `firebase.json`).
  */
 object InvitationLinkConfig {
