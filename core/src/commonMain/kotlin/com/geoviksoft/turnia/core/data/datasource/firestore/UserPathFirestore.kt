@@ -1,6 +1,7 @@
 package com.geoviksoft.turnia.core.data.datasource.firestore
 
 import com.geoviksoft.turnia.core.data.datasource.firestore.analytics.trackData
+import com.geoviksoft.turnia.core.data.datasource.firestore.analytics.trackedSnapshots
 import com.geoviksoft.turnia.core.data.datasource.firestore.analytics.trackWrite
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.UserDocument
 import com.geoviksoft.turnia.core.data.datasource.firestore.errors.UserProfileError
@@ -182,9 +183,8 @@ class UserPathFirestore(
     private fun queryCalendarSharedWith(uid: UserId): Flow<CalendarsSharedWithMe> =
         firestore.collection(PATH_USER)
             .where { UserDocument.FIELD_CALENDAR_SHARED_WITH contains uid.value }
-            .snapshots
+            .trackedSnapshots(TAG, "calendarsSharedWithMe(snapshots)")
             .map { snapshot ->
-                snapshot.trackData(TAG, "calendarsSharedWithMe(snapshots)")
                 snapshot.documents.map { mapper.map(it) }.toSuccess()
             }
             .distinctUntilChanged()

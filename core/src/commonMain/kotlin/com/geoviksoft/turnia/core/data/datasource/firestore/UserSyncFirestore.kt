@@ -2,6 +2,7 @@ package com.geoviksoft.turnia.core.data.datasource.firestore
 
 import com.geoviksoft.turnia.core.data.datasource.firestore.analytics.PendingWrite
 import com.geoviksoft.turnia.core.data.datasource.firestore.analytics.trackData
+import com.geoviksoft.turnia.core.data.datasource.firestore.analytics.trackedSnapshots
 import com.geoviksoft.turnia.core.data.datasource.firestore.analytics.trackWrite
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.EventSyncUpdateAt
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.UserSyncDocument
@@ -43,9 +44,8 @@ class UserSyncFirestore(
 
     fun observe(uid: UserId): Flow<UserSyncDocument> = listeners.shared(uid) { snapshots(uid) }
 
-    private fun snapshots(uid: UserId): Flow<UserSyncDocument> = syncDocument(uid).snapshots
+    private fun snapshots(uid: UserId): Flow<UserSyncDocument> = syncDocument(uid).trackedSnapshots(TAG, "sync(snapshots)")
         .map { snapshot ->
-            snapshot.trackData(TAG, "sync(snapshots)")
             if (!snapshot.exists) UserSyncDocument()
             else snapshot.data(UserSyncDocument.serializer())
         }

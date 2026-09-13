@@ -1,6 +1,7 @@
 package com.geoviksoft.turnia.core.data.datasource.firestore
 
 import com.geoviksoft.turnia.core.data.datasource.firestore.analytics.trackData
+import com.geoviksoft.turnia.core.data.datasource.firestore.analytics.trackedSnapshots
 import com.geoviksoft.turnia.core.data.datasource.firestore.analytics.trackWrite
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.DocHolder
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.GroupDocument
@@ -18,6 +19,7 @@ import dev.gitlive.firebase.firestore.Source
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -84,15 +86,16 @@ class GroupFirestore(
     private fun snapshotMyGroups(userId: UserId): Flow<List<DocHolder<GroupDocument>>> =
         firestore.collection(PATH_GROUPS)
             .where { GroupDocument.FIELD_MEMBER_UIDS contains userId.value }
-            .snapshots
+            .trackedSnapshots(TAG, "myGroups(snapshots)")
             .map { snapshot ->
-                snapshot.trackData(TAG, "myGroups(snapshots)")
                 Logger.d(TAG, "Groups of the user: ${snapshot.documents.size}")
 
                 snapshot.documents.map {
                     DocHolder(id = it.reference.id, doc = it.data(GroupDocument.serializer()))
                 }
             }
+            // Metadata changes arrive too, and repeat the list unchanged.
+            .distinctUntilChanged()
             .catch { throwable ->
                 Logger.e(TAG, "Groups listener failed", throwable)
                 emit(emptyList())
