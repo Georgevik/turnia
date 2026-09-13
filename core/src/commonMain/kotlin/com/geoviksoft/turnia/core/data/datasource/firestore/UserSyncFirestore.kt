@@ -87,6 +87,13 @@ class UserSyncFirestore(
         UserSyncDocument(accountUpdatedAt = Timestamp.ServerTimestamp),
     )
 
+    fun writeProfile(batch: WriteBatch, uid: UserId) = write(
+        "writeProfile",
+        batch,
+        uid,
+        UserSyncDocument(profileUpdatedAt = Timestamp.ServerTimestamp),
+    )
+
     fun writeJoinRequests(batch: WriteBatch, uid: UserId) = write(
         "writeJoinRequests",
         batch,

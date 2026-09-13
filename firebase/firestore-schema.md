@@ -308,6 +308,7 @@ what it already cached to decide whether it has to query the server at all.
 | `personalEventTypesUpdatedAt` | timestamp \| null | Last write to `personalEventTypes` (server timestamp). |
 | `revokedGroups` | timestamp \| null | Last write to `revokedGroups` — a revocation or a rejoin. Moved **only** by `leaveGroup` / `removeMember` / the rejoin path, never by a client. |
 | `account` | timestamp \| null | Last write to `private/account`. |
+| `profile` | timestamp \| null | Last write to the user's own `users/{uid}` — name, username, avatar or `calendarSharedWith` — by any of their devices or by `updateProfile`. Every such write stamps the profile's `updateAt` in the same commit. What the owner's session start and People tab read the cached profile against; other users keep using the reservation's `updateAt`. |
 | `joinRequests` | timestamp \| null | Last write to `private/joinRequests`, **or** to a `groups/{g}/joinRequests/{uid}` this user owns — answering a request changes no field of the pointer list, and this is the only thing that tells the requester to look again. |
 | `preferences` | timestamp \| null | Last write to `private/preferences`. |
 | `subscription` | timestamp \| null | Last write to `private/subscription`. **Server-only**: the rules refuse any client write that touches it. |

@@ -80,7 +80,7 @@ val dataModule: Module = module {
 
     // Datasources.
     single { UserProfileFunction(get(), get()) }
-    single { UserPathFirestore(get(), get(), get(), get()) }
+    single { UserPathFirestore(get(), get(), get(), get(), get()) }
     single { UserPrivateFirestore(get(), get(), get()) }
     single { UsernameFirestore(get(), get()) }
     single { UserSyncFirestore(get(), get()) }

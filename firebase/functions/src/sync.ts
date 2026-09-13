@@ -30,6 +30,7 @@ export interface SyncWriter {
  */
 export type UserMarker =
   | "account"
+  | "profile"
   | "joinRequests"
   | "preferences"
   // Server-only, and the rules keep it that way: the receipt-verification function commits it with
