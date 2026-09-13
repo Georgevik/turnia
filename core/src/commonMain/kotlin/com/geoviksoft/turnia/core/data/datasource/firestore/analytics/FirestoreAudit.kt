@@ -1,11 +1,15 @@
 package com.geoviksoft.turnia.core.data.datasource.firestore.analytics
 
 import com.geoviksoft.turnia.core.data.logger.Logger
+import dev.gitlive.firebase.firestore.DocumentReference
 import dev.gitlive.firebase.firestore.DocumentSnapshot
+import dev.gitlive.firebase.firestore.Query
 import dev.gitlive.firebase.firestore.QuerySnapshot
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
@@ -136,6 +140,70 @@ fun DocumentSnapshot.trackData(tag: String, operation: String): DocumentSnapshot
     trackRead(tag, operation, 1, metadata.isFromCache)
 }
 
+/**
+ * A document listener, reported the way Firestore bills it.
+ *
+ * Subscribed with metadata changes, because without them the SDK stays silent when the server
+ * merely confirms what the cache already held — and that confirmation is billed whenever the
+ * listener last listened more than 30 minutes ago. Counting it on every attach is therefore an
+ * upper bound: a re-attach inside that window is free, and the client cannot tell the two apart.
+ *
+ * After that, a server snapshot is billed only when it carries a remote change. The two
+ * metadata-only events are skipped: the acknowledgement of this device's own write (a write, never
+ * a read) and falling back to the cache when the connection drops.
+ */
+fun DocumentReference.trackedSnapshots(tag: String, operation: String): Flow<DocumentSnapshot> =
+    flow {
+        var attached = false
+        var confirmed = false
+        var hadPendingWrites = false
+
+        snapshots(includeMetadataChanges = true).collect { snapshot ->
+            val metadata = snapshot.metadata
+            when {
+                !attached && metadata.isFromCache -> trackRead(tag, operation, 1, fromCache = true)
+                metadata.isFromCache || metadata.hasPendingWrites || hadPendingWrites -> Unit
+                !confirmed -> trackAttach(tag, operation, 1)
+                else -> trackRead(tag, operation, 1, fromCache = false)
+            }
+
+            attached = true
+            if (metadata.isFromCache) confirmed = false
+            else if (!metadata.hasPendingWrites && !hadPendingWrites) confirmed = true
+            hadPendingWrites = metadata.hasPendingWrites
+            emit(snapshot)
+        }
+    }
+
+/**
+ * A query listener, reported the way Firestore bills it: the whole result set on attach (see
+ * [DocumentReference.trackedSnapshots] for why that is an upper bound), then only the documents a
+ * remote change touched. An empty result is still billed one read.
+ */
+fun Query.trackedSnapshots(tag: String, operation: String): Flow<QuerySnapshot> = flow {
+    var attached = false
+    var confirmed = false
+
+    snapshots(includeMetadataChanges = true).collect { snapshot ->
+        val metadata = snapshot.metadata
+        when {
+            !attached && metadata.isFromCache ->
+                trackRead(tag, operation, snapshot.documents.size.coerceAtLeast(1), fromCache = true)
+
+            metadata.isFromCache || metadata.hasPendingWrites -> Unit
+            !confirmed -> trackAttach(tag, operation, snapshot.documents.size.coerceAtLeast(1))
+            // Metadata-only changes leave `documentChanges` empty, so they count nothing here.
+            snapshot.documentChanges.isNotEmpty() ->
+                trackRead(tag, operation, snapshot.documentChanges.size, fromCache = false)
+        }
+
+        attached = true
+        if (metadata.isFromCache) confirmed = false
+        else if (!metadata.hasPendingWrites) confirmed = true
+        emit(snapshot)
+    }
+}
+
 fun interface PendingWrite {
     fun committed()
 }
@@ -153,6 +221,12 @@ fun trackFunction(name: String) {
 /** A write is never served from a cache: it is billed even while the device is offline. */
 fun trackWrite(tag: String, operation: String, documents: Int = 1) {
     FirestoreAudit.add(tag, operation, FirestoreUsage(writes = documents))
+    FirestoreAudit.triggerSummary()
+}
+
+private fun trackAttach(tag: String, operation: String, documents: Int) {
+    FirestoreAudit.add(tag, operation, FirestoreUsage(serverReads = documents))
+    Logger.w(TAG, "$tag.$operation - SERVER READ: $documents (listener attach, at most)")
     FirestoreAudit.triggerSummary()
 }
 

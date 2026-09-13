@@ -245,12 +245,15 @@ See [firebase/firestore-schema.md](firebase/firestore-schema.md) — the single 
 
 Firestore bills **per document**: one read for every document the server returns, one write for every document sent to it. The local cache is the only lever we have on that bill, so its effect has to be measurable — a read served from cache is free, and we count those apart to see the caching working.
 
+What a user is expected to cost, per action and per day, is in [firebase/firestore-usage.md](firebase/firestore-usage.md) — update it when a change moves those numbers.
+
 **Every Firestore call must report itself** through [`FirestoreUsageMetrics.kt`](core/src/commonMain/kotlin/com/geoviksoft/turnia/core/data/datasource/firestore/analytics/FirestoreUsageMetrics.kt). A new datasource, or a new query in an existing one, is not finished until it does.
 
 | Call | How to report it |
 |------|------------------|
 | `.get()` on a query | chain `.trackData(TAG, "operation")` onto the snapshot |
 | `.get()` on a document | chain `.trackData(TAG, "operation")` — a document that does not exist still costs a read |
+| a listener (document or query) | subscribe through `.trackedSnapshots(TAG, "operation")` instead of `.snapshots` — never `.snapshots` + `trackData` |
 | `set` / `updateFields` / `delete` | `trackWrite(TAG, "operation")` on the line **after** the call |
 | `httpsCallable(NAME)` on a Cloud Function | `trackFunction(NAME)` on the line **before** the call |
 
@@ -261,6 +264,12 @@ The operation is a **key**, so it has to be short and stable. `"events(SERVER)"`
 Two rules that are easy to get wrong:
 
 - **`trackWrite` goes after the write, never before.** Inside `outcomeCatching { }` that means a call which threw never gets counted — a write rejected by the security rules is not billed, and counting it hides real failures behind plausible numbers.
+- **A listener is billed when it attaches, even if nothing changed.** Without metadata changes the SDK
+  raises no event when the server only confirms the cache, so `trackData` on `.snapshots` never saw
+  it. `trackedSnapshots` listens with metadata changes and counts the result set on every attach —
+  an upper bound, since a re-attach within 30 minutes of the last listen is free — then only the
+  documents a remote change touches. Its extra metadata-only emissions repeat the same value, so
+  follow it with `distinctUntilChanged()`.
 - **A write has no cache variant.** It is billed even offline; the charge simply lands when the device syncs. Only reads can be free.
 
 - **`trackFunction` goes *before* the call**, which is the opposite rule and has the opposite reason: a callable is billed the moment it reaches Google, refusals included, so counting it afterwards would hide exactly the failures worth seeing. What a function then spends on its own reads and writes never reaches this audit — it happens server-side with admin privileges — so one `Calls: 1` can stand for a dozen documents.

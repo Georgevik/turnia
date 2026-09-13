@@ -49,6 +49,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
@@ -56,6 +57,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.withIndex
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
@@ -141,7 +143,7 @@ class GroupRepositoryImpl(
             )
         )
 
-        groupFirestore.create(created.id, document).errorOrNull()?.let { error ->
+        groupFirestore.create(created.id, userId, document).errorOrNull()?.let { error ->
             Logger.e(TAG, "Failed to create group: $error")
             return GroupError.NotFound.toFailure()
         }
@@ -183,13 +185,24 @@ class GroupRepositoryImpl(
         return coded.copy(isAdmin = userId.value in adminUids).toSuccess()
     }
 
-    override suspend fun getJoinRequests(groupId: GroupId): Outcome<List<JoinRequest>, GroupError> =
-        groupJoinRequestFirestore.getPending(groupId)
-            .map { requests -> requests.map(groupMapper::map) }
-            .mapError { error ->
-                Logger.e(TAG, "Failed to read the join requests: $error")
-                GroupError.LoadFailed
+    override fun observeGroup(groupId: GroupId): Flow<Outcome<Group, GroupError>> =
+        userRepository.loggedUserFlow.flatMapLatest { user ->
+            combine(
+                groupFirestore.observe(groupId)
+                    .withIndex()
+                    // Not cached yet says nothing about whether the group exists: wait for the server.
+                    .filterNot { (index, holder) -> index == 0 && holder == null }
+                    .map { it.value },
+                userPrivateFirestore.observePreferences(user.id).map { it.groupEventTypeColors },
+            ) { holder, colors ->
+                holder?.let { groupMapper.map(it, user.id, colors).toSuccess() }
+                    ?: GroupError.NotFound.toFailure()
             }
+        }
+
+    override fun observeJoinRequests(groupId: GroupId): Flow<List<JoinRequest>> =
+        groupJoinRequestFirestore.observePending(groupId)
+            .map { requests -> requests.map(groupMapper::map) }
 
     override suspend fun acceptJoinRequest(
         groupId: GroupId,

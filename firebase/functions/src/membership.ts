@@ -8,7 +8,7 @@ import {
 } from "firebase-admin/firestore";
 import { TurniaError } from "./errors";
 import { requireFields, requireUid } from "./requests";
-import { markGroupUpdated, markUserUpdated } from "./sync";
+import { markGroupLeft, markGroupUpdated, markUserUpdated } from "./sync";
 import { writeJoinRequestPointer } from "./users";
 
 export function clearRevokedGroup(
@@ -78,6 +78,7 @@ async function revoke(db: Firestore, groupId: string, uid: string) {
 
   // Same commit as the group, so both resolve to one instant and a reader's cache can settle.
   markGroupUpdated(db, batch, groupId);
+  markGroupLeft(db, batch, uid, groupId);
   await batch.commit();
 
   return held.length > 0 ? ("revoked" as const) : ("removed" as const);
@@ -206,13 +207,17 @@ export async function deleteGroupTree(db: Firestore, group: DocumentSnapshot) {
   // document, and `recursiveDelete` cannot reach it: it is not under the group. Read them while
   // the requests still exist.
   const requests = await group.ref.collection("joinRequests").get();
+  const memberUids = (group.get("memberUids") as string[] | undefined) ?? [];
 
   // The group first: a tombstone written before a delete that then fails would take a group away
   // from people it still exists for. The other way round they keep a stale, empty entry at worst.
   await db.recursiveDelete(group.ref);
 
-  if (revokedUids.length > 0 || !requests.empty) {
+  if (revokedUids.length > 0 || !requests.empty || memberUids.length > 0) {
     const batch = db.batch();
+    for (const memberUid of memberUids) {
+      markGroupLeft(db, batch, memberUid, groupId);
+    }
     for (const revokedUid of revokedUids) {
       batch.set(
         db.doc(`users/${revokedUid}/revokedGroups/${groupId}`),

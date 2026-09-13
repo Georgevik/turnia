@@ -4,7 +4,13 @@ import { clearRevokedGroup } from "./membership";
 import { notifyJoinAccepted, notifyJoinRequested } from "./notifications";
 import { TurniaError } from "./errors";
 import { requireFields, requireUid } from "./requests";
-import { markGroupUpdated, markUserUpdated } from "./sync";
+import {
+  markGroupJoined,
+  markGroupUpdated,
+  markJoinRequestPending,
+  markJoinRequestSettled,
+  markUserUpdated,
+} from "./sync";
 import { writeJoinRequestPointer } from "./users";
 
 /**
@@ -69,6 +75,7 @@ export const requestToJoinGroup = onCall(async (request) => {
     });
     clearRevokedGroup(db, batch, groupDoc, uid);
     markGroupUpdated(db, batch, groupDoc.id);
+    markGroupJoined(db, batch, uid, groupDoc.id);
     await batch.commit();
 
     return { groupId: groupDoc.id, status: "joined" as const };
@@ -87,6 +94,7 @@ export const requestToJoinGroup = onCall(async (request) => {
     requestedAt: FieldValue.serverTimestamp(),
   });
   writeJoinRequestPointer(db, batch, uid, FieldValue.arrayUnion(groupDoc.id));
+  markJoinRequestPending(db, batch, groupDoc.id, uid);
   await batch.commit();
   // After the write: the request is what the admins are being told about, and a push about one
   // that failed to save would send them to an approval screen with nothing on it.
@@ -144,8 +152,10 @@ export const acceptJoinRequest = onCall(async (request) => {
   clearRevokedGroup(db, batch, group, uid);
   // Same commit as the group, so both resolve to one instant and a reader's cache can settle.
   markGroupUpdated(db, batch, groupId);
+  markGroupJoined(db, batch, uid, groupId);
   batch.update(requestRef, { status: "accepted", respondedAt: FieldValue.serverTimestamp() });
   markUserUpdated(db, batch, uid, "joinRequests");
+  markJoinRequestSettled(db, batch, groupId, uid);
   await batch.commit();
 
   await notifyJoinAccepted(groupId, group.get("name") ?? "", uid);
@@ -155,8 +165,8 @@ export const acceptJoinRequest = onCall(async (request) => {
 
 /**
  * Rejects a pending join request. Admin-only, and the mirror image of `acceptJoinRequest` minus
- * everything about the group: nothing joins, so neither the group document nor its sync marker
- * moves.
+ * everything about the group: nothing joins, so the group document and its `group` marker stay put.
+ * Only the request leaves the pending map.
  *
  * Server-only because `status` is frozen against every client by the rules, admins included. It used
  * to be the admin deleting the request document, which answered it by destroying the only thing that
@@ -185,6 +195,7 @@ export const rejectJoinRequest = onCall(async (request) => {
   const batch = db.batch();
   batch.update(requestRef, { status: "rejected", respondedAt: FieldValue.serverTimestamp() });
   markUserUpdated(db, batch, uid, "joinRequests");
+  markJoinRequestSettled(db, batch, groupId, uid);
   await batch.commit();
 
   return { groupId, uid, status: "rejected" as const };

@@ -308,8 +308,12 @@ what it already cached to decide whether it has to query the server at all.
 | `personalEventTypesUpdatedAt` | timestamp \| null | Last write to `personalEventTypes` (server timestamp). |
 | `revokedGroups` | timestamp \| null | Last write to `revokedGroups` — a revocation or a rejoin. Moved **only** by `leaveGroup` / `removeMember` / the rejoin path, never by a client. |
 | `account` | timestamp \| null | Last write to `private/account`. |
+| `profile` | timestamp \| null | Last write to the user's own `users/{uid}` — name, username, avatar or `calendarSharedWith` — by any of their devices or by `updateProfile`. Every such write stamps the profile's `updateAt` in the same commit. What the owner's session start and People tab read the cached profile against; other users keep using the reservation's `updateAt`. |
 | `joinRequests` | timestamp \| null | Last write to `private/joinRequests`, **or** to a `groups/{g}/joinRequests/{uid}` this user owns — answering a request changes no field of the pointer list, and this is the only thing that tells the requester to look again. |
 | `preferences` | timestamp \| null | Last write to `private/preferences`. |
+| `groups` | map&lt;groupId, timestamp&gt; | **The groups this user is a member of**, each stamped when they joined. Added by `requestToJoinGroup` (auto-approve), `acceptJoinRequest` and the creator's own `createGroup` batch; removed by `leaveGroup`, `removeMember` and `deleteGroup`. |
+| `groupsIndexed` | boolean | Whether `groups` is complete. Set by the app the first time it copies a server-confirmed `memberUids` query into `groups`; until then the map may hold only groups joined since the functions started writing it, and the app ignores it. |
+| `subscription` | timestamp \| null | Last write to `private/subscription`. **Server-only**: the rules refuse any client write that touches it. |
 | `private` | timestamp \| null | **Legacy, read-only.** The single marker `account` and `joinRequests` used to share. |
 
 Every timestamp is written with a **server timestamp**, so readers on other devices compare against the same
@@ -339,9 +343,19 @@ marker settles rather than forcing a read: a pick made on this device is in the 
 acknowledges it, so the colour repaints straight away, offline included. Only another of the user's
 devices leaves the cache genuinely behind, and only that costs a read.
 
-`private/subscription` is covered by no marker: only the receipt-verification Cloud Function writes that
-document, and gating it behind a marker the client also moves would keep an expired subscription looking
-valid.
+`groups` replaces a `memberUids array-contains` **query listener**. That listener was billed the whole
+result set every time it re-attached more than 30 minutes after it last listened — on most app launches —
+while the app already listens to this document and to each group's own `sync/updates`. With the index,
+the app follows each group it names from the cache and reads a group document only when that group's
+`group` marker moves. A key left behind for a group the user can no longer read costs one denied read
+and renders nothing.
+
+`private/subscription` has its own marker, `subscription`, and it is the one marker no client may move:
+the rules reject a create that carries it and an update that touches it. A marker the client could hold
+back would keep a refunded or downgraded entitlement looking settled in its cache. The receipt-verification
+Cloud Function must write it through `markUserUpdated(…, "subscription")` in the **same commit** as the
+document, and stamp the document's `updatedAt` with the same server timestamp. With no marker the server
+has never written an entitlement, so the client answers "free" from the cache without a read.
 
 **Access**: written by the owner; read by the owner and by UIDs in `calendarSharedWith`.
 
@@ -518,9 +532,18 @@ before reading any event.
 |-------|------|-------------|
 | `events` | map&lt;`YYYY-MM`, {`updatedAt`: timestamp}&gt; | Per month, when it last changed. |
 | `group` | timestamp \| null | When the group document last changed — its name, its invitation and above all its event types. |
+| `joinRequests` | map&lt;uid, timestamp&gt; | **The pending join requests**, by requester, each stamped with that request's `requestedAt`. Written only by `requestToJoinGroup` (adds), `acceptJoinRequest` / `rejectJoinRequest` and `deleteAccount` (remove); the rules refuse any client write that touches it. |
 
 One document answers both questions a calendar asks on opening: *have the types changed?* and *which
-months have?* The read is debounced, so opening a group costs **one** read when nothing moved.
+months have?* It is read through one shared listener per group, so opening a group costs no read when nothing moved
+and the listener re-attached within 30 minutes.
+
+`joinRequests` is how an admin lists what is waiting without querying `joinRequests/`: the group's
+screen reads the request documents the map names from the cache, and asks the server only for one whose
+cached `requestedAt` is older than its entry. A group nobody has asked to join costs nothing, and an
+answered or withdrawn request drops out because its key does — which a query for *what changed* could
+never show, since a deleted document is not in its results. Requests left pending from before the map
+existed are not in it: `lib/scripts/backfillJoinRequestMarkers.js` adds them once.
 
 **Access**: read and write by any member — any member's event write moves the month every member reads —
 and by a revoked user, who reads it to tell whether their cache is behind and writes it in the same batch

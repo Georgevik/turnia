@@ -16,6 +16,8 @@ import com.geoviksoft.turnia.core.domain.repository.GroupRepository
 import com.geoviksoft.turnia.core.domain.repository.UserRepository
 import com.geoviksoft.turnia.core.system.Outcome
 import com.geoviksoft.turnia.core.system.fold
+import com.geoviksoft.turnia.core.system.onFailure
+import com.geoviksoft.turnia.core.system.valueOrNull
 import com.geoviksoft.turnia.core.system.valueOrEmpty
 import com.geoviksoft.turnia.ui.group.detail.model.GroupCloseUi
 import com.geoviksoft.turnia.ui.group.detail.model.GroupDetailMessage
@@ -30,9 +32,14 @@ import com.geoviksoft.turnia.ui.system.color.toComposeColorOr
 import com.geoviksoft.turnia.ui.system.color.toComposeColorOrNull
 import com.geoviksoft.turnia.ui.system.color.toHex
 import com.geoviksoft.turnia.ui.system.createUuid
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -40,6 +47,7 @@ import kotlinx.coroutines.launch
  * Group detail, edit and creation. A null [groupId] means the screen is creating a group; the
  * loaded group's [Group.isAdmin] decides whether an existing one can be edited or is read-only.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class GroupDetailViewModel(
     private val groupId: GroupId?,
     private val groupRepository: GroupRepository,
@@ -51,6 +59,11 @@ class GroupDetailViewModel(
 
     /** Kept so saving can carry over the fields the form does not expose (the event types). */
     private var loadedGroup: Group? = null
+
+    /** The form as the group last filled it: while the user has not touched it, a change replaces it. */
+    private var loadedForm: GroupForm? = null
+
+    private var observation: Job? = null
 
     init {
         // Whatever a creation abandoned halfway left behind is not this group's.
@@ -75,50 +88,54 @@ class GroupDetailViewModel(
 
     fun retry() = load()
 
-    /** Coming back from the event type detail: the type it just created has to show up here. */
-    fun refresh() {
-        // A group being created has nothing to re-read — its types come from the repository —
-        // and re-entering the initial state would throw away the form.
-        if (groupId == null) return
-
-        load(showLoading = false)
-    }
-
+    /**
+     * Follows the group rather than reading it once: a type saved on its own screen, a request
+     * answered, a member removed or another admin's edit all arrive here through the group's sync
+     * listener, from the cache unless the server moved on — so nothing has to reload on resume.
+     */
     private fun load(showLoading: Boolean = true) {
         if (groupId == null) {
             _uiState.update { newGroupState() }
             return
         }
 
-        viewModelScope.launch {
-            if (showLoading) _uiState.update { GroupDetailUi.Loading }
-
-            groupRepository.getGroup(groupId).fold(
-                onSuccess = { group ->
-                    loadedGroup = group
+        observation?.cancel()
+        if (showLoading) _uiState.update { GroupDetailUi.Loading }
+        observation = viewModelScope.launch {
+            groupRepository.observeGroup(groupId)
+                .flatMapLatest { outcome ->
                     // Only an admin can read the requests, so only an admin is asked for them.
-                    val requests = if (group.isAdmin) {
-                        groupRepository.getJoinRequests(groupId).valueOrEmpty()
+                    if (outcome.valueOrNull()?.isAdmin == true) {
+                        groupRepository.observeJoinRequests(groupId).map { outcome to it }
                     } else {
-                        emptyList()
+                        flowOf(outcome to emptyList())
                     }
+                }
+                .collect { (outcome, requests) ->
+                    outcome.fold(
+                        onSuccess = { group -> show(group, requests) },
+                        onFailure = { error ->
+                            _uiState.update { GroupDetailUi.Error(error.toScreenError()) }
+                        },
+                    )
+                }
+        }
+    }
 
-                    val avatars = avatarsOf(group, requests)
+    private suspend fun show(group: Group, requests: List<JoinRequest>) {
+        loadedGroup = group
+        val loaded = group.toUiState(requests, avatarsOf(group, requests))
+        val previousForm = loadedForm
+        loadedForm = loaded.form
 
-                    _uiState.update { current ->
-                        val loaded = group.toUiState(requests, avatars)
-                        // A refresh brings the event types and the members up to date; whatever
-                        // the user was typing is theirs and stays.
-                        if (!showLoading && current is GroupDetailUi.Success) {
-                            loaded.copy(form = current.form)
-                        } else {
-                            loaded
-                        }
-                    }
-                },
-                onFailure = { error ->
-                    _uiState.update { GroupDetailUi.Error(error.toScreenError()) }
-                },
+        _uiState.update { current ->
+            if (current !is GroupDetailUi.Success) return@update loaded
+            current.copy(
+                // Whatever the user was typing is theirs and stays; an untouched form follows the group.
+                form = if (current.form == previousForm) loaded.form else current.form,
+                eventTypes = loaded.eventTypes,
+                members = loaded.members,
+                joinRequests = loaded.joinRequests,
             )
         }
     }
@@ -210,13 +227,12 @@ class GroupDetailViewModel(
                 state.copy(members = state.members.filterNot { it.id == userId })
             }
 
-            groupRepository.removeMember(groupId, userId).fold(
-                onSuccess = { load(showLoading = false) },
-                onFailure = {
-                    updateSuccess { it.copy(userMessage = GroupDetailMessage.RemoveMemberFailed) }
-                    load(showLoading = false)
-                },
-            )
+            // Success needs nothing more: the group follows the function's write on its own.
+            groupRepository.removeMember(groupId, userId).onFailure {
+                updateSuccess { it.copy(userMessage = GroupDetailMessage.RemoveMemberFailed) }
+                // Nothing moved on the server, so no emission will bring the member back.
+                load(showLoading = false)
+            }
         }
     }
 
@@ -270,7 +286,7 @@ class GroupDetailViewModel(
         }
     }
 
-    /** The answered request leaves the list at once; the group is re-read for its new members. */
+    /** The answered request leaves the list at once; the group's new members arrive on their own. */
     private fun answerRequest(
         userId: UserId,
         answer: suspend () -> Outcome<Unit, GroupError>,
@@ -280,13 +296,11 @@ class GroupDetailViewModel(
                 state.copy(joinRequests = state.joinRequests.filterNot { it.userId == userId })
             }
 
-            answer().fold(
-                onSuccess = { load(showLoading = false) },
-                onFailure = {
-                    updateSuccess { it.copy(userMessage = GroupDetailMessage.RequestFailed) }
-                    load(showLoading = false)
-                },
-            )
+            answer().onFailure {
+                updateSuccess { it.copy(userMessage = GroupDetailMessage.RequestFailed) }
+                // Nothing moved on the server, so no emission will bring the request back.
+                load(showLoading = false)
+            }
         }
     }
 

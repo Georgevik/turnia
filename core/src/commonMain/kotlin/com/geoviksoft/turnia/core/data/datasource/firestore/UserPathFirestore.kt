@@ -1,6 +1,7 @@
 package com.geoviksoft.turnia.core.data.datasource.firestore
 
 import com.geoviksoft.turnia.core.data.datasource.firestore.analytics.trackData
+import com.geoviksoft.turnia.core.data.datasource.firestore.analytics.trackedSnapshots
 import com.geoviksoft.turnia.core.data.datasource.firestore.analytics.trackWrite
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.UserDocument
 import com.geoviksoft.turnia.core.data.datasource.firestore.errors.UserProfileError
@@ -14,6 +15,7 @@ import com.geoviksoft.turnia.core.system.outcomeCatching
 import com.geoviksoft.turnia.core.system.toFailure
 import com.geoviksoft.turnia.core.system.toInstantOrNull
 import com.geoviksoft.turnia.core.system.toSuccess
+import com.geoviksoft.turnia.core.system.valueOrNull
 import dev.gitlive.firebase.firestore.BaseTimestamp
 import dev.gitlive.firebase.firestore.FieldValue
 import dev.gitlive.firebase.firestore.FirebaseFirestore
@@ -34,6 +36,7 @@ class UserPathFirestore(
     private val firestore: FirebaseFirestore,
     private val mapper: UserDocumentMapper,
     private val remoteUsernames: UsernameFirestore,
+    private val userSyncFirestore: UserSyncFirestore,
     scope: CoroutineScope
 ) {
     // Held long past the screen that asks for it: a listener bills its result set again on every
@@ -41,13 +44,11 @@ class UserPathFirestore(
     private val calendarSharedWithMe =
         SharedListeners<UserId, CalendarsSharedWithMe>(scope, keepAlive = 30.minutes)
 
+    /** The signed-in user's own profile. */
     suspend fun fetch(uid: UserId): Outcome<UserProfile, UserProfileError> =
         outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
-            val snapshot = queryUserDocument(uid).get().trackData(TAG, "fetchProfile")
-            Logger.d(TAG, "Fetch user from cache: ${snapshot.metadata.isFromCache}")
-
-            if (!snapshot.exists) return Outcome.Failure(UserProfileError.NotFound)
-            mapper.map(snapshot)
+            val document = ownDocument(uid) ?: return Outcome.Failure(UserProfileError.NotFound)
+            mapper.map(uid, document)
         }
 
     /**
@@ -84,12 +85,10 @@ class UserPathFirestore(
     fun fetchCalendarsSharedWithMe(uid: UserId): Flow<CalendarsSharedWithMe> =
         calendarSharedWithMe.shared(uid) { queryCalendarSharedWith(uid) }
 
+    /** The signed-in user's own document, for what the profile model leaves out. */
     suspend fun getUserDocument(uid: UserId): Outcome<UserDocument, UserProfileError> =
         outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
-            val snapshot = queryUserDocument(uid).get().trackData(TAG, "userDoc")
-            if (!snapshot.exists) return Outcome.Failure(UserProfileError.NotFound)
-
-            snapshot.data(UserDocument.serializer())
+            ownDocument(uid) ?: return Outcome.Failure(UserProfileError.NotFound)
         }
 
     suspend fun grantCalendarAccess(
@@ -98,10 +97,15 @@ class UserPathFirestore(
     ): Outcome<Unit, UserProfileError> =
         outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
             Logger.i(TAG, "Grant calendar access")
-            queryUserDocument(uid).updateFields {
+            val batch = firestore.batch()
+            batch.updateFields(queryUserDocument(uid)) {
                 UserDocument.FIELD_CALENDAR_SHARED_WITH to FieldValue.arrayUnion(granteeUid.value)
+                UserDocument.FIELD_UPDATE_AT to FieldValue.serverTimestamp
             }
+            val syncWrite = userSyncFirestore.writeProfile(batch, uid)
+            batch.commit()
             trackWrite(TAG, "grantCalendarAccess")
+            syncWrite.committed()
         }
 
     suspend fun revokeCalendarAccess(
@@ -110,10 +114,15 @@ class UserPathFirestore(
     ): Outcome<Unit, UserProfileError> =
         outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
             Logger.i(TAG, "Revoke calendar access")
-            queryUserDocument(uid).updateFields {
+            val batch = firestore.batch()
+            batch.updateFields(queryUserDocument(uid)) {
                 UserDocument.FIELD_CALENDAR_SHARED_WITH to FieldValue.arrayRemove(granteeUid.value)
+                UserDocument.FIELD_UPDATE_AT to FieldValue.serverTimestamp
             }
+            val syncWrite = userSyncFirestore.writeProfile(batch, uid)
+            batch.commit()
             trackWrite(TAG, "revokeCalendarAccess")
+            syncWrite.committed()
         }
 
     /**
@@ -142,24 +151,55 @@ class UserPathFirestore(
             // reservation's `create` rule, which this payload cannot satisfy.
             val markerWrite = username.takeIf { it.isNotBlank() }
                 ?.let { remoteUsernames.touch(batch, it) }
+            val syncWrite = userSyncFirestore.writeProfile(batch, uid)
             batch.commit()
             trackWrite(TAG, "updateAvatar")
             markerWrite?.committed()
+            syncWrite.committed()
         }
 
     suspend fun updateUsername(uid: UserId, username: String): Outcome<Unit, UserProfileError> =
         outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
             Logger.i(TAG, "Update username")
-            queryUserDocument(uid).updateFields { UserDocument.FIELD_USERNAME to username }
+            val batch = firestore.batch()
+            batch.updateFields(queryUserDocument(uid)) {
+                UserDocument.FIELD_USERNAME to username
+                UserDocument.FIELD_UPDATE_AT to FieldValue.serverTimestamp
+            }
+            val syncWrite = userSyncFirestore.writeProfile(batch, uid)
+            batch.commit()
             trackWrite(TAG, "updateUsername")
+            syncWrite.committed()
         }
 
     suspend fun update(uid: UserId, userPatched: UserDocument): Outcome<Unit, UserProfileError> =
         outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
             Logger.i(TAG, "Update user document")
-            queryUserDocument(uid).set(userPatched)
+            val batch = firestore.batch()
+            batch.set(queryUserDocument(uid), userPatched)
+            val syncWrite = userSyncFirestore.writeProfile(batch, uid)
+            batch.commit()
             trackWrite(TAG, "updateUserDoc")
+            syncWrite.committed()
         }
+
+    /**
+     * From the cache while the `profile` marker says it is current. Only this user's writes move it
+     * — from here, another of their devices, or `updateProfile` — so a session start and the People
+     * tab no longer each pay a read for a document that almost never changes. With no marker yet
+     * the cached copy stands: the marker is written from this version on.
+     */
+    private suspend fun ownDocument(uid: UserId): UserDocument? {
+        val cached = cachedProfile(uid)
+        val marker = userSyncFirestore.get(uid).valueOrNull()?.profileUpdatedAt.toInstantOrNull()
+        val cachedAt = cached?.updateAt.toInstantOrNull()
+
+        if (cached != null && (marker == null || (cachedAt != null && cachedAt >= marker))) {
+            Logger.d(TAG, "Own profile is settled, no read")
+            return cached
+        }
+        return serverProfile(uid)
+    }
 
     private suspend fun cachedProfile(uid: UserId): UserDocument? =
         queryUserDocument(uid).getCached(TAG, "profile(cache)")
@@ -182,9 +222,8 @@ class UserPathFirestore(
     private fun queryCalendarSharedWith(uid: UserId): Flow<CalendarsSharedWithMe> =
         firestore.collection(PATH_USER)
             .where { UserDocument.FIELD_CALENDAR_SHARED_WITH contains uid.value }
-            .snapshots
+            .trackedSnapshots(TAG, "calendarsSharedWithMe(snapshots)")
             .map { snapshot ->
-                snapshot.trackData(TAG, "calendarsSharedWithMe(snapshots)")
                 snapshot.documents.map { mapper.map(it) }.toSuccess()
             }
             .distinctUntilChanged()

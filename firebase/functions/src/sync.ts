@@ -30,8 +30,12 @@ export interface SyncWriter {
  */
 export type UserMarker =
   | "account"
+  | "profile"
   | "joinRequests"
   | "preferences"
+  // Server-only, and the rules keep it that way: the receipt-verification function commits it with
+  // `private/subscription`, and a client able to move it could pin a cached premium past a refund.
+  | "subscription"
   | "revokedGroups"
   | "personalEventsUpdatedAt"
   | "personalEventTypesUpdatedAt";
@@ -44,11 +48,68 @@ export function markUserUpdated(db: Firestore, writer: SyncWriter, uid: string, 
   );
 }
 
+/**
+ * The user became a member of the group. `users/{uid}/sync/updates.groups` is the membership list
+ * the app follows instead of a `memberUids` query listener, which bills every group again on each
+ * re-attach. Added unconditionally: the app ignores the map until it has indexed the rest itself.
+ */
+export function markGroupJoined(db: Firestore, writer: SyncWriter, uid: string, groupId: string) {
+  writer.set(
+    db.doc(`users/${uid}/sync/updates`),
+    { groups: { [groupId]: FieldValue.serverTimestamp() } },
+    { merge: true },
+  );
+}
+
+/** The user is no longer a member: they left, were removed, or the group is gone. */
+export function markGroupLeft(db: Firestore, writer: SyncWriter, uid: string, groupId: string) {
+  writer.set(
+    db.doc(`users/${uid}/sync/updates`),
+    { groups: { [groupId]: FieldValue.delete() } },
+    { merge: true },
+  );
+}
+
 /** The group document moved: its name, invitation, event types or member roster. */
 export function markGroupUpdated(db: Firestore, writer: SyncWriter, groupId: string) {
   writer.set(
     db.doc(`groups/${groupId}/sync/updates`),
     { group: FieldValue.serverTimestamp() },
+    { merge: true },
+  );
+}
+
+/**
+ * A request to join the group is waiting for an admin, keyed by requester and stamped with the
+ * request's own `requestedAt` — the same commit, so the same instant. The map is the whole pending
+ * list: an admin reads the requests it names, cache first, instead of querying the collection.
+ */
+export function markJoinRequestPending(
+  db: Firestore,
+  writer: SyncWriter,
+  groupId: string,
+  uid: string,
+) {
+  writer.set(
+    db.doc(`groups/${groupId}/sync/updates`),
+    { joinRequests: { [uid]: FieldValue.serverTimestamp() } },
+    { merge: true },
+  );
+}
+
+/**
+ * The request is no longer waiting: answered, or withdrawn with the account. Removing the key is what
+ * tells an admin's cache — a deleted document never shows up in a query that asks what changed.
+ */
+export function markJoinRequestSettled(
+  db: Firestore,
+  writer: SyncWriter,
+  groupId: string,
+  uid: string,
+) {
+  writer.set(
+    db.doc(`groups/${groupId}/sync/updates`),
+    { joinRequests: { [uid]: FieldValue.delete() } },
     { merge: true },
   );
 }

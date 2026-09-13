@@ -72,9 +72,15 @@ service cloud.firestore {
         allow write: if isSignedIn() && request.auth.uid == uid;
       }
       // Sync timestamps the owner bumps on every write; readers use them to check their cache.
+      // `subscription` is the exception: it gates the cached entitlement, which only the server may
+      // declare stale — a client that could hold it back would keep a refunded premium cached.
       match /sync/{docId} {
         allow read: if ownerOrShared(uid);
-        allow write: if isSignedIn() && request.auth.uid == uid;
+        allow create: if isSignedIn() && request.auth.uid == uid &&
+          !('subscription' in request.resource.data);
+        allow update: if isSignedIn() && request.auth.uid == uid &&
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['subscription']);
+        allow delete: if isSignedIn() && request.auth.uid == uid;
       }
       // Groups the user was removed from, with the event types their leftover events use. It is
       // what lets them render those events without reading the group document they lost access to,
@@ -166,9 +172,15 @@ service cloud.firestore {
       // When each month of the group's calendar last changed: any member's write moves it.
       // A revoked user is in here too: they read it to tell whether their cache is behind, and
       // their soft delete commits the month's marker in the same batch. It holds only timestamps.
+      // `joinRequests` is the exception, written only by the join-request functions: it is the
+      // admins' pending list, and a member able to edit it could hide a request from them.
       match /sync/{docId} {
         allow read: if isMember(groupId) || isRevoked(groupId);
-        allow write: if isMember(groupId) || isRevoked(groupId);
+        allow create: if (isMember(groupId) || isRevoked(groupId)) &&
+          !('joinRequests' in request.resource.data);
+        allow update: if (isMember(groupId) || isRevoked(groupId)) &&
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['joinRequests']);
+        allow delete: if isMember(groupId) || isRevoked(groupId);
       }
 
       // Join requests: created only by requestToJoinGroup, answered only by acceptJoinRequest /

@@ -100,7 +100,11 @@ export const updateProfile = onCall(async (request) => {
     );
   }
 
-  await userRef.set({ name, username, updateAt: FieldValue.serverTimestamp() }, { merge: true });
+  // With its marker, so the user's other devices know their cached profile is behind.
+  const profileBatch = db.batch();
+  profileBatch.set(userRef, { name, username, updateAt: FieldValue.serverTimestamp() }, { merge: true });
+  markUserUpdated(db, profileBatch, uid, "profile");
+  await profileBatch.commit();
 
   // Every group carrying a copy of this name. Entry and sync marker in one batch per group, so a
   // reader sees them as equally old — written apart, the marker is always the later of the two and

@@ -14,4 +14,6 @@ data class GroupSyncDocument(
     @SerialName("events") val eventsUpdatedAt: Map<YearMonth, EventSyncUpdateAt> = emptyMap(),
     /** The group document itself: its name, its invitation and above all its event types. */
     @SerialName("group") val groupUpdatedAt: BaseTimestamp? = null,
+    /** Requests waiting for an admin, by requester, each stamped with its `requestedAt`. Server-only. */
+    @SerialName("joinRequests") val pendingJoinRequests: Map<String, BaseTimestamp?> = emptyMap(),
 )

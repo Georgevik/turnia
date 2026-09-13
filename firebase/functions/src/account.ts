@@ -4,7 +4,7 @@ import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import { TurniaError } from "./errors";
 import { deleteGroupTree, isLastAdminOfOthers } from "./membership";
 import { requireUid } from "./requests";
-import { markGroupUpdated } from "./sync";
+import { markGroupUpdated, markJoinRequestSettled } from "./sync";
 
 /**
  * Deletes the caller's account by **anonymizing** it, then deletes the Auth user.
@@ -63,6 +63,7 @@ export const deleteAccount = onCall(async (request) => {
     const batch = db.batch();
     batch.delete(db.doc(`groups/${groupId}/joinRequests/${uid}`));
     markGroupUpdated(db, batch, groupId);
+    markJoinRequestSettled(db, batch, groupId, uid);
     await batch.commit();
   }
 

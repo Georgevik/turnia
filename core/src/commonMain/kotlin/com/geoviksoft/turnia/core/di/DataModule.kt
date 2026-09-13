@@ -49,7 +49,10 @@ import com.geoviksoft.turnia.core.domain.username.UsernameFactory
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.analytics.analytics
 import dev.gitlive.firebase.auth.auth
+import dev.gitlive.firebase.firestore.FirebaseFirestoreSettings
 import dev.gitlive.firebase.firestore.firestore
+import dev.gitlive.firebase.firestore.firestoreSettings
+import dev.gitlive.firebase.firestore.persistentCacheSettings
 import dev.gitlive.firebase.functions.functions
 import dev.gitlive.firebase.messaging.messaging
 import kotlinx.coroutines.CoroutineScope
@@ -72,7 +75,18 @@ private const val FUNCTIONS_REGION = "europe-southwest1"
 val dataModule: Module = module {
     // Outlives every screen: it carries the session and the cache subscriptions.
     single { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
-    single { Firebase.firestore }
+    single {
+        Firebase.firestore.apply {
+            // Unbounded, not the SDK's 100 MB LRU: past events outlive the server's retention window
+            // only here, and a garbage-collected month would be gone for good. Set before any read,
+            // which is why nothing else may touch `Firebase.firestore` directly.
+            settings = firestoreSettings {
+                cacheSettings = persistentCacheSettings {
+                    sizeBytes = FirebaseFirestoreSettings.CACHE_SIZE_UNLIMITED
+                }
+            }
+        }
+    }
     single { Firebase.functions(FUNCTIONS_REGION) }
     single { Firebase.messaging }
     single { Firebase.analytics }
@@ -80,14 +94,14 @@ val dataModule: Module = module {
 
     // Datasources.
     single { UserProfileFunction(get(), get()) }
-    single { UserPathFirestore(get(), get(), get(), get()) }
+    single { UserPathFirestore(get(), get(), get(), get(), get()) }
     single { UserPrivateFirestore(get(), get(), get()) }
     single { UsernameFirestore(get(), get()) }
     single { UserSyncFirestore(get(), get()) }
     single { GroupSyncFirestore(get(), get()) }
     single { GroupEventFirestore(get(), get()) }
-    single { GroupFirestore(get(), get(), get()) }
-    single { GroupJoinRequestFirestore(get()) }
+    single { GroupFirestore(get(), get(), get(), get()) }
+    single { GroupJoinRequestFirestore(get(), get()) }
     single { RevokedGroupFirestore(get(), get(), get()) }
     single { GroupMembershipFunction(get(), get(), get()) }
     single { GroupFunction(get(), get()) }
