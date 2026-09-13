@@ -69,7 +69,7 @@ class InstallReferrer(
         const val PREFS = "install_referrer"
         const val KEY_READ = "read"
 
-        // The contract with firebase/hosting/join.html, which builds the store link.
+        // The contract with firebase/hosting/index.html, which builds the store link.
         const val CODE_PREFIX = "code="
     }
 }

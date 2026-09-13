@@ -1,31 +1,341 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Turnia</title>
+  <meta name="description" content="All your shifts, organised. Plan the roster with your team and swap shifts in a couple of taps.">
+  <meta property="og:title" content="Turnia">
+  <meta property="og:description" content="All your shifts, organised. Plan the roster with your team and swap shifts in a couple of taps.">
+  <meta property="og:image" content="https://turnia.club/icon.png">
+  <meta name="theme-color" content="#0B6B5D">
+  <link rel="icon" href="/icon.png">
+  <link rel="apple-touch-icon" href="/icon.png">
   <style>
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      text-align: center;
-      background: #F8F9FC;
-      color: #161D1C;
-      font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    :root {
+      --bg: #F8F9FC;
+      --card: #FFFFFF;
+      --text: #161D1C;
+      --muted: #56615F;
+      --primary: #006B5F;
+      --outline: #DCE3E0;
+      --code-bg: #E7F4F1;
+      --hero-from: #13826F;
+      --hero-to: #00473D;
     }
     @media (prefers-color-scheme: dark) {
-      body { background: #0E1211; color: #E0E5E3; }
+      :root {
+        --bg: #0E1211;
+        --card: #1A201F;
+        --text: #E0E5E3;
+        --muted: #A3ADAA;
+        --primary: #4FDBC8;
+        --outline: #2C3432;
+        --code-bg: #12302B;
+        --hero-from: #0D6456;
+        --hero-to: #00312A;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    p { margin: 0 0 16px; }
+
+    .hero {
+      background: radial-gradient(circle at 15% 0%, rgba(255,255,255,.14), transparent 45%),
+                  linear-gradient(135deg, var(--hero-from), var(--hero-to));
+      color: #FFFFFF;
+      overflow: hidden;
+    }
+    .hero-inner {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 48px 24px 0;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 40px;
+      align-items: end;
+    }
+    .brand { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; }
+    .brand img { width: 64px; height: 64px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+    .brand span { font-size: 32px; font-weight: 700; }
+    h1 { font-size: clamp(34px, 6vw, 52px); line-height: 1.1; margin: 0 0 16px; letter-spacing: -.01em; }
+    .lead { font-size: 19px; color: rgba(255,255,255,.85); max-width: 460px; }
+
+    .badges { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 28px 0 8px; }
+    .badges a { display: inline-block; line-height: 0; border-radius: 10px; }
+    .badge-apple { height: 52px; }
+    /* Google's badge ships with transparent padding around it; the negative margin trims it so both
+       badges line up at the same visible height. */
+    .badge-google { height: 69px; margin: -8px -6px; }
+    .badges .soon { position: relative; opacity: .55; pointer-events: none; }
+    .soon-label { display: block; font-size: 13px; color: rgba(255,255,255,.8); margin-top: 4px; }
+
+    .phones { position: relative; display: flex; justify-content: center; gap: 20px; }
+    .phone {
+      width: 250px;
+      aspect-ratio: 1206 / 2622;
+      border-radius: 40px;
+      padding: 10px;
+      background: #111615;
+      box-shadow: 0 30px 60px rgba(0,0,0,.35);
+      margin-bottom: -140px;
+    }
+    .phone img { width: 100%; height: 100%; object-fit: cover; border-radius: 31px; display: block; }
+    .phone.back { transform: translateY(48px); display: none; }
+
+    .invitation {
+      background: var(--card);
+      color: var(--text);
+      border-radius: 24px;
+      padding: 20px;
+      margin: 24px 0 0;
+      max-width: 440px;
+      text-align: center;
+      box-shadow: 0 12px 32px rgba(0,0,0,.2);
+    }
+    .invitation h2 { font-size: 18px; margin: 0 0 4px; }
+    .invitation p { color: var(--muted); font-size: 15px; }
+    .code {
+      display: block;
+      width: 100%;
+      margin: 4px 0;
+      padding: 14px;
+      border: 0;
+      border-radius: 16px;
+      background: var(--code-bg);
+      color: var(--text);
+      font: 600 26px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: .15em;
+      cursor: pointer;
+    }
+    .hint { font-size: 13px !important; min-height: 20px; margin: 0 0 8px !important; }
+    .open {
+      display: block;
+      padding: 12px;
+      border-radius: 999px;
+      font-weight: 600;
+      text-decoration: none;
+      background: var(--primary);
+      color: var(--card);
+    }
+    .steps { margin: 12px 0 0 !important; font-size: 14px !important; }
+
+    .features {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 48px 24px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    .feature { background: var(--card); border: 1px solid var(--outline); border-radius: 20px; padding: 24px; }
+    .feature .dot {
+      width: 44px; height: 44px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      color: #FFFFFF; font-weight: 700; font-size: 20px; margin-bottom: 12px;
+    }
+    .feature h3 { margin: 0 0 6px; font-size: 18px; }
+    .feature p { margin: 0; color: var(--muted); }
+
+    footer { text-align: center; padding: 8px 24px 40px; font-size: 14px; color: var(--muted); }
+    footer a { color: var(--muted); }
+    [hidden] { display: none !important; }
+
+    @media (min-width: 860px) {
+      .hero-inner { grid-template-columns: 1.1fr 1fr; padding-top: 72px; }
+      .hero-text { padding-bottom: 96px; }
+      .phone.back { display: block; }
+      .phone { margin-bottom: -90px; }
+      .features { grid-template-columns: repeat(3, 1fr); padding-top: 64px; }
     }
   </style>
 </head>
 <body>
-<main>
-  <h1>Turnia</h1>
-  <p>Organiza y cambia turnos con tu equipo, sin perder la pista.</p>
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-text">
+      <div class="brand"><img src="/icon.png" alt=""><span>Turnia</span></div>
+      <h1 data-i18n="title">All your shifts, organised</h1>
+      <p class="lead" data-i18n="lead">Plan the roster with your team and swap shifts in a couple of taps, without losing track of who covers what.</p>
+
+      <section class="invitation" id="invitation" hidden>
+        <h2 data-i18n="inviteTitle">You've been invited to a Turnia group</h2>
+        <p data-i18n="inviteText">Download the app and use this code to join:</p>
+        <button class="code" id="code" type="button"></button>
+        <p class="hint" id="hint" data-i18n="copyHint">Tap the code to copy it</p>
+        <a class="open" id="open" hidden data-i18n="open">Open in Turnia</a>
+        <p class="steps" id="steps" data-i18n="steps">Once Turnia is installed, open it, go to Groups → Join a group and paste the code.</p>
+      </section>
+
+      <div class="badges" id="badges">
+        <a id="play" target="_blank" rel="noopener">
+          <img class="badge-google" id="play-badge" alt="Get it on Google Play"
+               src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png">
+        </a>
+        <a id="appstore" target="_blank" rel="noopener">
+          <img class="badge-apple" id="appstore-badge" alt="Download on the App Store"
+               src="https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-app-store/black/en-us">
+        </a>
+      </div>
+      <span class="soon-label" id="soon" hidden data-i18n="soon">iPhone version coming soon</span>
+    </div>
+
+    <div class="phones" aria-hidden="true">
+      <div class="phone"><img id="shot-calendar" src="/screen_calendar.jpg" alt=""></div>
+      <div class="phone back"><img src="/screen_day.jpg" alt=""></div>
+    </div>
+  </div>
+</header>
+
+<main class="features">
+  <article class="feature">
+    <div class="dot" style="background:#039BE5">M</div>
+    <h3 data-i18n="f1Title">Everyone's roster</h3>
+    <p data-i18n="f1Text">Your groups' shifts and your own events on one calendar, each in its colour.</p>
+  </article>
+  <article class="feature">
+    <div class="dot" style="background:#FB8C00">⇄</div>
+    <h3 data-i18n="f2Title">Swaps without WhatsApp</h3>
+    <p data-i18n="f2Text">Offer a shift and a colleague takes it with one tap. No double bookings.</p>
+  </article>
+  <article class="feature">
+    <div class="dot" style="background:#5E35B1">N</div>
+    <h3 data-i18n="f3Title">Every change recorded</h3>
+    <p data-i18n="f3Text">Even if a shift changes hands twice, you always know who covers it.</p>
+  </article>
 </main>
+
+<footer>
+  © Turnia · <a id="privacy" href="/privacy" data-i18n="privacy">Privacy Policy</a>
+</footer>
+
+<script>
+  // The contract with the app: `InvitationLink` builds /PATH/CODE (served by this page through the
+  // rewrite in firebase.json), the app opens SCHEME://PATH/CODE, and `InstallReferrer` reads the
+  // `code=` this page hands the Play Store. Must match InvitationLinkConfig.
+  var LINK = { scheme: "turnia", path: "join" };
+  var PACKAGE = "com.geoviksoft.turnia";
+  // Empty until the app is on the App Store: the badge is dimmed and marked "coming soon" without it.
+  var APP_STORE_URL = "";
+
+  var STRINGS = {
+    es: {
+      title: "Todos tus turnos, organizados",
+      lead: "Organiza el cuadrante con tu equipo y cambia turnos en un par de toques, sin perder la pista de quién cubre cada uno.",
+      inviteTitle: "Te han invitado a un grupo de Turnia",
+      inviteText: "Descarga la app y usa este código para unirte:",
+      copyHint: "Toca el código para copiarlo",
+      copied: "Código copiado",
+      copyLabel: "Copiar el código",
+      open: "Abrir en Turnia",
+      steps: "Cuando tengas Turnia instalada, ábrela, ve a Grupos → Unirme a un grupo y pega el código.",
+      soon: "Versión para iPhone, muy pronto",
+      f1Title: "El cuadrante de todos",
+      f1Text: "Los turnos de tus grupos y tus eventos personales en un solo calendario, cada uno con su color.",
+      f2Title: "Cambios sin WhatsApp",
+      f2Text: "Ofrece un turno y un compañero lo coge con un toque. Sin dobles asignaciones.",
+      f3Title: "Cada cambio, registrado",
+      f3Text: "Aunque un turno cambie de manos dos veces, sabrás siempre quién lo cubre.",
+      privacy: "Política de privacidad"
+    },
+    en: {
+      copied: "Code copied",
+      copyLabel: "Copy the code"
+    }
+  };
+  var BADGES = {
+    es: {
+      google: "https://play.google.com/intl/es/badges/static/images/badges/es_badge_web_generic.png",
+      googleAlt: "Disponible en Google Play",
+      apple: "https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-app-store/black/es-es",
+      appleAlt: "Descárgalo en el App Store"
+    }
+  };
+
+  var lang = /^es\b/i.test(navigator.language || "") ? "es" : "en";
+  function t(key) {
+    return (STRINGS[lang] && STRINGS[lang][key]) || STRINGS.en[key] ||
+      document.querySelector('[data-i18n="' + key + '"]').textContent;
+  }
+  if (lang === "es") {
+    document.documentElement.lang = "es";
+    document.querySelectorAll("[data-i18n]").forEach(function (el) {
+      el.textContent = STRINGS.es[el.getAttribute("data-i18n")];
+    });
+    document.getElementById("privacy").href = "/privacidad";
+    document.getElementById("play-badge").src = BADGES.es.google;
+    document.getElementById("play-badge").alt = BADGES.es.googleAlt;
+    document.getElementById("appstore-badge").src = BADGES.es.apple;
+    document.getElementById("appstore-badge").alt = BADGES.es.appleAlt;
+  }
+
+  var ua = navigator.userAgent;
+  var isAndroid = /Android/i.test(ua);
+  var isIos = /iPhone|iPad|iPod/i.test(ua) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+  var play = document.getElementById("play");
+  var appStore = document.getElementById("appstore");
+  play.href = playUrl(null);
+  if (APP_STORE_URL) {
+    appStore.href = APP_STORE_URL;
+  } else {
+    appStore.classList.add("soon");
+    appStore.removeAttribute("target");
+    document.getElementById("soon").hidden = false;
+  }
+  if (isIos) play.parentNode.insertBefore(appStore, play);
+
+  // Any /join/... link lands here. A readable code is shown to paste after installing; anything
+  // else simply gets the page as it is, since the app is the next step either way.
+  var prefix = "/" + LINK.path + "/";
+  if (location.pathname.indexOf(prefix) === 0) {
+    var raw = decodeURIComponent(location.pathname.slice(prefix.length).replace(/\/+$/, ""));
+    var code = raw.trim().toUpperCase();
+    if (/^[A-Z0-9]{4,16}$/.test(code)) showInvitation(code);
+  }
+
+  function playUrl(code) {
+    var url = "https://play.google.com/store/apps/details?id=" + PACKAGE;
+    return code ? url + "&referrer=" + encodeURIComponent("code=" + code) : url;
+  }
+
+  function showInvitation(code) {
+    document.getElementById("invitation").hidden = false;
+    var codeButton = document.getElementById("code");
+    codeButton.textContent = code;
+    codeButton.setAttribute("aria-label", t("copyLabel"));
+    codeButton.addEventListener("click", function () { copy(code); });
+
+    play.href = playUrl(code);
+    var open = document.getElementById("open");
+
+    if (isAndroid) {
+      // Opens the app when it is installed and falls back to the store with the code otherwise.
+      // Chrome only gets here when the link was not verified to open the app directly.
+      open.href = "intent://" + LINK.path + "/" + code + "#Intent;scheme=" + LINK.scheme +
+        ";package=" + PACKAGE +
+        ";S.browser_fallback_url=" + encodeURIComponent(playUrl(code)) + ";end";
+      open.hidden = false;
+      // Play hands the code to the app after installing, so there is nothing to paste.
+      document.getElementById("steps").hidden = true;
+    } else if (isIos) {
+      open.href = LINK.scheme + "://" + LINK.path + "/" + code;
+      open.hidden = false;
+    }
+  }
+
+  function copy(code) {
+    if (!navigator.clipboard) return;
+    navigator.clipboard.writeText(code).then(function () {
+      document.getElementById("hint").textContent = t("copied");
+    });
+  }
+</script>
 </body>
 </html>

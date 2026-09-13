@@ -13,7 +13,7 @@
     "appAssociation": "NONE",
     "cleanUrls": true,
     "rewrites": [
-      { "source": "/join/**", "destination": "/join.html" }
+      { "source": "/join/**", "destination": "/index.html" }
     ],
     "headers": [
       {
