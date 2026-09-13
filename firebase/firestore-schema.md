@@ -522,9 +522,18 @@ before reading any event.
 |-------|------|-------------|
 | `events` | map&lt;`YYYY-MM`, {`updatedAt`: timestamp}&gt; | Per month, when it last changed. |
 | `group` | timestamp \| null | When the group document last changed — its name, its invitation and above all its event types. |
+| `joinRequests` | map&lt;uid, timestamp&gt; | **The pending join requests**, by requester, each stamped with that request's `requestedAt`. Written only by `requestToJoinGroup` (adds), `acceptJoinRequest` / `rejectJoinRequest` and `deleteAccount` (remove); the rules refuse any client write that touches it. |
 
 One document answers both questions a calendar asks on opening: *have the types changed?* and *which
-months have?* The read is debounced, so opening a group costs **one** read when nothing moved.
+months have?* It is read through one shared listener per group, so opening a group costs no read when nothing moved
+and the listener re-attached within 30 minutes.
+
+`joinRequests` is how an admin lists what is waiting without querying `joinRequests/`: the group's
+screen reads the request documents the map names from the cache, and asks the server only for one whose
+cached `requestedAt` is older than its entry. A group nobody has asked to join costs nothing, and an
+answered or withdrawn request drops out because its key does — which a query for *what changed* could
+never show, since a deleted document is not in its results. Requests left pending from before the map
+existed are not in it: `lib/scripts/backfillJoinRequestMarkers.js` adds them once.
 
 **Access**: read and write by any member — any member's event write moves the month every member reads —
 and by a revoked user, who reads it to tell whether their cache is behind and writes it in the same batch

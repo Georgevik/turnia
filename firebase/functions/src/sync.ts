@@ -56,6 +56,41 @@ export function markGroupUpdated(db: Firestore, writer: SyncWriter, groupId: str
   );
 }
 
+/**
+ * A request to join the group is waiting for an admin, keyed by requester and stamped with the
+ * request's own `requestedAt` — the same commit, so the same instant. The map is the whole pending
+ * list: an admin reads the requests it names, cache first, instead of querying the collection.
+ */
+export function markJoinRequestPending(
+  db: Firestore,
+  writer: SyncWriter,
+  groupId: string,
+  uid: string,
+) {
+  writer.set(
+    db.doc(`groups/${groupId}/sync/updates`),
+    { joinRequests: { [uid]: FieldValue.serverTimestamp() } },
+    { merge: true },
+  );
+}
+
+/**
+ * The request is no longer waiting: answered, or withdrawn with the account. Removing the key is what
+ * tells an admin's cache — a deleted document never shows up in a query that asks what changed.
+ */
+export function markJoinRequestSettled(
+  db: Firestore,
+  writer: SyncWriter,
+  groupId: string,
+  uid: string,
+) {
+  writer.set(
+    db.doc(`groups/${groupId}/sync/updates`),
+    { joinRequests: { [uid]: FieldValue.delete() } },
+    { merge: true },
+  );
+}
+
 /** An event of the given `YYYY-MM` moved. The merge is deep, so other months keep their own. */
 export function markGroupEventsUpdated(
   db: Firestore,
