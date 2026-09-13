@@ -53,8 +53,16 @@ class GroupFirestore(
         var fetched = known != null
         emitAll(
             groupSyncFirestore.observe(groupId).mapNotNull { sync ->
-                if (fetched && !isStale(known, sync.groupUpdatedAt.toInstantOrNull())) {
+                val marker = sync.groupUpdatedAt.toInstantOrNull()
+                if (fetched && !isStale(known, marker)) {
                     return@mapNotNull null
+                }
+
+                // A save from this device is already in the cache, exactly as new as the marker.
+                cachedGroup(groupId)?.takeIf { !isStale(it, marker) }?.let { cached ->
+                    known = cached
+                    fetched = true
+                    return@mapNotNull cached
                 }
 
                 known = serverGroup(groupId)

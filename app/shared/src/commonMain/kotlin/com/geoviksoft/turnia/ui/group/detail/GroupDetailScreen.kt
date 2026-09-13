@@ -59,7 +59,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.geoviksoft.turnia.core.domain.model.InvitationLink
 import com.geoviksoft.turnia.core.domain.model.UserId
@@ -171,11 +170,6 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
     var leaveRequested by remember { mutableStateOf(false) }
     var deleteRequested by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
-
-    LifecycleResumeEffect(Unit) {
-        viewModel.refresh()
-        onPauseOrDispose { }
-    }
 
     Scaffold(
         topBar = {

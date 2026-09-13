@@ -16,6 +16,9 @@ import com.geoviksoft.turnia.core.system.toInstantOrNull
 import com.geoviksoft.turnia.core.system.valueOrNull
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Source
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
@@ -34,21 +37,22 @@ class GroupJoinRequestFirestore(
     private val cachedResponse = DebouncedReads<String, JoinRequestDocument>(window = 10.seconds)
 
     /**
-     * What an admin has to answer: the requests the group's pending map names, each from the cache
-     * unless its entry is newer than the copy held. A group nobody has asked to join costs no read.
+     * What an admin has to answer, kept current: the requests the group's pending map names, each
+     * from the cache unless its entry is newer than the copy held. A group nobody has asked to join
+     * costs no read, and an answer or a new request arrives through the sync listener.
      */
-    suspend fun getPending(
-        groupId: GroupId,
-    ): Outcome<List<DocHolder<JoinRequestDocument>>, GenericFirestoreError> =
-        outcomeCatching(TAG, { GenericFirestoreError(it) }) {
-            val pending = groupSyncFirestore.get(groupId).valueOrNull()?.pendingJoinRequests
-                ?: error("The group's sync document could not be read")
-            Logger.d(TAG, "Pending join requests: ${pending.size}")
-
-            pending.mapNotNull { (uid, requestedAt) ->
-                pendingRequest(groupId, uid, requestedAt.toInstantOrNull())
+    fun observePending(groupId: GroupId): Flow<List<DocHolder<JoinRequestDocument>>> =
+        groupSyncFirestore.observe(groupId)
+            .map { it.pendingJoinRequests }
+            .distinctUntilChanged()
+            .map { pending ->
+                Logger.d(TAG, "Pending join requests: ${pending.size}")
+                pending.mapNotNull { (uid, requestedAt) ->
+                    outcomeCatching(TAG, { it }) {
+                        pendingRequest(groupId, uid, requestedAt.toInstantOrNull())
+                    }.valueOrNull()
+                }
             }
-        }
 
     private suspend fun pendingRequest(
         groupId: GroupId,

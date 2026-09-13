@@ -89,8 +89,11 @@ interface GroupRepository {
 
     suspend fun updateGroup(group: Group): Outcome<Group, GroupError>
 
-    /** Who is waiting to be let in. Only an admin can read them. */
-    suspend fun getJoinRequests(groupId: GroupId): Outcome<List<JoinRequest>, GroupError>
+    /** The group, kept current: a save on another screen or by another admin arrives on its own. */
+    fun observeGroup(groupId: GroupId): Flow<Outcome<Group, GroupError>>
+
+    /** Who is waiting to be let in, kept current. Only an admin can read them. */
+    fun observeJoinRequests(groupId: GroupId): Flow<List<JoinRequest>>
 
     suspend fun acceptJoinRequest(groupId: GroupId, userId: UserId): Outcome<Unit, GroupError>
 

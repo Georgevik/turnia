@@ -228,14 +228,20 @@ internal class DemoGroupRepository(private val world: DemoWorld) : GroupReposito
         return group.toSuccess()
     }
 
+    override fun observeGroup(groupId: GroupId): Flow<Outcome<Group, GroupError>> =
+        groups.map { all ->
+            all.firstOrNull { it.id == groupId }?.toSuccess() ?: GroupError.NotFound.toFailure()
+        }
+
     /** One person waiting at the door of the group Lucía runs, so the admin side has something. */
-    override suspend fun getJoinRequests(groupId: GroupId): Outcome<List<JoinRequest>, GroupError> =
+    override fun observeJoinRequests(groupId: GroupId): Flow<List<JoinRequest>> = flowOf(
         if (groupId == world.urgencias) {
             val irene = DemoPeople.irene
-            listOf(JoinRequest(irene.id, irene.name, irene.username)).toSuccess()
+            listOf(JoinRequest(irene.id, irene.name, irene.username))
         } else {
-            emptyList<JoinRequest>().toSuccess()
+            emptyList()
         }
+    )
 
     override suspend fun acceptJoinRequest(groupId: GroupId, userId: UserId): Outcome<Unit, GroupError> =
         Unit.toSuccess()
