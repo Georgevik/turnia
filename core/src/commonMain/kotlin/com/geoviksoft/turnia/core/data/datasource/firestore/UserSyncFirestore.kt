@@ -11,6 +11,7 @@ import com.geoviksoft.turnia.core.data.datasource.firestore.sync.Synced
 import com.geoviksoft.turnia.core.data.datasource.firestore.sync.awaitConfirmed
 import com.geoviksoft.turnia.core.data.datasource.firestore.sync.isConfirmed
 import com.geoviksoft.turnia.core.data.logger.Logger
+import com.geoviksoft.turnia.core.domain.model.GroupId
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.system.Outcome
 import com.geoviksoft.turnia.core.system.outcomeCatching
@@ -93,6 +94,30 @@ class UserSyncFirestore(
         uid,
         UserSyncDocument(profileUpdatedAt = Timestamp.ServerTimestamp),
     )
+
+    /** A group this user just created, in the commit that creates it. */
+    fun writeGroupJoined(batch: WriteBatch, uid: UserId, groupId: GroupId) = write(
+        "writeGroupJoined",
+        batch,
+        uid,
+        UserSyncDocument(groups = mapOf(groupId.value to Timestamp.ServerTimestamp)),
+    )
+
+    /** Copies a membership the server has just confirmed into [UserSyncDocument.groups], once. */
+    suspend fun indexGroups(uid: UserId, groupIds: List<GroupId>) {
+        val batch = firestore.batch()
+        val syncWrite = write(
+            "indexGroups",
+            batch,
+            uid,
+            UserSyncDocument(
+                groups = groupIds.associate { it.value to Timestamp.ServerTimestamp },
+                groupsIndexed = true,
+            ),
+        )
+        batch.commit()
+        syncWrite.committed()
+    }
 
     fun writeJoinRequests(batch: WriteBatch, uid: UserId) = write(
         "writeJoinRequests",

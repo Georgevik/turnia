@@ -5,6 +5,7 @@ import { notifyJoinAccepted, notifyJoinRequested } from "./notifications";
 import { TurniaError } from "./errors";
 import { requireFields, requireUid } from "./requests";
 import {
+  markGroupJoined,
   markGroupUpdated,
   markJoinRequestPending,
   markJoinRequestSettled,
@@ -74,6 +75,7 @@ export const requestToJoinGroup = onCall(async (request) => {
     });
     clearRevokedGroup(db, batch, groupDoc, uid);
     markGroupUpdated(db, batch, groupDoc.id);
+    markGroupJoined(db, batch, uid, groupDoc.id);
     await batch.commit();
 
     return { groupId: groupDoc.id, status: "joined" as const };
@@ -150,6 +152,7 @@ export const acceptJoinRequest = onCall(async (request) => {
   clearRevokedGroup(db, batch, group, uid);
   // Same commit as the group, so both resolve to one instant and a reader's cache can settle.
   markGroupUpdated(db, batch, groupId);
+  markGroupJoined(db, batch, uid, groupId);
   batch.update(requestRef, { status: "accepted", respondedAt: FieldValue.serverTimestamp() });
   markUserUpdated(db, batch, uid, "joinRequests");
   markJoinRequestSettled(db, batch, groupId, uid);

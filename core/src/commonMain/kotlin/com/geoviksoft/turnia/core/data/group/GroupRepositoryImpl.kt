@@ -141,7 +141,7 @@ class GroupRepositoryImpl(
             )
         )
 
-        groupFirestore.create(created.id, document).errorOrNull()?.let { error ->
+        groupFirestore.create(created.id, userId, document).errorOrNull()?.let { error ->
             Logger.e(TAG, "Failed to create group: $error")
             return GroupError.NotFound.toFailure()
         }

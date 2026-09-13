@@ -86,7 +86,7 @@ val dataModule: Module = module {
     single { UserSyncFirestore(get(), get()) }
     single { GroupSyncFirestore(get(), get()) }
     single { GroupEventFirestore(get(), get()) }
-    single { GroupFirestore(get(), get(), get()) }
+    single { GroupFirestore(get(), get(), get(), get()) }
     single { GroupJoinRequestFirestore(get(), get()) }
     single { RevokedGroupFirestore(get(), get(), get()) }
     single { GroupMembershipFunction(get(), get(), get()) }

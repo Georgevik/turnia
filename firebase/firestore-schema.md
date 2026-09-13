@@ -311,6 +311,8 @@ what it already cached to decide whether it has to query the server at all.
 | `profile` | timestamp \| null | Last write to the user's own `users/{uid}` — name, username, avatar or `calendarSharedWith` — by any of their devices or by `updateProfile`. Every such write stamps the profile's `updateAt` in the same commit. What the owner's session start and People tab read the cached profile against; other users keep using the reservation's `updateAt`. |
 | `joinRequests` | timestamp \| null | Last write to `private/joinRequests`, **or** to a `groups/{g}/joinRequests/{uid}` this user owns — answering a request changes no field of the pointer list, and this is the only thing that tells the requester to look again. |
 | `preferences` | timestamp \| null | Last write to `private/preferences`. |
+| `groups` | map&lt;groupId, timestamp&gt; | **The groups this user is a member of**, each stamped when they joined. Added by `requestToJoinGroup` (auto-approve), `acceptJoinRequest` and the creator's own `createGroup` batch; removed by `leaveGroup`, `removeMember` and `deleteGroup`. |
+| `groupsIndexed` | boolean | Whether `groups` is complete. Set by the app the first time it copies a server-confirmed `memberUids` query into `groups`; until then the map may hold only groups joined since the functions started writing it, and the app ignores it. |
 | `subscription` | timestamp \| null | Last write to `private/subscription`. **Server-only**: the rules refuse any client write that touches it. |
 | `private` | timestamp \| null | **Legacy, read-only.** The single marker `account` and `joinRequests` used to share. |
 
@@ -340,6 +342,13 @@ free. The rule the reader follows is *cache unless the marker says otherwise*, a
 marker settles rather than forcing a read: a pick made on this device is in the cache before the server
 acknowledges it, so the colour repaints straight away, offline included. Only another of the user's
 devices leaves the cache genuinely behind, and only that costs a read.
+
+`groups` replaces a `memberUids array-contains` **query listener**. That listener was billed the whole
+result set every time it re-attached more than 30 minutes after it last listened — on most app launches —
+while the app already listens to this document and to each group's own `sync/updates`. With the index,
+the app follows each group it names from the cache and reads a group document only when that group's
+`group` marker moves. A key left behind for a group the user can no longer read costs one denied read
+and renders nothing.
 
 `private/subscription` has its own marker, `subscription`, and it is the one marker no client may move:
 the rules reject a create that carries it and an update that touches it. A marker the client could hold

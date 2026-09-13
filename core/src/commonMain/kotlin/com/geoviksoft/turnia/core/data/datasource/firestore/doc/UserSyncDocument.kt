@@ -19,6 +19,14 @@ data class UserSyncDocument(
     @SerialName(FIELD_PROFILE) val profileUpdatedAt: BaseTimestamp? = null,
     @SerialName(FIELD_JOIN_REQUESTS) val joinRequestsUpdatedAt: BaseTimestamp? = null,
     @SerialName(FIELD_PREFERENCES) val preferencesUpdatedAt: BaseTimestamp? = null,
+    /** The groups this user is a member of, stamped when they joined. Trusted only once [groupsIndexed]. */
+    @SerialName("groups") val groups: Map<String, BaseTimestamp?> = emptyMap(),
+    /**
+     * Whether [groups] is the whole list. Set by the client the first time it copies its membership
+     * into it: before that, the functions may already have added the odd group, and a partial list
+     * read as complete would hide the rest.
+     */
+    @SerialName("groupsIndexed") val groupsIndexed: Boolean = false,
     /** Moved only by the receipt-verification function, in the commit that writes the entitlement. */
     @SerialName(FIELD_SUBSCRIPTION) val subscriptionUpdatedAt: BaseTimestamp? = null,
     @Deprecated("Remove at some point")

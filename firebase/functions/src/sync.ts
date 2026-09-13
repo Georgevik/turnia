@@ -48,6 +48,28 @@ export function markUserUpdated(db: Firestore, writer: SyncWriter, uid: string, 
   );
 }
 
+/**
+ * The user became a member of the group. `users/{uid}/sync/updates.groups` is the membership list
+ * the app follows instead of a `memberUids` query listener, which bills every group again on each
+ * re-attach. Added unconditionally: the app ignores the map until it has indexed the rest itself.
+ */
+export function markGroupJoined(db: Firestore, writer: SyncWriter, uid: string, groupId: string) {
+  writer.set(
+    db.doc(`users/${uid}/sync/updates`),
+    { groups: { [groupId]: FieldValue.serverTimestamp() } },
+    { merge: true },
+  );
+}
+
+/** The user is no longer a member: they left, were removed, or the group is gone. */
+export function markGroupLeft(db: Firestore, writer: SyncWriter, uid: string, groupId: string) {
+  writer.set(
+    db.doc(`users/${uid}/sync/updates`),
+    { groups: { [groupId]: FieldValue.delete() } },
+    { merge: true },
+  );
+}
+
 /** The group document moved: its name, invitation, event types or member roster. */
 export function markGroupUpdated(db: Firestore, writer: SyncWriter, groupId: string) {
   writer.set(
