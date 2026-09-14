@@ -8,6 +8,9 @@ import androidx.compose.ui.graphics.Color
 // Neutral extremes
 val White = Color(0xFFFFFFFF)
 
+// Camel — the logo's ground, as on the launcher icon; the logo's T carries its own black
+val Camel = Color(0xFFF3EFE9)
+
 // Grey — cool neutral (surfaces & text)
 val Grey50 = Color(0xFFF8F9FC)
 val Grey100 = Color(0xFFF2F4F6)

@@ -14,6 +14,7 @@ data class MyProfileUi(
     val usernameError: ProfileFieldError? = null,
     val saving: Boolean = false,
     val saved: Boolean = false,
+    val deletingAccount: Boolean = false,
     val userMessage: ProfileMessage? = null,
 ) {
     val canSave: Boolean
@@ -23,4 +24,4 @@ data class MyProfileUi(
 
 enum class ProfileFieldError { NameRequired, UsernameInvalid, UsernameTaken }
 
-enum class ProfileMessage { SaveFailed }
+enum class ProfileMessage { SaveFailed, DeleteAccountLastAdmin, DeleteAccountFailed }

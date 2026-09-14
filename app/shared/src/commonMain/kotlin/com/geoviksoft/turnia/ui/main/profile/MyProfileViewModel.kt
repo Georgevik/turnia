@@ -2,10 +2,12 @@ package com.geoviksoft.turnia.ui.main.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.geoviksoft.turnia.core.domain.model.DeleteAccountError
 import com.geoviksoft.turnia.core.domain.model.UsernameError
 import com.geoviksoft.turnia.core.domain.repository.UserRepository
 import com.geoviksoft.turnia.core.domain.username.UsernameFactory
 import com.geoviksoft.turnia.core.system.fold
+import com.geoviksoft.turnia.core.system.onFailure
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -110,6 +112,22 @@ class MyProfileViewModel(
 
     private fun MyProfileUi.profileChanged(): Boolean =
         name.trim() != initProfileUi.name.trim() || username != initProfileUi.username
+
+    fun onDeleteAccountConfirmed() {
+        if (_uiState.value.deletingAccount) return
+        _uiState.update { it.copy(deletingAccount = true) }
+
+        // Success needs no handling here: the session ends, and the root takes the app to sign-in.
+        viewModelScope.launch {
+            userRepository.deleteAccount().onFailure { error ->
+                val message = when (error) {
+                    DeleteAccountError.LastAdmin -> ProfileMessage.DeleteAccountLastAdmin
+                    DeleteAccountError.Failed -> ProfileMessage.DeleteAccountFailed
+                }
+                _uiState.update { it.copy(deletingAccount = false, userMessage = message) }
+            }
+        }
+    }
 
     fun userMessageShown() = _uiState.update { it.copy(userMessage = null) }
 

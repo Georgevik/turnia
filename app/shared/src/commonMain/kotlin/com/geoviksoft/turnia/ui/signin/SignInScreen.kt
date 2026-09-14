@@ -1,6 +1,5 @@
 package com.geoviksoft.turnia.ui.signin
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,7 +27,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -38,15 +36,14 @@ import com.geoviksoft.turnia.ui.signin.components.SignInProvider
 import com.geoviksoft.turnia.ui.signin.model.SignInError
 import com.geoviksoft.turnia.ui.signin.model.SignInUi
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
+import com.geoviksoft.turnia.ui.system.components.TurniaLogo
 import com.geoviksoft.turnia.ui.system.toErrorSnackbar
 import com.mmk.kmpauth.apple.rememberAppleAuthState
 import com.mmk.kmpauth.google.rememberGoogleAuthState
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.app_name
-import turnia.app.shared.generated.resources.logo
 import turnia.app.shared.generated.resources.signin_apple
 import turnia.app.shared.generated.resources.signin_error_failed
 import turnia.app.shared.generated.resources.signin_google
@@ -103,20 +100,7 @@ private fun LogoAndAppName(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .size(88.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer),
-            contentAlignment = Alignment.Center,
-        ) {
-            Image(
-                painter = painterResource(Res.drawable.logo),
-                contentDescription = null,
-                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onPrimaryContainer),
-                modifier = Modifier.size(56.dp),
-            )
-        }
+        TurniaLogo(Modifier.size(88.dp))
 
         Text(
             text = stringResource(Res.string.app_name),

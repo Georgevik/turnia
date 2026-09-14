@@ -15,18 +15,24 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -39,6 +45,8 @@ import com.geoviksoft.turnia.navigation.LocalNavigator
 import com.geoviksoft.turnia.ui.main.profile.components.AvatarPickerSheet
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
 import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
+import com.geoviksoft.turnia.ui.system.components.ConfirmationDialog
+import com.geoviksoft.turnia.ui.system.components.ConfirmationStatus
 import com.geoviksoft.turnia.ui.system.components.TReadOnlyField
 import com.geoviksoft.turnia.ui.system.components.UserAvatar
 import com.geoviksoft.turnia.ui.system.keyboardAware
@@ -47,7 +55,14 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.calendar_back
+import turnia.app.shared.generated.resources.dialog_cancel
 import turnia.app.shared.generated.resources.profile_avatar_change
+import turnia.app.shared.generated.resources.profile_delete_account
+import turnia.app.shared.generated.resources.profile_delete_account_confirm
+import turnia.app.shared.generated.resources.profile_delete_account_error
+import turnia.app.shared.generated.resources.profile_delete_account_error_last_admin
+import turnia.app.shared.generated.resources.profile_delete_account_message
+import turnia.app.shared.generated.resources.profile_delete_account_title
 import turnia.app.shared.generated.resources.profile_error_name_required
 import turnia.app.shared.generated.resources.profile_error_save
 import turnia.app.shared.generated.resources.profile_error_username_invalid
@@ -72,6 +87,7 @@ fun MyProfileScreen(viewModel: MyProfileViewModel = koinViewModel()) {
         onAnimalPicked = viewModel::onAnimalPicked,
         onBackgroundPicked = viewModel::onBackgroundPicked,
         onSave = viewModel::onSave,
+        onDeleteAccountConfirmed = viewModel::onDeleteAccountConfirmed,
     )
 }
 
@@ -86,9 +102,11 @@ private fun MyProfileScreenContent(
     onAnimalPicked: (String) -> Unit = {},
     onBackgroundPicked: (String) -> Unit = {},
     onSave: () -> Unit = {},
+    onDeleteAccountConfirmed: () -> Unit = {},
 ) {
     val navigator = LocalNavigator.current
     val snackbar = LocalSnackbar.current
+    var confirmingDelete by remember { mutableStateOf(false) }
 
     uiState.userMessage?.let { message ->
         val text = message.message()
@@ -189,7 +207,28 @@ private fun MyProfileScreenContent(
                     )
                 }
             }
+
+            DeleteAccountButton(
+                onClick = { confirmingDelete = true },
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            )
         }
+    }
+
+    // Kept up while the deletion runs, spinner and all: closing it would suggest it was over.
+    if (confirmingDelete || uiState.deletingAccount) {
+        ConfirmationDialog(
+            title = stringResource(Res.string.profile_delete_account_title),
+            message = stringResource(Res.string.profile_delete_account_message),
+            confirmText = stringResource(Res.string.profile_delete_account_confirm),
+            dismissText = stringResource(Res.string.dialog_cancel),
+            onConfirm = {
+                confirmingDelete = false
+                onDeleteAccountConfirmed()
+            },
+            onDismissRequest = { confirmingDelete = false },
+            status = if (uiState.deletingAccount) ConfirmationStatus.Running else ConfirmationStatus.Idle,
+        )
     }
 
     if (uiState.pickingAvatar) {
@@ -199,6 +238,25 @@ private fun MyProfileScreenContent(
             onAnimalPicked = onAnimalPicked,
             onColorPicked = onBackgroundPicked,
             onDismiss = onAvatarPickerDismissed,
+        )
+    }
+}
+
+@Composable
+private fun DeleteAccountButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    TextButton(
+        onClick = onClick,
+        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+        modifier = modifier,
+    ) {
+        Icon(
+            imageVector = Icons.Default.DeleteForever,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+        )
+        Text(
+            text = stringResource(Res.string.profile_delete_account),
+            modifier = Modifier.padding(start = 8.dp),
         )
     }
 }
@@ -216,6 +274,8 @@ private fun ProfileFieldError.message(): String = stringResource(
 private fun ProfileMessage.message(): String = stringResource(
     when (this) {
         ProfileMessage.SaveFailed -> Res.string.profile_error_save
+        ProfileMessage.DeleteAccountLastAdmin -> Res.string.profile_delete_account_error_last_admin
+        ProfileMessage.DeleteAccountFailed -> Res.string.profile_delete_account_error
     }
 )
 

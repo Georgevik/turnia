@@ -282,7 +282,7 @@
 
     <!-- About -->
     <string name="about_title">Acerca de</string>
-    <string name="about_version">Versión %1$s (%2$s)</string>
+    <string name="about_version">Versión %1$s</string>
     <string name="about_section_legal">Legal</string>
     <string name="about_terms">Términos de uso</string>
     <string name="about_privacy">Política de privacidad</string>
@@ -290,12 +290,12 @@
     <string name="about_user_id">ID de usuario</string>
     <string name="about_user_id_copy">Copiar el ID de usuario</string>
     <string name="about_user_id_copied">ID de usuario copiado</string>
-    <string name="about_delete_account">Eliminar cuenta</string>
-    <string name="about_delete_account_title">¿Eliminar tu cuenta?</string>
-    <string name="about_delete_account_message">Se borrarán tu nombre, tu nombre de usuario, tu avatar, tus eventos personales y sus notas, y se cerrará la sesión. Los turnos que tengas en un grupo se quedan allí, a nombre de un antiguo miembro. No se puede deshacer.</string>
-    <string name="about_delete_account_confirm">Eliminar cuenta</string>
-    <string name="about_delete_account_error_last_admin">Eres el único admin de un grupo que todavía tiene miembros. Sácalos o elimina el grupo antes de eliminar tu cuenta.</string>
-    <string name="about_delete_account_error">No hemos podido eliminar tu cuenta. Inténtalo de nuevo.</string>
+    <string name="profile_delete_account">Eliminar cuenta</string>
+    <string name="profile_delete_account_title">¿Eliminar tu cuenta?</string>
+    <string name="profile_delete_account_message">Se borrarán tu nombre, tu nombre de usuario, tu avatar, tus eventos personales y sus notas, y se cerrará la sesión. Los turnos que tengas en un grupo se quedan allí, a nombre de un antiguo miembro. No se puede deshacer.</string>
+    <string name="profile_delete_account_confirm">Eliminar cuenta</string>
+    <string name="profile_delete_account_error_last_admin">Eres el único admin de un grupo que todavía tiene miembros. Sácalos o elimina el grupo antes de eliminar tu cuenta.</string>
+    <string name="profile_delete_account_error">No hemos podido eliminar tu cuenta. Inténtalo de nuevo.</string>
 
     <!-- Bottom bar -->
     <string name="tab_calendar">Calendario</string>

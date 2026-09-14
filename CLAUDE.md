@@ -83,7 +83,7 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
   able to see only their own events and only the event types those events use. They can no longer create
   events in that group. Someone with no events is simply removed, with no `revokedUids` entry.
 - The **last admin** of a group with other members cannot leave it, and an admin cannot remove another admin.
-- A user can **delete their account** from *About*. It is **anonymized, not erased**, by the `deleteAccount`
+- A user can **delete their account** from their profile. It is **anonymized, not erased**, by the `deleteAccount`
   Cloud Function: the uid stays wherever it is referenced (`memberUids`, events, `history`), so no chain
   loses a link, and what goes is everything that says who it was — name and username on the profile and
   on every group's copy, avatar, username reservation, and everything under `users/{uid}/**`. A blank
