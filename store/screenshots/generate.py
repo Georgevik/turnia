@@ -23,31 +23,55 @@ RAW = ROOT / "raw"
 ICON = ROOT.parent.parent / "app/iosApp/iosApp/Assets.xcassets/AppIcon.appiconset/app-icon-1024.png"
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
-# (raw file, headline, subheading, dark background)
-PAGES = [
-    ("1_calendar", "Tu cuadrante, claro de un vistazo",
-     "Mañanas, tardes, noches y guardias, cada una con su color.", False),
-    ("2_day", "Sabe siempre quién cubre cada turno",
-     "Cada cambio queda registrado, de mano en mano.", False),
-    ("3_colleagues", "Echa una mano a tu equipo",
-     "Cuando un compañero necesita cambio, lo cubres con un toque.", False),
-    ("4_requests", "Pide cambio sin perseguir a nadie",
-     "En verde, los turnos que ya tienen quien te los cubra.", False),
-    ("5_group", "Todo tu servicio en un calendario",
-     "Crea el grupo de tu unidad e invita a tu equipo con un enlace.", False),
-    ("6_shared", "Comparte tu cuadrante",
-     "Que tu familia sepa cuándo trabajas, sin mandar fotos del calendario.", False),
-    ("7_dark_calendar", "También para el turno de noche",
-     "Modo oscuro para mirar tus turnos sin deslumbrarte.", True),
-]
+# (raw file, headline, subheading, dark background), per language.
+PAGES = {
+    "es": [
+        ("1_calendar", "Tu cuadrante, claro de un vistazo",
+         "Mañanas, tardes, noches y guardias, cada una con su color.", False),
+        ("2_day", "Sabe siempre quién cubre cada turno",
+         "Cada cambio queda registrado, de mano en mano.", False),
+        ("3_colleagues", "Echa una mano a tu equipo",
+         "Cuando un compañero necesita cambio, lo cubres con un toque.", False),
+        ("4_requests", "Pide cambio sin perseguir a nadie",
+         "En verde, los turnos que ya tienen quien te los cubra.", False),
+        ("5_group", "Todo tu servicio en un calendario",
+         "Crea el grupo de tu unidad e invita a tu equipo con un enlace.", False),
+        ("6_shared", "Comparte tu cuadrante",
+         "Que tu familia sepa cuándo trabajas, sin mandar fotos del calendario.", False),
+        ("7_dark_calendar", "También para el turno de noche",
+         "Modo oscuro para mirar tus turnos sin deslumbrarte.", True),
+    ],
+    "en": [
+        ("1_calendar", "Your roster, clear at a glance",
+         "Mornings, afternoons, nights and on-call, each in its own color.", False),
+        ("2_day", "Always know who covers each shift",
+         "Every swap is recorded, hand to hand.", False),
+        ("3_colleagues", "Help out your team",
+         "When a colleague needs a swap, cover it with one tap.", False),
+        ("4_requests", "Swap shifts without chasing anyone",
+         "In green, the shifts someone has already covered for you.", False),
+        ("5_group", "Your whole unit in one calendar",
+         "Create your team's group and invite everyone with a link.", False),
+        ("6_shared", "Share your roster",
+         "Let your family know when you work, no more photos of the schedule.", False),
+        ("7_dark_calendar", "Made for the night shift too",
+         "Dark mode to check your shifts without the glare.", True),
+    ],
+}
 
 # Canvas, the phone's height on it, and how rounded the device's own screen is (in its pixels).
 TARGETS = {
-    "google-play": dict(platform="android", width=1080, height=1920, phone_height=1330,
+    "google-play": dict(raw="android", language="es", width=1080, height=1920, phone_height=1330,
                         screen_radius=110, headline=74, sub=38, top=110),
-    "app-store": dict(platform="ios", width=1320, height=2868, phone_height=2040,
+    "app-store": dict(raw="ios", language="es", width=1320, height=2868, phone_height=2040,
                       screen_radius=165, headline=96, sub=50, top=170),
+    # App Store Connect still asks for the 6.5" size on its own and refuses the 6.9" one there.
+    "app-store-6.5": dict(raw="ios", language="es", width=1284, height=2778, phone_height=1976,
+                          screen_radius=165, headline=93, sub=48, top=165),
 }
+# The English listing, from screens captured with the app in English (`-AppleLanguages "(en)"`).
+TARGETS["app-store-en"] = TARGETS["app-store"] | dict(raw="ios-en", language="en")
+TARGETS["app-store-6.5-en"] = TARGETS["app-store-6.5"] | dict(raw="ios-en", language="en")
 
 TEMPLATE = """<!doctype html>
 <html><head><meta charset="utf-8"><style>
@@ -185,8 +209,8 @@ def main() -> None:
     for name, target in TARGETS.items():
         out_dir = ROOT / name
         out_dir.mkdir(exist_ok=True)
-        for index, (raw_name, title, subtitle, dark) in enumerate(PAGES, start=1):
-            raw = RAW / target["platform"] / f"{raw_name}.png"
+        for index, (raw_name, title, subtitle, dark) in enumerate(PAGES[target["language"]], start=1):
+            raw = RAW / target["raw"] / f"{raw_name}.png"
             out = out_dir / f"{index:02d}_{raw_name.split('_', 1)[1]}.png"
             render(page_markup(target, raw, title, subtitle, dark), target["width"], target["height"], out)
             print(out.relative_to(ROOT))
