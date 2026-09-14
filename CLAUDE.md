@@ -232,7 +232,7 @@ Build one with `value.toSuccess()` / `error.toFailure()` — both work on any re
     release builds with **App Attest**; debug builds use a **debug token**, printed on first launch,
     that has to be registered in the console once per device. Not enforced yet: enforce each service
     (Firestore, Functions, Auth) in the console only once its metrics show current traffic verified.
-    Enforcing before iOS can attest locks out every iOS release user.
+    Enforcing before a release that attests is in users' hands locks every older build out.
   - **Cloud Scheduler** — triggers the periodic retention cleanup of old events.
 - **GitLive Firebase Kotlin SDK** (`dev.gitlive:firebase-*`) — Firebase access from `commonMain`.
 - **Native FCM per platform** — push reception uses the native SDK on each platform (iOS involves APNs, `AppDelegate` and permissions).
@@ -430,51 +430,24 @@ variables on CI. Without either the build still runs and produces an unsigned AP
   Google Sign-In fails in production, and its SHA-256 in `firebase/hosting/.well-known/assetlinks.json`,
   or invitation links open the web page instead of the app.
 
-## Pending: the paid Apple Developer Program
+## iOS signing & Apple setup
 
-Four features are written and shipped but cannot work yet, all for the same reason: the project is
-signed with a **Personal Team**, which cannot sign any of these capabilities. Xcode does not even
-list them under *Signing & Capabilities → + Capability*, and writing the entitlement by hand only
-breaks the build — Xcode fails to generate a profile. All are blocked on an Apple Developer Program
-membership; only Universal Links has a workaround.
+The app is signed by the paid team `83GQ2T4N4H` with automatic signing, so Xcode keeps the App ID's
+capabilities in step with [iosApp.entitlements](app/iosApp/iosApp/iosApp.entitlements). What lives
+outside the repo, and breaks silently if it is lost or changed:
 
-- **Push (FCM)** — `aps-environment` is missing from
-  [iosApp.entitlements](app/iosApp/iosApp/iosApp.entitlements). Without it iOS receives nothing.
-- **Sign in with Apple** — the button is on the sign-in screen and calls `rememberAppleAuthState`,
-  but every attempt fails until the setup below is complete. App Store guideline 4.8 requires it
-  once an app offers third-party sign-in, and Turnia already offers Google, so this is release
-  blocking rather than optional.
-- **Universal Links** — `com.apple.developer.associated-domains` with
-  `applinks:turnia.club` is missing, so an invitation link opens the web page instead of the app. The workaround is already
-  live: the page's *Abrir en Turnia* button opens the app through its custom scheme. The site already
-  serves the `apple-app-site-association` this needs, and `onOpenURL` already hands every URL to the
-  shared code, so adding the entitlement is the only step.
-- **App Check on iOS** — release builds use App Attest, which needs the
-  `com.apple.developer.devicecheck.appattest-environment` entitlement (`production`) and the app
-  registered for App Attest in the console. Until then an iOS release build sends no valid token, so
-  **no service can be enforced** without locking iOS users out. Debug builds are unaffected: they use
-  a registered debug token.
-
-### Sign in with Apple — what is left
-
-The Apple provider is already enabled in Firebase Authentication. What remains, in order:
-
-1. **App ID** — developer.apple.com → *Identifiers* → `com.geoviksoft.turnia.Turnia` → tick
-   **Sign In with Apple**. This is what makes the capability appear in Xcode.
-2. **Services ID** — *Identifiers* → **+** → *Services IDs*. Its identifier must differ from the
-   bundle id (e.g. `com.geoviksoft.turnia.signin`). Configure it with the App ID above, the domain
-   `turnia-23ebc.firebaseapp.com`, and the return URL
-   `https://turnia-23ebc.firebaseapp.com/__/auth/handler`. Android needs this: there the flow is
-   Firebase's browser OAuth, not the native sheet.
-3. **Key** — *Keys* → **+** → tick *Sign in with Apple* → register → download the `.p8`. It can be
-   downloaded **once**; a lost key has to be replaced. Note the Key ID.
-4. **Firebase** — Authentication → Sign-in method → Apple: the Services ID, Apple Team ID
-   `83GQ2T4N4H`, the Key ID, and the private key. The same key is what lets Firebase **revoke Apple
-   tokens**, which Apple requires of any app that lets a user delete their account.
-5. **Xcode** — *+ Capability* → *Sign in with Apple*, which writes
-   `com.apple.developer.applesignin` into the entitlements.
-
-Steps 2 to 4 are not optional here: without them the button would work on iOS and fail on Android.
+- **Push** — an APNs `.p8` key is uploaded in Firebase → Project settings → *Cloud Messaging*.
+  Without it FCM accepts the send and iOS receives nothing.
+- **Sign in with Apple** — Firebase Authentication → Apple holds the Services ID
+  `com.geoviksoft.turnia.signin` (return URL `https://turnia-23ebc.firebaseapp.com/__/auth/handler`),
+  the Key ID and its `.p8`. Android needs the Services ID, since there the flow is Firebase's browser
+  OAuth; the key is also what lets Firebase **revoke Apple tokens**, which Apple requires of an app
+  that lets a user delete their account. App Store guideline 4.8 makes the button mandatory, because
+  Turnia offers Google sign-in.
+- **Universal Links** — `apple-app-site-association` in `firebase/hosting` names the app by
+  `TEAM_ID.bundleId`: a change of team or bundle id has to be redeployed there.
+- **App Check** — App Attest is registered for the iOS app in the console. Enforcement waits until
+  an iOS release is out and its traffic shows as verified.
 
 ## License
 

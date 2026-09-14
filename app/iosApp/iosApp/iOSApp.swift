@@ -58,9 +58,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, MessagingDelegate,
 
 /// App Check's attestation. A debug build — the simulator above all — cannot attest, so it sends a
 /// debug token instead: the SDK prints it on first launch, and it goes into the console (App Check →
-/// Apps → Manage debug tokens) once per device. A release build uses App Attest, which needs the
-/// `appattest-environment` entitlement and therefore the paid Apple Developer Program: until then its
-/// requests carry no valid token.
+/// Apps → Manage debug tokens) once per device. A release build uses App Attest.
 final class TurniaAppCheckProviderFactory: NSObject, AppCheckProviderFactory {
     func createProvider(with app: FirebaseApp) -> AppCheckProvider? {
         #if DEBUG
@@ -101,8 +99,8 @@ struct iOSApp: App {
             ContentView()
                 .onOpenURL { url in
                     if GIDSignIn.sharedInstance.handle(url) { return }
-                    // The invitation link's custom scheme today; also the https Universal Link once
-                    // it is signed, which SwiftUI delivers through this same handler.
+                    // The invitation link: SwiftUI delivers both the custom scheme and the https
+                    // Universal Link through this same handler.
                     InvitationLinkBridgeKt.onLinkOpened(link: url.absoluteString)
                 }
         }

@@ -2,22 +2,19 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- TODO Four capabilities belong here and none can be added yet: a Personal Team cannot sign
-	     them, so Xcode does not offer them under Signing & Capabilities, and writing the key by
-	     hand only breaks the build. All wait on the paid Apple Developer Program.
-
-	       · com.apple.developer.devicecheck.appattest-environment (production) — App Check's
-	         App Attest in release builds. Without it their requests carry no valid token.
-
-	       · aps-environment (development) — without it there is no FCM on iOS.
-	       · com.apple.developer.applesignin — without it the Apple button on the sign-in screen
-	         fails every time.
-	       · com.apple.developer.associated-domains = applinks:turnia.club (the host in
-	         InvitationLinkConfig) — without it an invitation link opens the web page instead of
-	         the app. The page's own button still opens the app through its custom scheme, and the
-	         site already serves the apple-app-site-association file this needs (firebase/hosting).
-
-	     Adding the entitlement is the last step of each, not the only one. See
-	     "Pending: the paid Apple Developer Program" in CLAUDE.md. -->
+	<!-- Archiving for distribution rewrites this to production. -->
+	<key>aps-environment</key>
+	<string>development</string>
+	<key>com.apple.developer.applesignin</key>
+	<array>
+		<string>Default</string>
+	</array>
+	<!-- The host in InvitationLinkConfig; must change with it. -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:turnia.club</string>
+	</array>
+	<key>com.apple.developer.devicecheck.appattest-environment</key>
+	<string>production</string>
 </dict>
 </plist>
