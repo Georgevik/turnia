@@ -6,9 +6,9 @@ import com.geoviksoft.turnia.core.domain.model.EventId
 import com.geoviksoft.turnia.core.domain.model.EventTypeId
 import com.geoviksoft.turnia.core.domain.model.PersonalEvent
 import com.geoviksoft.turnia.core.domain.model.PersonalEventType
+import com.geoviksoft.turnia.core.system.parseEventDate
 import com.geoviksoft.turnia.core.system.toYearMonth
 import dev.gitlive.firebase.firestore.DocumentSnapshot
-import kotlin.time.Instant
 
 class PersonalEventMapper {
 
@@ -33,7 +33,7 @@ class PersonalEventMapper {
         return PersonalEvent(
             id = EventId(holder.id),
             type = type,
-            date = Instant.parse(doc.date),
+            date = parseEventDate(doc.date),
             notes = doc.notes.takeIf { it?.isNotEmpty() == true },
         )
     }

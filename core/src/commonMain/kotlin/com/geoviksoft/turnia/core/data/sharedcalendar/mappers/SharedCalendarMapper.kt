@@ -15,9 +15,8 @@ import com.geoviksoft.turnia.core.domain.model.PersonalEvent
 import com.geoviksoft.turnia.core.domain.model.PersonalEventType
 import com.geoviksoft.turnia.core.domain.model.SharedCalendar
 import com.geoviksoft.turnia.core.domain.model.UserId
-import com.geoviksoft.turnia.core.system.toInstant
+import com.geoviksoft.turnia.core.system.parseEventDate
 import kotlinx.datetime.LocalDate
-import kotlin.time.Instant
 
 /**
  * What `getSharedCalendar` aggregates, as the calendar the domain draws. There is no way back: a
@@ -101,8 +100,7 @@ class SharedCalendarMapper {
             id = EventId(event.eventId),
             type = type,
             // Written as an instant, but an event older than that carries a bare date.
-            date = runCatching { Instant.parse(event.date) }
-                .getOrElse { LocalDate.parse(event.date).toInstant() },
+            date =  parseEventDate(event.date),
             notes = event.notes.takeIf { it?.isNotEmpty() == true },
         )
     }

@@ -359,6 +359,7 @@ private fun CalendarGrid(
     val today = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()) }
     val leadingDays = month.dayOfWeek.ordinal
     val gridStart = month.minus(leadingDays, DateTimeUnit.DAY)
+    val stagger = remember { EventEntranceStagger() }
 
     Column(modifier = Modifier.fillMaxSize()) {
         repeat(WEEKS) { week ->
@@ -380,6 +381,7 @@ private fun CalendarGrid(
                         isSelected = date == selectedDate,
                         theme = calendarTheme,
                         events = cellsByDate[date].orEmpty(),
+                        stagger = stagger,
                         onClick = {
                             if (!dateInMonth) {
                                 onMonthChanged(LocalDate(date.year, date.month, 1))

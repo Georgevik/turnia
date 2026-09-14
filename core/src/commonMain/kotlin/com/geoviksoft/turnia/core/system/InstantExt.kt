@@ -24,6 +24,9 @@ fun Instant.toTimestamp(): Timestamp = Timestamp(
 
 fun LocalDate.toInstant() = atStartOfDayIn(TimeZone.currentSystemDefault())
 
+fun parseEventDate(value: String): Instant =
+    Instant.parseOrNull(value) ?: LocalDate.parse(value).toInstant()
+
 fun BaseTimestamp?.toInstantOrNull(): Instant? = when (this) {
     is Timestamp -> this.toInstant()
     else -> null

@@ -1,5 +1,7 @@
 package com.geoviksoft.turnia.ui.components.calendar
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -26,11 +28,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -41,7 +48,9 @@ import androidx.compose.ui.unit.sp
 import com.geoviksoft.turnia.core.domain.model.EventId
 import com.geoviksoft.turnia.ui.components.calendar.model.CalendarCellEventUi
 import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
+import kotlinx.coroutines.delay
 import kotlinx.datetime.LocalDate
+import kotlin.time.Duration
 
 /** Height reserved at the top of a cell for the day number. */
 private val CalendarCellNumberHeight = 24.dp
@@ -57,6 +66,9 @@ private val CellContentPadding = 2.dp
 
 private val ChipCornerRadius = 4.dp
 
+/** How far above its place a chip starts before sliding down into it. */
+private val EventEntranceOffset = 6.dp
+
 /** One lap of the swap arrows round an event's chip. */
 private const val SWAP_ARROWS_LAP_MS = 3000
 
@@ -70,6 +82,7 @@ fun CalendarCell(
     onClick: () -> Unit,
     modifier: Modifier = Modifier.Companion,
     events: List<CalendarCellEventUi> = emptyList(),
+    stagger: EventEntranceStagger? = null,
 ) {
     val indicatorColor = if (isToday) theme.accentColor else Color.Transparent
     val numberColor = when {
@@ -122,40 +135,28 @@ fun CalendarCell(
                 }
             }
 
-            when {
-                events.isEmpty() -> Unit
-                events.size == 1 -> {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
-                    ) {
-                        EventRow(
-                            modifier = Modifier.weight(1f),
-                            event = events.first(),
-                        )
-                        Spacer(modifier.weight(1f))
-                    }
-                }
-
-                events.size > 1 -> {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
-                    ) {
-                        EventRow(
-                            modifier = Modifier.weight(1f),
-                            event = events[0],
-                        )
-                        EventRow(
-                            modifier = Modifier.weight(1f),
-                            event = events[1],
-                        )
-                        if (events.size > 2) {
-                            OverflowRow()
+            if (events.isNotEmpty()) {
+                // One layout for any count, keyed by id: a chip that is already on screen keeps its
+                // state when a second one joins it, so only the newcomer animates in.
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                ) {
+                    events.take(2).forEach { event ->
+                        key(event.id) {
+                            EventRow(
+                                modifier = Modifier.weight(1f),
+                                event = event,
+                                entranceDelay = { stagger?.delayFor(date) ?: Duration.ZERO },
+                            )
                         }
-
+                    }
+                    if (events.size == 1) {
+                        Spacer(Modifier.weight(1f))
+                    }
+                    if (events.size > 2) {
+                        OverflowRow()
                     }
                 }
             }
@@ -166,8 +167,17 @@ fun CalendarCell(
 @Composable
 private fun EventRow(
     event: CalendarCellEventUi,
+    entranceDelay: suspend () -> Duration,
     modifier: Modifier = Modifier,
 ) {
+    // A static preview never runs effects, so it starts where the animation would end.
+    val inspection = LocalInspectionMode.current
+    val entrance = remember { Animatable(if (inspection) 1f else 0f) }
+    LaunchedEffect(Unit) {
+        delay(entranceDelay())
+        entrance.animateTo(1f, tween(EVENT_ENTRANCE_MS, easing = FastOutSlowInEasing))
+    }
+
     // A shift on offer is circled by two arrows in its label's colour. Only those chips run an
     // animation at all; the rest of the month stays still.
     val swapArrows = if (event.onSwap) {
@@ -190,6 +200,10 @@ private fun EventRow(
 
     Box(
         modifier = modifier
+            .graphicsLayer {
+                alpha = entrance.value
+                translationY = (entrance.value - 1f) * EventEntranceOffset.toPx()
+            }
             .fillMaxWidth()
             .padding(vertical = 1.dp)
             .clip(RoundedCornerShape(ChipCornerRadius))
