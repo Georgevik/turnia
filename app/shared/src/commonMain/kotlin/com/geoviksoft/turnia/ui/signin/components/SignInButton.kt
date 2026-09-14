@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -16,13 +18,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import turnia.app.shared.generated.resources.Res
@@ -35,12 +38,14 @@ import turnia.app.shared.generated.resources.signin_google_logo
  * custom button as long as it is no smaller or less prominent than the others; Google does not, so
  * theirs is the one both follow.
  */
-enum class SignInProvider(internal val logo: DrawableResource, internal val tintLogo: Boolean) {
+enum class SignInProvider(internal val logo: @Composable () -> Painter, internal val tintLogo: Boolean) {
     // The G is four colours and must never be recoloured.
-    Google(Res.drawable.signin_google_logo, tintLogo = false),
+    Google({ painterResource(Res.drawable.signin_google_logo) }, tintLogo = false),
 
     // Apple's logo is a single colour that follows the text, black on light and white on dark.
-    Apple(Res.drawable.signin_apple_logo, tintLogo = true),
+    Apple({ painterResource(Res.drawable.signin_apple_logo) }, tintLogo = true),
+
+    Email({ rememberVectorPainter(Icons.Outlined.Email) }, tintLogo = true),
 }
 
 @Composable
@@ -64,7 +69,7 @@ fun SignInButton(
         contentPadding = PaddingValues(horizontal = 12.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            val logo = painterResource(provider.logo)
+            val logo = provider.logo()
             if (provider.tintLogo) {
                 Icon(painter = logo, contentDescription = null, modifier = Modifier.size(LogoSize))
             } else {

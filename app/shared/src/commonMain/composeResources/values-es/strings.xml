@@ -125,6 +125,26 @@
     <string name="signin_google">Continuar con Google</string>
     <string name="signin_apple">Continuar con Apple</string>
     <string name="signin_error_failed">No hemos podido iniciar sesión. Inténtalo de nuevo.</string>
+    <string name="signin_email">Continuar con email</string>
+    <string name="signin_email_title">Continuar con email</string>
+    <string name="signin_email_sign_in">Iniciar sesión</string>
+    <string name="signin_email_create_account">Crear cuenta</string>
+    <string name="signin_email_password">Contraseña</string>
+    <string name="signin_email_no_account">¿No tienes cuenta?</string>
+    <string name="create_account_body">Usa tu email del trabajo o personal. Después te pediremos tu nombre.</string>
+    <string name="create_account_password_rules_title">Tu contraseña necesita</string>
+    <string name="create_account_password_rule_length">Al menos %1$d caracteres</string>
+    <string name="create_account_password_rule_uppercase">Una letra mayúscula</string>
+    <string name="create_account_password_rule_lowercase">Una letra minúscula</string>
+    <string name="signin_email_show_password">Mostrar contraseña</string>
+    <string name="signin_email_hide_password">Ocultar contraseña</string>
+    <string name="signin_email_forgot_password">¿Has olvidado la contraseña?</string>
+    <string name="signin_email_reset_sent">Te hemos enviado un email a %1$s para restablecer la contraseña.</string>
+    <string name="signin_email_error_invalid_email">Introduce un email válido.</string>
+    <string name="signin_email_error_password_required">Introduce la contraseña.</string>
+    <string name="signin_email_error_invalid_credentials">Email o contraseña incorrectos.</string>
+    <string name="signin_email_error_email_in_use">Ya existe una cuenta con este email. Inicia sesión.</string>
+    <string name="signin_email_error_weak_password">La contraseña debe tener al menos 8 caracteres, una mayúscula y una minúscula.</string>
 
     <!-- Groups tab -->
     <string name="group_search_hint">Buscar personas o grupos...</string>

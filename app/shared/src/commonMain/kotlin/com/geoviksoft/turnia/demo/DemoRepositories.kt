@@ -3,6 +3,7 @@ package com.geoviksoft.turnia.demo
 import com.geoviksoft.turnia.core.domain.analytics.Analytics
 import com.geoviksoft.turnia.core.domain.analytics.AnalyticsEvent
 import com.geoviksoft.turnia.core.domain.model.DeleteAccountError
+import com.geoviksoft.turnia.core.domain.model.EmailAuthError
 import com.geoviksoft.turnia.core.domain.model.EventHistoryEntry
 import com.geoviksoft.turnia.core.domain.model.EventId
 import com.geoviksoft.turnia.core.domain.model.EventTypeId
@@ -63,6 +64,15 @@ internal class DemoUserRepository : UserRepository {
     override val userSession: StateFlow<UserSession> = session.asStateFlow()
     override val loggedUserFlow: Flow<User> =
         session.filterIsInstance<UserSession.Authenticated>().map { it.user }
+
+    // Never reached: the demo starts signed in, so there is no sign-in screen to call these from.
+    override suspend fun signInWithEmail(email: String, password: String): Outcome<Unit, EmailAuthError> =
+        Unit.toSuccess()
+
+    override suspend fun createAccountWithEmail(email: String, password: String): Outcome<Unit, EmailAuthError> =
+        Unit.toSuccess()
+
+    override suspend fun sendPasswordReset(email: String): Outcome<Unit, EmailAuthError> = Unit.toSuccess()
 
     override suspend fun signOut() = Unit
 

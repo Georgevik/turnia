@@ -18,9 +18,12 @@ import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,6 +34,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.geoviksoft.turnia.navigation.LocalNavigator
+import com.geoviksoft.turnia.navigation.root.routes.RootRoute
+import com.geoviksoft.turnia.ui.signin.components.EmailSignInSheet
 import com.geoviksoft.turnia.ui.signin.components.SignInButton
 import com.geoviksoft.turnia.ui.signin.components.SignInProvider
 import com.geoviksoft.turnia.ui.signin.model.SignInError
@@ -45,6 +51,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.app_name
 import turnia.app.shared.generated.resources.signin_apple
+import turnia.app.shared.generated.resources.signin_email
 import turnia.app.shared.generated.resources.signin_error_failed
 import turnia.app.shared.generated.resources.signin_google
 import turnia.app.shared.generated.resources.welcome_body
@@ -57,10 +64,12 @@ import turnia.app.shared.generated.resources.welcome_feature_trace_title
 import turnia.app.shared.generated.resources.welcome_headline
 import turnia.app.shared.generated.resources.welcome_signin_hint
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignInScreen(viewModel: SignInViewModel = koinViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbar = LocalSnackbar.current
+    val navigator = LocalNavigator.current
 
     uiState.userMessage?.let { message ->
         val text = message.message()
@@ -90,6 +99,25 @@ fun SignInScreen(viewModel: SignInViewModel = koinViewModel()) {
         FeatureSection()
 
         SignInSection(uiState, viewModel)
+    }
+
+    uiState.emailForm?.let { form ->
+        ModalBottomSheet(
+            onDismissRequest = viewModel::onEmailSignInDismissed,
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        ) {
+            EmailSignInSheet(
+                form = form,
+                onEmailChange = viewModel::onEmailChanged,
+                onPasswordChange = viewModel::onPasswordChanged,
+                onSubmit = viewModel::onEmailSubmit,
+                onForgotPassword = viewModel::onPasswordResetRequested,
+                onCreateAccount = {
+                    viewModel.onEmailSignInDismissed()
+                    navigator.goTo(RootRoute.CreateAccountKey)
+                },
+            )
+        }
     }
 }
 
@@ -195,7 +223,7 @@ private val SignInButtonHeight = 52.dp
 
 @Composable
 private fun SignInSection(uiState: SignInUi, viewModel: SignInViewModel) {
-    // Both providers answer through the same callback: whichever the user picks, what comes back
+    // Google and Apple answer through the same callback: whichever the user picks, what comes back
     // is a session, and the screen has nothing left to decide.
     val googleAuth = rememberGoogleAuthState(onResult = viewModel::onSignInResult)
     val appleAuth = rememberAppleAuthState(onResult = viewModel::onSignInResult)
@@ -238,6 +266,13 @@ private fun SignInSection(uiState: SignInUi, viewModel: SignInViewModel) {
                         viewModel.onSignInStarted()
                         appleAuth.launch()
                     },
+                    modifier = Modifier.fillMaxWidth().height(SignInButtonHeight),
+                )
+
+                SignInButton(
+                    provider = SignInProvider.Email,
+                    text = stringResource(Res.string.signin_email),
+                    onClick = viewModel::onEmailSignInOpened,
                     modifier = Modifier.fillMaxWidth().height(SignInButtonHeight),
                 )
             }

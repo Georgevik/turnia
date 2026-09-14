@@ -13,6 +13,9 @@ sealed interface RootRoute : NavKey {
     data object SignInKey : RootRoute
 
     @Serializable
+    data object CreateAccountKey : RootRoute
+
+    @Serializable
     data object MainKey : RootRoute
 
     @Serializable

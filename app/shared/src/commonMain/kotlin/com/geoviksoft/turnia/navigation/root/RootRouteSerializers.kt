@@ -11,6 +11,7 @@ internal val rootRouteSavedStateConfiguration: SavedStateConfiguration = SavedSt
         polymorphic(NavKey::class) {
             subclass(RootRoute.SplashKey::class, RootRoute.SplashKey.serializer())
             subclass(RootRoute.SignInKey::class, RootRoute.SignInKey.serializer())
+            subclass(RootRoute.CreateAccountKey::class, RootRoute.CreateAccountKey.serializer())
             subclass(RootRoute.MainKey::class, RootRoute.MainKey.serializer())
             subclass(
                 RootRoute.EventTypeDetailKey::class,

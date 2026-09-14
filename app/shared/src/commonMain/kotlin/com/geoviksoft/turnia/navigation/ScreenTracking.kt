@@ -30,6 +30,7 @@ fun TrackScreen(route: NavKey?) {
 private fun screenName(route: NavKey): String? = when (route) {
     RootRoute.SplashKey -> "splash"
     RootRoute.SignInKey -> "sign_in"
+    RootRoute.CreateAccountKey -> "create_account"
     // Main is a host, not a screen: the tab underneath it reports instead.
     RootRoute.MainKey -> null
     is RootRoute.EventTypeDetailKey -> "event_type_detail"

@@ -16,6 +16,7 @@ import com.geoviksoft.turnia.ui.main.eventtypes.personal.PersonalEventTypesScree
 import com.geoviksoft.turnia.ui.main.preferences.PreferencesScreen
 import com.geoviksoft.turnia.ui.main.profile.MyProfileScreen
 import com.geoviksoft.turnia.ui.signin.SignInScreen
+import com.geoviksoft.turnia.ui.signin.createaccount.CreateAccountScreen
 import com.geoviksoft.turnia.ui.splash.SplashScreen
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -34,6 +35,7 @@ fun RootNavDisplay(
                 SplashScreen(backStack = backStack, snackbar = snackbarHostState)
             }
             entry<RootRoute.SignInKey> { SignInScreen() }
+            entry<RootRoute.CreateAccountKey> { CreateAccountScreen() }
             entry<RootRoute.MainKey> { MainScreen() }
 
             entry<RootRoute.EventTypeDetailKey> { key ->

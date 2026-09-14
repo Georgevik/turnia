@@ -5,6 +5,7 @@ import com.geoviksoft.turnia.ui.main.MainViewModel
 import com.geoviksoft.turnia.ui.root.RootViewModel
 import com.geoviksoft.turnia.ui.root.name.CompleteNameViewModel
 import com.geoviksoft.turnia.ui.signin.SignInViewModel
+import com.geoviksoft.turnia.ui.signin.createaccount.CreateAccountViewModel
 import com.geoviksoft.turnia.ui.splash.SplashViewModel
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModelOf
@@ -16,6 +17,7 @@ val rootModule: Module = module {
     viewModelOf(::RootViewModel)
     viewModelOf(::SplashViewModel)
     viewModelOf(::SignInViewModel)
+    viewModelOf(::CreateAccountViewModel)
     viewModelOf(::MainViewModel)
     viewModelOf(::CompleteNameViewModel)
 }

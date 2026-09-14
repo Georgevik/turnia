@@ -1,6 +1,7 @@
 package com.geoviksoft.turnia.core.domain.repository
 
 import com.geoviksoft.turnia.core.domain.model.DeleteAccountError
+import com.geoviksoft.turnia.core.domain.model.EmailAuthError
 import com.geoviksoft.turnia.core.domain.model.User
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.domain.model.UserProfile
@@ -15,6 +16,13 @@ interface UserRepository : FcmDelegate {
     val userSession: StateFlow<UserSession>
 
     val loggedUserFlow: Flow<User>
+
+    suspend fun signInWithEmail(email: String, password: String): Outcome<Unit, EmailAuthError>
+
+    suspend fun createAccountWithEmail(email: String, password: String): Outcome<Unit, EmailAuthError>
+
+    suspend fun sendPasswordReset(email: String): Outcome<Unit, EmailAuthError>
+
     suspend fun signOut()
 
     suspend fun deleteAccount(): Outcome<Unit, DeleteAccountError>

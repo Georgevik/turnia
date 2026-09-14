@@ -125,6 +125,26 @@
     <string name="signin_google">Continue with Google</string>
     <string name="signin_apple">Continue with Apple</string>
     <string name="signin_error_failed">We couldn't sign you in. Please try again.</string>
+    <string name="signin_email">Continue with email</string>
+    <string name="signin_email_title">Continue with email</string>
+    <string name="signin_email_sign_in">Sign in</string>
+    <string name="signin_email_create_account">Create account</string>
+    <string name="signin_email_password">Password</string>
+    <string name="signin_email_no_account">Don't have an account?</string>
+    <string name="create_account_body">Use your work or personal email. We'll ask for your name next.</string>
+    <string name="create_account_password_rules_title">Your password needs</string>
+    <string name="create_account_password_rule_length">At least %1$d characters</string>
+    <string name="create_account_password_rule_uppercase">An uppercase letter</string>
+    <string name="create_account_password_rule_lowercase">A lowercase letter</string>
+    <string name="signin_email_show_password">Show password</string>
+    <string name="signin_email_hide_password">Hide password</string>
+    <string name="signin_email_forgot_password">Forgot your password?</string>
+    <string name="signin_email_reset_sent">We've sent an email to %1$s to reset your password.</string>
+    <string name="signin_email_error_invalid_email">Enter a valid email address.</string>
+    <string name="signin_email_error_password_required">Enter your password.</string>
+    <string name="signin_email_error_invalid_credentials">Incorrect email or password.</string>
+    <string name="signin_email_error_email_in_use">There is already an account with this email. Sign in instead.</string>
+    <string name="signin_email_error_weak_password">The password must have at least 8 characters, an uppercase and a lowercase letter.</string>
 
     <!-- Groups tab -->
     <string name="group_search_hint">Search people or groups...</string>

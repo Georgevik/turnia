@@ -9,6 +9,7 @@ import com.geoviksoft.turnia.core.data.logger.Logger
 import com.geoviksoft.turnia.core.data.user.mappers.UserDocumentMapper
 import com.geoviksoft.turnia.core.domain.analytics.Analytics
 import com.geoviksoft.turnia.core.domain.model.DeleteAccountError
+import com.geoviksoft.turnia.core.domain.model.EmailAuthError
 import com.geoviksoft.turnia.core.domain.model.User
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.domain.model.UserProfile
@@ -21,11 +22,16 @@ import com.geoviksoft.turnia.core.system.errorOrNull
 import com.geoviksoft.turnia.core.system.fold
 import com.geoviksoft.turnia.core.system.mapError
 import com.geoviksoft.turnia.core.system.onSuccess
+import com.geoviksoft.turnia.core.system.outcomeCatching
 import com.geoviksoft.turnia.core.system.toFailure
 import com.geoviksoft.turnia.core.system.toSuccess
 import com.geoviksoft.turnia.core.system.valueOrElse
 import com.geoviksoft.turnia.core.system.valueOrNull
 import dev.gitlive.firebase.auth.FirebaseAuth
+import dev.gitlive.firebase.auth.FirebaseAuthInvalidCredentialsException
+import dev.gitlive.firebase.auth.FirebaseAuthInvalidUserException
+import dev.gitlive.firebase.auth.FirebaseAuthUserCollisionException
+import dev.gitlive.firebase.auth.FirebaseAuthWeakPasswordException
 import dev.gitlive.firebase.auth.FirebaseUser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -215,6 +221,36 @@ class UserRepositoryImpl(
 
         return remoteProfiles.revokeCalendarAccess(uid, userId)
             .mapError { error -> Logger.e(TAG, "Failed to revoke calendar access: $error") }
+    }
+
+    // Success returns nothing: `authStateChanged` picks the new user up and builds the session,
+    // exactly as it does after Google or Apple.
+    override suspend fun signInWithEmail(email: String, password: String): Outcome<Unit, EmailAuthError> =
+        outcomeCatching(TAG, ::toEmailAuthError) {
+            auth.signInWithEmailAndPassword(email.trim(), password)
+        }
+
+    // The account is born without a name, so the complete-name dialog asks for it straight after.
+    override suspend fun createAccountWithEmail(email: String, password: String): Outcome<Unit, EmailAuthError> =
+        outcomeCatching(TAG, ::toEmailAuthError) {
+            auth.createUserWithEmailAndPassword(email.trim(), password)
+        }
+
+    override suspend fun sendPasswordReset(email: String): Outcome<Unit, EmailAuthError> =
+        outcomeCatching(TAG, ::toEmailAuthError) {
+            auth.sendPasswordResetEmail(email.trim())
+        }
+
+    private fun toEmailAuthError(error: Throwable): EmailAuthError = when {
+        error is FirebaseAuthUserCollisionException -> EmailAuthError.EmailInUse
+        error is FirebaseAuthWeakPasswordException -> EmailAuthError.WeakPassword
+        // The console's password policy is refused with a plain auth exception, told apart only by its code.
+        error.message.orEmpty().contains("PASSWORD_DOES_NOT_MEET_REQUIREMENTS") -> EmailAuthError.WeakPassword
+        error is FirebaseAuthInvalidUserException -> EmailAuthError.InvalidCredentials
+        // Also what a malformed address throws; the form checks the shape first, so here it is
+        // almost always a wrong password.
+        error is FirebaseAuthInvalidCredentialsException -> EmailAuthError.InvalidCredentials
+        else -> EmailAuthError.Failed
     }
 
     override suspend fun signOut() {
