@@ -24,6 +24,16 @@ class AppDelegate: NSObject, UIApplicationDelegate, MessagingDelegate,
         return true
     }
 
+    /// Handed over by hand: Firebase's swizzling hooks whatever delegate exists at `configure()`,
+    /// which runs in `iOSApp.init` before SwiftUI installs this one, so it never sees the token and
+    /// FCM refuses to issue one of its own.
+    func application(
+        _ application: UIApplication,
+        didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
+    ) {
+        Messaging.messaging().apnsToken = deviceToken
+    }
+
     func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
         PushTokenBridgeKt.onPushTokenRefreshed()
     }
