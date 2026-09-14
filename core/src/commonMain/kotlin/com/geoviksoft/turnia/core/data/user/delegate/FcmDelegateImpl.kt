@@ -14,6 +14,8 @@ import dev.gitlive.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class FcmDelegateImpl(
     private val messaging: FirebaseMessaging,
@@ -22,6 +24,13 @@ class FcmDelegateImpl(
 
     private val _notificationsEnabled = MutableStateFlow(true)
     override val notificationsEnabled: StateFlow<Boolean> = _notificationsEnabled.asStateFlow()
+
+    /**
+     * A new token is registered from two places at once on iOS — the restored session and FCM's
+     * refresh callback — and both read the account before either has written, so each would add it.
+     */
+    private val registration = Mutex()
+    private var registered: Pair<UserId, String>? = null
 
     /**
      * Reads the account, then registers this device unless the user has switched notifications off.
@@ -42,14 +51,17 @@ class FcmDelegateImpl(
      * Called before signing out, while the uid is still known.
      */
     override suspend fun unregisterFcmToken(uid: UserId) {
-        val token = getFirebaseMessagingToken() ?: return
+        registration.withLock {
+            val token = getFirebaseMessagingToken() ?: return
 
-        remotePrivate.removeFcmToken(uid, token).errorOrNull()?.let { error ->
-            Logger.e(TAG, "Could not unregister the push token: $error")
-            return
+            remotePrivate.removeFcmToken(uid, token).errorOrNull()?.let { error ->
+                Logger.e(TAG, "Could not unregister the push token: $error")
+                return
+            }
+            registered = null
+
+            outcomeCatching(TAG, { it }) { messaging.deleteToken() }
         }
-
-        outcomeCatching(TAG, { it }) { messaging.deleteToken() }
     }
 
     override suspend fun setNotificationsEnabled(
@@ -73,15 +85,20 @@ class FcmDelegateImpl(
         return Unit.toSuccess()
     }
 
-    private suspend fun registerToken(uid: UserId, registered: List<String> = emptyList()) {
-        val token = getFirebaseMessagingToken() ?: return
-        if (token in registered) {
-            Logger.d(TAG, "This device is already registered")
-            return
-        }
+    private suspend fun registerToken(uid: UserId, onAccount: List<String> = emptyList()) {
+        registration.withLock {
+            val token = getFirebaseMessagingToken() ?: return
+            if (registered == uid to token || token in onAccount) {
+                registered = uid to token
+                Logger.d(TAG, "This device is already registered")
+                return
+            }
 
-        remotePrivate.addFcmToken(uid, token).errorOrNull()?.let { error ->
-            Logger.e(TAG, "Could not register the push token: $error")
+            remotePrivate.addFcmToken(uid, token).errorOrNull()?.let { error ->
+                Logger.e(TAG, "Could not register the push token: $error")
+                return
+            }
+            registered = uid to token
         }
     }
 
