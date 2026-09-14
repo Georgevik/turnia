@@ -20,6 +20,7 @@ import com.geoviksoft.turnia.navigation.root.RootNavDisplay
 import com.geoviksoft.turnia.navigation.root.RootNavigator
 import com.geoviksoft.turnia.navigation.root.rootRouteSavedStateConfiguration
 import com.geoviksoft.turnia.navigation.root.routes.RootRoute
+import com.geoviksoft.turnia.ui.root.name.CompleteNameDialog
 import com.geoviksoft.turnia.ui.system.AppLanguageHost
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
 import com.geoviksoft.turnia.ui.system.RequestNotificationPermission
@@ -65,6 +66,11 @@ fun App(vm: RootViewModel = koinViewModel()) {
                         snackbarHostState = snackbarHostState,
                         backStack = backStack,
                     )
+
+                    // Over whatever the session routed to: nobody gets past it without a name.
+                    if ((userSession as? UserSession.Authenticated)?.user?.needsName == true) {
+                        CompleteNameDialog()
+                    }
                 }
             }
         }

@@ -32,6 +32,7 @@ class UserDocumentMapper {
         username = profile?.username.orEmpty(),
         membership = subscription.toMembership(),
         avatar = profile?.avatar ?: UserProfile.AnimalAvatar.NONE,
+        hasProfile = profile != null,
     )
 
     fun map(snapshot: DocumentSnapshot): UserProfile =

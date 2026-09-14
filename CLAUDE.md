@@ -70,6 +70,10 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
   The screen shows **one** color picker either way: the user picks a color and the app decides where
   it goes — onto the type as its default when the type is being created, onto that user's own
   override every time after.
+- **A user has a name before they get in.** Apple, and sometimes Google, sign a user in without one;
+  a modal then asks for it over whatever screen the session reached, and cancelling signs them out.
+  It only asks once the profile has been read — `User.needsName` — so an offline launch that has
+  only heard from Auth is not mistaken for a nameless account.
 - **Avatar**: a user picks an **animal icon** and a **background colour** for themselves; both live
   on their public profile, so anyone who can find them sees the same one. Neither is stored until
   it is picked: a profile that has never opened the picker renders the client's default — the first

@@ -257,6 +257,9 @@
     <string name="profile_error_name_required">Enter your name.</string>
     <string name="profile_error_username_invalid">3 to 20 characters: letters, numbers, underscore or full stop.</string>
     <string name="profile_error_username_taken">That username is already taken.</string>
+    <string name="complete_name_title">What's your name?</string>
+    <string name="complete_name_message">Your colleagues see it on every shift you cover. You can change it later in your profile.</string>
+    <string name="complete_name_continue">Continue</string>
     <string name="profile_error_save">We couldn't save your changes.</string>
     <string name="profile_avatar_change">Change avatar</string>
     <string name="profile_avatar_title">Choose your avatar</string>

@@ -257,6 +257,9 @@
     <string name="profile_error_name_required">Escribe tu nombre.</string>
     <string name="profile_error_username_invalid">Entre 3 y 20 caracteres: letras, números, guion bajo o punto.</string>
     <string name="profile_error_username_taken">Ese nombre de usuario ya está en uso.</string>
+    <string name="complete_name_title">¿Cómo te llamas?</string>
+    <string name="complete_name_message">Tus compañeros lo verán en los turnos que cubras. Podrás cambiarlo después en tu perfil.</string>
+    <string name="complete_name_continue">Continuar</string>
     <string name="profile_error_save">No hemos podido guardar los cambios.</string>
     <string name="profile_avatar_change">Cambiar avatar</string>
     <string name="profile_avatar_title">Elige tu avatar</string>
