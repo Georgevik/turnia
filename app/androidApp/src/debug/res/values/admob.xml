@@ -1,0 +1,6 @@
+<resources>
+    <!-- Google's test app and banner. A new or unapproved real unit serves nothing, and clicking a
+         real ad from a development device gets the AdMob account flagged. -->
+    <string name="admob_app_id" translatable="false">ca-app-pub-3940256099942544~3347511713</string>
+    <string name="admob_banner_unit_id" translatable="false">ca-app-pub-3940256099942544/9214589741</string>
+</resources>

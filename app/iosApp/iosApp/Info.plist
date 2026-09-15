@@ -11,6 +11,12 @@
 		<string>en</string>
 		<string>es</string>
 	</array>
+	<!-- AdMob, test or real by build configuration (Configuration/Config.xcconfig). The SDK
+	     crashes the app on start without the app id; AdBanner.swift reads the banner unit. -->
+	<key>GADApplicationIdentifier</key>
+	<string>$(ADMOB_APP_ID)</string>
+	<key>AdMobBannerUnitId</key>
+	<string>$(ADMOB_BANNER_UNIT_ID)</string>
 	<!-- iOS OAuth client id (from GoogleService-Info.plist CLIENT_ID). The GoogleSignIn
 	     SDK reads this to build its active configuration; KMPAuth never sets one itself,
 	     so without this key signInWithPresentingViewController has no configuration and fails.

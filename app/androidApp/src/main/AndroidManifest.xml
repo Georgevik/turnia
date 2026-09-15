@@ -67,6 +67,12 @@
                     android:value="true" />
         </service>
 
+        <!-- The AdMob app id, test or real by build type (res/values/admob.xml in debug and
+             release); the SDK crashes the app on start without it. -->
+        <meta-data
+                android:name="com.google.android.gms.ads.APPLICATION_ID"
+                android:value="@string/admob_app_id" />
+
         <service
                 android:exported="false"
                 android:name=".TurniaMessagingService">
