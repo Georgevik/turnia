@@ -1,0 +1,10 @@
+<resources>
+    <string name="notification_channel_name">Dienste und Gruppen</string>
+
+    <string name="push_swap_requested">%1$s möchte tauschen: %2$s am %3$s. Kannst du aushelfen?</string>
+    <string name="push_swap_covered">%1$s übernimmt deinen Dienst: %2$s am %3$s.</string>
+    <string name="push_swap_returned">%1$s hat dir deinen Dienst zurückgegeben: %2$s am %3$s. Er wird wieder zum Tausch angeboten.</string>
+    <string name="push_join_requested">%1$s möchte der Gruppe beitreten.</string>
+    <string name="push_join_accepted">Du bist jetzt Mitglied der Gruppe.</string>
+    <string name="push_calendar_shared">%1$s hat den Kalender mit dir geteilt.</string>
+</resources>

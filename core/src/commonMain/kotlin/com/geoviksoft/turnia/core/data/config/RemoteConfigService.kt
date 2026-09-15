@@ -35,11 +35,22 @@ class RemoteConfigService(
     fun getFlags(): FeatureFlags {
         return FeatureFlags(
             // GitLive's get has no Int: anything but Boolean, Double, Long or String throws.
-            minActionsToEnableAds = remoteConfig.get<Long>(RemoteKey.MIN_ADS_ACTION.value).toInt(),
-            invitationCodeLength = remoteConfig.get<Long>(RemoteKey.INVITATION_CODE_LENGTH.value).toInt(),
-            enableSubscription = remoteConfig.get<Boolean>(RemoteKey.ENABLE_SUBSCRIPTION.value),
+            minActionsToEnableAds = remoteConfig.getSafe<Long>(RemoteKey.MIN_ADS_ACTION, 0).toInt(),
+            invitationCodeLength = remoteConfig.getSafe<Long>(RemoteKey.INVITATION_CODE_LENGTH, 6)
+                .toInt(),
+            enableSubscription = remoteConfig.getSafe<Boolean>(
+                RemoteKey.ENABLE_SUBSCRIPTION, false
+            ),
         )
     }
+
+    private inline fun <reified T> FirebaseRemoteConfig.getSafe(key: RemoteKey, default: T): T =
+        try {
+            remoteConfig.get<T>(key.value)
+        } catch (e: Exception) {
+            default
+        }
+
 
     private suspend fun setDefaults() {
         remoteConfig.setDefaults(
@@ -52,7 +63,7 @@ class RemoteConfigService(
 }
 
 enum class RemoteKey(val value: String) {
-    MIN_ADS_ACTION("minAdsAction"),
-    INVITATION_CODE_LENGTH("invitation_code_length"),
-    ENABLE_SUBSCRIPTION("enableSubscription"),
+    MIN_ADS_ACTION("minAdsAction"), INVITATION_CODE_LENGTH("invitation_code_length"), ENABLE_SUBSCRIPTION(
+        "enableSubscription"
+    ),
 }

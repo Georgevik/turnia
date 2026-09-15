@@ -29,6 +29,9 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.language_english
+import turnia.app.shared.generated.resources.language_french
+import turnia.app.shared.generated.resources.language_german
+import turnia.app.shared.generated.resources.language_italian
 import turnia.app.shared.generated.resources.language_spanish
 import turnia.app.shared.generated.resources.language_system
 import turnia.app.shared.generated.resources.preferences_section_language
@@ -97,6 +100,9 @@ val AppLanguage.label: StringResource
         AppLanguage.System -> Res.string.language_system
         AppLanguage.English -> Res.string.language_english
         AppLanguage.Spanish -> Res.string.language_spanish
+        AppLanguage.French -> Res.string.language_french
+        AppLanguage.German -> Res.string.language_german
+        AppLanguage.Italian -> Res.string.language_italian
     }
 
 // British: that is the English the strings are written in.
@@ -105,6 +111,9 @@ private val AppLanguage.flag: String?
         AppLanguage.System -> null
         AppLanguage.English -> "🇬🇧"
         AppLanguage.Spanish -> "🇪🇸"
+        AppLanguage.French -> "🇫🇷"
+        AppLanguage.German -> "🇩🇪"
+        AppLanguage.Italian -> "🇮🇹"
     }
 
 @Preview

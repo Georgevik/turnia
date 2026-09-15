@@ -1,0 +1,6 @@
+"push_swap_requested" = "%1$@ chiede un cambio: %2$@ del %3$@. Puoi dare una mano?";
+"push_swap_covered" = "%1$@ copre il tuo turno: %2$@ del %3$@.";
+"push_swap_returned" = "%1$@ ti ha restituito il turno: %2$@ del %3$@. È di nuovo in cambio.";
+"push_join_requested" = "%1$@ chiede di unirsi al gruppo.";
+"push_join_accepted" = "Ora fai parte del gruppo.";
+"push_calendar_shared" = "%1$@ ha condiviso il suo calendario con te.";

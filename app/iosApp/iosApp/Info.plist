@@ -10,6 +10,9 @@
 	<array>
 		<string>en</string>
 		<string>es</string>
+		<string>fr</string>
+		<string>de</string>
+		<string>it</string>
 	</array>
 	<!-- AdMob, test or real by build configuration (Configuration/Config.xcconfig). The SDK
 	     crashes the app on start without the app id; AdBanner.swift reads the banner unit. -->

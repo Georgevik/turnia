@@ -1,0 +1,441 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<resources>
+    <string name="app_name">Turnia</string>
+    <string-array name="loading_phrases">
+        <item>Trattando con il destino (e con il collega del turno di notte)…</item>
+        <item>Allineando le stelle… e gli orari della squadra.</item>
+        <item>Risolvendo la fisica quantistica di un weekend libero intero.</item>
+        <item>Incastrando i turni meglio di una partita a Tetris.</item>
+        <item>Aspettando il miracolo di un orario che vada bene a tutti…</item>
+        <item>Calcolando quanti caffè servirà questa settimana.</item>
+        <item>Scambiando mattine con pomeriggi e salvando i piani dell'ultimo minuto…</item>
+        <item>Riorganizzando il tempo perché tu abbia finalmente una vita sociale.</item>
+        <item>Avviando la diplomazia del cambio turno…</item>
+        <item>Controllando il piano turni: un secondo, ci siamo quasi.</item>
+        <item>Scambiando il turno di notte con una fetta di torta...</item>
+        <item>Cercando l'anima coraggiosa che copra il festivo...</item>
+        <item>Riordinando i pezzi del puzzle settimanale.</item>
+        <item>Sincronizzando gli orologi ed evitando sovrapposizioni misteriose.</item>
+        <item>Verificando se un venerdì libero è un mito o la realtà.</item>
+        <item>Trasformando il caos degli orari in tranquillità.</item>
+        <item>Incastrando i pezzi prima che qualcuno chieda un cambio.</item>
+        <item>Calcolando le probabilità di due giorni liberi di fila.</item>
+        <item>Sistemando il piano turni perché tutti possano respirare.</item>
+        <item>Stendendo il tappeto rosso per il tuo prossimo giorno libero.</item>
+    </string-array>
+
+    <!-- Calendar -->
+    <string name="calendar_previous_month">Mese precedente</string>
+    <string name="calendar_next_month">Mese successivo</string>
+    <string name="calendar_back">Indietro</string>
+    <string name="calendar_month_year">%1$s %2$d</string>
+    <string-array name="calendar_weekday_initials">
+        <item>L</item>
+        <item>M</item>
+        <item>M</item>
+        <item>G</item>
+        <item>V</item>
+        <item>S</item>
+        <item>D</item>
+    </string-array>
+    <!-- Event details bottom sheet -->
+    <string name="event_full_date">%1$d %2$s %3$d</string>
+    <plurals name="event_details_count">
+        <item quantity="one">%1$d evento</item>
+        <item quantity="other">%1$d eventi</item>
+    </plurals>
+    <string name="event_details_empty">Nessun evento in questo giorno</string>
+    <string name="event_status_on_swap">In cambio</string>
+    <string name="event_assigned_to">Assegnato a %1$s</string>
+    <string name="event_assigned_to_me">Assegnato a me</string>
+    <string name="event_holder_me">Io</string>
+    <string name="event_holder_returned">l'ha restituito a</string>
+    <string name="event_manage">Gestisci</string>
+    <string name="event_add">Aggiungi evento</string>
+    <string name="event_add_close">Chiudi</string>
+    <string name="event_group_only_banner">Puoi aggiungere solo gli eventi definiti per questo gruppo.</string>
+    <string name="event_note_add">Aggiungi nota</string>
+    <string name="event_note_edit">Nota</string>
+    <string name="event_note_dialog_title">Nota</string>
+    <string name="event_note_hint">Scrivi una nota per questo evento</string>
+    <string name="event_note_save">Salva</string>
+    <string name="event_note_cancel">Annulla</string>
+    <string name="event_note_error">Impossibile salvare la nota</string>
+    <string name="event_remove">Elimina evento</string>
+    <string name="event_remove_confirm_title">Eliminare l'evento?</string>
+    <string name="event_remove_confirm_body">L'operazione non può essere annullata.</string>
+    <string name="event_remove_confirm">Elimina</string>
+    <string name="event_remove_cancel">Annulla</string>
+    <string name="event_return">Restituisci il turno</string>
+    <string name="event_return_confirm_title">Restituire il turno?</string>
+    <string name="event_return_confirm_body">Torna a %1$s, di nuovo in cambio.</string>
+    <string name="event_return_confirm">Restituisci</string>
+    <string name="event_details_new_title">Nuovo tipo di evento</string>
+
+    <string-array name="calendar_months">
+        <item>Gennaio</item>
+        <item>Febbraio</item>
+        <item>Marzo</item>
+        <item>Aprile</item>
+        <item>Maggio</item>
+        <item>Giugno</item>
+        <item>Luglio</item>
+        <item>Agosto</item>
+        <item>Settembre</item>
+        <item>Ottobre</item>
+        <item>Novembre</item>
+        <item>Dicembre</item>
+    </string-array>
+
+    <!-- Short forms, for where a date has to fit beside something else. Monday first, like the grid. -->
+    <string-array name="calendar_weekdays_short">
+        <item>Lun</item>
+        <item>Mar</item>
+        <item>Mer</item>
+        <item>Gio</item>
+        <item>Ven</item>
+        <item>Sab</item>
+        <item>Dom</item>
+    </string-array>
+    <string-array name="calendar_months_short">
+        <item>Gen</item>
+        <item>Feb</item>
+        <item>Mar</item>
+        <item>Apr</item>
+        <item>Mag</item>
+        <item>Giu</item>
+        <item>Lug</item>
+        <item>Ago</item>
+        <item>Set</item>
+        <item>Ott</item>
+        <item>Nov</item>
+        <item>Dic</item>
+    </string-array>
+
+    <!-- Welcome / Sign in -->
+    <string name="welcome_headline">I tuoi turni, senza caos</string>
+    <string name="welcome_body">Cambi dell'ultimo minuto, sostituzioni e favori tra colleghi… finalmente in un solo posto. Basta perdersi tra i messaggi di WhatsApp.</string>
+    <string name="welcome_feature_trace_title">Ogni cambio, sempre tracciato</string>
+    <string name="welcome_feature_trace_body">Segui un turno dall'inizio alla fine, anche quando passa di mano più volte.</string>
+    <string name="welcome_feature_clear_title">Niente doppi turni, niente sorprese</string>
+    <string name="welcome_feature_clear_body">Saprai sempre chi copre ogni turno.</string>
+    <string name="welcome_feature_notify_title">Ti avvisiamo quando conta</string>
+    <string name="welcome_feature_notify_body">Una notifica appena qualcosa cambia nei tuoi turni.</string>
+    <string name="welcome_signin_hint">Accedi per iniziare</string>
+    <string name="signin_google">Continua con Google</string>
+    <string name="signin_apple">Continua con Apple</string>
+    <string name="signin_error_failed">Non siamo riusciti a farti accedere. Riprova.</string>
+    <string name="signin_email">Continua con l'email</string>
+    <string name="signin_email_title">Continua con l'email</string>
+    <string name="signin_email_sign_in">Accedi</string>
+    <string name="signin_email_create_account">Crea account</string>
+    <string name="signin_email_password">Password</string>
+    <string name="signin_email_no_account">Non hai un account?</string>
+    <string name="create_account_body">Usa l'email di lavoro o personale.</string>
+    <string name="create_account_accept_terms">Accetto i %1$s</string>
+    <string name="create_account_accept_privacy">Accetto l'%1$s</string>
+    <string name="create_account_password_rules_title">La password deve avere</string>
+    <string name="create_account_password_rule_length">Almeno %1$d caratteri</string>
+    <string name="create_account_password_rule_uppercase">Una lettera maiuscola</string>
+    <string name="create_account_password_rule_lowercase">Una lettera minuscola</string>
+    <string name="signin_email_show_password">Mostra password</string>
+    <string name="signin_email_hide_password">Nascondi password</string>
+    <string name="signin_email_forgot_password">Password dimenticata?</string>
+    <string name="signin_email_reset_sent">Abbiamo inviato un'email a %1$s per reimpostare la password.</string>
+    <string name="signin_email_error_invalid_email">Inserisci un indirizzo email valido.</string>
+    <string name="signin_email_error_password_required">Inserisci la password.</string>
+    <string name="signin_email_error_invalid_credentials">Email o password errate.</string>
+    <string name="signin_email_error_email_in_use">Esiste già un account con questa email. Accedi.</string>
+    <string name="signin_email_error_weak_password">La password deve avere almeno 8 caratteri, una lettera maiuscola e una minuscola.</string>
+
+    <!-- Groups tab -->
+    <string name="group_search_hint">Cerca persone o gruppi...</string>
+    <string name="group_people_header">PERSONE</string>
+    <string name="group_groups_header">GRUPPI</string>
+    <string name="group_see_all">Vedi tutti</string>
+    <plurals name="group_member_count">
+        <item quantity="one">%1$d membro</item>
+        <item quantity="other">%1$d membri</item>
+    </plurals>
+
+    <!-- Group detail: view / edit / create a group -->
+    <string name="group_detail_title_new">Nuovo gruppo</string>
+    <string name="group_detail_create">Crea gruppo</string>
+    <string name="group_detail_open">Vedi gruppo</string>
+    <string name="group_detail_field_name">Nome del gruppo</string>
+    <string name="group_detail_field_members">Membri</string>
+    <string name="group_detail_field_invitation">Codice di invito</string>
+    <string name="group_detail_section_color">Colore</string>
+    <string name="group_detail_section_types">Tipi di evento</string>
+    <string name="group_detail_types_add">Aggiungi tipo di evento</string>
+    <string name="group_detail_types_empty">Ancora nessun tipo di evento</string>
+    <string name="group_detail_types_empty_body">Senza almeno uno, nessuno può aggiungere turni a questo gruppo.</string>
+    <string name="group_detail_save">Salva</string>
+    <string name="group_detail_error_not_found">Non abbiamo trovato il gruppo. Potrebbe non esistere più o potresti averlo lasciato.</string>
+    <string name="group_detail_error_load">Non siamo riusciti a caricare il gruppo.</string>
+    <string name="group_detail_section_invitation">Invito</string>
+    <string name="group_detail_auto_approve">Approvazione automatica</string>
+    <string name="group_detail_auto_approve_on">Chiunque abbia il codice entra subito nel gruppo.</string>
+    <string name="group_detail_auto_approve_off">Il codice invia una richiesta e decidi tu chi entra.</string>
+    <string name="group_detail_code_regenerate">Genera un nuovo codice</string>
+    <string name="group_detail_code_copy">Copia codice</string>
+    <string name="group_detail_code_copied">Codice copiato</string>
+    <string name="group_detail_share_invitation">Invita nel gruppo</string>
+    <string name="group_detail_share_invitation_text">Unisciti al gruppo “%1$s” su Turnia: %2$s</string>
+    <string name="group_detail_code_changed">Salva perché il nuovo codice inizi a funzionare.</string>
+    <string name="group_detail_section_members">Membri</string>
+    <string name="group_detail_members_sheet_title">Membri del gruppo</string>
+    <string name="group_detail_requests_title">Richieste di adesione</string>
+    <string name="group_detail_request_accept">Accetta</string>
+    <string name="group_detail_request_reject">Rifiuta</string>
+    <string name="group_detail_error_request">Non siamo riusciti a rispondere alla richiesta. Riprova.</string>
+    <string name="group_detail_error_save">Impossibile salvare il gruppo. Riprova.</string>
+    <string name="group_detail_member_remove">Rimuovi dal gruppo</string>
+    <string name="group_detail_member_remove_title">Rimuovere %1$s dal gruppo?</string>
+    <string name="group_detail_member_remove_message">Non vedrà più il calendario del gruppo. I turni assegnati restano, e li vedrà solo questa persona.</string>
+    <string name="group_detail_member_remove_confirm">Rimuovi dal gruppo</string>
+    <string name="group_detail_error_remove_member">Non siamo riusciti a rimuovere questa persona dal gruppo.</string>
+
+    <!-- Leaving a group -->
+    <string name="group_member_former">Ex membro</string>
+    <string name="group_revoked_badge">HAI LASCIATO</string>
+    <string name="group_revoked_banner">Non fai più parte di questo gruppo. Vedi solo i turni che ti erano assegnati.</string>
+    <string name="group_leave_action">Lascia il gruppo</string>
+    <string name="group_leave_title">Lasciare il gruppo?</string>
+    <string name="group_leave_message">Non vedrai più il calendario del gruppo. I turni che ti sono assegnati restano, e li vedrai solo tu.</string>
+    <string name="group_leave_confirm">Lascia</string>
+    <string name="group_leave_error">Non siamo riusciti a farti uscire dal gruppo.</string>
+    <string name="group_leave_last_admin_error">Sei l'unico amministratore. Prima di uscire, il gruppo ha bisogno di qualcun altro che lo gestisca.</string>
+    <string name="group_delete_action">Elimina gruppo</string>
+    <string name="group_delete_title">Eliminare il gruppo?</string>
+    <string name="group_delete_message">Verranno eliminati il gruppo, i suoi tipi di turno e tutti i suoi turni. L'operazione non può essere annullata.</string>
+    <string name="group_delete_confirm">Elimina</string>
+    <string name="group_delete_error">Non siamo riusciti a eliminare il gruppo.</string>
+    <string name="group_delete_not_empty_error">Ci sono ancora persone nel gruppo. Devono uscire, o devi rimuoverle tu, prima di poterlo eliminare.</string>
+
+    <!-- Event types: detail (edit color / manage) -->
+    <string name="event_types_section_group">GRUPPO</string>
+    <string name="event_type_detail_title_group">Evento del gruppo</string>
+    <string name="event_type_detail_title_personal">Evento personale</string>
+    <string name="event_type_detail_new_personal">Nuovo evento personale</string>
+    <string name="event_type_field_name">Nome</string>
+    <string name="event_type_name_hint_group">Mattina, Pomeriggio, Notte, Reperibilità…</string>
+    <string name="event_type_field_acronym">Sigla nel calendario</string>
+    <string name="event_type_acronym_hint">Fino a %1$d lettere. È ciò che appare in ogni giorno del calendario.</string>
+    <string name="event_type_field_optional">Facoltativo</string>
+    <string name="event_type_field_description">Descrizione</string>
+    <string name="event_type_field_start">Inizio</string>
+    <string name="event_type_field_end">Fine</string>
+    <string name="event_type_field_color">Colore</string>
+    <string name="event_type_pick_color">Scegli un colore</string>
+    <string name="event_type_swap_allowed">Cambi consentiti</string>
+    <string name="event_type_swap_not_allowed">Cambi non consentiti</string>
+    <string name="event_type_group_readonly">Solo l'amministratore del gruppo può modificare questi campi. Tu puoi cambiare il colore.</string>
+    <string name="event_type_save">Salva</string>
+    <string name="event_type_not_set">—</string>
+    <string name="event_type_error_required">Questo campo è obbligatorio.</string>
+    <string name="event_type_error_group_not_found">Non abbiamo trovato il gruppo. Potrebbe non esistere più o potresti averlo lasciato.</string>
+    <string name="event_type_error_type_not_found">Non abbiamo trovato questo tipo di evento. Potrebbe essere stato eliminato.</string>
+    <string name="event_type_error_pick_color">Impossibile salvare il colore. Riprova.</string>
+    <string name="event_type_error_save_personal">Impossibile salvare l'evento. Riprova.</string>
+    <string name="event_type_error_save_group">Impossibile salvare il tipo di evento. Riprova.</string>
+    <string name="event_type_error_not_implemented">Questa funzione non è ancora disponibile.</string>
+
+    <!-- Personal event types: "My events" -->
+    <string name="personal_event_types_title">I miei eventi</string>
+    <string name="personal_event_types_add">Nuovo evento</string>
+    <string name="personal_event_types_empty">Non hai ancora creato eventi personali.</string>
+    <string name="personal_event_types_delete">Elimina</string>
+    <string name="personal_event_types_delete_dialog_title">Eliminare l'evento?</string>
+    <string name="personal_event_types_delete_dialog_message">“%1$s” verrà rimosso dai tuoi eventi personali.</string>
+    <string name="personal_event_types_error_delete">Impossibile eliminare l'evento. Riprova.</string>
+
+    <!-- Components -->
+    <string name="time_field_hint">HH:mm</string>
+    <string name="color_selected">Colore selezionato</string>
+
+    <!-- Dialogs -->
+    <string name="dialog_cancel">Annulla</string>
+    <string name="dialog_error_title">Qualcosa è andato storto</string>
+    <string name="dialog_error_close">Chiudi</string>
+    <string name="dialog_error_retry">Riprova</string>
+
+    <!-- Profile -->
+    <string name="profile_my_events">I miei eventi</string>
+    <string name="profile_logout">Esci</string>
+    <string name="profile_logout_dialog_title">Uscire?</string>
+    <string name="profile_logout_dialog_message">Dovrai accedere di nuovo per vedere i tuoi turni.</string>
+    <!-- My profile -->
+    <string name="profile_title">Il mio profilo</string>
+    <string name="settings_my_profile">Il mio profilo</string>
+    <string name="notifications_enable">Ricevi notifiche</string>
+    <string name="notifications_enable_description">Avvisi su richieste dei gruppi e calendari condivisi</string>
+    <string name="notifications_system_hint">Se le hai disattivate nelle impostazioni di sistema, non riceverai avvisi nemmeno con questa opzione attiva.</string>
+    <string name="notifications_save_error">Impossibile salvare l'impostazione delle notifiche</string>
+    <string name="profile_field_name">Nome</string>
+    <string name="profile_field_username">Nome utente</string>
+    <string name="profile_field_email">Email</string>
+    <string name="profile_save">Salva</string>
+    <string name="profile_error_name_required">Inserisci il tuo nome.</string>
+    <string name="profile_error_username_invalid">Da 3 a 20 caratteri: lettere, numeri, trattino basso o punto.</string>
+    <string name="profile_error_username_taken">Questo nome utente è già in uso.</string>
+    <string name="complete_name_title">Come ti chiami?</string>
+    <string name="complete_name_message">I tuoi colleghi lo vedono in ogni turno che copri. Potrai cambiarlo in seguito dal tuo profilo.</string>
+    <string name="complete_name_continue">Continua</string>
+    <string name="profile_error_save">Non siamo riusciti a salvare le modifiche.</string>
+    <string name="profile_avatar_change">Cambia avatar</string>
+    <string name="profile_avatar_title">Scegli il tuo avatar</string>
+    <string name="profile_avatar_animal">Animale</string>
+    <string name="profile_avatar_color">Colore</string>
+    <string name="profile_avatar_done">Fatto</string>
+
+    <string name="settings_preferences">Preferenze</string>
+    <string name="settings_my_groups">I miei gruppi</string>
+    <string name="settings_about">Informazioni</string>
+    <string name="settings_plan_premium">Piano Premium</string>
+    <string name="settings_plan_premium_body">Niente pubblicità. Grazie per sostenere Turnia.</string>
+    <string name="settings_plan_free">Piano gratuito</string>
+    <string name="settings_plan_free_body">Passa a Premium per rimuovere la pubblicità.</string>
+
+    <!-- Preferences -->
+    <string name="preferences_title">Preferenze</string>
+    <string name="preferences_section_notifications">Notifiche</string>
+    <string name="preferences_section_language">Lingua</string>
+    <string name="preferences_section_ads">Pubblicità</string>
+    <string name="ads_privacy_options">Privacy della pubblicità</string>
+    <string name="ads_privacy_options_description">Rivedi le tue scelte sugli annunci personalizzati</string>
+    <string name="ads_consent_required_title">Turnia è gratuita grazie alla pubblicità</string>
+    <string name="ads_consent_required_body">Rispondi al messaggio sulla privacy della pubblicità per iniziare a usare l'app.</string>
+    <string name="ads_consent_required_retry">Mostra di nuovo il messaggio</string>
+    <string name="language_system">Lingua del dispositivo</string>
+    <string name="language_english">English</string>
+    <string name="language_spanish">Español</string>
+    <string name="language_french">Français</string>
+    <string name="language_german">Deutsch</string>
+    <string name="language_italian">Italiano</string>
+
+    <!-- About -->
+    <string name="about_title">Informazioni</string>
+    <string name="about_version">Versione %1$s</string>
+    <string name="about_section_legal">Note legali</string>
+    <string name="about_terms">Termini di utilizzo</string>
+    <string name="about_privacy">Informativa sulla privacy</string>
+    <string name="about_section_account">Account</string>
+    <string name="about_user_id">ID utente</string>
+    <string name="about_user_id_copy">Copia ID utente</string>
+    <string name="about_user_id_copied">ID utente copiato</string>
+    <string name="profile_delete_account">Elimina account</string>
+    <string name="profile_delete_account_title">Eliminare il tuo account?</string>
+    <string name="profile_delete_account_message">Il tuo nome, nome utente, avatar, eventi personali e note verranno cancellati e verrai disconnesso. I turni che hai in un gruppo restano lì, come di un ex membro. L'operazione non può essere annullata.</string>
+    <string name="profile_delete_account_confirm">Elimina account</string>
+    <string name="profile_delete_account_error_last_admin">Sei l'unico amministratore di un gruppo che ha ancora membri. Rimuovili o elimina il gruppo prima di eliminare il tuo account.</string>
+    <string name="profile_delete_account_error">Non siamo riusciti a eliminare il tuo account. Riprova.</string>
+
+    <!-- Bottom bar -->
+    <string name="tab_calendar">Calendario</string>
+    <string name="tab_people">Persone</string>
+    <string name="tab_groups">Gruppi</string>
+    <string name="tab_swap">Cambi</string>
+    <string name="tab_settings">Impostazioni</string>
+
+    <string name="group_admin_badge">ADMIN</string>
+    <string name="people_title">Persone</string>
+    <string name="people_empty_title">Ancora nessuno qui</string>
+    <string name="people_empty_body">Chiedi a un collega di condividere il suo calendario con te. Funziona molto meglio che scrivere «sabato sei libero?» alle undici di sera.</string>
+    <string name="people_shared_empty_title">Il tuo calendario è solo tuo</string>
+    <string name="people_filter_shared_by_me">Condivisi da me</string>
+    <string name="people_filter_shared_with_me">Condivisi con me</string>
+    <string name="groups_title">Gruppi</string>
+    <string name="groups_empty_title">Nessun gruppo da queste parti</string>
+    <string name="groups_empty_body">Creane uno, e fai uscire i tuoi turni da una chat di WhatsApp.</string>
+    <string name="groups_load_error">Non siamo riusciti a caricare i tuoi gruppi.</string>
+    <string name="groups_filter_all">Tutti</string>
+    <string name="groups_filter_mine">I tuoi gruppi</string>
+    <string name="groups_filter_pending">In attesa (%1$d)</string>
+    <string name="groups_filter_mine_empty_title">Ancora nessun gruppo</string>
+    <string name="groups_filter_mine_empty_body">Appena un amministratore accetta la tua richiesta, il gruppo apparirà qui.</string>
+    <string name="groups_join_title">Hai un codice di invito?</string>
+    <string name="groups_join_menu">Unisciti a un gruppo</string>
+    <string name="groups_join_body">Entra nel gruppo del tuo reparto con il codice che ti ha dato un collega.</string>
+    <string name="groups_join_hint">Codice</string>
+    <string name="groups_join_action">Invia</string>
+    <string name="groups_join_requested">Richiesta inviata. Un amministratore del gruppo deve accettarla.</string>
+    <string name="groups_join_joined">Ci sei! Ora fai parte del gruppo.</string>
+    <string name="groups_join_already_member">Sei già in questo gruppo.</string>
+    <string name="groups_join_code_not_found">Questo codice non esiste.</string>
+    <string name="groups_join_invitation_inactive">Questo invito non è più attivo.</string>
+    <string name="groups_join_invitation_expired">Questo invito è scaduto.</string>
+    <string name="groups_join_error">Non siamo riusciti a inviare la richiesta.</string>
+    <string name="groups_request_pending">In attesa che un amministratore accetti la tua richiesta.</string>
+    <string name="groups_request_rejected">La tua richiesta non è stata accettata.</string>
+    <string name="groups_request_unknown_group">Gruppo</string>
+    <string name="groups_request_cancel">Annulla richiesta</string>
+    <string name="groups_request_dismiss">Rimuovi dall'elenco</string>
+    <string name="groups_request_dismiss_error">Non siamo riusciti a rimuovere la richiesta.</string>
+    <string name="people_load_error">Non siamo riusciti a caricare chi condivide il calendario con te.</string>
+
+    <!-- Share calendar -->
+    <string name="share_calendar_empty">Non condividi ancora il tuo calendario con nessuno.</string>
+    <string name="shared_calendar_error_not_shared">Questa persona non condivide più il suo calendario con te.</string>
+    <string name="shared_calendar_error_range">Non siamo riusciti a caricare così tanti giorni in una volta.</string>
+    <string name="shared_calendar_error_load">Non siamo riusciti a caricare il calendario.</string>
+    <string name="share_calendar_unknown_user">Utente senza profilo</string>
+    <string name="share_calendar_load_error">Non siamo riusciti a caricare con chi condividi il calendario.</string>
+    <string name="share_calendar_add">Condividi con qualcuno</string>
+    <string name="share_calendar_search_hint">nome utente</string>
+    <string name="share_calendar_search_min">Scrivi almeno 3 caratteri del nome utente.</string>
+    <string name="share_calendar_search_empty">Nessuno con questo nome utente.</string>
+    <string name="share_calendar_already_shared">Vede già il tuo calendario</string>
+    <string name="share_calendar_grant_error">Non siamo riusciti a condividere il tuo calendario.</string>
+    <string name="share_calendar_revoke">Smetti di condividere</string>
+    <string name="share_calendar_revoke_title">Smettere di condividere?</string>
+    <string name="share_calendar_revoke_message">%1$s non vedrà più il tuo calendario.</string>
+    <string name="share_calendar_revoke_confirm">Smetti di condividere</string>
+    <string name="share_calendar_revoke_error">Non siamo riusciti a smettere di condividere.</string>
+    <string name="calendar_more_options">Altre opzioni</string>
+
+    <!-- Day detail sheet -->
+    <string name="day_detail_personal_events">EVENTI PERSONALI</string>
+    <string name="day_detail_group_events">EVENTI DEL GRUPPO</string>
+    <string name="day_detail_add_event">Aggiungi</string>
+    <string name="day_detail_load_error">Non siamo riusciti a caricare i tuoi tipi di evento.</string>
+    <string name="event_group_no_types">Questo gruppo non ha ancora tipi di turno, quindi qui non c'è niente da aggiungere.</string>
+    <string name="event_group_no_types_action">Gestisci il gruppo</string>
+
+    <!-- Swap -->
+    <string name="event_swap_toggle">Chiedi un cambio</string>
+    <string name="event_swap_error_not_assignee">Solo chi fa il turno può chiedere un cambio.</string>
+    <string name="event_swap_error_not_swappable">Questo tipo di turno non consente cambi.</string>
+    <string name="event_swap_error_save">Non siamo riusciti a modificarlo. Riprova.</string>
+    <string name="event_swap_take">Lo copro io</string>
+    <string name="event_swap_take_confirm_title">Coprire questo turno?</string>
+    <string name="event_swap_take_confirm_body">Diventerà tuo, e avviseremo il tuo collega che qualcuno lo sostituisce.</string>
+    <string name="event_swap_take_confirm">Coprilo</string>
+    <string name="event_swap_take_cancel">Non ora</string>
+    <string name="event_swap_error_taken_by_someone">Qualcuno è arrivato prima di te: questo turno è già coperto.</string>
+    <string name="event_swap_error_not_member">Non fai più parte di questo gruppo.</string>
+    <string name="event_swap_error_own_shift">Questo turno è già tuo.</string>
+    <string name="event_swap_error_not_found">Questo turno non esiste più.</string>
+    <string name="event_swap_error_nothing_to_return">Nessuno aveva questo turno prima di te.</string>
+    <string name="event_swap_error_previous_holder_left">Chi aveva questo turno prima ha lasciato il gruppo, quindi non può tornare a quella persona.</string>
+
+    <!-- Swap tab -->
+    <string name="swap_title">I miei cambi</string>
+    <string name="swap_segment_mine">Le mie richieste</string>
+    <string name="swap_segment_colleagues">Dei colleghi</string>
+    <string name="swap_requested_by">chiede un cambio</string>
+    <string name="swap_covered_by">Coperto da %1$s</string>
+    <string name="swap_covered_by_former">Coperto da un ex membro</string>
+    <string name="swap_filter_uncovered">Solo non coperti</string>
+    <string name="swap_filter_title">Filtra per gruppo</string>
+    <string name="swap_date_today">Oggi</string>
+    <string name="swap_filter_subtitle">Scegli di quali gruppi vuoi vedere i turni.</string>
+    <string name="swap_filter_all">Tutti i gruppi</string>
+    <string name="swap_empty_mine_title">Nessuna richiesta</string>
+    <string name="swap_empty_mine_body">Non hai chiesto il cambio di nessun turno. Il tuo tempo libero resta puramente teorico.</string>
+    <string name="swap_empty_uncovered_title">Tutto coperto</string>
+    <string name="swap_empty_uncovered_body">Ogni turno che hai messo in cambio ha già qualcuno che lo copre. Rimuovi il filtro per vederli.</string>
+    <string name="swap_empty_colleagues_title">Nessuno ha bisogno di un cambio</string>
+    <string name="swap_empty_colleagues_body">Nessun collega ha chiesto un cambio. Quando qualcuno avrà bisogno di una sostituzione, lo vedrai qui.</string>
+
+</resources>

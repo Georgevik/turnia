@@ -7,7 +7,7 @@
     <!--
         Push text. The server sends only the key and the values; the system fills them in here,
         even with the app closed. Every key and its arguments must match firebase/functions'
-        notifications.ts, values-es and the iOS app's Localizable.strings (en.lproj and es.lproj).
+        notifications.ts, every values-* translation and the iOS app's Localizable.strings (one per .lproj).
     -->
     <string name="push_swap_requested">%1$s asked for a swap: %2$s on %3$s. Can you help out?</string>
     <string name="push_swap_covered">%1$s is covering your shift: %2$s on %3$s.</string>

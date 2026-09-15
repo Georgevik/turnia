@@ -310,6 +310,9 @@
     <string name="language_system">Idioma del dispositivo</string>
     <string name="language_english">English</string>
     <string name="language_spanish">Español</string>
+    <string name="language_french">Français</string>
+    <string name="language_german">Deutsch</string>
+    <string name="language_italian">Italiano</string>
 
     <!-- About -->
     <string name="about_title">Acerca de</string>

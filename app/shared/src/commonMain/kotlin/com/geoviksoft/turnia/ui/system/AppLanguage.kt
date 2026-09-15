@@ -7,6 +7,9 @@ enum class AppLanguage(val tag: String?) {
     System(null),
     English("en"),
     Spanish("es"),
+    French("fr"),
+    German("de"),
+    Italian("it"),
 }
 
 /**

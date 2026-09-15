@@ -21,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.entryProvider
 import com.geoviksoft.turnia.core.domain.model.PushDestination
@@ -107,7 +108,8 @@ fun MainScreen(viewModel: MainViewModel = koinViewModel()) {
                             selected = state.topLevelRoute == tab.route,
                             onClick = { navigator.goTo(tab.route) },
                             icon = { Icon(imageVector = tab.icon, contentDescription = title) },
-                            label = { Text(text = title) },
+                            // One line: a translation too long for the slot is cut, never broken in two.
+                            label = { Text(text = title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                         )
                     }
                 }
