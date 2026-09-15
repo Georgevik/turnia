@@ -5,3 +5,8 @@
 # The source file name is replaced, so the APK does not carry the original file names.
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
+
+# AdMob pulls in WorkManager 2.7, and with it Room 2.2.5, whose rule keeps `WorkDatabase_Impl` but not
+# its constructor. R8 full mode strips it, Room cannot instantiate the database by reflection, and the
+# app crashes on start. Newer Room ships this same rule.
+-keep class * extends androidx.room.RoomDatabase { void <init>(); }
