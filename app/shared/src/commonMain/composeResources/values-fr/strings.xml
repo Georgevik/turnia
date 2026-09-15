@@ -320,6 +320,9 @@
     <string name="about_section_legal">Mentions légales</string>
     <string name="about_terms">Conditions d'utilisation</string>
     <string name="about_privacy">Politique de confidentialité</string>
+    <!-- The page's path on turnia.club (firebase/hosting), in this language. -->
+    <string name="legal_terms_path">conditions</string>
+    <string name="legal_privacy_path">confidentialite</string>
     <string name="about_section_account">Compte</string>
     <string name="about_user_id">ID utilisateur</string>
     <string name="about_user_id_copy">Copier l'ID utilisateur</string>

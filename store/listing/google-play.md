@@ -7,7 +7,17 @@ Cada bloque va tal cual en su campo. Entre paréntesis, los caracteres usados / 
 
 ---
 
-## Español (es-ES)
+Pulsa un idioma para abrir su ficha; el resto se queda plegado.
+
+<details>
+<summary><strong>Español (es-ES)</strong></summary>
+
+### Enlaces
+
+| Página | URL |
+|--------|-----|
+| Política de privacidad | https://turnia.club/privacidad |
+| Términos de uso | https://turnia.club/terminos |
 
 ### Nombre de la aplicación (24/30)
 
@@ -58,24 +68,26 @@ Pensada para enfermeras, médicos, TCAE, técnicos y cualquier profesional sanit
 • Cuando un compañero pide cambio, cuando alguien cubre tu turno o te lo devuelve.
 • Cuando alguien quiere unirse a tu grupo y cuando te aceptan en uno.
 
-★ Y ADEMÁS
-• Modo oscuro para mirar tus turnos de noche.
-• En español, inglés, francés, alemán e italiano.
-• Inicia sesión con Google o con Apple.
-• Elimina tu cuenta cuando quieras desde la propia app.
-
 Deja de organizar los cambios de turno por mensajes: con Turnia el cuadrante de tu equipo está siempre al día.
 ```
 
-### Novedades de la versión (1.01)
+### Novedades de la versión
 
 ```text
-Primera versión de Turnia: cuadrante de equipo, cambios de turno con historial, calendario compartido, avisos al momento y modo oscuro.
+Ahora puedes crear tu cuenta con tu email, y Turnia también está en francés, alemán e italiano. Turnia es gratis gracias a un pequeño banner de anuncios.
 ```
 
----
+</details>
 
-## English (en-US)
+<details>
+<summary><strong>English (en-US)</strong></summary>
+
+### Enlaces
+
+| Página | URL |
+|--------|-----|
+| Política de privacidad | https://turnia.club/privacy |
+| Términos de uso | https://turnia.club/terms |
 
 ### App name (19/30)
 
@@ -126,24 +138,26 @@ Built for nurses, doctors, healthcare assistants and anyone in healthcare who wo
 • When a colleague asks for a swap, when someone covers your shift or gives it back.
 • When someone wants to join your group and when you're accepted into one.
 
-★ AND ALSO
-• Dark mode for checking your shifts at night.
-• Available in English, Spanish, French, German and Italian.
-• Sign in with Google or Apple.
-• Delete your account at any time from inside the app.
-
 Stop organizing shift swaps over messages: with Turnia your team's roster is always up to date.
 ```
 
-### Release notes (1.01)
+### Release notes
 
 ```text
-The first release of Turnia: team rosters, shift swaps with a full history, shared calendars, instant notifications and dark mode.
+You can now sign up with your email, and Turnia is also available in French, German and Italian. Turnia is free thanks to a small ad banner.
 ```
 
----
+</details>
 
-## Français (fr-FR)
+<details>
+<summary><strong>Français (fr-FR)</strong></summary>
+
+### Enlaces
+
+| Página | URL |
+|--------|-----|
+| Política de privacidad | https://turnia.club/confidentialite |
+| Términos de uso | https://turnia.club/conditions |
 
 ### Nom de l'application (26/30)
 
@@ -194,24 +208,26 @@ Pensée pour les infirmières et infirmiers, médecins, aides-soignants, manipul
 • Quand un collègue demande un échange, quand quelqu'un prend ta garde ou te la rend.
 • Quand quelqu'un veut rejoindre ton groupe et quand tu es accepté dans un groupe.
 
-★ ET AUSSI
-• Mode sombre pour consulter tes gardes la nuit.
-• En français, anglais, espagnol, allemand et italien.
-• Connexion avec Google ou Apple.
-• Supprime ton compte quand tu veux, directement depuis l'app.
-
 Arrête d'organiser les échanges de garde par messages : avec Turnia, le planning de ton équipe est toujours à jour.
 ```
 
-### Notes de version (1.01)
+### Notes de version
 
 ```text
-Première version de Turnia : planning d'équipe, échanges de garde avec historique, calendrier partagé, notifications instantanées et mode sombre.
+Tu peux maintenant créer ton compte avec ton e-mail, et Turnia est disponible en français, en allemand et en italien. Turnia est gratuite grâce à une petite bannière publicitaire.
 ```
 
----
+</details>
 
-## Deutsch (de-DE)
+<details>
+<summary><strong>Deutsch (de-DE)</strong></summary>
+
+### Enlaces
+
+| Página | URL |
+|--------|-----|
+| Política de privacidad | https://turnia.club/datenschutz |
+| Términos de uso | https://turnia.club/nutzungsbedingungen |
 
 ### App-Name (20/30)
 
@@ -262,24 +278,26 @@ Gemacht für Pflegekräfte, Ärztinnen und Ärzte, MFA, Pflegehelfer und alle im
 • Wenn eine Kollegin um einen Tausch bittet, wenn jemand deinen Dienst übernimmt oder ihn dir zurückgibt.
 • Wenn jemand deiner Gruppe beitreten möchte und wenn du in eine aufgenommen wirst.
 
-★ UND AUSSERDEM
-• Dunkelmodus, um deine Dienste auch nachts anzusehen.
-• Auf Deutsch, Englisch, Spanisch, Französisch und Italienisch.
-• Melde dich mit Google oder Apple an.
-• Lösche dein Konto jederzeit direkt in der App.
-
 Organisiere Diensttausche nicht mehr per Nachricht: Mit Turnia ist der Dienstplan deines Teams immer aktuell.
 ```
 
-### Versionshinweise (1.01)
+### Versionshinweise
 
 ```text
-Die erste Version von Turnia: Dienstpläne fürs Team, Diensttausch mit Verlauf, geteilte Kalender, sofortige Benachrichtigungen und Dunkelmodus.
+Du kannst dich jetzt mit deiner E-Mail-Adresse registrieren, und Turnia gibt es jetzt auch auf Deutsch, Französisch und Italienisch. Turnia ist dank eines kleinen Werbebanners kostenlos.
 ```
 
----
+</details>
 
-## Italiano (it-IT)
+<details>
+<summary><strong>Italiano (it-IT)</strong></summary>
+
+### Enlaces
+
+| Página | URL |
+|--------|-----|
+| Política de privacidad | https://turnia.club/informativa-privacy |
+| Términos de uso | https://turnia.club/termini |
 
 ### Nome dell'app (19/30)
 
@@ -330,20 +348,16 @@ Pensata per infermieri, medici, OSS, tecnici e ogni professionista sanitario che
 • Quando un collega chiede un cambio, quando qualcuno copre il tuo turno o te lo restituisce.
 • Quando qualcuno vuole entrare nel tuo gruppo e quando vieni accettato in uno.
 
-★ E INOLTRE
-• Modalità scura per guardare i tuoi turni di notte.
-• In italiano, inglese, spagnolo, francese e tedesco.
-• Accedi con Google o Apple.
-• Elimina il tuo account quando vuoi, direttamente dall'app.
-
 Smetti di organizzare i cambi turno via messaggio: con Turnia il piano turni del tuo team è sempre aggiornato.
 ```
 
-### Note sulla versione (1.01)
+### Note sulla versione
 
 ```text
-Prima versione di Turnia: piano turni del team, cambi turno con storico, calendario condiviso, notifiche in tempo reale e modalità scura.
+Ora puoi creare il tuo account con l'email, e Turnia è disponibile anche in italiano, francese e tedesco. Turnia è gratuita grazie a un piccolo banner pubblicitario.
 ```
+
+</details>
 
 ---
 
@@ -368,4 +382,4 @@ Las capturas y el gráfico están en español: súbelos a todos los idiomas o so
 | Etiquetas | Calendario, Productividad, Organización |
 | Email | `geoviksoft@gmail.com` |
 | Sitio web | `https://turnia.club` |
-| Política de privacidad | `https://turnia.club/privacidad` |
+| Política de privacidad | `https://turnia.club/privacidad` (Play tiene una sola URL para todos los idiomas) |

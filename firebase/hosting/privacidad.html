@@ -24,8 +24,7 @@
 </head>
 <body>
 <main>
-    <nav><a href="/terminos">Términos y condiciones</a> · <a href="/privacy"
-                                                             hreflang="en">English</a></nav>
+    <nav><a href="/terminos">Términos y condiciones</a></nav>
     <h1>Política de privacidad</h1>
     <p>Esta política de privacidad se aplica a la aplicación Turnia para dispositivos móviles, junto
         con los servicios relacionados operados por Jorge Gonzalez (en conjunto, la "Aplicación").
@@ -40,11 +39,13 @@
         el responsable del tratamiento a través de los datos de contacto anteriores.</p>
     <h2>¿Qué información obtiene la Aplicación y cómo se utiliza?</h2>
     <p>Turnia es una herramienta para que los equipos sanitarios organicen y cambien sus turnos.
-        Para usarla es necesario iniciar sesión con una cuenta de Google o de Apple. La Aplicación
-        trata la siguiente información:</p>
+        Para usarla es necesario crear una cuenta con tu email y una contraseña, o iniciar sesión
+        con una cuenta de Google o de Apple. La Aplicación trata la siguiente información:</p>
     <ul>
-        <li>Cuenta: tu dirección de email y el identificador de la cuenta con la que inicias sesión
-            (Google o Apple), gestionados por Firebase Authentication.
+        <li>Cuenta: tu dirección de email y el identificador de tu cuenta, gestionados por Firebase
+            Authentication. Si te registras con tu email, Firebase Authentication guarda tu
+            contraseña cifrada mediante un hash y el Proveedor del Servicio nunca puede verla; si
+            inicias sesión con Google o Apple, se guarda en su lugar el identificador de esa cuenta.
         </li>
         <li>Perfil: tu nombre, tu nombre de usuario y el avatar que elijas (un icono de animal y un
             color de fondo).
@@ -97,12 +98,24 @@
         una solicitud para unirte a un grupo. Puedes desactivarlas en los ajustes de la Aplicación o
         en los de tu dispositivo.</p>
     <h2>Publicidad y suscripciones</h2>
-    <p>Los usuarios del plan gratuito pueden ver anuncios servidos por Google AdMob, que puede usar
-        el identificador publicitario de tu dispositivo y recopilar datos para mostrar y medir los
-        anuncios. Cuando la ley lo exija, se te pedirá el consentimiento antes de mostrar anuncios
-        personalizados, y puedes restablecer o limitar el identificador publicitario en los ajustes
-        de tu dispositivo. Los suscriptores premium no ven anuncios. Las suscripciones se contratan
-        a través de Google Play o del App Store y se rigen por sus condiciones.</p>
+    <p>Los usuarios del plan gratuito ven un banner de anuncios servido por Google AdMob. Para
+        mostrar y medir los anuncios, AdMob recopila información como el identificador publicitario
+        de tu dispositivo, tu dirección IP (de la que se deduce una ubicación aproximada), datos
+        sobre tu dispositivo y cómo interactúas con los anuncios. Google trata estos datos según su
+        propia política de privacidad.</p>
+    <p>Cuando la ley exige consentimiento para la publicidad, como en el Espacio Económico Europeo,
+        el Reino Unido y Suiza, al abrir la Aplicación se muestra el mensaje de consentimiento de
+        Google (Google User Messaging Platform), y debes responderlo antes de usar la Aplicación.
+        Puedes aceptar los anuncios personalizados o rechazarlos; si los rechazas, solo se muestran
+        anuncios no personalizados, basados en el contexto y no en un perfil creado con tus datos.
+        Puedes cambiar tu elección en cualquier momento en Ajustes → Preferencias → Privacidad de
+        los anuncios, y restablecer o limitar el identificador publicitario en los ajustes de tu
+        dispositivo.</p>
+    <p>En iOS, la Aplicación no pide permiso para rastrearte en apps y webs de otras empresas, así
+        que AdMob no accede al identificador publicitario de tu dispositivo (IDFA).</p>
+    <p>Los suscriptores premium, cuando las suscripciones estén disponibles, no ven anuncios. Las
+        suscripciones se contratan a través de Google Play o del App Store y se rigen por sus
+        condiciones.</p>
     <h2>Base jurídica para el tratamiento de tus datos personales</h2>
     <p>Cuando se aplica el RGPD, el Proveedor del Servicio se basa en una o varias bases jurídicas
         para tratar tus datos personales, entre ellas:</p>
@@ -111,7 +124,7 @@
             contrato contigo.
         </li>
         <li>Consentimiento: cuando has dado tu consentimiento explícito al tratamiento, incluido el
-            de marketing, analítica o funciones opcionales. Puedes retirar el consentimiento en
+            de publicidad personalizada, analítica o funciones opcionales. Puedes retirar el consentimiento en
             cualquier momento sin que ello afecte al tratamiento realizado antes de retirarlo.
         </li>
         <li>Interés legítimo: cuando el tratamiento es necesario para intereses legítimos concretos
@@ -150,7 +163,7 @@
         Proveedor del Servicio para poder funcionar: Google Firebase almacena los datos de tu cuenta
         y de tu calendario y entrega las notificaciones; Google Analytics for Firebase y Firebase
         Crashlytics recopilan estadísticas de uso e informes de errores para mejorar la Aplicación;
-        y Google y Apple gestionan el inicio de sesión y el pago de las suscripciones. Estos
+        Google AdMob sirve los anuncios del plan gratuito; y Google y Apple gestionan el inicio de sesión y el pago de las suscripciones. Estos
         proveedores solo tratan los datos necesarios para su servicio.</p>
     <h2>Transferencias internacionales de datos</h2>
     <p>El Proveedor del Servicio o sus proveedores externos pueden transferir datos personales fuera
@@ -238,8 +251,8 @@
         cuando la ley exija conservarlos. También puedes contactar con el Proveedor del Servicio en
         geoviksoft@gmail.com, que responderá en el plazo que establezca la ley aplicable.</p>
     <h2>Eliminación de datos</h2>
-    <p>Puedes eliminar tu cuenta en cualquier momento desde la Aplicación, en Acerca de → Eliminar
-        cuenta. Al hacerlo se borran tu nombre, tu nombre de usuario, tu avatar, tu email, tus
+    <p>Puedes eliminar tu cuenta en cualquier momento desde la Aplicación, en Ajustes → Mi perfil →
+        Eliminar cuenta. Al hacerlo se borran tu nombre, tu nombre de usuario, tu avatar, tu email, tus
         tokens de notificaciones, tus preferencias, tus eventos personales y sus notas, los permisos
         de calendario compartido y las solicitudes pendientes para unirte a grupos; se eliminan los
         grupos en los que eras el único miembro y, por último, se elimina tu cuenta de acceso.</p>
@@ -285,7 +298,7 @@
         importantes antes de que surtan efecto.</p>
     <p>Las versiones anteriores de esta política de privacidad se conservarán y se facilitarán a
         quien las solicite al Proveedor del Servicio en geoviksoft@gmail.com.</p>
-    <p>Esta política de privacidad está en vigor desde el 13 de septiembre de 2026</p>
+    <p>Esta política de privacidad está en vigor desde el 15 de septiembre de 2026</p>
     <h2>¿Cuáles son tus derechos de protección de datos según el RGPD?</h2>
     <p>Según el RGPD, tienes los siguientes derechos:</p>
     <ul>

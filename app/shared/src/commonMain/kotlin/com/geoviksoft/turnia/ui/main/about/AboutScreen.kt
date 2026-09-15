@@ -88,11 +88,13 @@ fun AboutScreen(viewModel: AboutViewModel = koinViewModel()) {
             AppHeader()
 
             SectionHeader(stringResource(Res.string.about_section_legal))
+            val termsUrl = LegalLinks.terms
+            val privacyUrl = LegalLinks.privacy
             LinkRow(Icons.Default.Description, stringResource(Res.string.about_terms)) {
-                uriHandler.openUri(LegalLinks.TERMS)
+                uriHandler.openUri(termsUrl)
             }
             LinkRow(Icons.Default.PrivacyTip, stringResource(Res.string.about_privacy)) {
-                uriHandler.openUri(LegalLinks.PRIVACY)
+                uriHandler.openUri(privacyUrl)
             }
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))

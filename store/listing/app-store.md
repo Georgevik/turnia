@@ -11,7 +11,17 @@ Cada bloque va tal cual en su campo. Entre paréntesis, los caracteres usados / 
 
 ---
 
-## Español (España)
+Pulsa un idioma para abrir su ficha; el resto se queda plegado.
+
+<details>
+<summary><strong>Español (España)</strong></summary>
+
+### Enlaces
+
+| Página | URL |
+|--------|-----|
+| Política de privacidad | https://turnia.club/privacidad |
+| Términos de uso | https://turnia.club/terminos |
 
 ### Nombre (24/30) — *Información de la app*
 
@@ -71,7 +81,8 @@ AVISOS AL MOMENTO
 Y ADEMÁS
 • Modo oscuro para mirar tus turnos de noche.
 • En español, inglés, francés, alemán e italiano.
-• Inicia sesión con Google o con Apple.
+• Crea tu cuenta con tu email o entra con Google o Apple.
+• Gratis, con un pequeño banner de anuncios.
 • Elimina tu cuenta cuando quieras desde la propia app.
 
 Deja de organizar los cambios de turno por mensajes: con Turnia el cuadrante de tu equipo está siempre al día.
@@ -86,15 +97,23 @@ Política de privacidad: https://turnia.club/privacidad
 enfermera,enfermería,sanitario,guardias,calendario,hospital,médico,horario,planilla,TCAE,noche
 ```
 
-### Novedades de esta versión (1.0)
+### Novedades de esta versión
 
 ```text
-Primera versión de Turnia: cuadrante de equipo, cambios de turno con historial, calendario compartido, avisos al momento y modo oscuro.
+Ahora puedes crear tu cuenta con tu email, y Turnia también está en francés, alemán e italiano. Turnia es gratis gracias a un pequeño banner de anuncios.
 ```
 
----
+</details>
 
-## English (U.S.)
+<details>
+<summary><strong>English (U.S.)</strong></summary>
+
+### Enlaces
+
+| Página | URL |
+|--------|-----|
+| Política de privacidad | https://turnia.club/privacy |
+| Términos de uso | https://turnia.club/terms |
 
 ### Name (19/30)
 
@@ -154,7 +173,8 @@ INSTANT NOTIFICATIONS
 AND ALSO
 • Dark mode for checking your shifts at night.
 • Available in English, Spanish, French, German and Italian.
-• Sign in with Google or Apple.
+• Sign up with your email, or sign in with Google or Apple.
+• Free, with a small ad banner.
 • Delete your account at any time from inside the app.
 
 Stop organizing shift swaps over messages: with Turnia your team's roster is always up to date.
@@ -169,15 +189,23 @@ Privacy Policy: https://turnia.club/privacy
 nurse,nursing,rota,rotation,calendar,hospital,doctor,planner,schedule,work,night,medical,staff,duty
 ```
 
-### What's New in This Version (1.0)
+### What's New in This Version
 
 ```text
-The first release of Turnia: team rosters, shift swaps with a full history, shared calendars, instant notifications and dark mode.
+You can now sign up with your email, and Turnia is also available in French, German and Italian. Turnia is free thanks to a small ad banner.
 ```
 
----
+</details>
 
-## Français (France)
+<details>
+<summary><strong>Français (France)</strong></summary>
+
+### Enlaces
+
+| Página | URL |
+|--------|-----|
+| Política de privacidad | https://turnia.club/confidentialite |
+| Términos de uso | https://turnia.club/conditions |
 
 ### Nom (26/30)
 
@@ -237,13 +265,14 @@ NOTIFICATIONS INSTANTANÉES
 ET AUSSI
 • Mode sombre pour consulter tes gardes la nuit.
 • En français, anglais, espagnol, allemand et italien.
-• Connexion avec Google ou Apple.
+• Crée ton compte avec ton e-mail ou connecte-toi avec Google ou Apple.
+• Gratuite, avec une petite bannière publicitaire.
 • Supprime ton compte quand tu veux, directement depuis l'app.
 
 Arrête d'organiser les échanges de garde par messages : avec Turnia, le planning de ton équipe est toujours à jour.
 
-Conditions d'utilisation : https://turnia.club/terms
-Politique de confidentialité : https://turnia.club/privacy
+Conditions d'utilisation : https://turnia.club/conditions
+Politique de confidentialité : https://turnia.club/confidentialite
 ```
 
 ### Mots-clés (99/100 bytes)
@@ -252,15 +281,23 @@ Politique de confidentialité : https://turnia.club/privacy
 infirmière,infirmier,soignant,astreinte,calendrier,hôpital,médecin,horaire,nuit,roulement,santé
 ```
 
-### Nouveautés de cette version (1.0)
+### Nouveautés de cette version
 
 ```text
-Première version de Turnia : planning d'équipe, échanges de garde avec historique, calendrier partagé, notifications instantanées et mode sombre.
+Tu peux maintenant créer ton compte avec ton e-mail, et Turnia est disponible en français, en allemand et en italien. Turnia est gratuite grâce à une petite bannière publicitaire.
 ```
 
----
+</details>
 
-## Deutsch
+<details>
+<summary><strong>Deutsch</strong></summary>
+
+### Enlaces
+
+| Página | URL |
+|--------|-----|
+| Política de privacidad | https://turnia.club/datenschutz |
+| Términos de uso | https://turnia.club/nutzungsbedingungen |
 
 ### Name (20/30)
 
@@ -320,13 +357,14 @@ SOFORTIGE BENACHRICHTIGUNGEN
 UND AUSSERDEM
 • Dunkelmodus, um deine Dienste auch nachts anzusehen.
 • Auf Deutsch, Englisch, Spanisch, Französisch und Italienisch.
-• Melde dich mit Google oder Apple an.
+• Registriere dich mit deiner E-Mail-Adresse oder melde dich mit Google oder Apple an.
+• Kostenlos, mit einem kleinen Werbebanner.
 • Lösche dein Konto jederzeit direkt in der App.
 
 Organisiere Diensttausche nicht mehr per Nachricht: Mit Turnia ist der Dienstplan deines Teams immer aktuell.
 
-Nutzungsbedingungen: https://turnia.club/terms
-Datenschutzerklärung: https://turnia.club/privacy
+Nutzungsbedingungen: https://turnia.club/nutzungsbedingungen
+Datenschutzerklärung: https://turnia.club/datenschutz
 ```
 
 ### Keywords (99/100 bytes)
@@ -335,15 +373,23 @@ Datenschutzerklärung: https://turnia.club/privacy
 Pflege,Krankenpflege,Schicht,Schichtplan,Kalender,Krankenhaus,Arzt,Bereitschaft,Nachtdienst,Station
 ```
 
-### Neuerungen in dieser Version (1.0)
+### Neuerungen in dieser Version
 
 ```text
-Die erste Version von Turnia: Dienstpläne fürs Team, Diensttausch mit Verlauf, geteilte Kalender, sofortige Benachrichtigungen und Dunkelmodus.
+Du kannst dich jetzt mit deiner E-Mail-Adresse registrieren, und Turnia gibt es jetzt auch auf Deutsch, Französisch und Italienisch. Turnia ist dank eines kleinen Werbebanners kostenlos.
 ```
 
----
+</details>
 
-## Italiano
+<details>
+<summary><strong>Italiano</strong></summary>
+
+### Enlaces
+
+| Página | URL |
+|--------|-----|
+| Política de privacidad | https://turnia.club/informativa-privacy |
+| Términos de uso | https://turnia.club/termini |
 
 ### Nome (19/30)
 
@@ -403,13 +449,14 @@ NOTIFICHE IN TEMPO REALE
 E INOLTRE
 • Modalità scura per guardare i tuoi turni di notte.
 • In italiano, inglese, spagnolo, francese e tedesco.
-• Accedi con Google o Apple.
+• Crea il tuo account con l'email o accedi con Google o Apple.
+• Gratuita, con un piccolo banner pubblicitario.
 • Elimina il tuo account quando vuoi, direttamente dall'app.
 
 Smetti di organizzare i cambi turno via messaggio: con Turnia il piano turni del tuo team è sempre aggiornato.
 
-Termini di utilizzo: https://turnia.club/terms
-Informativa sulla privacy: https://turnia.club/privacy
+Termini di utilizzo: https://turnia.club/termini
+Informativa sulla privacy: https://turnia.club/informativa-privacy
 ```
 
 ### Parole chiave (100/100 bytes)
@@ -418,25 +465,28 @@ Informativa sulla privacy: https://turnia.club/privacy
 infermiere,infermieristica,OSS,reperibilità,calendario,ospedale,medico,orario,notte,sanità,reparto
 ```
 
-### Novità di questa versione (1.0)
+### Novità di questa versione
 
 ```text
-Prima versione di Turnia: piano turni del team, cambi turno con storico, calendario condiviso, notifiche in tempo reale e modalità scura.
+Ora puoi creare il tuo account con l'email, e Turnia è disponibile anche in italiano, francese e tedesco. Turnia è gratuita grazie a un piccolo banner pubblicitario.
 ```
+
+</details>
 
 ---
 
 ## URLs — *Información de la app* / versión
 
-| Campo | Español | English, Français, Deutsch, Italiano |
-|-------|---------|--------------------------------------|
-| URL de soporte | `https://turnia.club` | `https://turnia.club` |
-| URL de marketing (opcional) | `https://turnia.club` | `https://turnia.club` |
-| URL de la política de privacidad | `https://turnia.club/privacidad` | `https://turnia.club/privacy` |
-| Copyright | `2026 Jorge Gonzalez` | `2026 Jorge Gonzalez` |
+URL de soporte y de marketing: `https://turnia.club` en todos los idiomas. Copyright:
+`2026 Jorge Gonzalez`.
 
-La web solo tiene las páginas legales en español e inglés: el francés, el alemán y el italiano
-enlazan a las inglesas.
+| Idioma | URL de la política de privacidad | Condiciones de uso (en la descripción) |
+|--------|----------------------------------|----------------------------------------|
+| Español | `https://turnia.club/privacidad` | `https://turnia.club/terminos` |
+| English | `https://turnia.club/privacy` | `https://turnia.club/terms` |
+| Français | `https://turnia.club/confidentialite` | `https://turnia.club/conditions` |
+| Deutsch | `https://turnia.club/datenschutz` | `https://turnia.club/nutzungsbedingungen` |
+| Italiano | `https://turnia.club/informativa-privacy` | `https://turnia.club/termini` |
 
 ## Capturas
 

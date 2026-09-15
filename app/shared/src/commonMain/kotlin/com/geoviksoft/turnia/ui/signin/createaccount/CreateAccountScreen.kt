@@ -184,7 +184,7 @@ fun CreateAccountScreenContent(
                     onCheckedChange = { onFieldChanged(CreateAccountField.Terms, it) },
                     text = Res.string.create_account_accept_terms,
                     link = Res.string.about_terms,
-                    url = LegalLinks.TERMS,
+                    url = LegalLinks.terms,
                     enabled = !state.submitting,
                 )
                 LegalCheckbox(
@@ -192,7 +192,7 @@ fun CreateAccountScreenContent(
                     onCheckedChange = { onFieldChanged(CreateAccountField.Privacy, it) },
                     text = Res.string.create_account_accept_privacy,
                     link = Res.string.about_privacy,
-                    url = LegalLinks.PRIVACY,
+                    url = LegalLinks.privacy,
                     enabled = !state.submitting,
                 )
 

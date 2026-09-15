@@ -1,5 +1,6 @@
 package com.geoviksoft.turnia.demo
 
+import androidx.compose.ui.text.intl.Locale
 import com.geoviksoft.turnia.core.domain.model.EventHistoryEntry
 import com.geoviksoft.turnia.core.domain.model.EventId
 import com.geoviksoft.turnia.core.domain.model.EventTypeId
@@ -56,6 +57,52 @@ internal object DemoPeople {
     )
 }
 
+/** What the demo's own data says, in the language the app is shown in; people keep their names. */
+internal data class DemoText(
+    val emergency: String,
+    val paediatricIcu: String,
+    val morning: Pair<String, String>,
+    val afternoon: Pair<String, String>,
+    val night: Pair<String, String>,
+    val onCall: Pair<String, String>,
+    val reinforcement: Pair<String, String>,
+    val training: Pair<String, String>,
+    val trainingDescription: String,
+    val holidays: Pair<String, String>,
+    val courseNote: String,
+) {
+    companion object {
+        /** Read once, when the demo starts: a store screenshot is taken with the language already set. */
+        fun current(): DemoText = when (Locale.current.language) {
+            "en" -> DemoText(
+                "Emergency", "Paediatric ICU", "Morning" to "M", "Afternoon" to "A", "Night" to "N",
+                "24 h on call" to "OC", "Extra shift" to "X", "Training" to "T",
+                "Courses and clinical sessions", "Holiday" to "H", "Advanced life support course · Room 3, 4 pm",
+            )
+            "fr" -> DemoText(
+                "Urgences", "Réa pédiatrique", "Matin" to "M", "Soir" to "S", "Nuit" to "N",
+                "Garde 24 h" to "G", "Renfort" to "R", "Formation" to "F",
+                "Cours et staffs cliniques", "Congés" to "C", "Formation RCP avancée · Salle 3, 16 h",
+            )
+            "de" -> DemoText(
+                "Notaufnahme", "Kinder-Intensiv", "Frühdienst" to "F", "Spätdienst" to "S", "Nachtdienst" to "N",
+                "24-h-Dienst" to "D", "Verstärkung" to "V", "Fortbildung" to "FB",
+                "Kurse und Fallbesprechungen", "Urlaub" to "U", "Reanimationskurs · Raum 3, 16:00 Uhr",
+            )
+            "it" -> DemoText(
+                "Pronto soccorso", "Terapia intensiva ped.", "Mattina" to "M", "Pomeriggio" to "P", "Notte" to "N",
+                "Guardia 24 h" to "G", "Rinforzo" to "R", "Formazione" to "F",
+                "Corsi e riunioni cliniche", "Ferie" to "FE", "Corso di rianimazione avanzata · Aula 3, ore 16",
+            )
+            else -> DemoText(
+                "Urgencias", "UCI Pediátrica", "Mañana" to "M", "Tarde" to "T", "Noche" to "N",
+                "Guardia 24 h" to "G", "Refuerzo" to "R", "Formación" to "F",
+                "Cursos y sesiones clínicas", "Vacaciones" to "V", "Curso de RCP avanzada · Aula 3, 16:00",
+            )
+        }
+    }
+}
+
 /**
  * Everything the demo shows, built around [today] so the screenshots always show the current month.
  *
@@ -63,19 +110,19 @@ internal object DemoPeople {
  * is always a colleague asking for a swap in the coming weeks, somebody who already covered one of Lucía's
  * shifts, and a chain of three holders to show off the history.
  */
-internal class DemoWorld(val today: LocalDate) {
+internal class DemoWorld(val today: LocalDate, text: DemoText = DemoText.current()) {
 
     val urgencias = GroupId("demo-urgencias")
     val uci = GroupId("demo-uci")
 
-    private val urgenciasName = "Urgencias"
-    private val uciName = "UCI Pediátrica"
+    private val urgenciasName = text.emergency
+    private val uciName = text.paediatricIcu
 
-    private val manana = groupType(urgencias, urgenciasName, "m", "Mañana", "M", "08:00", "15:00", "#039BE5")
-    private val tarde = groupType(urgencias, urgenciasName, "t", "Tarde", "T", "15:00", "22:00", "#FB8C00")
-    private val noche = groupType(urgencias, urgenciasName, "n", "Noche", "N", "22:00", "08:00", "#5E35B1")
-    private val guardia = groupType(urgencias, urgenciasName, "g", "Guardia 24 h", "G", "08:00", "08:00", "#E53935")
-    private val refuerzo = groupType(uci, uciName, "r", "Refuerzo", "R", "10:00", "18:00", "#43A047")
+    private val manana = groupType(urgencias, urgenciasName, "m", text.morning, "08:00", "15:00", "#039BE5")
+    private val tarde = groupType(urgencias, urgenciasName, "t", text.afternoon, "15:00", "22:00", "#FB8C00")
+    private val noche = groupType(urgencias, urgenciasName, "n", text.night, "22:00", "08:00", "#5E35B1")
+    private val guardia = groupType(urgencias, urgenciasName, "g", text.onCall, "08:00", "08:00", "#E53935")
+    private val refuerzo = groupType(uci, uciName, "r", text.reinforcement, "10:00", "18:00", "#43A047")
 
     private val urgenciasRoster = with(DemoPeople) {
         listOf(lucia to 0, javier to 2, marta to 4, carlos to 6, elena to 8, pablo to 3, sofia to 7)
@@ -112,18 +159,18 @@ internal class DemoWorld(val today: LocalDate) {
 
     val formacion = PersonalEventType(
         id = EventTypeId("demo-formacion"),
-        name = "Formación",
+        name = text.training.first,
         color = "#00897B",
-        acronym = "F",
-        description = "Cursos y sesiones clínicas",
+        acronym = text.training.second,
+        description = text.trainingDescription,
         startTime = null,
         endTime = null,
     )
     val vacaciones = PersonalEventType(
         id = EventTypeId("demo-vacaciones"),
-        name = "Vacaciones",
+        name = text.holidays.first,
         color = "#F9A825",
-        acronym = "V",
+        acronym = text.holidays.second,
         description = null,
         startTime = null,
         endTime = null,
@@ -180,7 +227,7 @@ internal class DemoWorld(val today: LocalDate) {
             id = EventId("demo-course"),
             type = formacion,
             date = courseDay.toInstant(),
-            notes = "Curso de RCP avanzada · Aula 3, 16:00",
+            notes = text.courseNote,
         )
 
         // Colleagues asking for a swap, on days Lucía has free, so she could cover any of them.
@@ -261,8 +308,7 @@ internal class DemoWorld(val today: LocalDate) {
         group: GroupId,
         groupName: String,
         id: String,
-        name: String,
-        acronym: String,
+        nameAndAcronym: Pair<String, String>,
         start: String,
         end: String,
         color: String,
@@ -270,8 +316,8 @@ internal class DemoWorld(val today: LocalDate) {
         id = EventTypeId("${group.value}-$id"),
         groupId = group,
         groupName = groupName,
-        name = name,
-        acronym = acronym,
+        name = nameAndAcronym.first,
+        acronym = nameAndAcronym.second,
         description = null,
         startTime = start,
         endTime = end,
