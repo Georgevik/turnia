@@ -71,8 +71,8 @@ android {
         applicationId = "com.geoviksoft.turnia"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 3
-        versionName = "1.02"
+        versionCode = 4
+        versionName = "1.03"
 
         buildConfigField("String", "WEB_CLIENT_ID", "\"${webClientId()}\"")
     }

@@ -3,8 +3,8 @@ TEAM_ID=83GQ2T4N4H
 PRODUCT_NAME=Turnia
 PRODUCT_BUNDLE_IDENTIFIER=com.geoviksoft.turnia.Turnia
 
-CURRENT_PROJECT_VERSION=1
-MARKETING_VERSION=1.0
+CURRENT_PROJECT_VERSION=4
+MARKETING_VERSION=1.03
 
 // AdMob, read through Info.plist. Debug uses Google's test app and banner: a new or unapproved real
 // unit serves nothing, and clicking a real ad from a development device gets the account flagged.
