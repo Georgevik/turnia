@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.geoviksoft.turnia.core.domain.repository.UserRepository
 import com.geoviksoft.turnia.core.system.onFailure
 import com.geoviksoft.turnia.ui.system.AppLanguage
+import com.geoviksoft.turnia.ui.system.ads.AdConsent
+import com.geoviksoft.turnia.ui.system.ads.AdConsentPlatform
 import com.geoviksoft.turnia.ui.system.applyAppLanguage
 import com.geoviksoft.turnia.ui.system.currentAppLanguage
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,14 +16,27 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class PreferencesViewModel(private val userRepository: UserRepository) : ViewModel() {
+class PreferencesViewModel(
+    private val userRepository: UserRepository,
+    private val adConsent: AdConsent,
+) : ViewModel() {
 
     private val userMessage = MutableStateFlow<PreferencesMessage?>(null)
     private val language = MutableStateFlow(currentAppLanguage())
 
     val uiState: StateFlow<PreferencesUi> =
-        combine(userRepository.notificationsEnabled, language, userMessage) { enabled, language, message ->
-            PreferencesUi(notificationsEnabled = enabled, language = language, userMessage = message)
+        combine(
+            userRepository.notificationsEnabled,
+            language,
+            adConsent.status,
+            userMessage,
+        ) { enabled, language, consent, message ->
+            PreferencesUi(
+                notificationsEnabled = enabled,
+                language = language,
+                adPrivacyOptionsRequired = consent?.privacyOptionsRequired == true,
+                userMessage = message,
+            )
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT),
@@ -42,6 +57,10 @@ class PreferencesViewModel(private val userRepository: UserRepository) : ViewMod
         applyAppLanguage(selected)
         language.value = selected
     }
+
+    fun loadAdConsent(platform: AdConsentPlatform) = adConsent.load(platform)
+
+    fun onAdPrivacyOptions(platform: AdConsentPlatform) = adConsent.showPrivacyOptions(platform)
 
     fun userMessageShown() {
         userMessage.value = null

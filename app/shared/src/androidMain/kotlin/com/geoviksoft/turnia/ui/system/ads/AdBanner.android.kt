@@ -3,8 +3,11 @@ package com.geoviksoft.turnia.ui.system.ads
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
+import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
@@ -17,8 +20,9 @@ import org.koin.compose.koinInject
 class AdBannerUnitId(val value: String)
 
 @Composable
-internal actual fun PlatformAdBanner(modifier: Modifier) {
+internal actual fun PlatformAdBanner(modifier: Modifier, onLoaded: () -> Unit) {
     val unitId = koinInject<AdBannerUnitId>().value
+    val currentOnLoaded by rememberUpdatedState(onLoaded)
 
     BoxWithConstraints(modifier) {
         val width = maxWidth.value.toInt()
@@ -27,7 +31,10 @@ internal actual fun PlatformAdBanner(modifier: Modifier) {
             factory = { context ->
                 AdView(context).apply {
                     adUnitId = unitId
-                    setAdSize(AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(context, width))
+                    setAdSize(AdSize.getPortraitInlineAdaptiveBannerAdSize(context, width))
+                    adListener = object : AdListener() {
+                        override fun onAdLoaded() = currentOnLoaded()
+                    }
                     loadAd(AdRequest.Builder().build())
                 }
             },

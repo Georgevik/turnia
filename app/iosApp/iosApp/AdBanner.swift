@@ -13,14 +13,33 @@ final class GoogleAdBannerFactory: NSObject, AdBannerFactory {
         Double(currentOrientationAnchoredAdaptiveBanner(width: CGFloat(width)).size.height)
     }
 
-    func create(width: Double) -> UIView {
-        let banner = BannerView(adSize: currentOrientationAnchoredAdaptiveBanner(width: CGFloat(width)))
+    func create(width: Double, onLoaded: @escaping () -> Void) -> UIView {
+        let banner = LoadReportingBannerView(adSize: currentOrientationAnchoredAdaptiveBanner(width: CGFloat(width)))
         banner.adUnitID = bannerAdUnitId
-        // Compose owns the only view controller there is; the SDK presents a tapped ad over it.
-        banner.rootViewController = UIApplication.shared.connectedScenes
-            .compactMap { ($0 as? UIWindowScene)?.keyWindow?.rootViewController }
-            .first
+        banner.rootViewController = rootViewController()
+        banner.onLoaded = onLoaded
+        banner.delegate = banner
+        // Transparent until it has an ad: Compose collapses its slot until then, and an invisible
+        // view takes no taps either.
+        banner.alpha = 0
         banner.load(Request())
         return banner
     }
+}
+
+/// Its own delegate: `BannerView.delegate` is weak, and nothing else would keep one alive.
+private final class LoadReportingBannerView: BannerView, BannerViewDelegate {
+    var onLoaded: (() -> Void)?
+
+    func bannerViewDidReceiveAd(_ bannerView: BannerView) {
+        alpha = 1
+        onLoaded?()
+    }
+}
+
+/// Compose owns the only view controller there is; the SDKs present a tapped ad or a form over it.
+func rootViewController() -> UIViewController? {
+    UIApplication.shared.connectedScenes
+        .compactMap { ($0 as? UIWindowScene)?.keyWindow?.rootViewController }
+        .first
 }

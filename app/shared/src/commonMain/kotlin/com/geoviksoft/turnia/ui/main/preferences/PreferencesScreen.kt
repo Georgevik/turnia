@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -40,15 +41,19 @@ import com.geoviksoft.turnia.ui.main.preferences.components.LanguageSheet
 import com.geoviksoft.turnia.ui.main.preferences.components.label
 import com.geoviksoft.turnia.ui.system.AppLanguage
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
+import com.geoviksoft.turnia.ui.system.ads.rememberAdConsentPlatform
 import com.geoviksoft.turnia.ui.system.toErrorSnackbar
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import turnia.app.shared.generated.resources.Res
+import turnia.app.shared.generated.resources.ads_privacy_options
+import turnia.app.shared.generated.resources.ads_privacy_options_description
 import turnia.app.shared.generated.resources.calendar_back
 import turnia.app.shared.generated.resources.notifications_enable
 import turnia.app.shared.generated.resources.notifications_enable_description
 import turnia.app.shared.generated.resources.notifications_save_error
 import turnia.app.shared.generated.resources.notifications_system_hint
+import turnia.app.shared.generated.resources.preferences_section_ads
 import turnia.app.shared.generated.resources.preferences_section_language
 import turnia.app.shared.generated.resources.preferences_section_notifications
 import turnia.app.shared.generated.resources.preferences_title
@@ -69,6 +74,8 @@ fun PreferencesScreen(viewModel: PreferencesViewModel = koinViewModel()) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     // Not saveable: applying a language recreates the screen, and the sheet should not come back.
     var languageSheetOpen by remember { mutableStateOf(false) }
+    val adConsentPlatform = rememberAdConsentPlatform()
+    LaunchedEffect(adConsentPlatform) { adConsentPlatform?.let(viewModel::loadAdConsent) }
 
     state.userMessage?.let { message ->
         val text = stringResource(Res.string.notifications_save_error)
@@ -116,6 +123,13 @@ fun PreferencesScreen(viewModel: PreferencesViewModel = koinViewModel()) {
 
             SectionHeader(stringResource(Res.string.preferences_section_language))
             LanguageRow(language = state.language, onClick = { languageSheetOpen = true })
+
+            if (state.adPrivacyOptionsRequired && adConsentPlatform != null) {
+                HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+
+                SectionHeader(stringResource(Res.string.preferences_section_ads))
+                AdPrivacyRow(onClick = { viewModel.onAdPrivacyOptions(adConsentPlatform) })
+            }
         }
     }
 
@@ -174,6 +188,41 @@ private fun EnableRow(enabled: Boolean, onEnabledChange: (Boolean) -> Unit) {
             )
         }
         Switch(checked = enabled, onCheckedChange = onEnabledChange)
+    }
+}
+
+@Composable
+private fun AdPrivacyRow(onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = Icons.Default.PrivacyTip,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.secondary,
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(Res.string.ads_privacy_options),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+            Text(
+                text = stringResource(Res.string.ads_privacy_options_description),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

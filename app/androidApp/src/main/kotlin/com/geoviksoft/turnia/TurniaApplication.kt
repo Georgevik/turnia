@@ -7,13 +7,11 @@ import android.os.Build
 import com.geoviksoft.turnia.core.system.BuildInfo
 import com.geoviksoft.turnia.di.AndroidAppModule
 import com.geoviksoft.turnia.di.initKoin
-import com.google.android.gms.ads.MobileAds
 import com.google.firebase.Firebase
 import com.google.firebase.appcheck.appCheck
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.logger.Level
-import kotlin.concurrent.thread
 
 class TurniaApplication : Application() {
     override fun onCreate() {
@@ -30,8 +28,6 @@ class TurniaApplication : Application() {
             modules(AndroidAppModule)
         }
         createNotificationChannel()
-        // Off the main thread, as Google asks: initialisation is slow and would delay the first frame.
-        thread { MobileAds.initialize(this) }
     }
 
     /**

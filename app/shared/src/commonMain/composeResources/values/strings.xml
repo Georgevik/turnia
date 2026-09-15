@@ -299,6 +299,9 @@
     <string name="preferences_title">Preferences</string>
     <string name="preferences_section_notifications">Notifications</string>
     <string name="preferences_section_language">Language</string>
+    <string name="preferences_section_ads">Ads</string>
+    <string name="ads_privacy_options">Ad privacy</string>
+    <string name="ads_privacy_options_description">Review your choices about personalised ads</string>
     <string name="language_system">Device language</string>
     <string name="language_english">English</string>
     <string name="language_spanish">Español</string>
