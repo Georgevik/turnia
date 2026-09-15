@@ -13,6 +13,7 @@ import com.geoviksoft.turnia.navigation.root.routes.RootRoute
 import com.geoviksoft.turnia.navigation.routes.EventTypeDetailData
 import com.geoviksoft.turnia.ui.components.calendar.CalendarViewer
 import com.geoviksoft.turnia.ui.components.daydetail.DayAddMode
+import com.geoviksoft.turnia.ui.system.RequestNotificationPermission
 import com.geoviksoft.turnia.ui.system.ads.AdBanner
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -25,6 +26,10 @@ fun MyCalendarScreen(viewModel: MyCalendarViewModel = koinViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigator = LocalNavigator.current
     val rootNavigator = LocalRootNavigator.current
+
+    // Here rather than at the root: on first launch the splash is still asking for ads consent, and
+    // two system dialogs on top of each other is a bad first impression.
+    RequestNotificationPermission()
 
     Column(modifier = Modifier.fillMaxSize()) {
         CalendarViewer(

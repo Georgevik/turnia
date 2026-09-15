@@ -32,16 +32,19 @@ interface AdConsentPlatform {
 internal expect fun rememberAdConsentPlatform(): AdConsentPlatform?
 
 /**
- * Consent for ads, asked for when the banner first becomes due rather than at launch: a new user
- * sees no ad for their first actions, and has nothing to consent to until then. Outside the regions
- * that need consent the SDK answers straight away that ads can be requested.
+ * Consent for ads, asked for on the splash screen: Turnia is paid for by its ads, so the app is not
+ * usable until the user has answered the consent message. Outside the regions that need consent the
+ * SDK answers straight away that ads can be requested.
  */
 class AdConsent {
 
     private val _status = MutableStateFlow<AdConsentStatus?>(null)
     val status: StateFlow<AdConsentStatus?> = _status.asStateFlow()
 
-    private var gathering = false
+    private val _gathering = MutableStateFlow(false)
+    val gathering: StateFlow<Boolean> = _gathering.asStateFlow()
+
+    private var gathered = false
     private var adsStarted = false
 
     /** Reads the answer stored on the device, which is enough to draw a banner while [gather] runs. */
@@ -49,14 +52,22 @@ class AdConsent {
         if (_status.value == null) update(platform, platform.status())
     }
 
-    /** Once per launch: a failure is tried again on the next one. */
+    /**
+     * Asks once per launch. An attempt that leaves ads unrequestable — the form failed to load, or was
+     * closed without an answer — does not count, so calling this again retries.
+     */
     fun gather(platform: AdConsentPlatform) {
         load(platform)
-        if (gathering) return
-        gathering = true
+        if (gathered || _gathering.value) return
+        _gathering.value = true
 
         // On failure the answer stored from an earlier launch still stands.
-        platform.gather { status -> update(platform, status ?: platform.status()) }
+        platform.gather { result ->
+            val status = result ?: platform.status()
+            gathered = status.canRequestAds
+            update(platform, status)
+            _gathering.value = false
+        }
     }
 
     fun showPrivacyOptions(platform: AdConsentPlatform) {

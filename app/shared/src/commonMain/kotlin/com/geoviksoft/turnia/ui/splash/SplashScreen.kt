@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
@@ -27,18 +28,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import com.geoviksoft.turnia.ui.system.ads.rememberAdConsentPlatform
 import com.geoviksoft.turnia.ui.system.components.TurniaLogo
 import com.geoviksoft.turnia.ui.system.toErrorSnackbar
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import org.jetbrains.compose.resources.stringArrayResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import turnia.app.shared.generated.resources.Res
+import turnia.app.shared.generated.resources.ads_consent_required_body
+import turnia.app.shared.generated.resources.ads_consent_required_retry
+import turnia.app.shared.generated.resources.ads_consent_required_title
 import turnia.app.shared.generated.resources.loading_phrases
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun SplashScreen(
@@ -58,11 +65,18 @@ fun SplashScreen(
         }
     }
 
-    SplashScreenContent()
+    val consentPlatform = rememberAdConsentPlatform()
+    LaunchedEffect(consentPlatform) { consentPlatform?.let(vm::gatherConsent) }
+    val consentMissing by vm.consentMissing.collectAsStateWithLifecycle()
+
+    SplashScreenContent(
+        consentMissing = consentMissing,
+        onRetryConsent = { consentPlatform?.let(vm::gatherConsent) },
+    )
 }
 
 @Composable
-fun SplashScreenContent() {
+fun SplashScreenContent(consentMissing: Boolean = false, onRetryConsent: () -> Unit = {}) {
     val phrases = stringArrayResource(Res.array.loading_phrases)
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -80,10 +94,35 @@ fun SplashScreenContent() {
             verticalArrangement = Arrangement.Top
         ) {
             Spacer(Modifier.height(100.dp))
-            CircularProgressIndicator()
-            Spacer(Modifier.height(24.dp))
-            RotatingLoadingText(phrases = phrases)
+            if (consentMissing) {
+                ConsentMissing(onRetry = onRetryConsent)
+            } else {
+                CircularProgressIndicator()
+                Spacer(Modifier.height(24.dp))
+                RotatingLoadingText(phrases = phrases)
+            }
         }
+    }
+}
+
+@Composable
+private fun ConsentMissing(onRetry: () -> Unit) {
+    Text(
+        text = stringResource(Res.string.ads_consent_required_title),
+        style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.onBackground,
+        textAlign = TextAlign.Center,
+    )
+    Spacer(Modifier.height(8.dp))
+    Text(
+        text = stringResource(Res.string.ads_consent_required_body),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+    )
+    Spacer(Modifier.height(24.dp))
+    Button(onClick = onRetry) {
+        Text(stringResource(Res.string.ads_consent_required_retry))
     }
 }
 

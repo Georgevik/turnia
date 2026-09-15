@@ -302,6 +302,9 @@
     <string name="preferences_section_ads">Anuncios</string>
     <string name="ads_privacy_options">Privacidad de los anuncios</string>
     <string name="ads_privacy_options_description">Revisa tus opciones sobre anuncios personalizados</string>
+    <string name="ads_consent_required_title">Turnia es gratis gracias a sus anuncios</string>
+    <string name="ads_consent_required_body">Responde al mensaje de privacidad sobre los anuncios para empezar a usar la app.</string>
+    <string name="ads_consent_required_retry">Volver a mostrar el mensaje</string>
     <string name="language_system">Idioma del dispositivo</string>
     <string name="language_english">English</string>
     <string name="language_spanish">Español</string>

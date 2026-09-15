@@ -31,7 +31,9 @@ internal actual fun PlatformAdBanner(modifier: Modifier, onLoaded: () -> Unit) {
             factory = { context ->
                 AdView(context).apply {
                     adUnitId = unitId
-                    setAdSize(AdSize.getPortraitInlineAdaptiveBannerAdSize(context, width))
+                    // Anchored, as on iOS: an inline size takes its height from the slot, and the
+                    // bottom bar's slot is nearly the whole screen.
+                    setAdSize(AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(context, width))
                     adListener = object : AdListener() {
                         override fun onAdLoaded() = currentOnLoaded()
                     }

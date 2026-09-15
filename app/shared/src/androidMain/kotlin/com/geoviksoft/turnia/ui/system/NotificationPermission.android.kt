@@ -1,6 +1,7 @@
 package com.geoviksoft.turnia.ui.system
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -9,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 
 @Composable
 actual fun RequestNotificationPermission() {
@@ -26,8 +28,15 @@ actual fun RequestNotificationPermission() {
             context, Manifest.permission.POST_NOTIFICATIONS
         ) == PackageManager.PERMISSION_GRANTED
 
-        // Asking again after a denial shows nothing at all from the second refusal onwards, so the
-        // check is what keeps this from being a silent no-op the app cannot distinguish.
-        if (!granted) launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        if (granted) return@LaunchedEffect
+
+        // Android lets an app ask twice before it stops showing the dialog; Turnia asks once.
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        if (prefs.getBoolean(KEY_ASKED, false)) return@LaunchedEffect
+        prefs.edit { putBoolean(KEY_ASKED, true) }
+        launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
     }
 }
+
+private const val PREFS = "notification_permission"
+private const val KEY_ASKED = "asked"

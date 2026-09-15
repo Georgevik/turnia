@@ -23,7 +23,6 @@ import com.geoviksoft.turnia.navigation.root.routes.RootRoute
 import com.geoviksoft.turnia.ui.root.name.CompleteNameDialog
 import com.geoviksoft.turnia.ui.system.AppLanguageHost
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
-import com.geoviksoft.turnia.ui.system.RequestNotificationPermission
 import com.geoviksoft.turnia.ui.system.TurniaSnackbarHost
 import com.geoviksoft.turnia.ui.system.TurniaTheme
 import org.koin.compose.viewmodel.koinViewModel
@@ -40,10 +39,6 @@ fun App(vm: RootViewModel = koinViewModel()) {
     val backStack = rememberNavBackStack(rootRouteSavedStateConfiguration, RootRoute.SplashKey)
     val userSession by vm.userSession.collectAsStateWithLifecycle(UserSession.Loading)
     val pendingJoinCode by vm.pendingJoinCode.collectAsStateWithLifecycle()
-
-    // Only once there is somebody to notify: asked on the sign-in screen it would be a dialog about
-    // an app the user has not seen yet, and a refusal there is one the system will not ask again.
-    if (userSession is UserSession.Authenticated) RequestNotificationPermission()
 
     HandleLogoutSignal(userSession, backStack)
     HandleJoinGroupDeeplink(pendingJoinCode, backStack)
