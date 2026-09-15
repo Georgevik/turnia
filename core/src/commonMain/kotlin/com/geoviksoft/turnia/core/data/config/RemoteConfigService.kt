@@ -34,8 +34,9 @@ class RemoteConfigService(
 
     fun getFlags(): FeatureFlags {
         return FeatureFlags(
-            minActionsToEnableAds = remoteConfig.get<Int>(RemoteKey.MIN_ADS_ACTION.value),
-            invitationCodeLength = remoteConfig.get<Int>(RemoteKey.INVITATION_CODE_LENGTH.value),
+            // GitLive's get has no Int: anything but Boolean, Double, Long or String throws.
+            minActionsToEnableAds = remoteConfig.get<Long>(RemoteKey.MIN_ADS_ACTION.value).toInt(),
+            invitationCodeLength = remoteConfig.get<Long>(RemoteKey.INVITATION_CODE_LENGTH.value).toInt(),
             enableSubscription = remoteConfig.get<Boolean>(RemoteKey.ENABLE_SUBSCRIPTION.value),
         )
     }
