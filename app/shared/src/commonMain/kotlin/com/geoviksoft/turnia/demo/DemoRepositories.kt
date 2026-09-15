@@ -88,6 +88,8 @@ internal class DemoUserRepository : UserRepository {
     override suspend fun updateAvatar(animalIconId: String?, backgroundColor: String?) =
         Unit.toSuccess()
 
+    override suspend fun enableShowAds(): Outcome<Unit, Unit> = Unit.toSuccess()
+
     override suspend fun searchUsers(prefix: String): Outcome<List<UserProfile>, Unit> =
         DemoPeople.all.filter { it.username.startsWith(prefix.lowercase()) && it != DemoPeople.lucia }
             .map { it.profile }

@@ -9,6 +9,7 @@ import com.geoviksoft.turnia.ui.main.preferences.di.preferencesModule
 import com.geoviksoft.turnia.ui.main.settings.di.settingsModule
 import com.geoviksoft.turnia.ui.main.swap.di.swapModule
 import com.geoviksoft.turnia.ui.root.di.rootModule
+import com.geoviksoft.turnia.ui.system.ads.di.adsModule
 import org.koin.core.module.Module
 
 /**
@@ -25,4 +26,5 @@ val featureModules: List<Module> = listOf(
     settingsModule,
     swapModule,
     preferencesModule,
+    adsModule,
 )
