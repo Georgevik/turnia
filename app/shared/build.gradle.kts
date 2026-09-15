@@ -47,6 +47,7 @@ kotlin {
         androidMain.dependencies {
             // The per-app language: AppCompatDelegate stores it and applies it from API 24.
             implementation(libs.androidx.appcompat)
+            implementation(libs.play.services.ads)
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.compose.uiTooling)
         }

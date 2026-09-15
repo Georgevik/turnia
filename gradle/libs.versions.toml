@@ -26,6 +26,7 @@ crashlytics = "3.0.6"
 firebaseBom = "34.17.0"
 kmpauth = "3.0.4"
 kotlinxDatetime = "0.7.1"
+playServicesAds = "25.4.0"
 
 
 [libraries]
@@ -72,6 +73,7 @@ kmpauth-google = { module = "io.github.mirzemehdi:kmpauth-google", version.ref =
 kmpauth-apple = { module = "io.github.mirzemehdi:kmpauth-apple", version.ref = "kmpauth" }
 kmpauth-firebase = { module = "io.github.mirzemehdi:kmpauth-firebase", version.ref = "kmpauth" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
+play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAds" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

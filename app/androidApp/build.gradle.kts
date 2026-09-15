@@ -21,6 +21,7 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.installreferrer)
+    implementation(libs.play.services.ads)
     implementation(libs.koin.android)
     implementation(libs.firebase.messaging.android)
     implementation(libs.firebase.crashlytics)

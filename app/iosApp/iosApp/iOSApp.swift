@@ -3,6 +3,7 @@ import Shared
 import FirebaseAppCheck
 import FirebaseCore
 import FirebaseMessaging
+import GoogleMobileAds
 import GoogleSignIn
 import UserNotifications
 
@@ -102,6 +103,8 @@ struct iOSApp: App {
         AppCheck.setAppCheckProviderFactory(TurniaAppCheckProviderFactory())
         FirebaseApp.configure()
         KoinIOSKt.doInitKoin(webClientId: Self.webClientId, demo: Self.demo)
+        MobileAds.shared.start()
+        AdBannerBridgeKt.registerAdBannerFactory(factory: GoogleAdBannerFactory())
     }
 
     var body: some Scene {

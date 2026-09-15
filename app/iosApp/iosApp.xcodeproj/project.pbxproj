@@ -23,6 +23,7 @@
 		515FEE4B3028AF8D00A40A69 /* FirebasePerformance in Frameworks */ = {isa = PBXBuildFile; productRef = 515FEE4A3028AF8D00A40A69 /* FirebasePerformance */; };
 		515FEE663028B62F00A40A69 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 515FEE653028B62F00A40A69 /* GoogleSignIn */; };
 		515FEE683028B62F00A40A69 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 515FEE673028B62F00A40A69 /* GoogleSignInSwift */; };
+		515FEE6C3028B62F00A40A69 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 515FEE6B3028B62F00A40A69 /* GoogleMobileAds */; };
 		929887402EF083DE75296FB4 /* KotlinMultiplatformLinkedPackage in Frameworks */ = {isa = PBXBuildFile; productRef = C4838CBF7967ADC8A4C519BE /* KotlinMultiplatformLinkedPackage */; };
 /* End PBXBuildFile section */
 
@@ -63,6 +64,7 @@
 			files = (
 				515FEE4B3028AF8D00A40A69 /* FirebasePerformance in Frameworks */,
 				515FEE663028B62F00A40A69 /* GoogleSignIn in Frameworks */,
+				515FEE6C3028B62F00A40A69 /* GoogleMobileAds in Frameworks */,
 				515FEE373028AF8D00A40A69 /* FirebaseAppCheck in Frameworks */,
 				515FEE3B3028AF8D00A40A69 /* FirebaseAuthCombine-Community in Frameworks */,
 				515FEE393028AF8D00A40A69 /* FirebaseAuth in Frameworks */,
@@ -140,6 +142,7 @@
 				C4838CBF7967ADC8A4C519BE /* KotlinMultiplatformLinkedPackage */,
 				515FEE653028B62F00A40A69 /* GoogleSignIn */,
 				515FEE673028B62F00A40A69 /* GoogleSignInSwift */,
+				515FEE6B3028B62F00A40A69 /* GoogleMobileAds */,
 			);
 			productName = iosApp;
 			productReference = 31E156B9672F5775BF916919 /* Turnia.app */;
@@ -174,6 +177,7 @@
 				515FEE2F3028AF8D00A40A69 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				899391ABBB10B01A00DA7F40 /* XCLocalSwiftPackageReference "KotlinMultiplatformLinkedPackage" */,
 				515FEE643028B62F00A40A69 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+				515FEE6A3028B62F00A40A69 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 900FE4839C9D767CC583D269 /* Products */;
@@ -479,6 +483,14 @@
 				minimumVersion = 9.2.0;
 			};
 		};
+		515FEE6A3028B62F00A40A69 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/googleads/swift-package-manager-google-mobile-ads";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -561,6 +573,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 515FEE643028B62F00A40A69 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
 			productName = GoogleSignInSwift;
+		};
+		515FEE6B3028B62F00A40A69 /* GoogleMobileAds */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 515FEE6A3028B62F00A40A69 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */;
+			productName = GoogleMobileAds;
 		};
 		C4838CBF7967ADC8A4C519BE /* KotlinMultiplatformLinkedPackage */ = {
 			isa = XCSwiftPackageProductDependency;
