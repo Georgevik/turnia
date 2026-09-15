@@ -42,9 +42,13 @@ service cloud.firestore {
       // `name` and `username` are copied into every group the user belongs to, so only the
       // `updateProfile` function may change them — a keeper that ships inside the app is only as
       // current as the oldest version still installed.
+      // `showAds` only ever goes one way: once a free user has earned the banner, clearing the flag
+      // would be a way to hide it.
       allow update: if isSignedIn() && request.auth.uid == uid &&
         request.resource.data.get('name', '') == resource.data.get('name', '') &&
-        request.resource.data.get('username', '') == resource.data.get('username', '');
+        request.resource.data.get('username', '') == resource.data.get('username', '') &&
+        (resource.data.get('showAds', false) != true ||
+          request.resource.data.get('showAds', false) == true);
       allow delete: if isSignedIn() && request.auth.uid == uid;
 
       // Email, FCM tokens, pending join requests and entitlement: never readable by anyone else.
