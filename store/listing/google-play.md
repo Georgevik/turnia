@@ -1,7 +1,7 @@
 # Google Play — ficha de la tienda
 
 Play Console → *Crecimiento* → *Presencia en Play Store* → *Ficha principal de Play Store*.
-Idioma por defecto **es-ES**; añade **en-US** en *Gestionar traducciones → Añadir tu propia traducción*.
+Idioma por defecto **es-ES**; añade **en-US**, **fr-FR**, **de-DE** e **it-IT** en *Gestionar traducciones → Añadir tu propia traducción*.
 
 Cada bloque va tal cual en su campo. Entre paréntesis, los caracteres usados / el límite.
 
@@ -60,7 +60,7 @@ Pensada para enfermeras, médicos, TCAE, técnicos y cualquier profesional sanit
 
 ★ Y ADEMÁS
 • Modo oscuro para mirar tus turnos de noche.
-• En español e inglés.
+• En español, inglés, francés, alemán e italiano.
 • Inicia sesión con Google o con Apple.
 • Elimina tu cuenta cuando quieras desde la propia app.
 
@@ -128,7 +128,7 @@ Built for nurses, doctors, healthcare assistants and anyone in healthcare who wo
 
 ★ AND ALSO
 • Dark mode for checking your shifts at night.
-• Available in English and Spanish.
+• Available in English, Spanish, French, German and Italian.
 • Sign in with Google or Apple.
 • Delete your account at any time from inside the app.
 
@@ -143,6 +143,210 @@ The first release of Turnia: team rosters, shift swaps with a full history, shar
 
 ---
 
+## Français (fr-FR)
+
+### Nom de l'application (26/30)
+
+```text
+Turnia : échanges de garde
+```
+
+### Description courte (72/80)
+
+```text
+Planning d'équipe et échanges de garde, clairs et tracés au même endroit
+```
+
+### Description complète
+
+```text
+Tu échanges tes gardes par messages et au final plus personne ne sait qui travaille quel jour ? Turnia réunit le planning de ton équipe et chaque échange de garde au même endroit, pour qu'on sache toujours qui assure chaque garde.
+
+Pensée pour les infirmières et infirmiers, médecins, aides-soignants, manipulateurs radio et tous les professionnels de santé qui travaillent en horaires décalés.
+
+★ TON PLANNING EN UN COUP D'ŒIL
+• Matins, après-midis, nuits et astreintes : chaque type de garde avec sa couleur et ses horaires.
+• Les gardes de tous tes groupes et tes événements personnels (congés, formation, rendez-vous…) dans un seul calendrier.
+• Ajoute des notes à tes événements personnels.
+• Choisis tes propres couleurs sans changer celles des autres.
+
+★ ÉCHANGE TES GARDES SANS COURIR APRÈS PERSONNE
+• Propose une garde à l'échange et ton équipe la voit tout de suite.
+• Un collègue la prend en un geste et elle passe dans son calendrier.
+• Si deux personnes essaient de la prendre en même temps, une seule l'obtient : aucune garde n'est attribuée deux fois.
+• Finalement tu ne peux pas l'assurer ? Rends-la à qui te l'a donnée et elle est de nouveau proposée.
+
+★ SACHE TOUJOURS QUI ASSURE CHAQUE GARDE
+• Chaque échange est enregistré, même quand une garde passe par plusieurs mains : de toi à Sophie, de Sophie à Lucas.
+• L'historique des échanges ne peut être ni supprimé ni modifié.
+
+★ TOUT TON SERVICE DANS UN CALENDRIER
+• Crée le groupe de ton unité ou de ton service et définis ses types de garde.
+• Invite ton équipe avec un lien ou un code ; l'administrateur décide qui entre.
+• Consulte le calendrier complet du groupe et qui assure chaque garde.
+• Tu travailles dans plusieurs services ? Rejoins autant de groupes que nécessaire.
+
+★ PARTAGE TON PLANNING
+• Donne accès à ton calendrier à ton ou ta partenaire, à ta famille ou à qui tu veux, sans envoyer de photos du planning.
+• Retire l'accès quand tu veux.
+
+★ NOTIFICATIONS INSTANTANÉES
+• Quand un collègue demande un échange, quand quelqu'un prend ta garde ou te la rend.
+• Quand quelqu'un veut rejoindre ton groupe et quand tu es accepté dans un groupe.
+
+★ ET AUSSI
+• Mode sombre pour consulter tes gardes la nuit.
+• En français, anglais, espagnol, allemand et italien.
+• Connexion avec Google ou Apple.
+• Supprime ton compte quand tu veux, directement depuis l'app.
+
+Arrête d'organiser les échanges de garde par messages : avec Turnia, le planning de ton équipe est toujours à jour.
+```
+
+### Notes de version (1.01)
+
+```text
+Première version de Turnia : planning d'équipe, échanges de garde avec historique, calendrier partagé, notifications instantanées et mode sombre.
+```
+
+---
+
+## Deutsch (de-DE)
+
+### App-Name (20/30)
+
+```text
+Turnia: Diensttausch
+```
+
+### Kurzbeschreibung (76/80)
+
+```text
+Dienstplan deines Teams und jeder Tausch, klar und dokumentiert an einem Ort
+```
+
+### Vollständige Beschreibung
+
+```text
+Tauschst du Dienste per Nachricht, und am Ende weiß niemand mehr, wer wann arbeitet? Turnia bringt den Dienstplan deines Teams und jeden Diensttausch an einem Ort zusammen, damit immer klar ist, wer welchen Dienst übernimmt.
+
+Gemacht für Pflegekräfte, Ärztinnen und Ärzte, MFA, Pflegehelfer und alle im Gesundheitswesen, die im Schichtdienst arbeiten.
+
+★ DEIN DIENSTPLAN AUF EINEN BLICK
+• Früh-, Spät-, Nacht- und Bereitschaftsdienste, jede Dienstart mit eigener Farbe und eigenen Zeiten.
+• Die Dienste all deiner Gruppen und deine persönlichen Termine (Urlaub, Fortbildung, Arzttermine…) in einem Kalender.
+• Füge deinen persönlichen Terminen Notizen hinzu.
+• Wähle deine eigenen Farben, ohne die der anderen zu ändern.
+
+★ DIENSTE TAUSCHEN, OHNE JEMANDEM HINTERHERZULAUFEN
+• Biete einen Dienst zum Tausch an, und dein Team sieht ihn sofort.
+• Eine Kollegin übernimmt ihn mit einem Tipp, und er landet in ihrem Kalender.
+• Wollen ihn zwei gleichzeitig übernehmen, bekommt ihn nur eine Person: Kein Dienst wird doppelt vergeben.
+• Du kannst ihn doch nicht übernehmen? Gib ihn an die Person zurück, von der du ihn hast, und er wird wieder angeboten.
+
+★ WISSE IMMER, WER WELCHEN DIENST ÜBERNIMMT
+• Jeder Tausch wird festgehalten, auch wenn ein Dienst mehrmals den Besitzer wechselt: von dir zu Sofia, von Sofia zu Jonas.
+• Der Tauschverlauf kann weder gelöscht noch geändert werden.
+
+★ DEINE GANZE STATION IN EINEM KALENDER
+• Erstelle eine Gruppe für deine Station oder Abteilung und lege ihre Dienstarten fest.
+• Lade dein Team per Link oder Code ein; der Admin entscheidet, wer beitritt.
+• Sieh dir den kompletten Gruppenkalender an und wer welchen Dienst hat.
+• Du arbeitest auf mehreren Stationen? Tritt so vielen Gruppen bei, wie du brauchst.
+
+★ TEILE DEINEN DIENSTPLAN
+• Gib deinem Partner, deiner Familie oder wem du willst Zugriff auf deinen Kalender, ohne Fotos vom Dienstplan zu verschicken.
+• Entziehe den Zugriff, wann immer du willst.
+
+★ SOFORTIGE BENACHRICHTIGUNGEN
+• Wenn eine Kollegin um einen Tausch bittet, wenn jemand deinen Dienst übernimmt oder ihn dir zurückgibt.
+• Wenn jemand deiner Gruppe beitreten möchte und wenn du in eine aufgenommen wirst.
+
+★ UND AUSSERDEM
+• Dunkelmodus, um deine Dienste auch nachts anzusehen.
+• Auf Deutsch, Englisch, Spanisch, Französisch und Italienisch.
+• Melde dich mit Google oder Apple an.
+• Lösche dein Konto jederzeit direkt in der App.
+
+Organisiere Diensttausche nicht mehr per Nachricht: Mit Turnia ist der Dienstplan deines Teams immer aktuell.
+```
+
+### Versionshinweise (1.01)
+
+```text
+Die erste Version von Turnia: Dienstpläne fürs Team, Diensttausch mit Verlauf, geteilte Kalender, sofortige Benachrichtigungen und Dunkelmodus.
+```
+
+---
+
+## Italiano (it-IT)
+
+### Nome dell'app (19/30)
+
+```text
+Turnia: cambi turno
+```
+
+### Breve descrizione (80/80)
+
+```text
+Il piano turni del tuo team e ogni cambio turno, chiaro e registrato in un posto
+```
+
+### Descrizione completa
+
+```text
+Cambi i turni via messaggio e alla fine nessuno sa più chi lavora e quando? Turnia riunisce il piano turni del tuo team e ogni cambio turno in un solo posto, così è sempre chiaro chi copre ogni turno.
+
+Pensata per infermieri, medici, OSS, tecnici e ogni professionista sanitario che lavora a turni.
+
+★ IL TUO PIANO TURNI A COLPO D'OCCHIO
+• Mattine, pomeriggi, notti e reperibilità, ogni tipo di turno con il suo colore e il suo orario.
+• I turni di tutti i tuoi gruppi e i tuoi eventi personali (ferie, formazione, appuntamenti…) in un unico calendario.
+• Aggiungi note ai tuoi eventi personali.
+• Scegli i tuoi colori senza cambiare quelli degli altri.
+
+★ CAMBI TURNO SENZA RINCORRERE NESSUNO
+• Metti un turno in cambio e il tuo team lo vede subito.
+• Un collega lo copre con un tocco e il turno passa nel suo calendario.
+• Se in due provano a prenderlo nello stesso momento, solo uno lo ottiene: nessun turno viene assegnato due volte.
+• Alla fine non puoi coprirlo? Restituiscilo a chi te l'ha dato e torna di nuovo in cambio.
+
+★ SAPPI SEMPRE CHI COPRE OGNI TURNO
+• Ogni cambio resta registrato, anche quando il turno passa per più mani: da te a Sofia, da Sofia a Carlo.
+• Lo storico dei cambi non si può cancellare né modificare.
+
+★ TUTTO IL TUO REPARTO IN UN CALENDARIO
+• Crea il gruppo della tua unità o del tuo reparto e definisci i suoi tipi di turno.
+• Invita il tuo team con un link o un codice; l'amministratore decide chi entra.
+• Consulta il calendario completo del gruppo e chi fa ogni turno.
+• Lavori in più reparti? Unisciti a tutti i gruppi che ti servono.
+
+★ CONDIVIDI IL TUO PIANO TURNI
+• Dai accesso al tuo calendario al partner, alla famiglia o a chi vuoi, senza mandare foto del piano turni.
+• Revoca l'accesso quando vuoi.
+
+★ NOTIFICHE IN TEMPO REALE
+• Quando un collega chiede un cambio, quando qualcuno copre il tuo turno o te lo restituisce.
+• Quando qualcuno vuole entrare nel tuo gruppo e quando vieni accettato in uno.
+
+★ E INOLTRE
+• Modalità scura per guardare i tuoi turni di notte.
+• In italiano, inglese, spagnolo, francese e tedesco.
+• Accedi con Google o Apple.
+• Elimina il tuo account quando vuoi, direttamente dall'app.
+
+Smetti di organizzare i cambi turno via messaggio: con Turnia il piano turni del tuo team è sempre aggiornato.
+```
+
+### Note sulla versione (1.01)
+
+```text
+Prima versione di Turnia: piano turni del team, cambi turno con storico, calendario condiviso, notifiche in tempo reale e modalità scura.
+```
+
+---
+
 ## Recursos gráficos
 
 Los genera `python3 store/screenshots/generate.py` (ver *Capturas* en [README.md](README.md)).
@@ -153,7 +357,7 @@ Los genera `python3 store/screenshots/generate.py` (ver *Capturas* en [README.md
 | Gráfico de funciones | `store/screenshots/google-play/feature_graphic.png` | 1024 × 500 |
 | Capturas de teléfono (en orden) | `store/screenshots/google-play/01_calendar.png` … `07_dark_calendar.png` | 1080 × 1920 |
 
-Las capturas y el gráfico están en español: súbelos a los dos idiomas o solo al predeterminado
+Las capturas y el gráfico están en español: súbelos a todos los idiomas o solo al predeterminado
 (Play usa los del idioma predeterminado cuando una traducción no tiene los suyos).
 
 ## Datos de contacto y categoría

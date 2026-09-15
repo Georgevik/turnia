@@ -2,8 +2,8 @@
 
 | Archivo | Qué hay |
 |---------|---------|
-| [google-play.md](google-play.md) | Nombre, descripciones y novedades (es-ES / en-US), recursos gráficos, categoría y contacto |
-| [app-store.md](app-store.md) | Nombre, subtítulo, texto promocional, descripción, palabras clave y novedades (es-ES / en-US), URLs, capturas y categoría |
+| [google-play.md](google-play.md) | Nombre, descripciones y novedades (es-ES, en-US, fr-FR, de-DE, it-IT), recursos gráficos, categoría y contacto |
+| [app-store.md](app-store.md) | Nombre, subtítulo, texto promocional, descripción, palabras clave y novedades (es-ES, en-US, fr-FR, de-DE, it-IT), URLs, capturas y categoría |
 | [formularios.md](formularios.md) | Acceso para revisión, clasificación de contenido, seguridad de los datos / privacidad de la app, cifrado |
 
 Los textos solo cuentan lo que hace la build actual. Cuando lleguen los anuncios y Premium, hay que
