@@ -348,7 +348,10 @@ internal object DemoAnalytics : Analytics {
 }
 
 internal class DemoAppConfigRepository : AppConfigRepository {
-    private val flags = MutableStateFlow(FeatureFlags.Default.copy(enableAds = false))
+    // No ads in the demo: it exists for store screenshots.
+    private val flags = MutableStateFlow(
+        FeatureFlags(minActionsToEnableAds = -1, invitationCodeLength = 6, enableSubscription = false)
+    )
 
     override val featureFlags: StateFlow<FeatureFlags> = flags.asStateFlow()
 

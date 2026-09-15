@@ -33,6 +33,7 @@ kotlin {
             implementation(libs.firebase.messaging)
             implementation(libs.firebase.functions)
             implementation(libs.firebase.analytics)
+            implementation(libs.firebase.config)
             api(libs.koin.core)
             api(libs.kotlinx.datetime)
             api(libs.kotlinx.serialization.core)

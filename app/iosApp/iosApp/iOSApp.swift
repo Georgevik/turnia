@@ -89,6 +89,12 @@ struct iOSApp: App {
 
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
+    #if DEBUG
+    private static let isDebug = true
+    #else
+    private static let isDebug = false
+    #endif
+
     /// Made-up data instead of Firebase, for store screenshots: launch a debug build with
     /// `-TurniaDemo` (`xcrun simctl launch booted com.geoviksoft.turnia.Turnia -TurniaDemo`).
     #if DEBUG
@@ -102,7 +108,7 @@ struct iOSApp: App {
         // goes out with no App Check token.
         AppCheck.setAppCheckProviderFactory(TurniaAppCheckProviderFactory())
         FirebaseApp.configure()
-        KoinIOSKt.doInitKoin(webClientId: Self.webClientId, demo: Self.demo)
+        KoinIOSKt.doInitKoin(webClientId: Self.webClientId, isDebug: Self.isDebug, demo: Self.demo)
         MobileAds.shared.start()
         AdBannerBridgeKt.registerAdBannerFactory(factory: GoogleAdBannerFactory())
     }

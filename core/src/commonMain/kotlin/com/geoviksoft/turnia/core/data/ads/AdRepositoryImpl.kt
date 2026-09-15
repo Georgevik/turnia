@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 
 class AdRepositoryImpl(
     private val userRepository: UserRepository,
-    appConfigRepository: AppConfigRepository,
+    private val appConfigRepository: AppConfigRepository,
     private val scope: CoroutineScope,
 ) : AdRepository {
 
@@ -34,18 +34,15 @@ class AdRepositoryImpl(
     }.distinctUntilChanged()
 
     override fun actionPerformed() {
+        val flags = appConfigRepository.featureFlags.value
         val user = userRepository.loggedUser ?: return
-        if (user.showAds || writing) return
-        if (++actions < ACTIONS_BEFORE_BANNER) return
+        if (!flags.enableAds || user.showAds || writing) return
+        if (++actions < flags.minActionsToEnableAds) return
 
         writing = true
         scope.launch {
             // A failed write leaves the flag unset, and the next action tries again.
             userRepository.enableShowAds().onFailure { writing = false }
         }
-    }
-
-    private companion object {
-        const val ACTIONS_BEFORE_BANNER = 10
     }
 }

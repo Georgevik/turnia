@@ -63,6 +63,7 @@ firebase-auth = { module = "dev.gitlive:firebase-auth", version.ref = "firebase"
 firebase-firestore = { module = "dev.gitlive:firebase-firestore", version.ref = "firebase" }
 firebase-functions = { module = "dev.gitlive:firebase-functions", version.ref = "firebase" }
 firebase-analytics = { module = "dev.gitlive:firebase-analytics", version.ref = "firebase" }
+firebase-config = { module = "dev.gitlive:firebase-config", version.ref = "firebase" }
 firebase-messaging = { module = "dev.gitlive:firebase-messaging", version.ref = "firebase" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-messaging-android = { module = "com.google.firebase:firebase-messaging" }

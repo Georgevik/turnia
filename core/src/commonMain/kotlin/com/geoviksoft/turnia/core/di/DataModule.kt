@@ -3,6 +3,7 @@ package com.geoviksoft.turnia.core.di
 import com.geoviksoft.turnia.core.data.ads.AdRepositoryImpl
 import com.geoviksoft.turnia.core.data.analytics.AnalyticsImpl
 import com.geoviksoft.turnia.core.data.config.AppConfigRepositoryImpl
+import com.geoviksoft.turnia.core.data.config.RemoteConfigService
 import com.geoviksoft.turnia.core.data.datasource.firestore.GroupEventFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.GroupFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.GroupJoinRequestFirestore
@@ -57,6 +58,7 @@ import dev.gitlive.firebase.firestore.firestoreSettings
 import dev.gitlive.firebase.firestore.persistentCacheSettings
 import dev.gitlive.firebase.functions.functions
 import dev.gitlive.firebase.messaging.messaging
+import dev.gitlive.firebase.remoteconfig.remoteConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -92,6 +94,7 @@ val dataModule: Module = module {
     single { Firebase.functions(FUNCTIONS_REGION) }
     single { Firebase.messaging }
     single { Firebase.analytics }
+    single { Firebase.remoteConfig }
     single<Analytics> { AnalyticsImpl(get()) }
 
     // Datasources.
@@ -144,7 +147,8 @@ val dataModule: Module = module {
             get()
         )
     }
-    single<AppConfigRepository> { AppConfigRepositoryImpl() }
+    single { RemoteConfigService(get(), get()) }
+    single<AppConfigRepository> { AppConfigRepositoryImpl(get()) }
     single<NotificationRepository> { NotificationRepositoryImpl() }
     single<InvitationLinkRepository> { InvitationLinkRepositoryImpl() }
     single<GroupRepository> {

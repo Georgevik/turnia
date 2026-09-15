@@ -35,7 +35,7 @@ class SettingsMenuViewModel(
                 .collect { (session, flags) ->
                     _uiState.update {
                         it.copy(
-                            adsEnabled = flags.enableAds,
+                            adsEnabled = flags.enableAds && flags.enableSubscription,
                             userDetails = SettingsMenuUi.UserDetails(
                                 displayName = session.user.displayName.orEmpty(),
                                 username = session.user.username,

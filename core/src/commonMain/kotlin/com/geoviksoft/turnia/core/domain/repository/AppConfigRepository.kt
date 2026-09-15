@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
  */
 interface AppConfigRepository {
 
-    /** Latest known flags. Emits [FeatureFlags.Default] until a refresh completes. */
+    /** Latest known flags. Emits the last activated values, or the defaults, until a refresh completes. */
     val featureFlags: StateFlow<FeatureFlags>
 
     /** Downloads the feature flags and updates [featureFlags]. Called on splash. */
