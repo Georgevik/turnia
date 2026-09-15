@@ -72,8 +72,8 @@ android {
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         // The release pipeline passes its own, so two uploads never share one; see .github/workflows/release.yml.
-        versionCode = providers.gradleProperty("turnia.versionCode").orNull?.toInt() ?: 4
-        versionName = "1.03"
+        versionCode = providers.gradleProperty("turnia.versionCode").orNull?.toInt() ?: 999
+        versionName = providers.gradleProperty("turnia.versionName").orNull ?: "999 Debug"
 
         buildConfigField("String", "WEB_CLIENT_ID", "\"${webClientId()}\"")
     }

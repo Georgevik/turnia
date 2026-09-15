@@ -9,6 +9,11 @@ name: Release
 on:
   workflow_dispatch:
     inputs:
+      versionName:
+        description: Version name shown in the stores, e.g. 1.04
+        type: string
+        required: true
+
       platforms:
         description: Which apps to build and upload
         type: choice
@@ -23,13 +28,27 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  # versionName / MARKETING_VERSION come from the repo; the build number is this run's, offset past
+  # The version name is typed when the workflow is run; the build number is this run's, offset past
   # every build uploaded by hand before the pipeline existed.
+  BUILD_NAME: ${{ inputs.versionName }}
   BUILD_NUMBER: ${{ github.run_number }}
   BUILD_NUMBER_OFFSET: 100
 
 jobs:
+  # App Store Connect only accepts up to three period-separated integers, and a bad name would only
+  # be refused at the very end of the iOS job; Play takes the same format for consistency.
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the version name
+        run: |
+          if ! [[ "$BUILD_NAME" =~ ^[0-9]+(\.[0-9]+){0,2}$ ]]; then
+            echo "::error::Version name '$BUILD_NAME' must look like 1.04 or 1.4.0"
+            exit 1
+          fi
+
   android:
+    needs: validate
     if: inputs.platforms == 'both' || inputs.platforms == 'android'
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -56,7 +75,8 @@ jobs:
           TURNIA_UPLOAD_KEY_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEY_PASSWORD }}
         run: |
           ./gradlew :app:androidApp:bundleRelease \
-            -Pturnia.versionCode=$((BUILD_NUMBER + BUILD_NUMBER_OFFSET))
+            -Pturnia.versionCode=$((BUILD_NUMBER + BUILD_NUMBER_OFFSET)) \
+            -Pturnia.versionName="$BUILD_NAME"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -76,6 +96,7 @@ jobs:
           status: completed
 
   ios:
+    needs: validate
     if: inputs.platforms == 'both' || inputs.platforms == 'ios'
     runs-on: macos-latest
     timeout-minutes: 90
@@ -117,6 +138,7 @@ jobs:
             -configuration Release \
             -destination generic/platform=iOS \
             -archivePath "$RUNNER_TEMP/Turnia.xcarchive" \
+            MARKETING_VERSION="$BUILD_NAME" \
             CURRENT_PROJECT_VERSION=$((BUILD_NUMBER + BUILD_NUMBER_OFFSET)) \
             -allowProvisioningUpdates \
             -authenticationKeyPath "$RUNNER_TEMP/asc/AuthKey.p8" \
