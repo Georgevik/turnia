@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.geoviksoft.turnia.core.domain.model.GroupId
 import com.geoviksoft.turnia.core.domain.model.SharedCalendarError
 import com.geoviksoft.turnia.core.domain.model.UserId
+import com.geoviksoft.turnia.core.domain.repository.AdRepository
 import com.geoviksoft.turnia.core.domain.repository.GroupRepository
 import com.geoviksoft.turnia.core.domain.repository.SharedCalendarRepository
 import com.geoviksoft.turnia.core.domain.repository.UserRepository
@@ -41,6 +42,7 @@ class ExternalCalendarViewModel(
     private val groupRepository: GroupRepository,
     private val sharedCalendarRepository: SharedCalendarRepository,
     private val userRepository: UserRepository,
+    adRepository: AdRepository,
 ) : ViewModel() {
     private val monthDate = MutableStateFlow(Clock.System.todayIn(TimeZone.currentSystemDefault()))
     private val invalidateData = MutableStateFlow(1)
@@ -49,6 +51,9 @@ class ExternalCalendarViewModel(
     val uiState: StateFlow<GroupCalendarUi> = _uiState.asStateFlow()
 
     init {
+        // Here and not in the screen: the ViewModel lives once per visit, the composable recomposes.
+        adRepository.actionPerformed()
+
         viewModelScope.launch {
             combine(monthDate, invalidateData) { date, _ -> date }
                 .flatMapLatest { date -> events(date) }

@@ -17,9 +17,9 @@ import org.koin.dsl.module
 val calendarModule: Module = module {
     viewModelOf(::MyCalendarViewModel)
     viewModel { (data: ExternalCalendarData) ->
-        ExternalCalendarViewModel(data, get(), get(), get())
+        ExternalCalendarViewModel(data, get(), get(), get(), get())
     }
     viewModel { (date: LocalDate, addMode: DayAddMode) ->
-        DayDetailSheetViewModel(date, addMode, get(), get(), get())
+        DayDetailSheetViewModel(date, addMode, get(), get(), get(), get())
     }
 }

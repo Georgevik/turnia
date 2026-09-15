@@ -39,6 +39,7 @@ import com.geoviksoft.turnia.ui.main.system.EmptyState
 import com.geoviksoft.turnia.ui.main.system.ScreenHeader
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
 import com.geoviksoft.turnia.ui.system.TurniaSnackbarVisual
+import com.geoviksoft.turnia.ui.system.ads.AdBanner
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import turnia.app.shared.generated.resources.Res
@@ -96,6 +97,7 @@ fun GroupsScreen(viewModel: GroupsViewModel = koinViewModel()) {
     }
 
     Scaffold(
+        bottomBar = { AdBanner() },
         floatingActionButton = {
             if (success != null) {
                 GroupsFabMenu(

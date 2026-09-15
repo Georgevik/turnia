@@ -71,6 +71,7 @@ one copy now, here. Everything a stranger must not see lives under `private` (be
 | `animalIconId` | string \| null | The `animal_icon_*` drawable suffix the user picked (`"duck"`). Absent until they pick one. |
 | `backgroundColor` | string \| null | Hex behind the icon. Absent until they pick one. |
 | `calendarSharedWith` | string[] | UIDs this user grants read access to **their** calendar. Written only by the owner. |
+| `showAds` | boolean \| null | `true` once the user has done 10 actions (adding an event, or opening a group's or a colleague's calendar), which is when a free user starts seeing banners. Written once by the owner and never cleared; absent means not yet. |
 | `isDeleted` | boolean \| null | `true` once the account was deleted. Written only by `deleteAccount`, together with a blank `name` and `username` and an empty `calendarSharedWith`. |
 | `updateAt` | timestamp | Server timestamp of the last write. The marker on `usernames/{username}` is a copy of it; a reader compares the two to tell whether their cached profile is current. |
 

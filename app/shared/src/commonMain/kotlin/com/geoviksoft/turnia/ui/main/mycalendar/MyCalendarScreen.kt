@@ -1,7 +1,10 @@
 package com.geoviksoft.turnia.ui.main.mycalendar
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.geoviksoft.turnia.navigation.LocalNavigator
 import com.geoviksoft.turnia.navigation.LocalRootNavigator
@@ -10,6 +13,7 @@ import com.geoviksoft.turnia.navigation.root.routes.RootRoute
 import com.geoviksoft.turnia.navigation.routes.EventTypeDetailData
 import com.geoviksoft.turnia.ui.components.calendar.CalendarViewer
 import com.geoviksoft.turnia.ui.components.daydetail.DayAddMode
+import com.geoviksoft.turnia.ui.system.ads.AdBanner
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
@@ -22,19 +26,23 @@ fun MyCalendarScreen(viewModel: MyCalendarViewModel = koinViewModel()) {
     val navigator = LocalNavigator.current
     val rootNavigator = LocalRootNavigator.current
 
-    CalendarViewer(
-        eventsByDate = (uiState as? MyCalendarUiState.Success)?.eventsByDate.orEmpty(),
-        isLoading = uiState is MyCalendarUiState.Loading,
-        onMonthChanged = viewModel::onMonthChanged,
-        addMode = DayAddMode.Full,
-        onEditGroup = { groupId, _ ->
-            navigator.goTo(MainRoute.GroupDetail(groupId))
-        },
-        onAddPersonalType = {
-            rootNavigator.goTo(RootRoute.EventTypeDetailKey(EventTypeDetailData.NewPersonal))
-        },
-        onAddGroupType = { groupId ->
-            rootNavigator.goTo(RootRoute.EventTypeDetailKey(EventTypeDetailData.NewGroup(groupId)))
-        },
-    )
+    Column(modifier = Modifier.fillMaxSize()) {
+        CalendarViewer(
+            modifier = Modifier.weight(1f),
+            eventsByDate = (uiState as? MyCalendarUiState.Success)?.eventsByDate.orEmpty(),
+            isLoading = uiState is MyCalendarUiState.Loading,
+            onMonthChanged = viewModel::onMonthChanged,
+            addMode = DayAddMode.Full,
+            onEditGroup = { groupId, _ ->
+                navigator.goTo(MainRoute.GroupDetail(groupId))
+            },
+            onAddPersonalType = {
+                rootNavigator.goTo(RootRoute.EventTypeDetailKey(EventTypeDetailData.NewPersonal))
+            },
+            onAddGroupType = { groupId ->
+                rootNavigator.goTo(RootRoute.EventTypeDetailKey(EventTypeDetailData.NewGroup(groupId)))
+            },
+        )
+        AdBanner()
+    }
 }

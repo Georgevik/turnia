@@ -1,5 +1,6 @@
 package com.geoviksoft.turnia.core.di
 
+import com.geoviksoft.turnia.core.data.ads.AdRepositoryImpl
 import com.geoviksoft.turnia.core.data.analytics.AnalyticsImpl
 import com.geoviksoft.turnia.core.data.config.AppConfigRepositoryImpl
 import com.geoviksoft.turnia.core.data.datasource.firestore.GroupEventFirestore
@@ -37,6 +38,7 @@ import com.geoviksoft.turnia.core.data.user.mappers.PersonalEventTypeDocMapper
 import com.geoviksoft.turnia.core.data.user.mappers.UserDocumentMapper
 import com.geoviksoft.turnia.core.data.user.mappers.UsernameErrorMapper
 import com.geoviksoft.turnia.core.domain.analytics.Analytics
+import com.geoviksoft.turnia.core.domain.repository.AdRepository
 import com.geoviksoft.turnia.core.domain.repository.AppConfigRepository
 import com.geoviksoft.turnia.core.domain.repository.FcmDelegate
 import com.geoviksoft.turnia.core.domain.repository.GroupRepository
@@ -153,4 +155,5 @@ val dataModule: Module = module {
     }
     single<PersonalEventRepository> { PersonalEventRepositoryImpl(get(), get(), get(), get()) }
     single<SharedCalendarRepository> { SharedCalendarRepositoryImpl(get(), get()) }
+    single<AdRepository> { AdRepositoryImpl(get(), get(), get()) }
 }

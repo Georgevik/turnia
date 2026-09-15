@@ -48,6 +48,7 @@ import com.geoviksoft.turnia.ui.main.people.model.PersonRowUi
 import com.geoviksoft.turnia.ui.main.system.EmptyState
 import com.geoviksoft.turnia.ui.main.system.ScreenHeader
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
+import com.geoviksoft.turnia.ui.system.ads.AdBanner
 import com.geoviksoft.turnia.ui.system.components.Chevron
 import com.geoviksoft.turnia.ui.system.components.ConfirmationDialog
 import com.geoviksoft.turnia.ui.system.toErrorSnackbar
@@ -94,6 +95,7 @@ fun PeopleScreen(viewModel: PeopleViewModel = koinViewModel()) {
     }
 
     Scaffold(
+        bottomBar = { AdBanner() },
         floatingActionButton = {
             if (success?.filter == PeopleFilter.SHARED_BY_ME && success.sharedByMe.isNotEmpty()) {
                 FloatingActionButton(onClick = { sheetOpen = true }) {

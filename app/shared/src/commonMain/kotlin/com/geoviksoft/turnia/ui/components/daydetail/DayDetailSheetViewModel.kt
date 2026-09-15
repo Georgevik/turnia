@@ -10,6 +10,7 @@ import com.geoviksoft.turnia.core.domain.model.GroupEventType
 import com.geoviksoft.turnia.core.domain.model.PersonalEvent
 import com.geoviksoft.turnia.core.domain.model.PersonalEventType
 import com.geoviksoft.turnia.core.domain.model.SwapError
+import com.geoviksoft.turnia.core.domain.repository.AdRepository
 import com.geoviksoft.turnia.core.domain.repository.GroupRepository
 import com.geoviksoft.turnia.core.domain.repository.PersonalEventRepository
 import com.geoviksoft.turnia.core.domain.repository.UserRepository
@@ -39,6 +40,7 @@ class DayDetailSheetViewModel(
     private val groupRepository: GroupRepository,
     private val personalRepository: PersonalEventRepository,
     private val userRepository: UserRepository,
+    private val adRepository: AdRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<AddEventTypesUi>(AddEventTypesUi.Loading)
@@ -154,6 +156,7 @@ class DayDetailSheetViewModel(
             is GroupEventType -> addNewEvent(eventType, eventTypeUi)
             is PersonalEventType -> addNewEvent(eventType)
         }
+        adRepository.actionPerformed()
     }
 
     private fun addNewEvent(type: GroupEventType, eventTypeUi: EventTypeUi) {
