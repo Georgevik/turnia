@@ -69,7 +69,11 @@ internal class DemoUserRepository : UserRepository {
     override suspend fun signInWithEmail(email: String, password: String): Outcome<Unit, EmailAuthError> =
         Unit.toSuccess()
 
-    override suspend fun createAccountWithEmail(email: String, password: String): Outcome<Unit, EmailAuthError> =
+    override suspend fun createAccountWithEmail(
+        name: String,
+        email: String,
+        password: String,
+    ): Outcome<Unit, EmailAuthError> =
         Unit.toSuccess()
 
     override suspend fun sendPasswordReset(email: String): Outcome<Unit, EmailAuthError> = Unit.toSuccess()

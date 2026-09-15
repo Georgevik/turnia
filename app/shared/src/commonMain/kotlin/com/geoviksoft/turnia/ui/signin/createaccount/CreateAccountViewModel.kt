@@ -3,8 +3,6 @@ package com.geoviksoft.turnia.ui.signin.createaccount
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.geoviksoft.turnia.core.domain.model.EmailAuthError
-import com.geoviksoft.turnia.core.domain.model.PasswordRule
-import com.geoviksoft.turnia.core.domain.model.meetsPasswordPolicy
 import com.geoviksoft.turnia.core.domain.repository.UserRepository
 import com.geoviksoft.turnia.core.system.fold
 import com.geoviksoft.turnia.ui.signin.model.isEmailShaped
@@ -14,31 +12,38 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-data class CreateAccountUi(
-    val email: String = "",
-    val password: String = "",
-    val submitting: Boolean = false,
-    val error: CreateAccountError? = null,
-) {
-    val metRules: Set<PasswordRule> get() = PasswordRule.entries.filterTo(mutableSetOf()) { it.isMetBy(password) }
-    val canSubmit: Boolean get() = !submitting && email.isNotBlank() && password.meetsPasswordPolicy()
+enum class CreateAccountField {
+    Name, Email, Password, Terms, Privacy
 }
-
-enum class CreateAccountError { InvalidEmail, EmailInUse, WeakPassword, Failed }
 
 class CreateAccountViewModel(private val userRepository: UserRepository) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreateAccountUi())
     val uiState: StateFlow<CreateAccountUi> = _uiState.asStateFlow()
 
-    fun onEmailChanged(email: String) = _uiState.update { it.copy(email = email, error = null) }
+    fun onFieldChanged(field: CreateAccountField, value: Any) {
+        when (field) {
+            CreateAccountField.Name -> _uiState.update {
+                it.copy(
+                    name = value as String, error = null
+                )
+            }
+            CreateAccountField.Email -> _uiState.update {
+                it.copy(
+                    email = value as String, error = null
+                )
+            }
+            CreateAccountField.Password -> _uiState.update {
+                it.copy(
+                    password = value as String, error = null
+                )
+            }
+            CreateAccountField.Terms -> _uiState.update { it.copy(termsAccepted = value as Boolean) }
+            CreateAccountField.Privacy -> _uiState.update { it.copy(privacyAccepted = value as Boolean) }
+        }
+    }
 
-    fun onPasswordChanged(password: String) = _uiState.update { it.copy(password = password, error = null) }
-
-    /**
-     * Success needs no handling: the new session replaces the whole stack with Main, and the
-     * complete-name dialog asks for the name this account was born without.
-     */
+    /** Success needs no handling: the new session replaces the whole stack with Main. */
     fun onSubmit() {
         val state = _uiState.value
         if (!state.canSubmit) return
@@ -46,10 +51,16 @@ class CreateAccountViewModel(private val userRepository: UserRepository) : ViewM
 
         _uiState.update { it.copy(submitting = true, error = null) }
         viewModelScope.launch {
-            userRepository.createAccountWithEmail(state.email.trim(), state.password).fold(
+            userRepository.createAccountWithEmail(
+                state.name.trim(), state.email.trim(), state.password
+            ).fold(
                 onSuccess = { },
                 onFailure = { failure ->
-                    _uiState.update { it.copy(submitting = false, error = failure.toCreateAccountError()) }
+                    _uiState.update {
+                        it.copy(
+                            submitting = false, error = failure.toCreateAccountError()
+                        )
+                    }
                 },
             )
         }

@@ -1,0 +1,47 @@
+# Release pipeline
+
+[`workflows/release.yml`](workflows/release.yml) builds both apps in release and uploads them:
+Android to Play's **internal testing** track, iOS to **TestFlight**. Run it from
+GitHub → **Actions** → **Release** → **Run workflow**, choosing `both`, `android` or `ios`.
+
+Promoting a build to production is still done by hand, in Play Console and App Store Connect.
+
+## Versions
+
+- `versionName` (`app/androidApp/build.gradle.kts`) and `MARKETING_VERSION`
+  (`app/iosApp/Configuration/Config.xcconfig`) come from the repo: bump them there for a new version.
+- The build number is the workflow's run number plus `BUILD_NUMBER_OFFSET` (100), passed as
+  `-Pturnia.versionCode` on Android and `CURRENT_PROJECT_VERSION` on iOS. Both stores refuse a
+  build number they have already seen, and this one never repeats. The offset keeps it past every
+  build uploaded by hand before the pipeline existed.
+
+## Secrets
+
+Repository → Settings → Secrets and variables → **Actions**.
+
+### Android
+
+| Secret | What it is |
+|--------|------------|
+| `ANDROID_UPLOAD_KEYSTORE_BASE64` | The upload keystore, base64: `base64 -i upload.jks \| pbcopy` |
+| `ANDROID_UPLOAD_STORE_PASSWORD` | `storePassword` from `keystore.properties` |
+| `ANDROID_UPLOAD_KEY_ALIAS` | `keyAlias` from `keystore.properties` |
+| `ANDROID_UPLOAD_KEY_PASSWORD` | `keyPassword` from `keystore.properties` |
+| `PLAY_SERVICE_ACCOUNT_JSON` | JSON key of a Google Cloud service account invited in Play Console |
+
+The service account: Google Cloud console → IAM → Service accounts → create one and add a JSON key.
+Then Play Console → **Users and permissions** → invite its email, with *Release apps to testing
+tracks* for Turnia. Play only accepts API uploads once the app has had one bundle uploaded by hand.
+
+### iOS
+
+| Secret | What it is |
+|--------|------------|
+| `ASC_KEY_ID` | Key ID of an App Store Connect API key |
+| `ASC_ISSUER_ID` | Issuer ID shown above the keys list |
+| `ASC_KEY_P8` | The contents of the downloaded `AuthKey_XXXX.p8` |
+
+App Store Connect → **Users and Access** → **Integrations** → **App Store Connect API** → generate
+a team key with the **Admin** role. Admin is what lets Xcode create the distribution certificate
+and profile on the runner (cloud signing), so no certificate or profile is stored anywhere. The
+`.p8` can only be downloaded once.

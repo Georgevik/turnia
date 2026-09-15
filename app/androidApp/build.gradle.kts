@@ -71,7 +71,8 @@ android {
         applicationId = "com.geoviksoft.turnia"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 4
+        // The release pipeline passes its own, so two uploads never share one; see .github/workflows/release.yml.
+        versionCode = providers.gradleProperty("turnia.versionCode").orNull?.toInt() ?: 4
         versionName = "1.03"
 
         buildConfigField("String", "WEB_CLIENT_ID", "\"${webClientId()}\"")

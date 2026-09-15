@@ -26,7 +26,8 @@ class UserProvisioner(
 ) {
 
     suspend fun create(
-        firebaseUser: FirebaseUser
+        firebaseUser: FirebaseUser,
+        name: String? = null,
     ): Outcome<UserProfile, UserProfileError> {
         val userId = UserId(firebaseUser.uid)
         Logger.w(TAG, "Empty users/${firebaseUser.uid}. New user")
@@ -35,7 +36,7 @@ class UserProvisioner(
             Logger.e(TAG, "Could not create the private account: $error")
         }
 
-        val name = firebaseUser.displayName.orEmpty()
+        val name = name?.takeIf { it.isNotBlank() } ?: firebaseUser.displayName.orEmpty()
         val username = claimUsername(userId, name).orEmpty()
 
         return remoteProfiles.update(

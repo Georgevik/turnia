@@ -131,7 +131,9 @@
     <string name="signin_email_create_account">Crear cuenta</string>
     <string name="signin_email_password">Contraseña</string>
     <string name="signin_email_no_account">¿No tienes cuenta?</string>
-    <string name="create_account_body">Usa tu email del trabajo o personal. Después te pediremos tu nombre.</string>
+    <string name="create_account_body">Usa tu email del trabajo o personal.</string>
+    <string name="create_account_accept_terms">Acepto los %1$s</string>
+    <string name="create_account_accept_privacy">Acepto la %1$s</string>
     <string name="create_account_password_rules_title">Tu contraseña necesita</string>
     <string name="create_account_password_rule_length">Al menos %1$d caracteres</string>
     <string name="create_account_password_rule_uppercase">Una letra mayúscula</string>

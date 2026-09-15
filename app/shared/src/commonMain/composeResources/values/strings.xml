@@ -131,7 +131,9 @@
     <string name="signin_email_create_account">Create account</string>
     <string name="signin_email_password">Password</string>
     <string name="signin_email_no_account">Don't have an account?</string>
-    <string name="create_account_body">Use your work or personal email. We'll ask for your name next.</string>
+    <string name="create_account_body">Use your work or personal email.</string>
+    <string name="create_account_accept_terms">I accept the %1$s</string>
+    <string name="create_account_accept_privacy">I accept the %1$s</string>
     <string name="create_account_password_rules_title">Your password needs</string>
     <string name="create_account_password_rule_length">At least %1$d characters</string>
     <string name="create_account_password_rule_uppercase">An uppercase letter</string>

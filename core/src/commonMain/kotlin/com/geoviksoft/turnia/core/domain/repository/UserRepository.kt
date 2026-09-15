@@ -19,7 +19,11 @@ interface UserRepository : FcmDelegate {
 
     suspend fun signInWithEmail(email: String, password: String): Outcome<Unit, EmailAuthError>
 
-    suspend fun createAccountWithEmail(email: String, password: String): Outcome<Unit, EmailAuthError>
+    suspend fun createAccountWithEmail(
+        name: String,
+        email: String,
+        password: String,
+    ): Outcome<Unit, EmailAuthError>
 
     suspend fun sendPasswordReset(email: String): Outcome<Unit, EmailAuthError>
 

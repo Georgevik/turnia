@@ -21,6 +21,7 @@ import com.geoviksoft.turnia.core.system.Outcome
 import com.geoviksoft.turnia.core.system.errorOrNull
 import com.geoviksoft.turnia.core.system.fold
 import com.geoviksoft.turnia.core.system.mapError
+import com.geoviksoft.turnia.core.system.onFailure
 import com.geoviksoft.turnia.core.system.onSuccess
 import com.geoviksoft.turnia.core.system.outcomeCatching
 import com.geoviksoft.turnia.core.system.toFailure
@@ -63,6 +64,13 @@ class UserRepositoryImpl(
 ) : UserRepository, FcmDelegate by fcmDelegate {
 
     private val _userSession = MutableStateFlow<UserSession>(UserSession.Loading)
+
+    /**
+     * The name typed on the sign-up form. Auth has nowhere to carry it into the new session — the
+     * account exists before a display name could be set on it — so it waits here for the profile
+     * that session creates.
+     */
+    private var pendingSignUpName: String? = null
     override val userSession: StateFlow<UserSession> = _userSession.asStateFlow()
 
     override val loggedUserFlow: Flow<User> =
@@ -111,7 +119,8 @@ class UserRepositoryImpl(
 
                 UserProfileError.NotFound -> {
                     // A brand-new account has no subscription document: absent means free tier.
-                    provisioner.create(firebaseUser).valueOrNull()?.let { created ->
+                    provisioner.create(firebaseUser, pendingSignUpName.also { pendingSignUpName = null })
+                        .valueOrNull()?.let { created ->
                         emit(
                             UserSession.Authenticated(
                                 userMapper.map(firebaseUser, created, subscription = null)
@@ -238,11 +247,18 @@ class UserRepositoryImpl(
             auth.signInWithEmailAndPassword(email.trim(), password)
         }
 
-    // The account is born without a name, so the complete-name dialog asks for it straight after.
-    override suspend fun createAccountWithEmail(email: String, password: String): Outcome<Unit, EmailAuthError> =
-        outcomeCatching(TAG, ::toEmailAuthError) {
+    override suspend fun createAccountWithEmail(
+        name: String,
+        email: String,
+        password: String,
+    ): Outcome<Unit, EmailAuthError> {
+        // Before the call: the session it opens reads the name as soon as the account exists.
+        pendingSignUpName = name.trim()
+        return outcomeCatching(TAG, ::toEmailAuthError) {
             auth.createUserWithEmailAndPassword(email.trim(), password)
-        }
+            Unit
+        }.onFailure { pendingSignUpName = null }
+    }
 
     override suspend fun sendPasswordReset(email: String): Outcome<Unit, EmailAuthError> =
         outcomeCatching(TAG, ::toEmailAuthError) {
