@@ -368,11 +368,11 @@ Los genera `python3 store/screenshots/generate.py` (ver *Capturas* en [README.md
 | Campo | Archivo | Tamaño |
 |-------|---------|--------|
 | Icono de la aplicación | `app/androidApp/src/main/ic_launcher_foreground-playstore.png` | 512 × 512 |
-| Gráfico de funciones | `store/screenshots/google-play/feature_graphic.png` | 1024 × 500 |
-| Capturas de teléfono (en orden) | `store/screenshots/google-play/01_calendar.png` … `07_dark_calendar.png` | 1080 × 1920 |
+| Gráfico de funciones | `store/screenshots/google-play/{idioma}/feature_graphic.png` | 1024 × 500 |
+| Capturas de teléfono (en orden) | `store/screenshots/google-play/{idioma}/01_calendar.png` … `07_dark_calendar.png` | 1080 × 1920 |
 
-Las capturas y el gráfico están en español: súbelos a todos los idiomas o solo al predeterminado
-(Play usa los del idioma predeterminado cuando una traducción no tiene los suyos).
+`{idioma}` es `es`, `en`, `fr`, `de` o `it`: sube cada carpeta a la traducción de su idioma, con
+la app y los titulares ya traducidos.
 
 ## Datos de contacto y categoría
 

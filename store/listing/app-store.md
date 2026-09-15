@@ -494,10 +494,13 @@ Las genera `python3 store/screenshots/generate.py`. Súbelas en este orden:
 
 | Tamaño en App Store Connect | Archivo | Píxeles |
 |-----------------------------|---------|---------|
-| iPhone 6,9" | `store/screenshots/app-store/01_calendar.png` … `07_dark_calendar.png` | 1320 × 2868 |
-| iPad 13" | *pendiente — ver [README.md](README.md)* | 2064 × 2752 |
+| iPhone 6,9" | `store/screenshots/app-store/{idioma}/01_calendar.png` … `07_dark_calendar.png` | 1320 × 2868 |
+| iPhone 6,5" | `store/screenshots/app-store-6.5/{idioma}/01_calendar.png` … `07_dark_calendar.png` | 1284 × 2778 |
+| iPad 13" | `store/screenshots/app-store-ipad/{idioma}/01_calendar.png` … `07_dark_calendar.png` | 2064 × 2752 |
 
-App Store Connect escala las de 6,9" al resto de tamaños de iPhone. El icono lo toma del binario.
+`{idioma}` es `es` o `en`, uno por ficha. Francés, alemán e italiano no tienen capturas de iOS: App
+Store Connect usa las del idioma principal (español) en esas fichas. App Store Connect escala las
+de 6,9" al resto de tamaños de iPhone. El icono lo toma del binario.
 
 ## Categoría
 

@@ -11,10 +11,11 @@ revisar las filas ⚠︎ de *formularios.md* y añadir la suscripción a las des
 
 ## Capturas
 
-Salen del modo demo (datos inventados, `demoModule`), en español, y se montan con
-[`store/screenshots/generate.py`](../screenshots/generate.py). Las carpetas generadas no van a git.
+Salen del modo demo (datos inventados, `demoModule`, que ya habla los cinco idiomas) y se montan
+con [`store/screenshots/generate.py`](../screenshots/generate.py), que lleva los titulares en
+es, en, fr, de e it. Las carpetas generadas no van a git.
 
-1. **Android** (emulador de 1080 × 2424, app en español):
+1. **Android** (emulador de 1080 × 2424):
 
    ```bash
    adb shell run-as com.geoviksoft.turnia touch files/demo
@@ -22,28 +23,24 @@ Salen del modo demo (datos inventados, `demoModule`), en español, y se montan c
    ```
 
    Barra de estado limpia con el *demo mode* de System UI (`clock -e hhmm 0941`, sin notificaciones).
-2. **iOS** (iPhone 17 Pro):
+2. **iOS** (iPhone 17 Pro y iPad Pro 13-inch):
 
    ```bash
    xcrun simctl status_bar booted override --time 9:41 --batteryState discharging --batteryLevel 100
    xcrun simctl launch booted com.geoviksoft.turnia.Turnia -TurniaDemo -AppleLanguages "(es)" -AppleLocale es_ES
    ```
 
-3. Guarda cada pantalla en `store/screenshots/raw/{android,ios}/` con su nombre — `1_calendar`
-   (mes), `2_day` (día 24 abierto, cadena de cambios), `3_colleagues` (*Cambios → De mis compañeros*),
-   `4_requests` (*Cambios → Mis peticiones*), `5_group` (*Grupos → Urgencias*), `6_shared`
-   (*Personas → Javier Ruiz*), `7_dark_calendar` (mes en modo oscuro) — y ejecuta:
+   La primera vez aparecen el consentimiento de anuncios de prueba y el permiso de notificaciones:
+   recházalos antes de capturar.
+
+3. Guarda cada pantalla en `store/screenshots/raw/{android,ios,ipad}/{idioma}/` con su nombre —
+   `1_calendar` (mes actual), `2_day` (el día 4 del mes siguiente abierto: la cadena Yo → Sofía →
+   Carlos), `3_colleagues` (*Cambios → De mis compañeros*), `4_requests` (*Cambios → Mis
+   peticiones*), `5_group` (*Grupos → Urgencias*), `6_shared` (*Personas → Javier Ruiz*),
+   `7_dark_calendar` (el mes siguiente en modo oscuro) — y ejecuta:
 
    ```bash
    python3 store/screenshots/generate.py
    ```
 
-## Pendiente: iPad
-
-El target de iOS declara iPhone **y iPad** (`TARGETED_DEVICE_FAMILY = "1,2"`), así que App Store
-Connect exigirá capturas de iPad 13" (2064 × 2752) antes de enviar a revisión. Dos opciones:
-
-- **Solo iPhone**: `TARGETED_DEVICE_FAMILY = 1`. La interfaz es de teléfono; en iPad la app sigue
-  pudiéndose instalar en modo compatibilidad y no piden capturas de iPad.
-- **Mantener iPad**: capturar las mismas pantallas en el simulador *iPad Pro 13-inch* y añadir un
-  destino `app-store-ipad` a `generate.py`.
+   Un idioma al que le falte alguna captura se salta sin error.
