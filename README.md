@@ -73,14 +73,12 @@ cd firebase && firebase deploy --only hosting
 
 ## Releasing
 
-Releases go out through a manual GitHub Actions workflow: **Actions → Release → Run workflow**.
-It uploads Android to Play's internal testing track and iOS to TestFlight, and sets the build number
-itself. Promoting a build to production is done in each store's console.
+Releases go out through a manual GitHub Actions workflow: **Actions → Release → Run workflow**,
+typing the version name (e.g. `1.04`). It uploads Android to Play's internal testing track and iOS to
+TestFlight, with the same version name on both and a build number it sets itself. Promoting a build
+to production is done in each store's console.
 
-Bump `versionName` in [`app/androidApp/build.gradle.kts`](app/androidApp/build.gradle.kts) and
-`MARKETING_VERSION` in [`app/iosApp/Configuration/Config.xcconfig`](app/iosApp/Configuration/Config.xcconfig)
-before a new version. The secrets the workflow needs, and how to create them, are in
-[.github/RELEASE.md](.github/RELEASE.md).
+The secrets the workflow needs, and how to create them, are in [.github/RELEASE.md](.github/RELEASE.md).
 
 To build a signed Android bundle locally, copy
 [`keystore.properties.example`](keystore.properties.example) to `keystore.properties` and run

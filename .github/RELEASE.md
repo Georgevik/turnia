@@ -2,14 +2,17 @@
 
 [`workflows/release.yml`](workflows/release.yml) builds both apps in release and uploads them:
 Android to Play's **internal testing** track, iOS to **TestFlight**. Run it from
-GitHub → **Actions** → **Release** → **Run workflow**, choosing `both`, `android` or `ios`.
+GitHub → **Actions** → **Release** → **Run workflow**, typing the version name and choosing `both`,
+`android` or `ios`.
 
 Promoting a build to production is still done by hand, in Play Console and App Store Connect.
 
 ## Versions
 
-- `versionName` (`app/androidApp/build.gradle.kts`) and `MARKETING_VERSION`
-  (`app/iosApp/Configuration/Config.xcconfig`) come from the repo: bump them there for a new version.
+- The **version name** users see (`1.04`) is typed when the workflow is run, and set as
+  `-Pturnia.versionName` on Android and `MARKETING_VERSION` on iOS. It must be up to three
+  period-separated integers, which is all App Store Connect accepts; the first job checks it before
+  anything is built. The values in the repo only apply to local builds.
 - The build number is the workflow's run number plus `BUILD_NUMBER_OFFSET` (100), passed as
   `-Pturnia.versionCode` on Android and `CURRENT_PROJECT_VERSION` on iOS. Both stores refuse a
   build number they have already seen, and this one never repeats. The offset keeps it past every

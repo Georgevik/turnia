@@ -437,8 +437,8 @@ variables on CI. Without either the build still runs and produces an unsigned AP
 ### Release pipeline
 
 A manual GitHub Actions workflow builds both apps and uploads them — Android to Play's internal
-track, iOS to TestFlight. It sets the build number itself; the version name still comes from the
-repo. Secrets and setup: [.github/RELEASE.md](.github/RELEASE.md).
+track, iOS to TestFlight. The version name is typed when it is run and the build number is set by
+the workflow, on both platforms. Secrets and setup: [.github/RELEASE.md](.github/RELEASE.md).
 
 ## iOS signing & Apple setup
 
