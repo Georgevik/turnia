@@ -20,6 +20,8 @@ data class UserDocument(
     /** Hex from `ALL_COLORS`; null until the user picks one. */
     @SerialName(FIELD_BACKGROUND_COLOR) val backgroundColor: String? = null,
     @SerialName(FIELD_CALENDAR_SHARED_WITH) val calendarSharedWith: List<String> = emptyList(),
+    /** Set once the user has done enough in the app to be shown ads, and never cleared. */
+    @SerialName(FIELD_SHOW_ADS) val showAds: Boolean = false,
     // Nullable: a write reads back with the server timestamp unresolved until it is acknowledged.
     @SerialName(FIELD_UPDATE_AT) val updateAt: BaseTimestamp? = Timestamp.ServerTimestamp,
 ) {
@@ -29,6 +31,7 @@ data class UserDocument(
         const val FIELD_ANIMAL_ICON_ID = "animalIconId"
         const val FIELD_BACKGROUND_COLOR = "backgroundColor"
         const val FIELD_CALENDAR_SHARED_WITH = "calendarSharedWith"
+        const val FIELD_SHOW_ADS = "showAds"
         const val FIELD_UPDATE_AT = "updateAt"
     }
 }

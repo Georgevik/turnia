@@ -1,8 +1,8 @@
 package com.geoviksoft.turnia.core.data.datasource.firestore
 
 import com.geoviksoft.turnia.core.data.datasource.firestore.analytics.trackData
-import com.geoviksoft.turnia.core.data.datasource.firestore.analytics.trackedSnapshots
 import com.geoviksoft.turnia.core.data.datasource.firestore.analytics.trackWrite
+import com.geoviksoft.turnia.core.data.datasource.firestore.analytics.trackedSnapshots
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.UserDocument
 import com.geoviksoft.turnia.core.data.datasource.firestore.errors.UserProfileError
 import com.geoviksoft.turnia.core.data.datasource.firestore.sync.SharedListeners
@@ -154,6 +154,29 @@ class UserPathFirestore(
             val syncWrite = userSyncFirestore.writeProfile(batch, uid)
             batch.commit()
             trackWrite(TAG, "updateAvatar")
+            markerWrite?.committed()
+            syncWrite.committed()
+        }
+
+    /** Moves the markers like any profile write, so another device sees the flag without a stale cache. */
+    suspend fun enableShowAds(uid: UserId, username: String): Outcome<Unit, UserProfileError> =
+        outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
+            Logger.i(TAG, "Enable show ads")
+
+            val batch = firestore.batch()
+            batch.set(
+                queryUserDocument(uid),
+                mapOf(
+                    UserDocument.FIELD_SHOW_ADS to true,
+                    UserDocument.FIELD_UPDATE_AT to FieldValue.serverTimestamp,
+                ),
+                merge = true,
+            )
+            val markerWrite = username.takeIf { it.isNotBlank() }
+                ?.let { remoteUsernames.touch(batch, it) }
+            val syncWrite = userSyncFirestore.writeProfile(batch, uid)
+            batch.commit()
+            trackWrite(TAG, "enableShowAds")
             markerWrite?.committed()
             syncWrite.committed()
         }

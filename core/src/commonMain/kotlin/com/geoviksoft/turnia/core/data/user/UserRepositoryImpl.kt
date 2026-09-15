@@ -209,6 +209,14 @@ class UserRepositoryImpl(
             )
     }
 
+    override suspend fun enableShowAds(): Outcome<Unit, Unit> {
+        val user = loggedUser ?: return Unit.toFailure()
+
+        return remoteProfiles.enableShowAds(user.id, user.username)
+            .onSuccess { _userSession.value = UserSession.Authenticated(user.copy(showAds = true)) }
+            .mapError { error -> Logger.e(TAG, "Failed to enable ads: $error") }
+    }
+
     override suspend fun grantCalendarAccess(userId: UserId): Outcome<Unit, Unit> {
         val uid = loggedUser?.id ?: return Unit.toFailure()
 

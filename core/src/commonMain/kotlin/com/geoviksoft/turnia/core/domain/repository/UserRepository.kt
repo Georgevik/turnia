@@ -33,6 +33,9 @@ interface UserRepository : FcmDelegate {
 
     suspend fun updateAvatar(animalIconId: String?, backgroundColor: String?): Outcome<Unit, Unit>
 
+    /** Flags the profile as ready for ads. */
+    suspend fun enableShowAds(): Outcome<Unit, Unit>
+
     suspend fun searchUsers(prefix: String): Outcome<List<UserProfile>, Unit>
 
     suspend fun getProfiles(userIds: List<UserId>): Outcome<List<UserProfile>, Unit>

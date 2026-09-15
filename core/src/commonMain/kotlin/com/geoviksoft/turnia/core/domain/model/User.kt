@@ -7,6 +7,7 @@ data class User(
     val username: String,
     val membership: Membership,
     val avatar: UserProfile.AnimalAvatar = UserProfile.AnimalAvatar.NONE,
+    val showAds: Boolean = false,
     /** False while only Auth has answered: until the profile is read, a blank name proves nothing. */
     val hasProfile: Boolean = false,
 ) {

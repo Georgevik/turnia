@@ -6,6 +6,7 @@ data class UserProfile(
     val name: String,
     val username: String,
     val avatar: AnimalAvatar = AnimalAvatar.NONE,
+    val showAds: Boolean = false,
 ) {
     data class AnimalAvatar(
         val animal: String?,
