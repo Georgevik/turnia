@@ -23,6 +23,11 @@ on:
           - android
           - ios
 
+      runTests:
+        description: Run the Android E2E suite before uploading
+        type: boolean
+        default: true
+
 concurrency:
   group: release
   cancel-in-progress: false
@@ -69,6 +74,7 @@ jobs:
   # the two apps share every line of logic it covers.
   android-e2e:
     needs: validate
+    if: inputs.runTests
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
@@ -152,7 +158,12 @@ jobs:
 
   android:
     needs: [validate, android-e2e]
-    if: inputs.platforms == 'both' || inputs.platforms == 'android'
+    # Skipped E2E tests (runTests unticked) let the upload through; failed ones do not.
+    if: >-
+      !cancelled() &&
+      needs.validate.result == 'success' &&
+      contains(fromJSON('["success", "skipped"]'), needs.android-e2e.result) &&
+      (inputs.platforms == 'both' || inputs.platforms == 'android')
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -202,7 +213,12 @@ jobs:
 
   ios:
     needs: [validate, android-e2e]
-    if: inputs.platforms == 'both' || inputs.platforms == 'ios'
+    # Skipped E2E tests (runTests unticked) let the upload through; failed ones do not.
+    if: >-
+      !cancelled() &&
+      needs.validate.result == 'success' &&
+      contains(fromJSON('["success", "skipped"]'), needs.android-e2e.result) &&
+      (inputs.platforms == 'both' || inputs.platforms == 'ios')
     runs-on: macos-latest
     timeout-minutes: 90
     steps:

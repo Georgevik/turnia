@@ -431,7 +431,8 @@ The 20 critical happy paths run on an Android emulator against the Firebase emul
   tags in `TestTags` (`app/shared/.../ui/system/TestTags.kt`). Renaming a tag or an English string a
   robot matches breaks the suite.
 - A change to a Firestore field is not finished until the fixtures change with it.
-- The Release workflow's `android-e2e` job runs the suite, and both uploads wait for it.
+- The Release workflow's `android-e2e` job runs the suite, and both uploads wait for it. Its
+  `runTests` checkbox (on by default) can skip it.
 
 ### Android release build
 
