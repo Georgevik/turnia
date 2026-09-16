@@ -46,8 +46,6 @@ import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.group_detail_create
 import turnia.app.shared.generated.resources.groups_empty_body
 import turnia.app.shared.generated.resources.groups_empty_title
-import turnia.app.shared.generated.resources.groups_filter_mine_empty_body
-import turnia.app.shared.generated.resources.groups_filter_mine_empty_title
 import turnia.app.shared.generated.resources.groups_join_already_member
 import turnia.app.shared.generated.resources.groups_join_code_not_found
 import turnia.app.shared.generated.resources.groups_join_error
@@ -138,18 +136,16 @@ fun GroupsScreen(viewModel: GroupsViewModel = koinViewModel()) {
                             modifier = Modifier.fillMaxSize(),
                         )
                     } else {
-                        GroupsFilterChips(
-                            selected = current.filter,
-                            pendingCount = current.pendingCount,
-                            onSelected = viewModel::filterSelected,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                        )
-
-                        if (current.groups.isEmpty() && current.requests.isEmpty()) {
-                            NoGroupsYet()
-                        } else {
-                            GroupList(groups = current.groups, requests = current.requests)
+                        if (current.showFilters) {
+                            GroupsFilterChips(
+                                selected = current.filter,
+                                pendingCount = current.pendingCount,
+                                onSelected = viewModel::filterSelected,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            )
                         }
+
+                        GroupList(groups = current.groups, requests = current.requests)
                     }
                 }
             }
@@ -203,15 +199,6 @@ private fun GroupList(
         }
     }
 }
-
-/** Only "Tus grupos" can come up empty: the pending chip is gone once there is nothing pending. */
-@Composable
-private fun NoGroupsYet() = EmptyState(
-    icon = Icons.Default.GroupAdd,
-    title = stringResource(Res.string.groups_filter_mine_empty_title),
-    body = stringResource(Res.string.groups_filter_mine_empty_body),
-    modifier = Modifier.fillMaxSize(),
-)
 
 @Composable
 private fun GroupsMessage.text(): String = stringResource(

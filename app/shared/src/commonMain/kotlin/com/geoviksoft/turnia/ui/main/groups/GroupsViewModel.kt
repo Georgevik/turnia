@@ -18,7 +18,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -37,20 +36,25 @@ class GroupsViewModel(
 
     init {
         viewModelScope.launch {
-            combine(pendingRequests(), groups(), filter) { requests, groups, filter ->
+            combine(pendingRequests(), groups(), filter) { requests, groups, selected ->
+                val showFilters = groups.isNotEmpty() && requests.isNotEmpty()
+                if (!showFilters) filter.value = GroupsFilter.ALL
+
+                val active = if (showFilters) selected else GroupsFilter.ALL
                 _uiState.update { state ->
                     val current = state as? GroupsUi.Success ?: GroupsUi.Success()
                     current.copy(
-                        groups = when (filter) {
+                        groups = when (active) {
                             GroupsFilter.ALL, GroupsFilter.MINE -> groups
                             GroupsFilter.PENDING -> emptyList()
                         },
-                        requests = when (filter) {
+                        requests = when (active) {
                             GroupsFilter.ALL, GroupsFilter.PENDING -> requests
                             GroupsFilter.MINE -> emptyList()
                         },
-                        filter = filter,
+                        filter = active,
                         pendingCount = requests.size,
+                        showFilters = showFilters,
                         isEmpty = groups.isEmpty() && requests.isEmpty(),
                     )
                 }
@@ -76,10 +80,6 @@ class GroupsViewModel(
                         )
                     }
                 }
-            }
-            // The pending chip goes with the last request, so the filter it selected goes too.
-            .onEach { requests ->
-                if (requests.isEmpty()) filter.compareAndSet(GroupsFilter.PENDING, GroupsFilter.ALL)
             }
 
     private fun groups(): Flow<List<GroupRowUi>> =

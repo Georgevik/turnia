@@ -30,8 +30,6 @@ fun GroupsFilterChips(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         GroupsFilter.entries.forEach { filter ->
-            if (filter == GroupsFilter.PENDING && pendingCount == 0) return@forEach
-
             FilterChip(
                 selected = filter == selected,
                 onClick = { onSelected(filter) },
