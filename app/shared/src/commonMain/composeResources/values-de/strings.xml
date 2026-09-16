@@ -330,7 +330,7 @@
     <string name="about_feedback_suggest_subject">Turnia: Vorschlag</string>
     <string name="about_feedback_report_body">Beschreibe, was passiert ist und was du stattdessen erwartet hast.</string>
     <string name="about_feedback_suggest_body">Erzähl uns, was Turnia für dich tun soll.</string>
-    <string name="about_feedback_diagnostics">Version %1$s (%2$s) · %3$s\nBenutzer-ID: %4$s</string>
+    <string name="about_feedback_diagnostics">Version %1$s (%2$s) · %3$s\nID: %4$s</string>
     <string name="about_feedback_no_email">Keine E-Mail-App gefunden. Schreib uns an %1$s</string>
     <string name="about_section_account">Konto</string>
     <string name="about_user_id">Benutzer-ID</string>
