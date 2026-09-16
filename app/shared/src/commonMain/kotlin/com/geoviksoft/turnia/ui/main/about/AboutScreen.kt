@@ -13,10 +13,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Fingerprint
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.PrivacyTip
+import androidx.compose.material.icons.filled.StarRate
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -26,6 +29,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -33,19 +37,30 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.geoviksoft.turnia.navigation.LocalNavigator
+import com.geoviksoft.turnia.ui.system.AppStore
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
+import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
 import com.geoviksoft.turnia.ui.system.components.TurniaLogo
 import com.geoviksoft.turnia.ui.system.rememberAppVersion
+import com.geoviksoft.turnia.ui.system.rememberStoreReview
 import com.geoviksoft.turnia.ui.system.rememberTextSharer
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import turnia.app.shared.generated.resources.Res
+import turnia.app.shared.generated.resources.about_feedback_diagnostics
+import turnia.app.shared.generated.resources.about_feedback_no_email
+import turnia.app.shared.generated.resources.about_feedback_rate_app_store
+import turnia.app.shared.generated.resources.about_feedback_rate_play
+import turnia.app.shared.generated.resources.about_feedback_report
+import turnia.app.shared.generated.resources.about_feedback_suggest
 import turnia.app.shared.generated.resources.about_privacy
 import turnia.app.shared.generated.resources.about_section_account
+import turnia.app.shared.generated.resources.about_section_feedback
 import turnia.app.shared.generated.resources.about_section_legal
 import turnia.app.shared.generated.resources.about_terms
 import turnia.app.shared.generated.resources.about_title
@@ -56,10 +71,39 @@ import turnia.app.shared.generated.resources.about_version
 import turnia.app.shared.generated.resources.app_name
 import turnia.app.shared.generated.resources.calendar_back
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AboutScreen(viewModel: AboutViewModel = koinViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbar = LocalSnackbar.current
+    val version = rememberAppVersion()
+
+    AboutScreenContent(
+        state = state,
+        onFeedback = { kind -> viewModel.feedbackRequested(kind, version) },
+    )
+
+    state.feedbackMail?.let { mail ->
+        FeedbackMailLauncher(
+            mail = mail,
+            onOpened = viewModel::feedbackMailOpened,
+            onFailed = viewModel::feedbackMailFailed,
+        )
+    }
+
+    state.userMessage?.let { message ->
+        val text = when (message) {
+            AboutMessage.NoEmailApp -> stringResource(Res.string.about_feedback_no_email, state.supportEmail)
+        }
+        LaunchedEffect(message) {
+            snackbar.showSnackbar(text)
+            viewModel.userMessageShown()
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AboutScreenContent(state: AboutUi, onFeedback: (FeedbackKind) -> Unit) {
     val navigator = LocalNavigator.current
     val uriHandler = LocalUriHandler.current
 
@@ -86,6 +130,10 @@ fun AboutScreen(viewModel: AboutViewModel = koinViewModel()) {
                 .padding(horizontal = 16.dp),
         ) {
             AppHeader()
+
+            FeedbackSection(onFeedback = onFeedback)
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
 
             SectionHeader(stringResource(Res.string.about_section_legal))
             val termsUrl = LegalLinks.terms
@@ -125,6 +173,59 @@ private fun AppHeader() {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+    }
+}
+
+@Composable
+private fun FeedbackSection(onFeedback: (FeedbackKind) -> Unit) {
+    val storeReview = rememberStoreReview()
+
+    SectionHeader(stringResource(Res.string.about_section_feedback))
+    LinkRow(Icons.Default.BugReport, stringResource(Res.string.about_feedback_report)) {
+        onFeedback(FeedbackKind.REPORT)
+    }
+    LinkRow(Icons.Default.Lightbulb, stringResource(Res.string.about_feedback_suggest)) {
+        onFeedback(FeedbackKind.SUGGESTION)
+    }
+    LinkRow(
+        icon = Icons.Default.StarRate,
+        label = stringResource(
+            when (storeReview.store) {
+                AppStore.GOOGLE_PLAY -> Res.string.about_feedback_rate_play
+                AppStore.APP_STORE -> Res.string.about_feedback_rate_app_store
+            }
+        ),
+        onClick = storeReview::open,
+    )
+}
+
+/** Resolves the mail the ViewModel asked for and hands it to the mail app. */
+@Composable
+private fun FeedbackMailLauncher(mail: FeedbackMailUi, onOpened: () -> Unit, onFailed: () -> Unit) {
+    val uriHandler = LocalUriHandler.current
+    val subject = stringResource(mail.subject)
+    val prompt = stringResource(mail.prompt)
+    val diagnostics = stringResource(
+        Res.string.about_feedback_diagnostics,
+        mail.versionName,
+        mail.versionBuild,
+        mail.system,
+        mail.userId,
+    )
+
+    LaunchedEffect(mail) {
+        val uri = FeedbackMail.uri(
+            address = mail.address,
+            subject = subject,
+            body = "$prompt\n\n\n\n—\n$diagnostics",
+        )
+        try {
+            uriHandler.openUri(uri)
+            onOpened()
+        } catch (_: IllegalArgumentException) {
+            // Thrown on Android when nothing on the device handles mailto.
+            onFailed()
+        }
     }
 }
 
@@ -210,5 +311,16 @@ private fun UserIdRow(userId: String) {
                 modifier = Modifier.size(20.dp),
             )
         }
+    }
+}
+
+@Preview
+@Composable
+fun AboutScreenPreview() {
+    PreviewTurniaTheme {
+        AboutScreenContent(
+            state = AboutUi(userId = "georgeclinton@my-own-personal-domain.com"),
+            onFeedback = {},
+        )
     }
 }

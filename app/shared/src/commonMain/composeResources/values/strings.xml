@@ -321,6 +321,17 @@
     <!-- The page's path on turnia.club (firebase/hosting), in this language. -->
     <string name="legal_terms_path">terms</string>
     <string name="legal_privacy_path">privacy</string>
+    <string name="about_section_feedback">Feedback</string>
+    <string name="about_feedback_report">Report a problem</string>
+    <string name="about_feedback_suggest">Send a suggestion</string>
+    <string name="about_feedback_rate_play">Rate on Google Play</string>
+    <string name="about_feedback_rate_app_store">Rate on the App Store</string>
+    <string name="about_feedback_report_subject">Turnia: problem report</string>
+    <string name="about_feedback_suggest_subject">Turnia: suggestion</string>
+    <string name="about_feedback_report_body">Tell us what happened and what you expected instead.</string>
+    <string name="about_feedback_suggest_body">Tell us what you would like Turnia to do.</string>
+    <string name="about_feedback_diagnostics">Version %1$s (%2$s) · %3$s\nUser ID: %4$s</string>
+    <string name="about_feedback_no_email">No email app found. Write to us at %1$s</string>
     <string name="about_section_account">Account</string>
     <string name="about_user_id">User ID</string>
     <string name="about_user_id_copy">Copy user ID</string>
@@ -353,8 +364,6 @@
     <string name="groups_filter_all">All</string>
     <string name="groups_filter_mine">Your groups</string>
     <string name="groups_filter_pending">Pending (%1$d)</string>
-    <string name="groups_filter_mine_empty_title">No groups yet</string>
-    <string name="groups_filter_mine_empty_body">As soon as an admin accepts your request, the group will show up here.</string>
     <string name="groups_join_title">Got an invitation code?</string>
     <string name="groups_join_menu">Join a group</string>
     <string name="groups_join_body">Join your unit's group with the code a colleague gave you.</string>

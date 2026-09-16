@@ -41,6 +41,9 @@ class RemoteConfigService(
             enableSubscription = remoteConfig.getSafe<Boolean>(
                 RemoteKey.ENABLE_SUBSCRIPTION, false
             ),
+            supportEmail = remoteConfig.getSafe<String>(
+                RemoteKey.SUPPORT_EMAIL, DEFAULT_SUPPORT_EMAIL
+            ).ifBlank { DEFAULT_SUPPORT_EMAIL },
         )
     }
 
@@ -57,7 +60,12 @@ class RemoteConfigService(
             RemoteKey.MIN_ADS_ACTION.value to 0,
             RemoteKey.INVITATION_CODE_LENGTH.value to 6,
             RemoteKey.ENABLE_SUBSCRIPTION.value to false,
+            RemoteKey.SUPPORT_EMAIL.value to DEFAULT_SUPPORT_EMAIL,
         )
+    }
+
+    companion object {
+        private const val DEFAULT_SUPPORT_EMAIL = "geoviksoft@gmail.com"
     }
 
 }
@@ -66,4 +74,5 @@ enum class RemoteKey(val value: String) {
     MIN_ADS_ACTION("minAdsAction"), INVITATION_CODE_LENGTH("invitation_code_length"), ENABLE_SUBSCRIPTION(
         "enableSubscription"
     ),
+    SUPPORT_EMAIL("supportEmail"),
 }

@@ -8,6 +8,7 @@ data class FeatureFlags(
     val minActionsToEnableAds: Int,
     val invitationCodeLength: Int,
     val enableSubscription: Boolean,
+    val supportEmail: String,
 ) {
     val enableAds = minActionsToEnableAds >= 0
 }

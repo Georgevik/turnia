@@ -321,6 +321,17 @@
     <!-- The page's path on turnia.club (firebase/hosting), in this language. -->
     <string name="legal_terms_path">terminos</string>
     <string name="legal_privacy_path">privacidad</string>
+    <string name="about_section_feedback">Comentarios</string>
+    <string name="about_feedback_report">Informar de un problema</string>
+    <string name="about_feedback_suggest">Enviar una sugerencia</string>
+    <string name="about_feedback_rate_play">Valorar en Google Play</string>
+    <string name="about_feedback_rate_app_store">Valorar en la App Store</string>
+    <string name="about_feedback_report_subject">Turnia: informe de problema</string>
+    <string name="about_feedback_suggest_subject">Turnia: sugerencia</string>
+    <string name="about_feedback_report_body">Cuéntanos qué ha pasado y qué esperabas que pasara.</string>
+    <string name="about_feedback_suggest_body">Cuéntanos qué te gustaría que hiciera Turnia.</string>
+    <string name="about_feedback_diagnostics">Versión %1$s (%2$s) · %3$s\nID de usuario: %4$s</string>
+    <string name="about_feedback_no_email">No hay ninguna app de correo. Escríbenos a %1$s</string>
     <string name="about_section_account">Cuenta</string>
     <string name="about_user_id">ID de usuario</string>
     <string name="about_user_id_copy">Copiar el ID de usuario</string>
@@ -353,8 +364,6 @@
     <string name="groups_filter_all">Todos</string>
     <string name="groups_filter_mine">Tus grupos</string>
     <string name="groups_filter_pending">Pendientes (%1$d)</string>
-    <string name="groups_filter_mine_empty_title">Ningún grupo todavía</string>
-    <string name="groups_filter_mine_empty_body">En cuanto un admin acepte tu petición, el grupo saldrá aquí.</string>
     <string name="groups_join_title">¿Tienes un código de invitación?</string>
     <string name="groups_join_menu">Unirme a un grupo</string>
     <string name="groups_join_body">Únete al grupo de tu unidad con el código que te haya pasado un compañero.</string>
