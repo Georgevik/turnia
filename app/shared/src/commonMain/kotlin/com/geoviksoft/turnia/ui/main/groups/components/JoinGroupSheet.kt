@@ -16,10 +16,12 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
+import com.geoviksoft.turnia.ui.system.TestTags
 import com.geoviksoft.turnia.ui.system.keyboardAware
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
@@ -58,7 +60,7 @@ fun JoinGroupSheet(
         OutlinedTextField(
             value = code,
             onValueChange = onCodeChanged,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().testTag(TestTags.JOIN_CODE_FIELD),
             enabled = !inProgress,
             singleLine = true,
             shape = RoundedCornerShape(16.dp),

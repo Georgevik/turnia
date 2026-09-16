@@ -19,11 +19,13 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.geoviksoft.turnia.ui.components.daydetail.DayAddMode
 import com.geoviksoft.turnia.ui.components.daydetail.model.EventTypeSectionUi
 import com.geoviksoft.turnia.ui.components.daydetail.model.EventTypeUi
+import com.geoviksoft.turnia.ui.system.TestTags
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.day_detail_group_events
@@ -136,7 +138,11 @@ private fun EventTypeChipRow(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         events.forEach { eventType ->
-            EventTypeChip(chipUi = eventType.chipUi, onClick = { onPick(eventType) })
+            EventTypeChip(
+                chipUi = eventType.chipUi,
+                onClick = { onPick(eventType) },
+                modifier = Modifier.testTag(TestTags.eventTypeChip(eventType.eventType.id)),
+            )
         }
         trailing?.invoke()
     }

@@ -1,0 +1,366 @@
+{
+  "_comment": "The world every E2E test starts from. See app/androidApp/src/androidTest/.../e2e/README.md for the placeholders and the sync markers the seeder derives.",
+  "auth": [
+    {
+      "uid": "alice",
+      "email": "alice@e2e.turnia.club",
+      "password": "Turnia-e2e-1"
+    },
+    {
+      "uid": "bruno",
+      "email": "bruno@e2e.turnia.club",
+      "password": "Turnia-e2e-1"
+    },
+    {
+      "uid": "carla",
+      "email": "carla@e2e.turnia.club",
+      "password": "Turnia-e2e-1"
+    },
+    {
+      "uid": "dana",
+      "email": "dana@e2e.turnia.club",
+      "password": "Turnia-e2e-1"
+    },
+    {
+      "uid": "irene",
+      "email": "irene@e2e.turnia.club",
+      "password": "Turnia-e2e-1"
+    },
+    {
+      "uid": "nameless",
+      "email": "nameless@e2e.turnia.club",
+      "password": "Turnia-e2e-1"
+    }
+  ],
+  "firestore": {
+    "users/alice": {
+      "name": "Alice Admin",
+      "username": "alice",
+      "calendarSharedWith": [],
+      "showAds": false,
+      "updateAt": "$now"
+    },
+    "usernames/alice": {
+      "username": "alice",
+      "uid": "alice",
+      "updateAt": "$now"
+    },
+    "users/alice/private/account": {
+      "email": "alice@e2e.turnia.club",
+      "fcmTokens": [],
+      "notificationsEnabled": true,
+      "updateAt": "$now"
+    },
+    "users/alice/private/preferences": {
+      "groupEventTypeColors": {},
+      "updateAt": "$now"
+    },
+    "users/bruno": {
+      "name": "Bruno Bravo",
+      "username": "bruno",
+      "calendarSharedWith": [
+        "alice"
+      ],
+      "showAds": false,
+      "updateAt": "$now"
+    },
+    "usernames/bruno": {
+      "username": "bruno",
+      "uid": "bruno",
+      "updateAt": "$now"
+    },
+    "users/bruno/private/account": {
+      "email": "bruno@e2e.turnia.club",
+      "fcmTokens": [],
+      "notificationsEnabled": true,
+      "updateAt": "$now"
+    },
+    "users/bruno/private/preferences": {
+      "groupEventTypeColors": {},
+      "updateAt": "$now"
+    },
+    "users/carla": {
+      "name": "Carla Cruz",
+      "username": "carla",
+      "calendarSharedWith": [],
+      "showAds": false,
+      "updateAt": "$now"
+    },
+    "usernames/carla": {
+      "username": "carla",
+      "uid": "carla",
+      "updateAt": "$now"
+    },
+    "users/carla/private/account": {
+      "email": "carla@e2e.turnia.club",
+      "fcmTokens": [],
+      "notificationsEnabled": true,
+      "updateAt": "$now"
+    },
+    "users/carla/private/preferences": {
+      "groupEventTypeColors": {},
+      "updateAt": "$now"
+    },
+    "users/dana": {
+      "name": "Dana Doe",
+      "username": "dana",
+      "calendarSharedWith": [],
+      "showAds": false,
+      "updateAt": "$now"
+    },
+    "usernames/dana": {
+      "username": "dana",
+      "uid": "dana",
+      "updateAt": "$now"
+    },
+    "users/dana/private/account": {
+      "email": "dana@e2e.turnia.club",
+      "fcmTokens": [],
+      "notificationsEnabled": true,
+      "updateAt": "$now"
+    },
+    "users/dana/private/preferences": {
+      "groupEventTypeColors": {},
+      "updateAt": "$now"
+    },
+    "users/irene": {
+      "name": "Irene Ibarra",
+      "username": "irene",
+      "calendarSharedWith": [],
+      "showAds": false,
+      "updateAt": "$now"
+    },
+    "usernames/irene": {
+      "username": "irene",
+      "uid": "irene",
+      "updateAt": "$now"
+    },
+    "users/irene/private/account": {
+      "email": "irene@e2e.turnia.club",
+      "fcmTokens": [],
+      "notificationsEnabled": true,
+      "updateAt": "$now"
+    },
+    "users/irene/private/preferences": {
+      "groupEventTypeColors": {},
+      "updateAt": "$now"
+    },
+    "users/nameless": {
+      "name": "",
+      "username": "nameless1",
+      "calendarSharedWith": [],
+      "showAds": false,
+      "updateAt": "$now"
+    },
+    "usernames/nameless1": {
+      "username": "nameless1",
+      "uid": "nameless",
+      "updateAt": "$now"
+    },
+    "users/nameless/private/account": {
+      "email": "nameless@e2e.turnia.club",
+      "fcmTokens": [],
+      "notificationsEnabled": true,
+      "updateAt": "$now"
+    },
+    "users/nameless/private/preferences": {
+      "groupEventTypeColors": {},
+      "updateAt": "$now"
+    },
+    "groups/urgencias": {
+      "name": "Urgencias",
+      "color": "#E57373",
+      "memberUids": [
+        "alice",
+        "bruno",
+        "carla"
+      ],
+      "revokedUids": [],
+      "members": {
+        "alice": {
+          "name": "Alice Admin",
+          "username": "alice"
+        },
+        "bruno": {
+          "name": "Bruno Bravo",
+          "username": "bruno"
+        },
+        "carla": {
+          "name": "Carla Cruz",
+          "username": "carla"
+        }
+      },
+      "adminUids": [
+        "alice"
+      ],
+      "groupEventTypes": [
+        {
+          "id": "manana",
+          "name": "Mañana",
+          "acronym": "MN",
+          "description": null,
+          "startTime": "08:00",
+          "endTime": "15:00",
+          "swappable": true,
+          "color": "#4DB6AC"
+        },
+        {
+          "id": "noche",
+          "name": "Noche",
+          "acronym": "NC",
+          "description": null,
+          "startTime": "22:00",
+          "endTime": "08:00",
+          "swappable": false,
+          "color": "#7986CB"
+        }
+      ],
+      "invitation": {
+        "code": "URG001",
+        "active": true,
+        "autoApprove": false,
+        "expiresAt": null
+      },
+      "updateAt": "$now"
+    },
+    "groups/planta": {
+      "name": "Planta",
+      "color": "#81C784",
+      "memberUids": [
+        "bruno"
+      ],
+      "revokedUids": [],
+      "members": {
+        "bruno": {
+          "name": "Bruno Bravo",
+          "username": "bruno"
+        }
+      },
+      "adminUids": [
+        "bruno"
+      ],
+      "groupEventTypes": [
+        {
+          "id": "tarde",
+          "name": "Tarde",
+          "acronym": "TD",
+          "description": null,
+          "startTime": "15:00",
+          "endTime": "22:00",
+          "swappable": true,
+          "color": "#FFB74D"
+        }
+      ],
+      "invitation": {
+        "code": "PLA001",
+        "active": true,
+        "autoApprove": true,
+        "expiresAt": null
+      },
+      "updateAt": "$now"
+    },
+    "groups/urgencias/events/e1": {
+      "ownerId": "alice",
+      "assigneeId": "alice",
+      "groupEventTypeId": "manana",
+      "date": "$date(+3)",
+      "yearMonth": "$yearMonth(+3)",
+      "onSwap": true,
+      "history": [],
+      "isDeleted": false,
+      "updateAt": "$now"
+    },
+    "groups/urgencias/events/e2": {
+      "ownerId": "alice",
+      "assigneeId": "bruno",
+      "groupEventTypeId": "manana",
+      "date": "$date(+4)",
+      "yearMonth": "$yearMonth(+4)",
+      "onSwap": false,
+      "history": [
+        {
+          "type": "transferred",
+          "actorUid": "bruno",
+          "fromUid": "alice",
+          "toUid": "bruno",
+          "timestamp": "$now"
+        }
+      ],
+      "isDeleted": false,
+      "updateAt": "$now"
+    },
+    "groups/urgencias/events/e3": {
+      "ownerId": "alice",
+      "assigneeId": "bruno",
+      "groupEventTypeId": "manana",
+      "date": "$date(+5)",
+      "yearMonth": "$yearMonth(+5)",
+      "onSwap": true,
+      "history": [
+        {
+          "type": "transferred",
+          "actorUid": "bruno",
+          "fromUid": "alice",
+          "toUid": "bruno",
+          "timestamp": "$now"
+        }
+      ],
+      "isDeleted": false,
+      "updateAt": "$now"
+    },
+    "groups/urgencias/events/e4": {
+      "ownerId": "alice",
+      "assigneeId": "alice",
+      "groupEventTypeId": "manana",
+      "date": "$date(+6)",
+      "yearMonth": "$yearMonth(+6)",
+      "onSwap": false,
+      "history": [],
+      "isDeleted": false,
+      "updateAt": "$now"
+    },
+    "groups/urgencias/events/e5": {
+      "ownerId": "carla",
+      "assigneeId": "carla",
+      "groupEventTypeId": "noche",
+      "date": "$date(+7)",
+      "yearMonth": "$yearMonth(+7)",
+      "onSwap": false,
+      "history": [],
+      "isDeleted": false,
+      "updateAt": "$now"
+    },
+    "groups/urgencias/joinRequests/irene": {
+      "name": "Irene Ibarra",
+      "username": "irene",
+      "groupName": "Urgencias",
+      "status": "pending",
+      "requestedAt": "$now",
+      "respondedAt": null
+    },
+    "users/irene/private/joinRequests": {
+      "groupIds": [
+        "urgencias"
+      ],
+      "updateAt": "$now"
+    },
+    "users/alice/personalEventTypes/curso": {
+      "name": "Curso",
+      "color": "#BA68C8",
+      "acronym": "CUR",
+      "description": null,
+      "startTime": null,
+      "endTime": null,
+      "isDeleted": false,
+      "updateAt": "$now"
+    },
+    "users/alice/personalEvents/p1": {
+      "typeId": "curso",
+      "date": "$date(+2)",
+      "notes": null,
+      "isDeleted": false,
+      "yearMonth": "$yearMonth(+2)",
+      "updateAt": "$now"
+    }
+  }
+}

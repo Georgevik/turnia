@@ -19,6 +19,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import com.geoviksoft.turnia.ui.system.TestTags
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.group_detail_create
@@ -40,6 +42,7 @@ fun GroupsFabMenu(
             ToggleFloatingActionButton(
                 checked = expanded,
                 onCheckedChange = { expanded = it },
+                modifier = Modifier.testTag(TestTags.GROUPS_FAB),
             ) {
                 val icon by remember {
                     derivedStateOf {

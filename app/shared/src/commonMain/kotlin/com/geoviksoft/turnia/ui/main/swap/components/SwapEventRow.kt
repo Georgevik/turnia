@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.isSpecified
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -45,6 +46,7 @@ import com.geoviksoft.turnia.ui.components.event.GroupLabel
 import com.geoviksoft.turnia.ui.components.event.TransferTrail
 import com.geoviksoft.turnia.ui.main.swap.model.SwapRequesterUi
 import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
+import com.geoviksoft.turnia.ui.system.TestTags
 import com.geoviksoft.turnia.ui.system.components.UserAvatar
 import com.geoviksoft.turnia.ui.system.components.UserAvatarSize
 import com.geoviksoft.turnia.ui.system.successColors
@@ -89,7 +91,7 @@ fun SwapEventRow(
     }
 
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().testTag(TestTags.swapEvent(event.id)),
         shape = RoundedCornerShape(16.dp),
         color = cardColor,
         shadowElevation = 1.dp,
