@@ -28,3 +28,6 @@ keystore.properties
 # Store screenshots: rebuilt by store/screenshots/generate.py from demo-mode captures
 /store/screenshots/*
 !/store/screenshots/generate.py
+
+# Firebase CLI deploy cache
+/firebase/.firebase/
