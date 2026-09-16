@@ -30,7 +30,7 @@ fun EventTypeChip(
         contentColor = chipUi.textColor,
     ) {
         Row(
-            modifier = modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {

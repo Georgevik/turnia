@@ -8,7 +8,6 @@ import com.geoviksoft.turnia.core.domain.model.GroupEvent
 import com.geoviksoft.turnia.core.domain.model.GroupId
 import com.geoviksoft.turnia.core.domain.model.PersonalEvent
 import com.geoviksoft.turnia.core.domain.model.UserId
-import com.geoviksoft.turnia.core.system.toLocalDate
 import com.geoviksoft.turnia.ui.system.color.entityColor
 import com.geoviksoft.turnia.ui.system.color.readableTextColor
 import com.geoviksoft.turnia.ui.system.color.toComposeColorOrNull
@@ -168,7 +167,7 @@ fun PersonalEvent.toUi(
     source = EventSource.PERSONAL,
     name = type.name,
     acronym = type.acronym,
-    date = date.toLocalDate(),
+    date = date,
     background = type.color.toComposeColorOrNull() ?: Color.Unspecified,
     timeRange = type.hours(),
     removable = removable,

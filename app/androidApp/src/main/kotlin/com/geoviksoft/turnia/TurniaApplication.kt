@@ -11,13 +11,14 @@ import com.google.firebase.Firebase
 import com.google.firebase.appcheck.appCheck
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
+import org.koin.core.context.loadKoinModules
 import org.koin.core.logger.Level
+import org.koin.core.module.Module
 
-class TurniaApplication : Application() {
+open class TurniaApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        // Before anything reaches Firebase: a call made earlier would go out with no App Check token.
-        Firebase.appCheck.installAppCheckProviderFactory(appCheckProviderFactory())
+        installFirebase()
         initKoin(
             webClientId = BuildConfig.WEB_CLIENT_ID,
             buildInfo = BuildInfo(isDebug = BuildConfig.DEBUG),
@@ -27,8 +28,18 @@ class TurniaApplication : Application() {
             androidContext(this@TurniaApplication)
             modules(AndroidAppModule)
         }
+        // After start: initKoin loads its own modules after the config block, and the last one wins.
+        loadKoinModules(extraModules())
         createNotificationChannel()
     }
+
+    /** Runs before anything reaches Firebase: a call made earlier would go out with no App Check token. */
+    protected open fun installFirebase() {
+        Firebase.appCheck.installAppCheckProviderFactory(appCheckProviderFactory())
+    }
+
+    /** Loaded last, so the E2E tests can replace what has no emulator (Remote Config, FCM, consent). */
+    protected open fun extraModules(): List<Module> = emptyList()
 
     /**
      * The channel the manifest points FCM at, created before the first message can arrive.

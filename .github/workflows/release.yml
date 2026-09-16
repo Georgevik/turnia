@@ -23,6 +23,11 @@ on:
           - android
           - ios
 
+      runTests:
+        description: Run the Android E2E suite before uploading
+        type: boolean
+        default: true
+
 concurrency:
   group: release
   cancel-in-progress: false
@@ -64,9 +69,101 @@ jobs:
             echo "| \`$BUILD_NAME\` | \`$number\` |"
           } >> "$GITHUB_STEP_SUMMARY"
 
-  android:
+  # The 20 critical happy paths (app/androidApp/src/androidTest), on an Android emulator against the
+  # Firebase emulators seeded from firebase/test/fixtures. Android only, but it gates both uploads:
+  # the two apps share every line of logic it covers.
+  android-e2e:
     needs: validate
-    if: inputs.platforms == 'both' || inputs.platforms == 'android'
+    if: inputs.runTests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      API_LEVEL: 34
+    steps:
+      - uses: actions/checkout@v4
+
+      # Temurin 21 also runs the Firestore emulator, which needs Java 21 or newer.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: firebase/functions/package-lock.json
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Build the Cloud Functions
+        run: |
+          npm ci --prefix firebase/functions
+          npm run build --prefix firebase/functions
+
+      - name: Install the Firebase CLI
+        run: npm install --global firebase-tools@15.30.0
+
+      # Built before the emulator boots, so its minutes are not spent waiting on Gradle.
+      - name: Build the app and the tests
+        run: ./gradlew :app:androidApp:assembleDebug :app:androidApp:assembleDebugAndroidTest
+
+      - name: Cache the AVD
+        uses: actions/cache@v4
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-${{ env.API_LEVEL }}-google_apis-x86_64
+
+      - name: Create the AVD snapshot
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ env.API_LEVEL }}
+          target: google_apis
+          arch: x86_64
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: false
+          script: echo "Generated the AVD snapshot"
+
+      # The runner executes each script line on its own, so the whole run is one line.
+      - name: Run the E2E suite
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ env.API_LEVEL }}
+          target: google_apis
+          arch: x86_64
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: cd firebase && firebase emulators:exec --only auth,firestore,functions --project turnia-23ebc "cd .. && ./gradlew :app:androidApp:connectedDebugAndroidTest"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-e2e-report
+          path: |
+            app/androidApp/build/reports/androidTests/connected
+            app/androidApp/build/outputs/androidTest-results/connected
+            firebase/*-debug.log
+
+  android:
+    needs: [validate, android-e2e]
+    # Skipped E2E tests (runTests unticked) let the upload through; failed ones do not.
+    if: >-
+      !cancelled() &&
+      needs.validate.result == 'success' &&
+      contains(fromJSON('["success", "skipped"]'), needs.android-e2e.result) &&
+      (inputs.platforms == 'both' || inputs.platforms == 'android')
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -115,8 +212,13 @@ jobs:
           status: completed
 
   ios:
-    needs: validate
-    if: inputs.platforms == 'both' || inputs.platforms == 'ios'
+    needs: [validate, android-e2e]
+    # Skipped E2E tests (runTests unticked) let the upload through; failed ones do not.
+    if: >-
+      !cancelled() &&
+      needs.validate.result == 'success' &&
+      contains(fromJSON('["success", "skipped"]'), needs.android-e2e.result) &&
+      (inputs.platforms == 'both' || inputs.platforms == 'ios')
     runs-on: macos-latest
     timeout-minutes: 90
     steps:

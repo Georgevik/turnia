@@ -24,8 +24,13 @@ fun Instant.toTimestamp(): Timestamp = Timestamp(
 
 fun LocalDate.toInstant() = atStartOfDayIn(TimeZone.currentSystemDefault())
 
-fun parseEventDate(value: String): Instant =
-    Instant.parseOrNull(value) ?: LocalDate.parse(value).toInstant()
+/**
+ * A personal event's day, as stored: `YYYY-MM-DD`. Events written for a while carried the local
+ * midnight as a UTC instant instead; those are read back as the day of that instant here, which is
+ * the day their author picked whenever this device shares their time zone.
+ */
+fun parseEventDate(value: String): LocalDate =
+    Instant.parseOrNull(value)?.toLocalDate() ?: LocalDate.parse(value)
 
 fun BaseTimestamp?.toInstantOrNull(): Instant? = when (this) {
     is Timestamp -> this.toInstant()

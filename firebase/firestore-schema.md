@@ -291,9 +291,12 @@ An instance of a personal event type on a date. Notes live **on the event**, not
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `personalEventTypeId` | string | References `personalEventTypes/{typeId}`. |
-| `date` | string | `YYYY-MM-DD`. |
+| `typeId` | string | References `personalEventTypes/{typeId}`. |
+| `date` | string | `YYYY-MM-DD`, the same day on every device. Events written before 2026-09 may hold a UTC instant instead (the author's local midnight); readers accept both. |
+| `yearMonth` | string | `YYYY-MM` of `date`: what the calendar queries by. |
 | `notes` | string \| null | Free-text notes for this event, written by the owner from the day sheet. Blank is stored as `null`. |
+| `isDeleted` | bool | Soft delete. |
+| `updateAt` | timestamp | Server timestamp of the last write. |
 
 **Access**: written by the owner; read by the owner and by UIDs in `calendarSharedWith`.
 

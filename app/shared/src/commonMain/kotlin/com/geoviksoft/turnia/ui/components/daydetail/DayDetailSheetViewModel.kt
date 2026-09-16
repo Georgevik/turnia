@@ -15,7 +15,6 @@ import com.geoviksoft.turnia.core.domain.repository.GroupRepository
 import com.geoviksoft.turnia.core.domain.repository.PersonalEventRepository
 import com.geoviksoft.turnia.core.domain.repository.UserRepository
 import com.geoviksoft.turnia.core.system.onFailure
-import com.geoviksoft.turnia.core.system.toInstant
 import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
 import com.geoviksoft.turnia.ui.components.calendar.model.EventSource
 import com.geoviksoft.turnia.ui.components.daydetail.components.EventTypeChipUi
@@ -186,7 +185,7 @@ class DayDetailSheetViewModel(
                 PersonalEvent(
                     id = EventId(Uuid.random().toString()),
                     type = type,
-                    date = date.toInstant(),
+                    date = date,
                     notes = null,
                 )
             )

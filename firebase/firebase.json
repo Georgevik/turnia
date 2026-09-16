@@ -1,7 +1,9 @@
 {
   "functions": {
     "source": "functions",
-    "predeploy": ["npm --prefix \"$RESOURCE_DIR\" run build"]
+    "predeploy": [
+      "npm --prefix \"$RESOURCE_DIR\" run build"
+    ]
   },
   "firestore": {
     "rules": "firestore.rules",
@@ -9,21 +11,51 @@
   },
   "hosting": {
     "public": "hosting",
-    "ignore": ["**/node_modules/**"],
+    "ignore": [
+      "**/node_modules/**"
+    ],
     "appAssociation": "NONE",
     "cleanUrls": true,
     "rewrites": [
-      { "source": "/join/**", "destination": "/index.html" }
+      {
+        "source": "/join/**",
+        "destination": "/index.html"
+      }
     ],
     "headers": [
       {
         "source": "/.well-known/apple-app-site-association",
-        "headers": [{ "key": "Content-Type", "value": "application/json" }]
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ]
       },
       {
         "source": "/.well-known/assetlinks.json",
-        "headers": [{ "key": "Content-Type", "value": "application/json" }]
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ]
       }
     ]
+  },
+  "emulators": {
+    "singleProjectMode": true,
+    "auth": {
+      "port": 9099
+    },
+    "firestore": {
+      "port": 8080
+    },
+    "functions": {
+      "port": 5001
+    },
+    "ui": {
+      "enabled": false
+    }
   }
 }

@@ -36,15 +36,16 @@ internal expect fun rememberAdConsentPlatform(): AdConsentPlatform?
  * usable until the user has answered the consent message. Outside the regions that need consent the
  * SDK answers straight away that ads can be requested.
  */
-class AdConsent {
+class AdConsent(granted: AdConsentStatus? = null) {
 
-    private val _status = MutableStateFlow<AdConsentStatus?>(null)
+    private val _status = MutableStateFlow(granted)
     val status: StateFlow<AdConsentStatus?> = _status.asStateFlow()
 
     private val _gathering = MutableStateFlow(false)
     val gathering: StateFlow<Boolean> = _gathering.asStateFlow()
 
-    private var gathered = false
+    // A status handed in up front (the E2E tests, where UMP must not reach the network) is final.
+    private var gathered = granted?.canRequestAds == true
     private var adsStarted = false
 
     /** Reads the answer stored on the device, which is enough to draw a banner while [gather] runs. */

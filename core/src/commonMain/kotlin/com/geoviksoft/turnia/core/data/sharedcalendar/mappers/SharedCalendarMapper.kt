@@ -99,8 +99,7 @@ class SharedCalendarMapper {
         return PersonalEvent(
             id = EventId(event.eventId),
             type = type,
-            // Written as an instant, but an event older than that carries a bare date.
-            date =  parseEventDate(event.date),
+            date = parseEventDate(event.date),
             notes = event.notes.takeIf { it?.isNotEmpty() == true },
         )
     }

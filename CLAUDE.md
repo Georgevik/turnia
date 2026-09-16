@@ -420,6 +420,20 @@ Use the run configurations provided by the run widget in your IDE's toolbar. You
 - Android app: `./gradlew :app:androidApp:assembleDebug`
 - iOS app: open the [/app/iosApp](./app/iosApp) directory in Xcode and run it from there.
 
+### E2E tests
+
+The 20 critical happy paths run on an Android emulator against the Firebase emulators, seeded from
+[`firebase/test/fixtures`](firebase/test/README.md) — see that README to run them. They live in
+`app/androidApp/src/androidTest/.../e2e`: `flows/` holds the tests, `robots/` drives the screens,
+`infra/` seeds the emulators and points the app at them (`TurniaTestApplication`).
+
+- Robots find nodes by their **English** text; where the text is not unique on screen they use the
+  tags in `TestTags` (`app/shared/.../ui/system/TestTags.kt`). Renaming a tag or an English string a
+  robot matches breaks the suite.
+- A change to a Firestore field is not finished until the fixtures change with it.
+- The Release workflow's `android-e2e` job runs the suite, and both uploads wait for it. Its
+  `runTests` checkbox (on by default) can skip it.
+
 ### Android release build
 
 Release builds are minified and obfuscated by R8, and signed with the **upload key** from
@@ -438,7 +452,8 @@ variables on CI. Without either the build still runs and produces an unsigned AP
 
 A manual GitHub Actions workflow builds both apps and uploads them — Android to Play's internal
 track, iOS to TestFlight. The version name is typed when it is run and the build number is set by
-the workflow, on both platforms. Secrets and setup: [.github/RELEASE.md](.github/RELEASE.md).
+the workflow, on both platforms. Neither app is uploaded unless the Android E2E suite passes first.
+Secrets and setup: [.github/RELEASE.md](.github/RELEASE.md).
 
 ## iOS signing & Apple setup
 

@@ -3,12 +3,11 @@
 Tests that are agreed but not written. Each entry says what it must prove, what has to exist first,
 and the fixture it needs — enough to pick up cold.
 
-> **The project has no tests at all today.** `core/build.gradle.kts:47` and
-> `app/shared/build.gradle.kts:75` both declare a `commonTest` source set with `libs.kotlin.test`,
-> but neither `src/commonTest/` directory exists. There is no Compose UI-test dependency, no
-> Firebase emulator block in `firebase/firebase.json`, and no fixture file: `MockData.kt` (277 lines)
-> was deleted on 2026-09-04 in commit `83887e5` "Remove mocks and use groups firestore". Anything
-> below therefore starts by creating infrastructure, not just a test.
+> **Status (2026-09-16):** the Android E2E suite exists — 20 happy paths against the Firebase
+> emulators, seeded from `firebase/test/fixtures` ([README](firebase/test/README.md)), run by the
+> Release workflow. It covers the offer → take → A→B→C chain and giving a shift back, through the
+> real `takeEvent` / `returnEvent`. What is still pending below is the *unhappy* side: the gates,
+> the FIFO race and the read-cost assertions.
 
 ---
 

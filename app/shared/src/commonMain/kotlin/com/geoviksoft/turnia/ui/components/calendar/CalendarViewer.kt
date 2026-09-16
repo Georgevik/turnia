@@ -44,6 +44,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -53,6 +54,7 @@ import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
 import com.geoviksoft.turnia.ui.components.calendar.model.ThreeDotsOption
 import com.geoviksoft.turnia.ui.components.daydetail.DayAddMode
 import com.geoviksoft.turnia.ui.components.daydetail.DayDetailSheet
+import com.geoviksoft.turnia.ui.system.TestTags
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
@@ -374,7 +376,10 @@ private fun CalendarGrid(
                     val dateInMonth =
                         date.month == month.month && date.year == month.year
                     CalendarCell(
-                        modifier = Modifier.weight(1f),
+                        // Only the month's own days: the grid's leading and trailing days repeat
+                        // on the neighbouring pages, which the pager keeps composed.
+                        modifier = Modifier.weight(1f)
+                            .then(if (dateInMonth) Modifier.testTag(TestTags.day(date)) else Modifier),
                         date = date,
                         inMonth = dateInMonth,
                         isToday = date == today,

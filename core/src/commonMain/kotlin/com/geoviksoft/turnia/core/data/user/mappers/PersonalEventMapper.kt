@@ -7,8 +7,8 @@ import com.geoviksoft.turnia.core.domain.model.EventTypeId
 import com.geoviksoft.turnia.core.domain.model.PersonalEvent
 import com.geoviksoft.turnia.core.domain.model.PersonalEventType
 import com.geoviksoft.turnia.core.system.parseEventDate
-import com.geoviksoft.turnia.core.system.toYearMonth
 import dev.gitlive.firebase.firestore.DocumentSnapshot
+import kotlinx.datetime.yearMonth
 
 class PersonalEventMapper {
 
@@ -16,7 +16,7 @@ class PersonalEventMapper {
         return PersonalEventDocument(
             typeId = event.type.id.value,
             date = event.date.toString(),
-            yearMonth = event.date.toYearMonth().toString(),
+            yearMonth = event.date.yearMonth.toString(),
             notes = event.notes.takeIf { it?.isNotEmpty() == true },
         )
     }

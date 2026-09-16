@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -48,6 +49,7 @@ import com.geoviksoft.turnia.ui.components.event.EventHours
 import com.geoviksoft.turnia.ui.components.event.GroupLabel
 import com.geoviksoft.turnia.ui.components.event.TransferTrail
 import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
+import com.geoviksoft.turnia.ui.system.TestTags
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
@@ -71,7 +73,7 @@ fun DayEventRow(
     onTake: (() -> Unit)? = null,
 ) {
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().testTag(TestTags.dayEvent(event.id)),
         shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surfaceContainerLowest,
         shadowElevation = 1.dp,
@@ -272,7 +274,11 @@ private fun SwapToggle(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
         )
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            modifier = Modifier.testTag(TestTags.SWAP_TOGGLE),
+        )
     }
 }
 

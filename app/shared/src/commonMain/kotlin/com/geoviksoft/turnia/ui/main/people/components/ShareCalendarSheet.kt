@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -32,6 +33,7 @@ import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.ui.main.people.SearchResultUi
 import com.geoviksoft.turnia.ui.main.people.SearchUi
 import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
+import com.geoviksoft.turnia.ui.system.TestTags
 import com.geoviksoft.turnia.ui.system.components.TListItem
 import com.geoviksoft.turnia.ui.system.components.UserAvatar
 import com.geoviksoft.turnia.ui.system.keyboardAware
@@ -63,7 +65,7 @@ fun ShareCalendarSheet(
         OutlinedTextField(
             value = search.query,
             onValueChange = onQueryChanged,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().testTag(TestTags.USER_SEARCH_FIELD),
             singleLine = true,
             shape = RoundedCornerShape(16.dp),
             prefix = { Text("@") },

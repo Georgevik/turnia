@@ -87,7 +87,7 @@ class PersonalEventFirestore(
             val batch = firestore.batch()
             batch.set(firestore.collection(PATH_EVENTS(uid.value)).document(event.id.value), doc)
             val syncWrite =
-                userSyncFirestore.writePersonalEvents(batch, uid, event.date.toYearMonth())
+                userSyncFirestore.writePersonalEvents(batch, uid, event.date.yearMonth)
             batch.commit()
             trackWrite(TAG, "setEvent")
             syncWrite.committed()
