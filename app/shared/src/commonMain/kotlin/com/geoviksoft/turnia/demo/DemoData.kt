@@ -15,7 +15,6 @@ import com.geoviksoft.turnia.core.domain.model.PersonalEventType
 import com.geoviksoft.turnia.core.domain.model.User
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.domain.model.UserProfile
-import com.geoviksoft.turnia.core.system.toInstant
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
@@ -226,7 +225,7 @@ internal class DemoWorld(val today: LocalDate, text: DemoText = DemoText.current
         personal += PersonalEvent(
             id = EventId("demo-course"),
             type = formacion,
-            date = courseDay.toInstant(),
+            date = courseDay,
             notes = text.courseNote,
         )
 
@@ -263,7 +262,7 @@ internal class DemoWorld(val today: LocalDate, text: DemoText = DemoText.current
         val holidayStart = LocalDate(today.year, today.month, 1).plus(1, DateTimeUnit.MONTH).plus(11, DateTimeUnit.DAY)
         (0..4).map { holidayStart.plus(it, DateTimeUnit.DAY) }.forEach { date ->
             events.removeAll { it.assigneeId == lucia.id && it.date == date }
-            personal += PersonalEvent(EventId("demo-holiday-$date"), vacaciones, date.toInstant(), null)
+            personal += PersonalEvent(EventId("demo-holiday-$date"), vacaciones, date, null)
         }
 
         groupEvents = events

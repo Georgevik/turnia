@@ -99,11 +99,10 @@ export const getSharedCalendar = onCall(async (request) => {
   const ownerName = (ownerDoc.get("name") as string | undefined) ?? "";
   if (ownerName) userNames[ownerUid] = ownerName;
 
-  // Personal events in range. Their `date` is a full ISO instant, not the plain "YYYY-MM-DD" a
-  // group event carries, and it is the start of the day in the *writer's* timezone — so string
-  // comparison against a bare date drops the last day, and a day either side can land outside the
-  // range. Both bounds are widened by a day; the client renders each event on its own local date
-  // and simply never draws the surplus.
+  // Personal events in range. Their `date` is a plain "YYYY-MM-DD", but events written for a while
+  // carry a full ISO instant instead — the start of the day in the *writer's* timezone — which a
+  // string comparison against a bare date can push a day either side of the range. Both bounds are
+  // widened by a day for them; the client never draws the surplus.
   const dayShift = (date: string, days: number) =>
     new Date(Date.parse(date) + days * 86_400_000).toISOString().slice(0, 10);
 

@@ -8,6 +8,7 @@ import com.geoviksoft.turnia.e2e.infra.boolean
 import com.geoviksoft.turnia.e2e.infra.string
 import com.geoviksoft.turnia.e2e.robots.AppRobot
 import com.geoviksoft.turnia.e2e.robots.CalendarRobot
+import kotlinx.datetime.yearMonth
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
@@ -75,9 +76,11 @@ class CalendarFlowsTest {
         calendar.openDay(date)
         calendar.addEventOfTypeLabelled("GX")
         calendar.awaitDayShows(date, "GX")
-        // Matched by type alone: the app writes a personal event's date as an instant, not the
-        // YYYY-MM-DD firestore-schema.md documents, and the type is new to this test anyway.
-        val (eventId, _) = Documents.awaitIn("users/alice/personalEvents") { it.string("typeId") == typeId }
+        val (eventId, _) = Documents.awaitIn("users/alice/personalEvents") {
+            it.string("typeId") == typeId &&
+                it.string("date") == date.toString() &&
+                it.string("yearMonth") == date.yearMonth.toString()
+        }
 
         calendar.openDay(date)
         calendar.writeNote(eventId, "Traer bata")

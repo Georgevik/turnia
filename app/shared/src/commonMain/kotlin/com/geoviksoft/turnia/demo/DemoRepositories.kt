@@ -328,7 +328,7 @@ internal class DemoPersonalEventRepository(world: DemoWorld) : PersonalEventRepo
     override fun getEvents(uid: UserId, date: LocalDate, monthDelta: Int): Flow<List<PersonalEvent>> =
         events.map { all ->
             val window = date.minus(monthDelta, DateTimeUnit.MONTH)..date.plus(monthDelta, DateTimeUnit.MONTH)
-            all.filter { it.localDate in window }
+            all.filter { it.date in window }
         }
 }
 
