@@ -1,11 +1,12 @@
 package com.geoviksoft.turnia.e2e.robots
 
-import androidx.compose.ui.test.hasClickAction
-import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.isToggleable
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.junit4.ComposeTestRule
-import androidx.compose.ui.test.performClick
+import androidx.test.espresso.Espresso
 import com.geoviksoft.turnia.e2e.infra.awaitNode
+import com.geoviksoft.turnia.e2e.infra.scrollAndClick
 
 internal class SignInRobot(compose: ComposeTestRule) : AppRobot(compose) {
 
@@ -19,17 +20,17 @@ internal class SignInRobot(compose: ComposeTestRule) : AppRobot(compose) {
     fun createAccount(name: String, email: String, password: String) {
         click("Continue with email")
         click("Create account")
-        // The form's own title says "Create account" too, but only the button can be clicked.
-        compose.awaitNode(hasText(name.let { "Name" }))
         type("Name", name)
         type("Email", email)
         type("Password", password)
-        // Terms and privacy: the only two checkboxes on the form.
-        compose.awaitNode(isToggleable())
-        compose.onAllNodes(isToggleable()).fetchSemanticsNodes().indices.forEach { index ->
-            compose.onAllNodes(isToggleable())[index].performClick()
-        }
-        compose.awaitNode(hasText("Create account") and hasClickAction()).performClick()
+        Espresso.closeSoftKeyboard()
+        // Terms and privacy. The box itself, not its row: the row's centre is the link to the page.
+        val checkbox = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Checkbox)
+        compose.awaitNode(checkbox, useUnmergedTree = true)
+        val boxes = compose.onAllNodes(checkbox, useUnmergedTree = true)
+        boxes.fetchSemanticsNodes().indices.forEach { boxes[it].scrollAndClick() }
+        // The form's own title says "Create account" too, but only the button can be clicked.
+        click("Create account")
     }
 
     fun completeName(name: String) {

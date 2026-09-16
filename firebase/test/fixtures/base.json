@@ -1,5 +1,5 @@
 {
-  "_comment": "The world every E2E test starts from. See app/androidApp/src/androidTest/.../e2e/README.md for the placeholders and the sync markers the seeder derives.",
+  "_comment": "The world every E2E test starts from. Placeholders, derived sync markers and who is who: firebase/test/README.md.",
   "auth": [
     {
       "uid": "alice",

@@ -27,6 +27,12 @@ internal object FirestoreRest {
     private val database get() = "projects/${Emulator.projectId}/databases/(default)"
 
     fun wipe() {
+        // The emulator answers 499 when the wipe cancels a listener the previous test's process
+        // left open; the documents are gone all the same once a retry comes back clean.
+        repeat(WIPE_ATTEMPTS - 1) {
+            if (Http.send("DELETE", "$base/emulator/v1/$database/documents").ok) return
+            Thread.sleep(WIPE_RETRY_MS)
+        }
         Http.send("DELETE", "$base/emulator/v1/$database/documents").requireOk("Wiping Firestore")
     }
 
@@ -115,6 +121,9 @@ internal object FirestoreRest {
             else -> error("Firestore value of type $type is not supported by the E2E helpers")
         }
     }
+
+    private const val WIPE_ATTEMPTS = 5
+    private const val WIPE_RETRY_MS = 500L
 
     // Firestore's own limit on a single commit.
     private const val MAX_WRITES_PER_COMMIT = 500

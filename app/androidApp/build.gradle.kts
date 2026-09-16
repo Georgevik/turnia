@@ -31,6 +31,19 @@ dependencies {
 
     implementation(libs.compose.uiToolingPreview)
     debugImplementation(libs.compose.uiTooling)
+
+    // E2E suite against the Firebase emulators: see src/androidTest and firebase/test.
+    androidTestImplementation(libs.androidx.compose.uiTestJunit4)
+    debugImplementation(libs.androidx.compose.uiTestManifest)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.rules)
+    androidTestImplementation(libs.androidx.testExt.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.kotlinx.serialization.json)
+    // Only to point them at the emulators: core keeps them off the app's own classpath.
+    androidTestImplementation(libs.firebase.firestore)
+    androidTestImplementation(libs.firebase.functions)
+    androidTestUtil(libs.androidx.test.orchestrator)
 }
 
 /** `client_type` of the project's web OAuth client inside `google-services.json`. */
@@ -76,6 +89,19 @@ android {
         versionName = providers.gradleProperty("turnia.versionName").orNull ?: "999 Debug"
 
         buildConfigField("String", "WEB_CLIENT_ID", "\"${webClientId()}\"")
+
+        testInstrumentationRunner = "com.geoviksoft.turnia.e2e.infra.TurniaTestRunner"
+        // A process per test, with the app's data cleared: no Koin singleton or Firestore cache
+        // survives from one test into the next.
+        testInstrumentationRunnerArguments["clearPackageData"] = "true"
+    }
+    testOptions {
+        execution = "ANDROIDX_TEST_ORCHESTRATOR"
+        animationsDisabled = true
+    }
+    sourceSets {
+        // The worlds the E2E tests seed, kept next to the Firebase project they describe.
+        getByName("androidTest").assets.srcDir(rootProject.file("firebase/test/fixtures"))
     }
     packaging {
         resources {
