@@ -39,6 +39,8 @@ jobs:
   # be refused at the very end of the iOS job; Play takes the same format for consistency.
   validate:
     runs-on: ubuntu-latest
+    outputs:
+      buildNumber: ${{ steps.version.outputs.buildNumber }}
     steps:
       - name: Check the version name
         run: |
@@ -46,6 +48,21 @@ jobs:
             echo "::error::Version name '$BUILD_NAME' must look like 1.04 or 1.4.0"
             exit 1
           fi
+
+      # Computed once so both apps ship the same number, and shown on the run's summary page.
+      - name: Resolve the version
+        id: version
+        run: |
+          number=$((BUILD_NUMBER + BUILD_NUMBER_OFFSET))
+          echo "buildNumber=$number" >> "$GITHUB_OUTPUT"
+          echo "Version name: $BUILD_NAME"
+          echo "Build number: $number (versionCode on Android, CFBundleVersion on iOS)"
+          {
+            echo "### Version"
+            echo "| Version name | Build number |"
+            echo "|---|---|"
+            echo "| \`$BUILD_NAME\` | \`$number\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   android:
     needs: validate
@@ -73,9 +90,11 @@ jobs:
           TURNIA_UPLOAD_STORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_STORE_PASSWORD }}
           TURNIA_UPLOAD_KEY_ALIAS: ${{ secrets.ANDROID_UPLOAD_KEY_ALIAS }}
           TURNIA_UPLOAD_KEY_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEY_PASSWORD }}
+          APP_BUILD_NUMBER: ${{ needs.validate.outputs.buildNumber }}
         run: |
+          echo "Building versionName=$BUILD_NAME versionCode=$APP_BUILD_NUMBER"
           ./gradlew :app:androidApp:bundleRelease \
-            -Pturnia.versionCode=$((BUILD_NUMBER + BUILD_NUMBER_OFFSET)) \
+            -Pturnia.versionCode="$APP_BUILD_NUMBER" \
             -Pturnia.versionName="$BUILD_NAME"
 
       - uses: actions/upload-artifact@v4
@@ -131,7 +150,10 @@ jobs:
       # Automatic signing with the API key: Xcode fetches or creates the distribution certificate
       # and profile itself, so none of them live in the repo or in secrets.
       - name: Archive
+        env:
+          APP_BUILD_NUMBER: ${{ needs.validate.outputs.buildNumber }}
         run: |
+          echo "Archiving MARKETING_VERSION=$BUILD_NAME CURRENT_PROJECT_VERSION=$APP_BUILD_NUMBER"
           xcodebuild archive \
             -project app/iosApp/iosApp.xcodeproj \
             -scheme iosApp \
@@ -139,7 +161,7 @@ jobs:
             -destination generic/platform=iOS \
             -archivePath "$RUNNER_TEMP/Turnia.xcarchive" \
             MARKETING_VERSION="$BUILD_NAME" \
-            CURRENT_PROJECT_VERSION=$((BUILD_NUMBER + BUILD_NUMBER_OFFSET)) \
+            CURRENT_PROJECT_VERSION="$APP_BUILD_NUMBER" \
             -allowProvisioningUpdates \
             -authenticationKeyPath "$RUNNER_TEMP/asc/AuthKey.p8" \
             -authenticationKeyID "${{ secrets.ASC_KEY_ID }}" \
