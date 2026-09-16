@@ -198,8 +198,6 @@
 
     <!-- Leaving a group -->
     <string name="group_member_former">Former member</string>
-    <string name="group_revoked_badge">YOU LEFT</string>
-    <string name="group_revoked_banner">You're no longer in this group. You only see the shifts you were assigned.</string>
     <string name="group_leave_action">Leave group</string>
     <string name="group_leave_title">Leave the group?</string>
     <string name="group_leave_message">You'll stop seeing the group's calendar. Any shifts assigned to you stay, and only you will see them.</string>

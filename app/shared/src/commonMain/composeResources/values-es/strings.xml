@@ -198,8 +198,6 @@
 
     <!-- Leaving a group -->
     <string name="group_member_former">Antiguo miembro</string>
-    <string name="group_revoked_badge">HAS SALIDO</string>
-    <string name="group_revoked_banner">Ya no estás en este grupo. Solo ves los turnos que tenías asignados.</string>
     <string name="group_leave_action">Salir del grupo</string>
     <string name="group_leave_title">¿Salir del grupo?</string>
     <string name="group_leave_message">Dejarás de ver el calendario del grupo. Los turnos que tengas asignados se quedan y solo los verás tú.</string>

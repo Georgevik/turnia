@@ -198,8 +198,6 @@
 
     <!-- Leaving a group -->
     <string name="group_member_former">Ehemaliges Mitglied</string>
-    <string name="group_revoked_badge">AUSGETRETEN</string>
-    <string name="group_revoked_banner">Du bist nicht mehr in dieser Gruppe. Du siehst nur die Dienste, die dir zugewiesen waren.</string>
     <string name="group_leave_action">Gruppe verlassen</string>
     <string name="group_leave_title">Gruppe verlassen?</string>
     <string name="group_leave_message">Du siehst den Gruppenkalender nicht mehr. Dir zugewiesene Dienste bleiben bestehen, und nur du siehst sie.</string>

@@ -83,7 +83,7 @@ class GroupsViewModel(
             }
 
     private fun groups(): Flow<List<GroupRowUi>> =
-        groupRepository.getGroups().map { groups -> groups.map { it.toRowUi() } }
+        groupRepository.getGroups().map { groups -> groups.filterNot { it.isRevoked }.map { it.toRowUi() } }
 
     fun joinCodeChanged(code: String) =
         updateSuccess { it.copy(joinCode = code.uppercase()) }

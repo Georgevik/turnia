@@ -198,8 +198,6 @@
 
     <!-- Leaving a group -->
     <string name="group_member_former">Ancien membre</string>
-    <string name="group_revoked_badge">TU AS QUITTÉ</string>
-    <string name="group_revoked_banner">Tu ne fais plus partie de ce groupe. Tu ne vois que les gardes qui t'étaient attribuées.</string>
     <string name="group_leave_action">Quitter le groupe</string>
     <string name="group_leave_title">Quitter le groupe ?</string>
     <string name="group_leave_message">Tu ne verras plus le calendrier du groupe. Les gardes qui te sont attribuées restent, et toi seul les verras.</string>
