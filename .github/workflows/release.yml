@@ -82,6 +82,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # The emulator's userdata partition does not fit in what the runner has left after the build.
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/share/boost /opt/hostedtoolcache/CodeQL /usr/local/share/powershell /usr/share/swift
+          sudo docker image prune --all --force
+          df -h /
+
       # Temurin 21 also runs the Firestore emulator, which needs Java 21 or newer.
       - uses: actions/setup-java@v4
         with:
@@ -121,7 +128,7 @@ jobs:
           path: |
             ~/.android/avd/*
             ~/.android/adb*
-          key: avd-${{ env.API_LEVEL }}-google_apis-x86_64
+          key: avd-${{ env.API_LEVEL }}-google_apis-x86_64-2G
 
       - name: Create the AVD snapshot
         if: steps.avd-cache.outputs.cache-hit != 'true'
@@ -131,6 +138,7 @@ jobs:
           target: google_apis
           arch: x86_64
           force-avd-creation: false
+          disk-size: 2G
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: false
           script: echo "Generated the AVD snapshot"
@@ -143,6 +151,7 @@ jobs:
           target: google_apis
           arch: x86_64
           force-avd-creation: false
+          disk-size: 2G
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: cd firebase && firebase emulators:exec --only auth,firestore,functions --project turnia-23ebc "cd .. && ./gradlew :app:androidApp:connectedDebugAndroidTest"
