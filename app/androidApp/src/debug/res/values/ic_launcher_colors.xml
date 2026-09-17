@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Inverted and tinted, so the debug build is told apart from the Play one on the launcher. -->
+    <color name="ic_launcher_foreground">#FFFFFF</color>
+    <color name="ic_launcher_background">#E8590C</color>
+</resources>

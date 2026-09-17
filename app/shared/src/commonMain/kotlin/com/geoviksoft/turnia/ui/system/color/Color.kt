@@ -11,6 +11,9 @@ val White = Color(0xFFFFFFFF)
 // Camel — the logo's ground, as on the launcher icon; the logo's T carries its own black
 val Camel = Color(0xFFF3EFE9)
 
+// The debug build's ground, on its launcher icon and logo alike, so it is never mistaken for the Play one
+val DebugOrange = Color(0xFFE8590C)
+
 // Grey — cool neutral (surfaces & text)
 val Grey50 = Color(0xFFF8F9FC)
 val Grey100 = Color(0xFFF2F4F6)

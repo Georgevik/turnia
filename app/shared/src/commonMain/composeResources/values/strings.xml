@@ -448,4 +448,6 @@
     <string name="swap_empty_colleagues_title">Nobody needs a swap</string>
     <string name="swap_empty_colleagues_body">No colleague has asked for a swap. When someone needs cover, you'll see it here.</string>
 
+    <!-- A build label, not a word: the same in every language. -->
+    <string name="debug_chip" translatable="false">DEBUG</string>
 </resources>

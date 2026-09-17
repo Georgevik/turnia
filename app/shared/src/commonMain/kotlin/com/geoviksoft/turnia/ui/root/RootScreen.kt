@@ -14,6 +14,7 @@ import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.geoviksoft.turnia.core.domain.model.UserSession
+import com.geoviksoft.turnia.core.system.BuildInfo
 import com.geoviksoft.turnia.navigation.LocalNavigator
 import com.geoviksoft.turnia.navigation.LocalRootNavigator
 import com.geoviksoft.turnia.navigation.root.RootNavDisplay
@@ -22,9 +23,11 @@ import com.geoviksoft.turnia.navigation.root.rootRouteSavedStateConfiguration
 import com.geoviksoft.turnia.navigation.root.routes.RootRoute
 import com.geoviksoft.turnia.ui.root.name.CompleteNameDialog
 import com.geoviksoft.turnia.ui.system.AppLanguageHost
+import com.geoviksoft.turnia.ui.system.LocalBuildInfo
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
 import com.geoviksoft.turnia.ui.system.TurniaSnackbarHost
 import com.geoviksoft.turnia.ui.system.TurniaTheme
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
@@ -34,11 +37,17 @@ import org.koin.compose.viewmodel.koinViewModel
  * leaving the splash alone.
  */
 @Composable
-@Preview
 fun App(vm: RootViewModel = koinViewModel()) {
-    val backStack = rememberNavBackStack(rootRouteSavedStateConfiguration, RootRoute.SplashKey)
     val userSession by vm.userSession.collectAsStateWithLifecycle(UserSession.Loading)
     val pendingJoinCode by vm.pendingJoinCode.collectAsStateWithLifecycle()
+    val buildInfo: BuildInfo = koinInject()
+
+    AppContent(userSession, pendingJoinCode, buildInfo)
+}
+
+@Composable
+fun AppContent(userSession: UserSession, pendingJoinCode: String?, buildInfo: BuildInfo) {
+    val backStack = rememberNavBackStack(rootRouteSavedStateConfiguration, RootRoute.SplashKey)
 
     HandleLogoutSignal(userSession, backStack)
     HandleJoinGroupDeeplink(pendingJoinCode, backStack)
@@ -51,6 +60,7 @@ fun App(vm: RootViewModel = koinViewModel()) {
             LocalRootNavigator provides navigator,
             LocalNavigator provides navigator,
             LocalSnackbar provides snackbarHostState,
+            LocalBuildInfo provides buildInfo,
         ) {
             AppLanguageHost {
                 Scaffold(
@@ -104,4 +114,10 @@ private fun HandleLogoutSignal(userSession: UserSession, backStack: NavBackStack
 
         }
     }
+}
+
+@Preview
+@Composable
+fun AppContentPreview() {
+    AppContent(UserSession.Loading, null, BuildInfo(isDebug = false))
 }

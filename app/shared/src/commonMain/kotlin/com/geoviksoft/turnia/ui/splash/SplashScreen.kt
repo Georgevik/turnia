@@ -31,7 +31,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import com.geoviksoft.turnia.ui.system.LocalBuildInfo
 import com.geoviksoft.turnia.ui.system.ads.rememberAdConsentPlatform
+import com.geoviksoft.turnia.ui.system.components.DebugChip
 import com.geoviksoft.turnia.ui.system.components.TurniaLogo
 import com.geoviksoft.turnia.ui.system.toErrorSnackbar
 import kotlinx.coroutines.delay
@@ -85,8 +87,11 @@ fun SplashScreenContent(consentMissing: Boolean = false, onRetryConsent: () -> U
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Bottom
         ) {
-
             TurniaLogo(Modifier.size(160.dp))
+            if (LocalBuildInfo.current.isDebug) {
+                Spacer(Modifier.height(16.dp))
+                DebugChip()
+            }
         }
         Column(
             modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 64.dp),
