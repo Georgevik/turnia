@@ -144,3 +144,6 @@ android {
         buildConfig = true
     }
 }
+
+// Every connected…AndroidTest task runs with the Firebase emulators up.
+FirebaseEmulators.attachTo(project)

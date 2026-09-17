@@ -427,11 +427,15 @@ The 20 critical happy paths run on an Android emulator against the Firebase emul
 `app/androidApp/src/androidTest/.../e2e`: `flows/` holds the tests, `robots/` drives the screens,
 `infra/` seeds the emulators and points the app at them (`TurniaTestApplication`).
 
+- `connected…AndroidTest` starts the Firebase emulators when nothing serves their ports, and stops
+  them at the end of the build (`buildSrc/src/main/kotlin/FirebaseEmulators.kt`), so a test
+  run from the IDE needs no emulator started by hand.
 - Robots find nodes by their **English** text; where the text is not unique on screen they use the
   tags in `TestTags` (`app/shared/.../ui/system/TestTags.kt`). Renaming a tag or an English string a
   robot matches breaks the suite.
 - A change to a Firestore field is not finished until the fixtures change with it.
-- The Release workflow's `android-e2e` job runs the suite, and both uploads wait for it. Its
+- The suite's CI job lives in `.github/workflows/android-e2e.yml`, runnable on its own from Actions.
+  The Release workflow calls it as its `android-e2e` job, and both uploads wait for it. Its
   `runTests` checkbox (on by default) can skip it.
 
 ### Android release build

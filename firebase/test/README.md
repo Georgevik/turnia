@@ -10,8 +10,16 @@ wipes Auth and Firestore, creates the accounts under `auth` and writes every doc
 With an Android emulator running (API 33+ recommended), from the repo root:
 
 ```bash
-npm run build --prefix firebase/functions
+./gradlew :app:androidApp:connectedDebugAndroidTest
 ```
+
+Running a test from Android Studio's gutter works the same way. Every `connected…AndroidTest` task
+starts the Firebase emulators itself — building the Functions first — unless something already
+serves ports 9099, 8080 and 5001, and stops the ones it started when the build ends. Their output
+goes to `firebase/build/emulators.log`. The Firebase CLI is looked up on `PATH` and under `~/.nvm`;
+elsewhere, set `turnia.firebaseCli=/path/to/firebase` in `~/.gradle/gradle.properties`.
+
+CI starts them on its own, and the task then leaves them alone:
 
 ```bash
 cd firebase && firebase emulators:exec --only auth,firestore,functions --project turnia-23ebc "cd .. && ./gradlew :app:androidApp:connectedDebugAndroidTest"
