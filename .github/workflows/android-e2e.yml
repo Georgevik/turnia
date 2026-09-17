@@ -13,8 +13,6 @@ concurrency:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 jobs:
   # The 20 critical happy paths (app/androidApp/src/androidTest), on an Android emulator against the
@@ -106,28 +104,17 @@ jobs:
           disable-animations: true
           script: cd firebase && firebase emulators:exec --only auth,firestore,functions --project turnia-23ebc "cd .. && ./gradlew :app:androidApp:connectedDebugAndroidTest"
 
-      - name: Upload E2E report to Pages
+      - name: Upload the E2E report
+        id: report
         if: always()
-        uses: actions/upload-pages-artifact@v5
-        with:
-          path: app/androidApp/build/reports/androidTests/connected/debug
-
-      # The report is a convenience: a Pages outage must not turn a green suite red.
-      - name: Deploy E2E report
-        id: pages
-        if: always()
-        continue-on-error: true
-        uses: actions/deploy-pages@v5
-
-      - name: Summarize the E2E results
-        if: always()
-        run: python3 .github/scripts/e2e-summary.py app/androidApp/build/outputs/androidTest-results/connected "${{ steps.pages.outputs.page_url }}"
-
-      - uses: actions/upload-artifact@v5
-        if: always()
+        uses: actions/upload-artifact@v5
         with:
           name: android-e2e-report
           path: |
             app/androidApp/build/reports/androidTests/connected
             app/androidApp/build/outputs/androidTest-results/connected
             firebase/*-debug.log
+
+      - name: Summarize the E2E results
+        if: always()
+        run: python3 .github/scripts/e2e-summary.py app/androidApp/build/outputs/androidTest-results/connected "${{ steps.report.outputs.artifact-url }}"

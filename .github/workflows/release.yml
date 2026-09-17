@@ -75,11 +75,6 @@ jobs:
     needs: validate
     if: inputs.runTests
     uses: ./.github/workflows/android-e2e.yml
-    # A called workflow gets no more than its caller grants, and the report deploy needs these two.
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
 
   android:
     needs: [validate, android-e2e]

@@ -37,7 +37,7 @@ else:
         *sorted(rows, key=lambda row: not row.startswith("| ❌")),
     ]
 if report_url:
-    lines += ["", f"[Full HTML report]({report_url})"]
+    lines += ["", f"[Full report (HTML, logcat, emulator logs)]({report_url})"]
 
 with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
     summary.write("\n".join(lines) + "\n")
