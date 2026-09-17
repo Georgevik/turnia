@@ -8,7 +8,8 @@ GitHub → **Actions** → **Release** → **Run workflow**, typing the version 
 Promoting a build to production is still done by hand, in Play Console and App Store Connect.
 
 Before either app is built for upload, the `android-e2e` job runs the E2E suite on an Android
-emulator against the Firebase emulators ([firebase/test/README.md](../firebase/test/README.md)). It
+emulator — it calls [android-e2e.yml](workflows/android-e2e.yml), which can also be run by itself from
+Actions → AndroidE2E — against the Firebase emulators ([firebase/test/README.md](../firebase/test/README.md)). It
 runs whatever platforms were chosen, needs no secrets, and a failure stops both uploads. The
 **Run the Android E2E suite** box (ticked by default) skips it when unticked, and the uploads then
 go ahead without it. Its report
