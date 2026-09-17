@@ -69,7 +69,7 @@ jobs:
           path: |
             ~/.android/avd/*
             ~/.android/adb*
-          key: avd-${{ env.API_LEVEL }}-google_apis-x86_64-2G
+          key: avd-${{ env.API_LEVEL }}-google_apis-x86_64-pixel_6-2G
 
       - name: Create the AVD snapshot
         if: steps.avd-cache.outputs.cache-hit != 'true'
@@ -79,6 +79,8 @@ jobs:
           target: google_apis
           arch: x86_64
           force-avd-creation: false
+          # The default 320x640 screen squashes the sign-in buttons to nothing.
+          profile: pixel_6
           disk-size: 2G
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: false
@@ -92,6 +94,8 @@ jobs:
           target: google_apis
           arch: x86_64
           force-avd-creation: false
+          # The default 320x640 screen squashes the sign-in buttons to nothing.
+          profile: pixel_6
           disk-size: 2G
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
