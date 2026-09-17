@@ -31,7 +31,8 @@ annotation class SignedInAs(val uid: String)
 /**
  * One test's world: both emulators wiped and seeded from [fixtures], the app signed in as
  * [signedInAs] or the test's [SignedInAs] (signed out when neither says), and [MainActivity]
- * launched with [intent].
+ * launched with [intent]. Onboarding counts as already seen unless [onboardingSeen] says otherwise,
+ * so only the test about it pays for its pages.
  *
  * Every test runs in a process of its own (the orchestrator clears the app's data between them),
  * so nothing the previous test cached — Koin singletons, Firestore's disk cache — leaks in.
@@ -40,6 +41,7 @@ class E2eRule(
     private val compose: ComposeTestRule,
     private val signedInAs: String? = null,
     private val fixtures: List<String> = listOf("base"),
+    private val onboardingSeen: Boolean = true,
     private val intent: () -> Intent = { launchIntent() },
 ) : ExternalResource() {
 
@@ -90,6 +92,7 @@ class E2eRule(
             runBlocking { Firebase.auth.signInWithEmailAndPassword(user.email, user.password) }
         }
 
+        FixedAppConfigRepository.onboardingSeen = onboardingSeen
         grantNotifications()
         scenario = ActivityScenario.launch(intent())
     }

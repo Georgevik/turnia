@@ -70,3 +70,23 @@ class CompleteNameFlowTest {
         Documents.await("users/nameless") { it.string("name") == "Nora Nameless" }
     }
 }
+
+/** Path 21: a first launch goes through onboarding before it can sign in. */
+@RunWith(AndroidJUnit4::class)
+class OnboardingFlowTest {
+
+    private val compose = createEmptyComposeRule()
+
+    @get:Rule
+    val rules: RuleChain = RuleChain.outerRule(compose).around(E2eRule(compose, onboardingSeen = false))
+
+    private val robot = SignInRobot(compose)
+
+    @Test
+    fun firstLaunch_showsOnboardingThenSignIn() {
+        robot.goThroughOnboarding()
+
+        robot.awaitSignIn()
+        robot.awaitNoText("Get started")
+    }
+}

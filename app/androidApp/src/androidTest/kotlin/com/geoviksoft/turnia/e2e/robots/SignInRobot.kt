@@ -10,6 +10,14 @@ import com.geoviksoft.turnia.e2e.infra.scrollAndClick
 
 internal class SignInRobot(compose: ComposeTestRule) : AppRobot(compose) {
 
+    fun goThroughOnboarding() {
+        click("Next")
+        click("Next")
+        click("Get started")
+    }
+
+    fun awaitSignIn() = awaitText("Continue with email")
+
     fun signIn(email: String, password: String) {
         click("Continue with email")
         type("Email", email)
