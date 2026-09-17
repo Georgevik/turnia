@@ -38,6 +38,7 @@ kotlin {
             api(libs.kotlinx.datetime)
             api(libs.kotlinx.serialization.core)
             implementation(libs.kotlinx.serialization.json)
+            implementation(libs.androidx.datastore.preferences)
         }
         androidMain.dependencies {
             api(project.dependencies.platform(libs.firebase.bom))

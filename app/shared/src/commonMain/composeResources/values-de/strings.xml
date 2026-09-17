@@ -122,6 +122,10 @@
     <string name="welcome_feature_notify_title">Wir sagen dir Bescheid, wenn es darauf ankommt</string>
     <string name="welcome_feature_notify_body">Eine Benachrichtigung, sobald sich etwas an deinem Dienstplan ändert.</string>
     <string name="welcome_signin_hint">Melde dich an, um loszulegen</string>
+    <string name="onboarding_next">Weiter</string>
+    <string name="onboarding_get_started">Los geht's</string>
+    <string name="onboarding_skip">Überspringen</string>
+    <string name="onboarding_page">Seite %1$d von %2$d</string>
     <string name="signin_google">Weiter mit Google</string>
     <string name="signin_apple">Weiter mit Apple</string>
     <string name="signin_error_failed">Die Anmeldung hat nicht geklappt. Bitte versuch es erneut.</string>

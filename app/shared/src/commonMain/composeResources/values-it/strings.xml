@@ -122,6 +122,10 @@
     <string name="welcome_feature_notify_title">Ti avvisiamo quando conta</string>
     <string name="welcome_feature_notify_body">Una notifica appena qualcosa cambia nei tuoi turni.</string>
     <string name="welcome_signin_hint">Accedi per iniziare</string>
+    <string name="onboarding_next">Avanti</string>
+    <string name="onboarding_get_started">Inizia</string>
+    <string name="onboarding_skip">Salta</string>
+    <string name="onboarding_page">Pagina %1$d di %2$d</string>
     <string name="signin_google">Continua con Google</string>
     <string name="signin_apple">Continua con Apple</string>
     <string name="signin_error_failed">Non siamo riusciti a farti accedere. Riprova.</string>

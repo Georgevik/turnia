@@ -27,6 +27,8 @@ import com.geoviksoft.turnia.core.data.group.mappers.GroupErrorMapper
 import com.geoviksoft.turnia.core.data.group.mappers.GroupMapper
 import com.geoviksoft.turnia.core.data.invitation.InvitationLinkRepositoryImpl
 import com.geoviksoft.turnia.core.data.notification.NotificationRepositoryImpl
+import com.geoviksoft.turnia.core.data.preferences.createPreferencesDataStore
+import com.geoviksoft.turnia.core.data.preferences.preferencesFilePath
 import com.geoviksoft.turnia.core.data.sharedcalendar.SharedCalendarRepositoryImpl
 import com.geoviksoft.turnia.core.data.sharedcalendar.mappers.SharedCalendarErrorMapper
 import com.geoviksoft.turnia.core.data.sharedcalendar.mappers.SharedCalendarMapper
@@ -96,6 +98,7 @@ val dataModule: Module = module {
     single { Firebase.analytics }
     single { Firebase.remoteConfig }
     single<Analytics> { AnalyticsImpl(get()) }
+    single { createPreferencesDataStore(preferencesFilePath()) }
 
     // Datasources.
     single { UserProfileFunction(get(), get()) }
@@ -148,7 +151,7 @@ val dataModule: Module = module {
         )
     }
     single { RemoteConfigService(get(), get()) }
-    single<AppConfigRepository> { AppConfigRepositoryImpl(get()) }
+    single<AppConfigRepository> { AppConfigRepositoryImpl(get(), get()) }
     single<NotificationRepository> { NotificationRepositoryImpl() }
     single<InvitationLinkRepository> { InvitationLinkRepositoryImpl() }
     single<GroupRepository> {

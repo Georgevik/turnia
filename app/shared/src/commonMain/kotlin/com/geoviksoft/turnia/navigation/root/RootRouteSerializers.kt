@@ -10,6 +10,7 @@ internal val rootRouteSavedStateConfiguration: SavedStateConfiguration = SavedSt
     serializersModule = SerializersModule {
         polymorphic(NavKey::class) {
             subclass(RootRoute.SplashKey::class, RootRoute.SplashKey.serializer())
+            subclass(RootRoute.OnboardingKey::class, RootRoute.OnboardingKey.serializer())
             subclass(RootRoute.SignInKey::class, RootRoute.SignInKey.serializer())
             subclass(RootRoute.CreateAccountKey::class, RootRoute.CreateAccountKey.serializer())
             subclass(RootRoute.MainKey::class, RootRoute.MainKey.serializer())

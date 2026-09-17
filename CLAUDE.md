@@ -216,6 +216,8 @@ Build one with `value.toSuccess()` / `error.toFailure()` — both work on any re
 - **kotlinx.serialization** — serialization (navigation keys, DTOs).
 - **Local NoSQL cache** — on-device document store (candidate: Realm Kotlin) holding events fetched from
   Firestore in a **normalized** shape, so past events stay viewable after Firebase purges them (see *Data retention & local cache*).
+- **DataStore (KMP, Preferences)** — on-device key/value settings that exist before any account, such as
+  whether onboarding was seen. Read and written only through `AppPreferencesRepository`.
 - **AdMob** — ads for free-tier users (banner / interstitial / rewarded). Hidden for premium users.
 - **In-app subscriptions** — **Google Play Billing** (Android) and **StoreKit / App Store** (iOS) for premium plans.
 - **Firebase** — backend, no custom server:
@@ -422,7 +424,7 @@ Use the run configurations provided by the run widget in your IDE's toolbar. You
 
 ### E2E tests
 
-The 20 critical happy paths run on an Android emulator against the Firebase emulators, seeded from
+The 21 critical happy paths run on an Android emulator against the Firebase emulators, seeded from
 [`firebase/test/fixtures`](firebase/test/README.md) — see that README to run them. They live in
 `app/androidApp/src/androidTest/.../e2e`: `flows/` holds the tests, `robots/` drives the screens,
 `infra/` seeds the emulators and points the app at them (`TurniaTestApplication`).

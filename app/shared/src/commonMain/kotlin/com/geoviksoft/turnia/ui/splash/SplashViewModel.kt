@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.geoviksoft.turnia.core.domain.model.UserSession
 import com.geoviksoft.turnia.core.domain.repository.AppConfigRepository
+import com.geoviksoft.turnia.core.domain.repository.InvitationLinkRepository
 import com.geoviksoft.turnia.core.domain.repository.UserRepository
 import com.geoviksoft.turnia.navigation.root.routes.RootRoute
 import com.geoviksoft.turnia.ui.system.ads.AdConsent
@@ -25,6 +26,7 @@ class SplashViewModel(
     private val appConfigRepository: AppConfigRepository,
     userRepository: UserRepository,
     private val adConsent: AdConsent,
+    private val invitations: InvitationLinkRepository,
 ) : ViewModel() {
     private val _uiEvent = Channel<SplashUiEvent>(Channel.BUFFERED)
     val uiEvent = _uiEvent.receiveAsFlow()
@@ -52,9 +54,11 @@ class SplashViewModel(
             adConsent.status.first { it?.canRequestAds == true }
             _uiEvent.send(
                 SplashUiEvent.Navigate(
-                    when (session) {
-                        is UserSession.Authenticated -> RootRoute.MainKey
-                        else -> RootRoute.SignInKey
+                    when {
+                        session is UserSession.Authenticated -> RootRoute.MainKey
+                        invitations.pendingCode.value != null -> RootRoute.SignInKey
+                        appConfigRepository.isOnboardingSeen() -> RootRoute.SignInKey
+                        else -> RootRoute.OnboardingKey
                     }
                 )
             )

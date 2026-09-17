@@ -10,6 +10,9 @@ sealed interface RootRoute : NavKey {
     data object SplashKey : RootRoute
 
     @Serializable
+    data object OnboardingKey : RootRoute
+
+    @Serializable
     data object SignInKey : RootRoute
 
     @Serializable

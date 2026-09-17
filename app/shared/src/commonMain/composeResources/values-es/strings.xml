@@ -122,6 +122,10 @@
     <string name="welcome_feature_notify_title">Te avisamos cuando importa</string>
     <string name="welcome_feature_notify_body">Una notificación en cuanto algo afecta a tu horario.</string>
     <string name="welcome_signin_hint">Inicia sesión para empezar</string>
+    <string name="onboarding_next">Siguiente</string>
+    <string name="onboarding_get_started">Empezar</string>
+    <string name="onboarding_skip">Saltar</string>
+    <string name="onboarding_page">Página %1$d de %2$d</string>
     <string name="signin_google">Continuar con Google</string>
     <string name="signin_apple">Continuar con Apple</string>
     <string name="signin_error_failed">No hemos podido iniciar sesión. Inténtalo de nuevo.</string>

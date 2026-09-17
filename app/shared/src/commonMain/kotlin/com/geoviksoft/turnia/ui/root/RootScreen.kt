@@ -95,6 +95,8 @@ private fun HandleJoinGroupDeeplink(code: String?, backStack: NavBackStack<NavKe
     }
 }
 
+private val SignedOutRoutes: Set<NavKey> = setOf(RootRoute.OnboardingKey, RootRoute.SignInKey)
+
 @Composable
 private fun HandleLogoutSignal(userSession: UserSession, backStack: NavBackStack<NavKey>) {
     LaunchedEffect(userSession) {
@@ -107,7 +109,7 @@ private fun HandleLogoutSignal(userSession: UserSession, backStack: NavBackStack
                 backStack.add(RootRoute.MainKey)
             }
 
-            UserSession.Unauthenticated -> if (backStack.lastOrNull() != RootRoute.SignInKey) {
+            UserSession.Unauthenticated -> if (backStack.lastOrNull() !in SignedOutRoutes) {
                 backStack.clear()
                 backStack.add(RootRoute.SignInKey)
             }

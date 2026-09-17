@@ -122,6 +122,10 @@
     <string name="welcome_feature_notify_title">We let you know when it matters</string>
     <string name="welcome_feature_notify_body">A notification as soon as something affects your schedule.</string>
     <string name="welcome_signin_hint">Sign in to get started</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_get_started">Get started</string>
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_page">Page %1$d of %2$d</string>
     <string name="signin_google">Continue with Google</string>
     <string name="signin_apple">Continue with Apple</string>
     <string name="signin_error_failed">We couldn't sign you in. Please try again.</string>

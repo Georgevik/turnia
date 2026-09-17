@@ -365,4 +365,6 @@ internal class DemoAppConfigRepository : AppConfigRepository {
     override val featureFlags: StateFlow<FeatureFlags> = flags.asStateFlow()
 
     override suspend fun refreshFeatureFlags(): FeatureFlags = flags.value
+    override suspend fun isOnboardingSeen(): Boolean = false
+    override suspend fun setOnboardingSeen(seen: Boolean) = Unit
 }

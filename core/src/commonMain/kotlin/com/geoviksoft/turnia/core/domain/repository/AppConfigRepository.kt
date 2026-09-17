@@ -14,4 +14,6 @@ interface AppConfigRepository {
 
     /** Downloads the feature flags and updates [featureFlags]. Called on splash. */
     suspend fun refreshFeatureFlags(): FeatureFlags
+    suspend fun isOnboardingSeen(): Boolean
+    suspend fun setOnboardingSeen(seen: Boolean)
 }

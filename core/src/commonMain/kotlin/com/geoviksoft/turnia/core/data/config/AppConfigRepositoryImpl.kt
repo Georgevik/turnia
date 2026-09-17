@@ -1,11 +1,16 @@
 package com.geoviksoft.turnia.core.data.config
 
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
 import com.geoviksoft.turnia.core.domain.model.FeatureFlags
 import com.geoviksoft.turnia.core.domain.repository.AppConfigRepository
 import com.geoviksoft.turnia.core.system.outcomeCatching
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 
 /**
  * [AppConfigRepository] backed by Firebase Remote Config.
@@ -15,6 +20,7 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 class AppConfigRepositoryImpl(
     private val remoteConfigService: RemoteConfigService,
+    private val dataStore: DataStore<Preferences>,
 ) : AppConfigRepository {
 
     private val _featureFlags = MutableStateFlow(remoteConfigService.getFlags())
@@ -31,8 +37,15 @@ class AppConfigRepositoryImpl(
         return _featureFlags.value
     }
 
+    override suspend fun isOnboardingSeen(): Boolean =
+        dataStore.data.first()[ONBOARDING_SEEN] ?: false
+
+    override suspend fun setOnboardingSeen(seen: Boolean) {
+        dataStore.edit { it[ONBOARDING_SEEN] = seen }
+    }
 
     companion object {
         private const val TAG = "AppConfigRepository"
+        private val ONBOARDING_SEEN = booleanPreferencesKey("onboarding_seen")
     }
 }

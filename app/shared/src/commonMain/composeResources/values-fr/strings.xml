@@ -122,6 +122,10 @@
     <string name="welcome_feature_notify_title">On te prévient quand ça compte</string>
     <string name="welcome_feature_notify_body">Une notification dès que quelque chose touche ton planning.</string>
     <string name="welcome_signin_hint">Connecte-toi pour commencer</string>
+    <string name="onboarding_next">Suivant</string>
+    <string name="onboarding_get_started">Commencer</string>
+    <string name="onboarding_skip">Passer</string>
+    <string name="onboarding_page">Page %1$d sur %2$d</string>
     <string name="signin_google">Continuer avec Google</string>
     <string name="signin_apple">Continuer avec Apple</string>
     <string name="signin_error_failed">Nous n'avons pas pu te connecter. Réessaie.</string>
