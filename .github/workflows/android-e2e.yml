@@ -110,11 +110,18 @@ jobs:
         if: always()
         uses: actions/upload-pages-artifact@v5
         with:
-          path: app/androidApp/build/reports/androidTests/connected
+          path: app/androidApp/build/reports/androidTests/connected/debug
 
+      # The report is a convenience: a Pages outage must not turn a green suite red.
       - name: Deploy E2E report
+        id: pages
         if: always()
+        continue-on-error: true
         uses: actions/deploy-pages@v5
+
+      - name: Summarize the E2E results
+        if: always()
+        run: python3 .github/scripts/e2e-summary.py app/androidApp/build/outputs/androidTest-results/connected "${{ steps.pages.outputs.page_url }}"
 
       - uses: actions/upload-artifact@v5
         if: always()
