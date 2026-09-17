@@ -2,7 +2,7 @@ package com.geoviksoft.turnia.e2e.flows
 
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.ui.test.junit4.createEmptyComposeRule
+import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.geoviksoft.turnia.e2e.infra.Documents
 import com.geoviksoft.turnia.e2e.infra.E2eRule

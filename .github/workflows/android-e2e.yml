@@ -11,6 +11,11 @@ concurrency:
   group: ${{ github.workflow }}-android-e2e
   cancel-in-progress: false
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   # The 20 critical happy paths (app/androidApp/src/androidTest), on an Android emulator against the
   # Firebase emulators seeded from firebase/test/fixtures. Android only, but it gates both uploads:
@@ -21,7 +26,7 @@ jobs:
     env:
       API_LEVEL: 34
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # The emulator's userdata partition does not fit in what the runner has left after the build.
       - name: Free disk space
@@ -31,18 +36,18 @@ jobs:
           df -h /
 
       # Temurin 21 also runs the Firestore emulator, which needs Java 21 or newer.
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
           cache-dependency-path: firebase/functions/package-lock.json
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v5
 
       - name: Enable KVM
         run: |
@@ -63,7 +68,7 @@ jobs:
         run: ./gradlew :app:androidApp:assembleDebug :app:androidApp:assembleDebugAndroidTest
 
       - name: Cache the AVD
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: avd-cache
         with:
           path: |
@@ -101,7 +106,17 @@ jobs:
           disable-animations: true
           script: cd firebase && firebase emulators:exec --only auth,firestore,functions --project turnia-23ebc "cd .. && ./gradlew :app:androidApp:connectedDebugAndroidTest"
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload E2E report to Pages
+        if: always()
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: app/androidApp/build/reports/androidTests/connected
+
+      - name: Deploy E2E report
+        if: always()
+        uses: actions/deploy-pages@v5
+
+      - uses: actions/upload-artifact@v5
         if: always()
         with:
           name: android-e2e-report
