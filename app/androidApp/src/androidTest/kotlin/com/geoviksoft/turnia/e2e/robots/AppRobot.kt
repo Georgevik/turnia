@@ -8,10 +8,10 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.performTextInput
-import androidx.test.espresso.Espresso
 import com.geoviksoft.turnia.e2e.infra.awaitAnyNode
 import com.geoviksoft.turnia.e2e.infra.awaitNoNode
 import com.geoviksoft.turnia.e2e.infra.awaitNode
+import com.geoviksoft.turnia.e2e.infra.pressBack
 import com.geoviksoft.turnia.e2e.infra.scrollAndClick
 
 /**
@@ -51,7 +51,7 @@ internal open class AppRobot(protected val compose: ComposeTestRule) {
     }
 
     /** Closes whatever is on top: a bottom sheet, a dialog, or the screen itself. */
-    fun back() = Espresso.pressBack()
+    fun back() = compose.pressBack()
 
     /** The main screen is up once its tab bar is. */
     fun awaitMain() {

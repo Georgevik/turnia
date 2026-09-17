@@ -4,8 +4,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.junit4.ComposeTestRule
-import androidx.test.espresso.Espresso
 import com.geoviksoft.turnia.e2e.infra.awaitNode
+import com.geoviksoft.turnia.e2e.infra.hideKeyboard
 import com.geoviksoft.turnia.e2e.infra.scrollAndClick
 
 internal class SignInRobot(compose: ComposeTestRule) : AppRobot(compose) {
@@ -31,7 +31,7 @@ internal class SignInRobot(compose: ComposeTestRule) : AppRobot(compose) {
         type("Name", name)
         type("Email", email)
         type("Password", password)
-        Espresso.closeSoftKeyboard()
+        compose.hideKeyboard()
         // Terms and privacy. The box itself, not its row: the row's centre is the link to the page.
         val checkbox = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Checkbox)
         compose.awaitNode(checkbox, useUnmergedTree = true)
