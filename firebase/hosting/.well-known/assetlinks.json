@@ -7,7 +7,9 @@
       "namespace": "android_app",
       "package_name": "com.geoviksoft.turnia",
       "sha256_cert_fingerprints": [
-        "FF:08:60:F3:97:EC:AF:A1:0C:26:1D:51:0B:61:5A:52:46:4C:BF:67:C0:9B:F4:F3:83:A0:3F:CD:52:0F:E1:5D"
+        "FF:08:60:F3:97:EC:AF:A1:0C:26:1D:51:0B:61:5A:52:46:4C:BF:67:C0:9B:F4:F3:83:A0:3F:CD:52:0F:E1:5D",
+        "C8:1E:C8:CB:A4:5F:1D:DA:06:2C:FA:41:A9:25:0C:98:31:26:2E:4D:8C:48:2B:D5:6B:84:5F:9E:40:19:6E:66",
+        "39:46:26:BD:11:77:CD:BC:7F:05:77:7A:A6:DE:C6:9F:6B:73:3D:2D:24:F1:D7:0E:86:B6:5D:2C:6F:4F:DA:58"
       ]
     }
   },
