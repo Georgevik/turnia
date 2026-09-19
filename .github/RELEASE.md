@@ -45,6 +45,9 @@ The service account: Google Cloud console → IAM → Service accounts → creat
 Then Play Console → **Users and permissions** → invite its email, with *Release apps to testing
 tracks* for Turnia. Play only accepts API uploads once the app has had one bundle uploaded by hand.
 
+Every upload carries the release notes in `.github/whatsnew/`, one `whatsnew-<locale>` file per
+store language (500 characters at most). Edit them there before running the workflow.
+
 ### iOS
 
 | Secret | What it is |
