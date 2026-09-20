@@ -7,11 +7,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
+import com.geoviksoft.turnia.core.data.logger.Logger
 import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.LoadAdError
 import org.koin.compose.koinInject
+
+private const val TAG = "AdBanner"
 
 /**
  * The banner's ad unit id. It is a resource of the app, which is the module with build types — test
@@ -36,6 +40,12 @@ internal actual fun PlatformAdBanner(modifier: Modifier, onLoaded: () -> Unit) {
                     setAdSize(AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(context, width))
                     adListener = object : AdListener() {
                         override fun onAdLoaded() = currentOnLoaded()
+
+                        // A banner that never arrives is invisible by design, so the reason has to
+                        // be logged or there is nothing to tell no-fill from a misconfigured unit.
+                        override fun onAdFailedToLoad(error: LoadAdError) {
+                            Logger.w(TAG, "Banner failed: [${error.code}] ${error.message} (${error.domain}) unit=$unitId")
+                        }
                     }
                     loadAd(AdRequest.Builder().build())
                 }

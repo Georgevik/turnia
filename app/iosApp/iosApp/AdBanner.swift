@@ -35,6 +35,12 @@ private final class LoadReportingBannerView: BannerView, BannerViewDelegate {
         alpha = 1
         onLoaded?()
     }
+
+    // A banner that never arrives is invisible by design, so the reason has to be logged or there
+    // is nothing to tell no-fill from a misconfigured unit.
+    func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: Error) {
+        NSLog("AdBanner: banner failed: \(error.localizedDescription) unit=\(bannerAdUnitId)")
+    }
 }
 
 /// Compose owns the only view controller there is; the SDKs present a tapped ad or a form over it.
