@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.sp
 import com.geoviksoft.turnia.core.domain.model.EventId
 import com.geoviksoft.turnia.ui.components.calendar.model.CalendarCellEventUi
 import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
+import com.geoviksoft.turnia.ui.system.color.EntityPalette
 import kotlinx.coroutines.delay
 import kotlinx.datetime.LocalDate
 import kotlin.time.Duration
@@ -291,13 +292,16 @@ fun CalendarCellEventPreview() {
                 LabelledCell("long label", events = listOf(demoCell(label = "REFUERZO")))
             }
             Row {
+                val demoCell = demoCell()
+                val demoCell2 = demoCell(label = "T2", background = EntityPalette[8])
+                val demoCell3 = demoCell(label = "T3", background = EntityPalette[6])
                 // A cell draws two and hides the rest, which is why `swapFirst` exists: the third
                 // one here is the one nobody would see.
-                LabelledCell("one", events = listOf(demoCell()))
-                LabelledCell("two", events = List(2) { demoCell(label = "T$it") })
+                LabelledCell("one", events = listOf(demoCell))
+                LabelledCell("two", events = listOf(demoCell, demoCell2))
                 LabelledCell(
                     label = "three",
-                    events = List(3) { demoCell(label = "T$it") },
+                    events = listOf(demoCell, demoCell2, demoCell3),
                 )
                 LabelledCell("empty", events = emptyList())
             }
@@ -338,7 +342,7 @@ private fun LabelledCell(
 
 private fun demoCell(
     label: String = "DE",
-    background: Color = Color(0xFF3949AB),
+    background: Color = EntityPalette[1],
     onSwap: Boolean = false,
     assignedToOther: Boolean = false,
 ) = CalendarCellEventUi(
