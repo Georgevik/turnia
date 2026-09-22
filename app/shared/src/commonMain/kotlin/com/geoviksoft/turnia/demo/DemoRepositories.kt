@@ -19,6 +19,7 @@ import com.geoviksoft.turnia.core.domain.model.JoinRequest
 import com.geoviksoft.turnia.core.domain.model.MyJoinRequest
 import com.geoviksoft.turnia.core.domain.model.NewGroup
 import com.geoviksoft.turnia.core.domain.model.PersonalEventType
+import com.geoviksoft.turnia.core.domain.model.PersonalOneOffEvent
 import com.geoviksoft.turnia.core.domain.model.PersonalTypedEvent
 import com.geoviksoft.turnia.core.domain.model.SharedCalendar
 import com.geoviksoft.turnia.core.domain.model.SharedCalendarError
@@ -301,6 +302,7 @@ internal class DemoPersonalEventRepository(world: DemoWorld) : PersonalEventRepo
 
     private val types = MutableStateFlow(world.personalTypes)
     private val events = MutableStateFlow(world.personalEvents)
+    private val oneOffEvents = MutableStateFlow(world.personalOneOffEvents)
 
     override fun getMyEventTypes(includeDeleted: Boolean): Flow<List<PersonalEventType>> =
         types.map { all -> all.filter { includeDeleted || !it.isDeleted } }
@@ -330,6 +332,31 @@ internal class DemoPersonalEventRepository(world: DemoWorld) : PersonalEventRepo
             val window = date.minus(monthDelta, DateTimeUnit.MONTH)..date.plus(monthDelta, DateTimeUnit.MONTH)
             all.filter { it.date in window }
         }
+
+    override fun getOneOffEvents(uid: UserId, date: LocalDate, monthDelta: Int): Flow<List<PersonalOneOffEvent>> =
+        oneOffEvents.map { all ->
+            val from = date.minus(monthDelta, DateTimeUnit.MONTH)
+            val until = date.plus(monthDelta, DateTimeUnit.MONTH)
+            all.filter { it.start.date <= until && it.end.date >= from }
+        }
+
+    override suspend fun addOneOffEvent(event: PersonalOneOffEvent): Outcome<Unit, Unit> {
+        oneOffEvents.update { it + event }
+        return Unit.toSuccess()
+    }
+
+    override suspend fun updateOneOffEvent(
+        previous: PersonalOneOffEvent,
+        event: PersonalOneOffEvent,
+    ): Outcome<Unit, Unit> {
+        oneOffEvents.update { all -> all.map { if (it.id == event.id) event else it } }
+        return Unit.toSuccess()
+    }
+
+    override suspend fun deleteOneOffEvent(event: PersonalOneOffEvent): Outcome<Unit, Unit> {
+        oneOffEvents.update { all -> all.filterNot { it.id == event.id } }
+        return Unit.toSuccess()
+    }
 }
 
 /** A colleague's calendar is their shifts, whichever group they are in; they keep no personal ones here. */

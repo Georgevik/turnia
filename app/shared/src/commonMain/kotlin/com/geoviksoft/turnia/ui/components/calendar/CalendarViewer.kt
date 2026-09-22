@@ -29,6 +29,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -106,17 +107,6 @@ fun CalendarViewer(
         LocalDate(today.year, today.month, 1)
     }
     val pagerState = rememberPagerState(initialPage = MONTH_PAGE_ANCHOR) { MONTH_PAGE_COUNT }
-
-    LaunchedEffect(pagerState) {
-        snapshotFlow { pagerState.settledPage }
-            .collect { page ->
-                val newMonth = anchorMonth.plus(page - MONTH_PAGE_ANCHOR, DateTimeUnit.MONTH)
-                Logger.d("Jorge", "Month changed to $newMonth")
-                onMonthChanged(newMonth)
-            }
-    }
-
-
     val scope = rememberCoroutineScope()
 
     val cellsByDate = remember(eventsByDate) {
@@ -130,7 +120,23 @@ fun CalendarViewer(
 
     // The day whose details sheet is shown; non-null means the sheet is open.
     var sheetDate by rememberSaveable { mutableStateOf<LocalDate?>(null) }
-    val sheetState = rememberModalBottomSheetState()
+    var sheetFormOpen by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(
+        confirmValueChange = { value -> !(sheetFormOpen && value == SheetValue.PartiallyExpanded) },
+    )
+    LaunchedEffect(sheetFormOpen) {
+        if (sheetFormOpen && sheetState.isVisible) sheetState.expand()
+    }
+
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.settledPage }
+            .collect { page ->
+                val newMonth = anchorMonth.plus(page - MONTH_PAGE_ANCHOR, DateTimeUnit.MONTH)
+                Logger.d("Jorge", "Month changed to $newMonth")
+                onMonthChanged(newMonth)
+            }
+    }
+
 
     // Animate the sheet out, then clear the date. Used by the programmatic close
     // paths (add event, edit group) that don't go through onDismissRequest.
@@ -208,7 +214,10 @@ fun CalendarViewer(
 
         sheetDate?.let { date ->
             ModalBottomSheet(
-                onDismissRequest = { sheetDate = null },
+                onDismissRequest = {
+                    sheetDate = null
+                    sheetFormOpen = false
+                },
                 sheetState = sheetState,
             ) {
                 DayDetailSheet(
@@ -221,6 +230,7 @@ fun CalendarViewer(
                     },
                     openNewPersonalTypeScreen = { onAddPersonalType() },
                     openNewGroupTypeScreen = onAddGroupType,
+                    onFormOpenChange = { sheetFormOpen = it },
                     onClose = { dismissSheet() },
                 )
             }

@@ -10,6 +10,7 @@ import com.geoviksoft.turnia.core.data.datasource.firestore.GroupJoinRequestFire
 import com.geoviksoft.turnia.core.data.datasource.firestore.GroupSyncFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.PersonalEventFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.PersonalEventTypesFirestore
+import com.geoviksoft.turnia.core.data.datasource.firestore.PersonalOneOffEventFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.RevokedGroupFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.UserPathFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.UserPrivateFirestore
@@ -116,6 +117,7 @@ val dataModule: Module = module {
     single { GroupEventFunction(get(), get()) }
     single { SharedCalendarFunction(get(), get()) }
     single { PersonalEventFirestore(get(), get(), get()) }
+    single { PersonalOneOffEventFirestore(get(), get(), get()) }
     single { PersonalEventTypesFirestore(get(), get(), get(), get()) }
 
     // Domain rules that depend on nothing outside the domain.
@@ -160,7 +162,7 @@ val dataModule: Module = module {
             get(), get()
         )
     }
-    single<PersonalEventRepository> { PersonalEventRepositoryImpl(get(), get(), get(), get()) }
+    single<PersonalEventRepository> { PersonalEventRepositoryImpl(get(), get(), get(), get(), get()) }
     single<SharedCalendarRepository> { SharedCalendarRepositoryImpl(get(), get()) }
     single<AdRepository> { AdRepositoryImpl(get(), get(), get()) }
 }

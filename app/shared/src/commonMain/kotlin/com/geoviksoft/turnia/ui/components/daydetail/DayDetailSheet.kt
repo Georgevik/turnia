@@ -22,6 +22,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.geoviksoft.turnia.core.domain.model.EventId
@@ -45,14 +47,15 @@ import com.geoviksoft.turnia.ui.components.daydetail.components.DayDetailAddEven
 import com.geoviksoft.turnia.ui.components.daydetail.components.DayDetailHeader
 import com.geoviksoft.turnia.ui.components.daydetail.components.DayEventRow
 import com.geoviksoft.turnia.ui.components.daydetail.components.OneOffEventRow
-import com.geoviksoft.turnia.ui.components.daydetail.model.OneOffEventFormUi
-import com.geoviksoft.turnia.ui.components.daydetail.model.OneOffEventUi
-import com.geoviksoft.turnia.ui.components.daydetail.model.OneOffFormAction
 import com.geoviksoft.turnia.ui.components.daydetail.components.PreviewEventTypeSections
 import com.geoviksoft.turnia.ui.components.daydetail.model.AddEventTypesError
 import com.geoviksoft.turnia.ui.components.daydetail.model.AddEventTypesUi
 import com.geoviksoft.turnia.ui.components.daydetail.model.DaySwapMessage
 import com.geoviksoft.turnia.ui.components.daydetail.model.EventTypeUi
+import com.geoviksoft.turnia.ui.components.daydetail.model.OneOffEventFormUi
+import com.geoviksoft.turnia.ui.components.daydetail.model.OneOffEventMessage
+import com.geoviksoft.turnia.ui.components.daydetail.model.OneOffEventUi
+import com.geoviksoft.turnia.ui.components.daydetail.model.OneOffFormAction
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
 import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
 import com.geoviksoft.turnia.ui.system.color.EntityPalette
@@ -92,6 +95,8 @@ import turnia.app.shared.generated.resources.event_swap_take_cancel
 import turnia.app.shared.generated.resources.event_swap_take_confirm
 import turnia.app.shared.generated.resources.event_swap_take_confirm_body
 import turnia.app.shared.generated.resources.event_swap_take_confirm_title
+import turnia.app.shared.generated.resources.one_off_event_delete_error
+import turnia.app.shared.generated.resources.one_off_event_save_error
 
 @Composable
 fun DayDetailSheet(
@@ -101,6 +106,8 @@ fun DayDetailSheet(
     openEditTypeScreen: (groupId: String, groupName: String) -> Unit,
     openNewPersonalTypeScreen: () -> Unit,
     openNewGroupTypeScreen: (groupId: String) -> Unit,
+    /** A form wants the sheet open all the way, so it has the whole height to scroll in. */
+    onFormOpenChange: (Boolean) -> Unit,
     onClose: (shouldRefresh: Boolean) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: DayDetailSheetViewModel = koinViewModel(key = date.toString()) {
@@ -112,6 +119,16 @@ fun DayDetailSheet(
     val oneOffEvents by viewModel.oneOffEvents.collectAsStateWithLifecycle()
     var adding by rememberSaveable { mutableStateOf(false) }
     var pendingDelete by remember { mutableStateOf<DayEventUi?>(null) }
+    var confirmOneOffDelete by remember { mutableStateOf(false) }
+
+    val formOpen = oneOffForm != null
+    LaunchedEffect(formOpen) { onFormOpenChange(formOpen) }
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.onOneOffAction(OneOffFormAction.Cancel)
+            onFormOpenChange(false)
+        }
+    }
     var pendingReturn by remember { mutableStateOf<DayEventUi?>(null) }
     var editingNotes by remember { mutableStateOf<DayEventUi?>(null) }
     var pendingTake by remember { mutableStateOf<DayEventUi?>(null) }
@@ -132,6 +149,15 @@ fun DayDetailSheet(
         LaunchedEffect(message) {
             snackbar.showSnackbar(text.toErrorSnackbar())
             viewModel.swapMessageShown()
+        }
+    }
+
+    val oneOffMessage by viewModel.oneOffMessage.collectAsStateWithLifecycle()
+    oneOffMessage?.let { message ->
+        val text = message.text()
+        LaunchedEffect(message) {
+            snackbar.showSnackbar(text.toErrorSnackbar())
+            viewModel.oneOffMessageShown()
         }
     }
 
@@ -187,6 +213,26 @@ fun DayDetailSheet(
         )
     }
 
+    if (confirmOneOffDelete) {
+        AlertDialog(
+            onDismissRequest = { confirmOneOffDelete = false },
+            title = { Text(stringResource(Res.string.event_remove_confirm_title)) },
+            text = { Text(stringResource(Res.string.event_remove_confirm_body)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.onOneOffAction(OneOffFormAction.Delete)
+                    confirmOneOffDelete = false
+                    adding = false
+                }) { Text(stringResource(Res.string.event_remove_confirm)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmOneOffDelete = false }) {
+                    Text(stringResource(Res.string.event_remove_cancel))
+                }
+            },
+        )
+    }
+
     pendingReturn?.let { event ->
         AlertDialog(
             onDismissRequest = { pendingReturn = null },
@@ -222,6 +268,10 @@ fun DayDetailSheet(
             adding = !adding
         },
         onOneOffAction = { action ->
+            if (action == OneOffFormAction.Delete) {
+                confirmOneOffDelete = true
+                return@DayDetailContent
+            }
             val saving = action == OneOffFormAction.Save && oneOffForm?.canSave == true
             viewModel.onOneOffAction(action)
             // Back to the day's list, where the event just saved is now shown.
@@ -240,6 +290,10 @@ fun DayDetailSheet(
         onEditNotes = { editingNotes = it },
         onSwapChange = viewModel::setOnSwap,
         onTake = { pendingTake = it },
+        onEditOneOff = { event ->
+            viewModel.onOneOffAction(OneOffFormAction.Edit(event.id))
+            adding = true
+        },
         modifier = modifier,
     )
 }
@@ -266,12 +320,13 @@ private fun DayDetailContent(
     onEditNotes: (DayEventUi) -> Unit,
     onSwapChange: (DayEventUi, Boolean) -> Unit,
     onTake: (DayEventUi) -> Unit,
+    onEditOneOff: (OneOffEventUi) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(max = 560.dp)
+            .heightIn(max = if (oneOffForm != null) Dp.Unspecified else 560.dp)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp)
             .padding(bottom = 16.dp),
@@ -354,7 +409,10 @@ private fun DayDetailContent(
                             }
                             oneOffEvents.forEachIndexed { index, event ->
                                 if (index > 0 || events.isNotEmpty()) Spacer(Modifier.height(12.dp))
-                                OneOffEventRow(event = event)
+                                OneOffEventRow(
+                                    event = event,
+                                    onEdit = { onEditOneOff(event) },
+                                )
                             }
                         }
                     }
@@ -425,6 +483,14 @@ private fun DaySwapMessage.text(): String = stringResource(
         DaySwapMessage.NothingToReturn -> Res.string.event_swap_error_nothing_to_return
         DaySwapMessage.PreviousHolderLeft -> Res.string.event_swap_error_previous_holder_left
         DaySwapMessage.SaveFailed -> Res.string.event_swap_error_save
+    }
+)
+
+@Composable
+private fun OneOffEventMessage.text(): String = stringResource(
+    when (this) {
+        OneOffEventMessage.SaveFailed -> Res.string.one_off_event_save_error
+        OneOffEventMessage.DeleteFailed -> Res.string.one_off_event_delete_error
     }
 )
 
@@ -519,6 +585,7 @@ private fun PreviewDayDetail(
                 onEditNotes = {},
                 onSwapChange = { _, _ -> },
                 onTake = {},
+                onEditOneOff = {},
             )
         }
     }

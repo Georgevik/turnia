@@ -1,14 +1,15 @@
 package com.geoviksoft.turnia.ui.components.daydetail.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -30,6 +31,7 @@ import kotlinx.datetime.LocalTime
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.one_off_event_all_day
+import turnia.app.shared.generated.resources.one_off_event_edit
 
 /**
  * Laid out as an agenda line rather than like a shift's row: what a one-off event is known by is
@@ -39,7 +41,10 @@ import turnia.app.shared.generated.resources.one_off_event_all_day
 fun OneOffEventRow(
     event: OneOffEventUi,
     modifier: Modifier = Modifier,
+    /** Tapping the row edits the event, deleting included; null leaves it read-only. */
+    onEdit: (() -> Unit)? = null,
 ) {
+    val editLabel = stringResource(Res.string.one_off_event_edit)
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -47,7 +52,13 @@ fun OneOffEventRow(
         shadowElevation = 1.dp,
     ) {
         Row(
-            modifier = Modifier.height(IntrinsicSize.Min).padding(vertical = 14.dp),
+            modifier = Modifier
+                .then(
+                    if (onEdit != null) Modifier.clickable(onClickLabel = editLabel, onClick = onEdit)
+                    else Modifier
+                )
+                .height(IntrinsicSize.Min)
+                .padding(vertical = 14.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Column(
@@ -84,7 +95,7 @@ fun OneOffEventRow(
                     .background(event.color, RoundedCornerShape(2.dp)),
             )
             Column(
-                modifier = Modifier.weight(1f).padding(end = 14.dp),
+                modifier = Modifier.weight(1f).padding(end = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text(
@@ -135,6 +146,7 @@ fun OneOffEventRowPreview() {
                     allDay = false,
                     color = EntityPalette.first(),
                 ),
+                onEdit = {},
             )
             OneOffEventRow(
                 OneOffEventUi(

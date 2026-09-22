@@ -420,7 +420,11 @@
     <string name="one_off_event_end_before_start">Termina antes de empezar</string>
     <string name="one_off_event_save">Guardar</string>
     <string name="one_off_event_cancel">Cancelar</string>
+    <string name="one_off_event_delete">Borrar</string>
     <string name="one_off_event_picker_ok">Aceptar</string>
+    <string name="one_off_event_edit">Editar</string>
+    <string name="one_off_event_save_error">No se ha podido guardar el evento</string>
+    <string name="one_off_event_delete_error">No se ha podido borrar el evento</string>
     <string name="day_detail_group_events">EVENTOS DE GRUPO</string>
     <string name="day_detail_add_event">Añadir</string>
     <string name="day_detail_load_error">No hemos podido cargar tus tipos de evento.</string>

@@ -3,6 +3,7 @@ package com.geoviksoft.turnia.core.domain.repository
 import com.geoviksoft.turnia.core.domain.model.EventId
 import com.geoviksoft.turnia.core.domain.model.EventTypeId
 import com.geoviksoft.turnia.core.domain.model.PersonalEventType
+import com.geoviksoft.turnia.core.domain.model.PersonalOneOffEvent
 import com.geoviksoft.turnia.core.domain.model.PersonalTypedEvent
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.system.Outcome
@@ -40,4 +41,21 @@ interface PersonalEventRepository {
         date: LocalDate,
         monthDelta: Int = 1,
     ): Flow<List<PersonalTypedEvent>>
+
+    /** Like [getEvents]: every one-off event touching a month of the window, even partly. */
+    fun getOneOffEvents(
+        uid: UserId,
+        date: LocalDate,
+        monthDelta: Int = 1,
+    ): Flow<List<PersonalOneOffEvent>>
+
+    suspend fun addOneOffEvent(event: PersonalOneOffEvent): Outcome<Unit, Unit>
+
+    /** [previous] is the event before the edit: the months it leaves have to learn it left. */
+    suspend fun updateOneOffEvent(
+        previous: PersonalOneOffEvent,
+        event: PersonalOneOffEvent,
+    ): Outcome<Unit, Unit>
+
+    suspend fun deleteOneOffEvent(event: PersonalOneOffEvent): Outcome<Unit, Unit>
 }

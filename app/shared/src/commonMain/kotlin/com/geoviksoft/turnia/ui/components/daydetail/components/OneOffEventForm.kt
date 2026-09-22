@@ -23,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -63,6 +64,7 @@ import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.color_selected
 import turnia.app.shared.generated.resources.one_off_event_all_day
 import turnia.app.shared.generated.resources.one_off_event_cancel
+import turnia.app.shared.generated.resources.one_off_event_delete
 import turnia.app.shared.generated.resources.one_off_event_end
 import turnia.app.shared.generated.resources.one_off_event_end_before_start
 import turnia.app.shared.generated.resources.one_off_event_name
@@ -84,7 +86,10 @@ fun OneOffEventForm(
     val nameFocus = remember { FocusRequester() }
     var picking by remember { mutableStateOf<PickerTarget?>(null) }
 
+    // Only a new event starts typing: an existing one is often opened to be read or deleted, and a
+    // keyboard would cover half of it.
     LaunchedEffect(Unit) {
+        if (form.editingId != null) return@LaunchedEffect
         delay(FOCUS_DELAY_MS)
         nameFocus.requestFocus()
     }
@@ -179,9 +184,19 @@ fun OneOffEventForm(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                if (form.editingId != null) {
+                    TextButton(
+                        onClick = { onAction(OneOffFormAction.Delete) },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error,
+                        ),
+                    ) {
+                        Text(stringResource(Res.string.one_off_event_delete))
+                    }
+                }
+                Spacer(Modifier.weight(1f))
                 TextButton(onClick = { onAction(OneOffFormAction.Cancel) }) {
                     Text(stringResource(Res.string.one_off_event_cancel))
                 }

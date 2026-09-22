@@ -25,6 +25,8 @@ data class OneOffEventFormUi(
     val end: LocalDateTime,
     val allDay: Boolean = false,
     val color: Color,
+    /** The event being edited, or null while a new one is being written. */
+    val editingId: String? = null,
 ) {
     /**
      * An all-day event keeps the times it had underneath, so switching back restores them, but
@@ -38,8 +40,11 @@ data class OneOffEventFormUi(
 /** What the user does to the one-off form, so the whole of it travels as one callback. */
 sealed interface OneOffFormAction {
     data object Open : OneOffFormAction
+    data class Edit(val eventId: String) : OneOffFormAction
     data object Cancel : OneOffFormAction
     data object Save : OneOffFormAction
+    /** Deletes the event being edited. The sheet asks first, and only a confirmed one arrives. */
+    data object Delete : OneOffFormAction
     data class NameChanged(val name: String) : OneOffFormAction
     data class NotesChanged(val notes: String) : OneOffFormAction
     data class StartChanged(val start: LocalDateTime) : OneOffFormAction
@@ -47,3 +52,6 @@ sealed interface OneOffFormAction {
     data class AllDayChanged(val allDay: Boolean) : OneOffFormAction
     data class ColorPicked(val color: Color) : OneOffFormAction
 }
+
+/** A one-off event write that failed, shown until the sheet says it has been. */
+enum class OneOffEventMessage { SaveFailed, DeleteFailed }

@@ -420,7 +420,11 @@
     <string name="one_off_event_end_before_start">Das Ende liegt vor dem Beginn</string>
     <string name="one_off_event_save">Speichern</string>
     <string name="one_off_event_cancel">Abbrechen</string>
+    <string name="one_off_event_delete">Löschen</string>
     <string name="one_off_event_picker_ok">OK</string>
+    <string name="one_off_event_edit">Bearbeiten</string>
+    <string name="one_off_event_save_error">Der Termin konnte nicht gespeichert werden</string>
+    <string name="one_off_event_delete_error">Der Termin konnte nicht gelöscht werden</string>
     <string name="day_detail_group_events">GRUPPENTERMINE</string>
     <string name="day_detail_add_event">Hinzufügen</string>
     <string name="day_detail_load_error">Wir konnten deine Terminarten nicht laden.</string>

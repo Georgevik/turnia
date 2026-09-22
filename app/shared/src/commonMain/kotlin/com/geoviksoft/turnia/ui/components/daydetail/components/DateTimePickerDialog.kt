@@ -1,5 +1,6 @@
 package com.geoviksoft.turnia.ui.components.daydetail.components
 
+import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -51,17 +52,21 @@ fun DateTimePickerDialog(
         )
         DatePickerDialog(
             onDismissRequest = onDismiss,
+            // Both buttons in one slot, in our order: left to itself, the dialog puts confirm first
+            // on iOS, the opposite of the time dialog that follows it.
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        val picked = dateState.selectedDateMillis
-                            ?.let { LocalDate.fromEpochDays(it / MILLIS_PER_DAY) }
-                            ?: initial.date
-                        if (pickTime) pickedDate = picked else onConfirm(LocalDateTime(picked, initial.time))
-                    },
-                ) { Text(ok) }
+                Row {
+                    TextButton(onClick = onDismiss) { Text(cancel) }
+                    TextButton(
+                        onClick = {
+                            val picked = dateState.selectedDateMillis
+                                ?.let { LocalDate.fromEpochDays(it / MILLIS_PER_DAY) }
+                                ?: initial.date
+                            if (pickTime) pickedDate = picked else onConfirm(LocalDateTime(picked, initial.time))
+                        },
+                    ) { Text(ok) }
+                }
             },
-            dismissButton = { TextButton(onClick = onDismiss) { Text(cancel) } },
         ) {
             DatePicker(state = dateState)
         }

@@ -2,11 +2,13 @@ package com.geoviksoft.turnia.core.data.user
 
 import com.geoviksoft.turnia.core.data.datasource.firestore.PersonalEventFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.PersonalEventTypesFirestore
+import com.geoviksoft.turnia.core.data.datasource.firestore.PersonalOneOffEventFirestore
 import com.geoviksoft.turnia.core.data.logger.Logger
 import com.geoviksoft.turnia.core.data.user.mappers.PersonalEventMapper
 import com.geoviksoft.turnia.core.domain.model.EventId
 import com.geoviksoft.turnia.core.domain.model.EventTypeId
 import com.geoviksoft.turnia.core.domain.model.PersonalEventType
+import com.geoviksoft.turnia.core.domain.model.PersonalOneOffEvent
 import com.geoviksoft.turnia.core.domain.model.PersonalTypedEvent
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.domain.repository.PersonalEventRepository
@@ -30,6 +32,7 @@ class PersonalEventRepositoryImpl(
     private val personalEventMapper: PersonalEventMapper,
     private val personalEventFirestore: PersonalEventFirestore,
     private val personalEventTypesFirestore: PersonalEventTypesFirestore,
+    private val personalOneOffEventFirestore: PersonalOneOffEventFirestore,
 ) : PersonalEventRepository {
 
     override fun getMyEventTypes(includeDeleted: Boolean): Flow<List<PersonalEventType>> {
@@ -91,6 +94,43 @@ class PersonalEventRepositoryImpl(
         docs.mapNotNull { personalEventMapper.map(it, typesMap) }
     }
 
+
+    override fun getOneOffEvents(
+        uid: UserId, date: LocalDate, monthDelta: Int
+    ): Flow<List<PersonalOneOffEvent>> = personalOneOffEventFirestore.get(
+        uid,
+        from = date.minus(monthDelta, DateTimeUnit.MONTH).toInstant(),
+        until = date.plus(monthDelta, DateTimeUnit.MONTH).toInstant(),
+    ).map { docs -> docs.mapNotNull { personalEventMapper.map(it) } }
+
+    override suspend fun addOneOffEvent(event: PersonalOneOffEvent): Outcome<Unit, Unit> {
+        val uid = userRepository.loggedUser?.id ?: return Unit.toFailure()
+        personalOneOffEventFirestore.set(uid, event).errorOrNull()?.let { error ->
+            Logger.e(TAG, "Error adding personal one-off event", error.error)
+            return Unit.toFailure()
+        }
+        return Unit.toSuccess()
+    }
+
+    override suspend fun updateOneOffEvent(
+        previous: PersonalOneOffEvent, event: PersonalOneOffEvent
+    ): Outcome<Unit, Unit> {
+        val uid = userRepository.loggedUser?.id ?: return Unit.toFailure()
+        personalOneOffEventFirestore.update(uid, previous, event).errorOrNull()?.let { error ->
+            Logger.e(TAG, "Error updating personal one-off event", error.error)
+            return Unit.toFailure()
+        }
+        return Unit.toSuccess()
+    }
+
+    override suspend fun deleteOneOffEvent(event: PersonalOneOffEvent): Outcome<Unit, Unit> {
+        val uid = userRepository.loggedUser?.id ?: return Unit.toFailure()
+        personalOneOffEventFirestore.delete(uid, event).errorOrNull()?.let { error ->
+            Logger.e(TAG, "Error deleting personal one-off event", error.error)
+            return Unit.toFailure()
+        }
+        return Unit.toSuccess()
+    }
 
     private fun getAllEventTypes(uid: UserId): Flow<List<PersonalEventType>> =
         personalEventTypesFirestore.observe(uid)

@@ -31,6 +31,8 @@ of its last listen pays nothing.
 | People tab, first time per 30 min | 2 | **1** | `calendarsSharedWithMe` listener attach (empty result = 1). |
 | Groups / Swaps / Settings tabs | 0–1 | 0 | — |
 | Save a group, a type or a colour | 0 reads | 0 reads | 2 writes: the document and its marker. |
+| Open a day in my calendar | — | **0** | One-off events come from the cache, following the user sync listener already open; the server is asked only for a month whose marker moved. |
+| Add, edit or delete a one-off event | — | 0 reads | 2 writes: the event and the marker of every month it spans (an edit also marks the months it leaves). |
 | Rename yourself (`updateProfile`) | — | 1 call | Server: profile + marker + reservation + 2 per group. Your other devices pay 1 profile read; every member pays 1 group read per shared group. |
 
 **Remote changes** are the part that scales with team activity and is the same before and after: when
