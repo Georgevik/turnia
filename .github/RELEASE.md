@@ -26,7 +26,15 @@ Tick each one off before running the workflow:
 
 1. Open GitHub → **Actions** → **Release** → **Run workflow**.
 2. Leave **Use workflow from** on `main`. Any other branch is refused.
-3. Type the **version name** users will see, such as `1.04`: up to three numbers separated by dots.
+3. Choose what kind of **release** it is. The workflow works out the new version from the last one:
+
+   | Release | When | Example |
+   |---------|------|---------|
+   | `hotfix` | Only fixes something that was broken | 1.2.3 → 1.2.4 |
+   | `minor` | New features or changes | 1.2.3 → 1.3.0 |
+   | `major` | A big change, such as a redesign | 1.2.3 → 2.0.0 |
+
+   The version it chose is shown at the top of the run's summary page.
 4. Choose which apps to send: `both`, `android` or `ios`.
 5. Leave **Run the Android E2E suite** ticked (see *Skipping the tests* below).
 6. Click **Run workflow**. Recent releases have taken 10–20 minutes.
@@ -56,7 +64,7 @@ on screen at that moment.
 
 ## Tags
 
-Once every chosen app has been uploaded, the workflow tags the code it built, such as `v1.04-247`:
+Once every chosen app has been uploaded, the workflow tags the code it built, such as `v1.2.3-247`:
 the version name, then the build number. The tag's message says which apps went out. A tag lets
 anyone find exactly the code behind a build, for example when looking into a crash report.
 
@@ -64,8 +72,12 @@ A run that failed gets no tag. The *Re-run failed jobs* that completes it adds t
 
 ## Version and build numbers
 
-- The **version name** (`1.04`) is what users see. It is typed when the workflow is run. The value in
-  the code only applies to builds made on a developer's machine.
+- The **version name** (`1.2.3`) is what users see. The workflow takes the last release's tag and
+  raises the number that matches the kind of release you chose. The value in the code only applies to
+  builds made on a developer's machine.
+- A run that fails leaves no tag, so running it again gives the same version, not the next one.
+- It needs at least one earlier release tag to count from. If none exists, the run stops at once and
+  says so. An engineer then creates one by hand, such as `git tag v1.2.3-250 <commit> && git push origin v1.2.3-250`.
 - The **build number** is set automatically: the run's number plus 100, the same for both apps.
   The stores refuse a build number they have already seen, and this one never repeats. The +100 keeps
   it past the builds uploaded by hand before this workflow existed.

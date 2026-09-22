@@ -9,10 +9,14 @@ name: Release
 on:
   workflow_dispatch:
     inputs:
-      versionName:
-        description: Version name shown in the stores, e.g. 1.04
-        type: string
-        required: true
+      release:
+        description: "What kind of release: hotfix (1.2.3 → 1.2.4), minor (→ 1.3.0) or major (→ 2.0.0)"
+        type: choice
+        default: minor
+        options:
+          - hotfix
+          - minor
+          - major
 
       platforms:
         description: Which apps to build and upload
@@ -33,18 +37,16 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  # The version name is typed when the workflow is run; the build number is this run's, offset past
-  # every build uploaded by hand before the pipeline existed.
-  BUILD_NAME: ${{ inputs.versionName }}
+  # The build number is this run's, offset past every build uploaded by hand before the pipeline
+  # existed. The version name is worked out by the validate job from the last release tag.
   BUILD_NUMBER: ${{ github.run_number }}
   BUILD_NUMBER_OFFSET: 100
 
 jobs:
-  # App Store Connect only accepts up to three period-separated integers, and a bad name would only
-  # be refused at the very end of the iOS job; Play takes the same format for consistency.
   validate:
     runs-on: ubuntu-latest
     outputs:
+      versionName: ${{ steps.version.outputs.versionName }}
       buildNumber: ${{ steps.version.outputs.buildNumber }}
     steps:
       # A release from any other branch would ship code nobody reviewed into the stores.
@@ -54,26 +56,44 @@ jobs:
           echo "::error::Releases can only be made from main. Choose main in 'Use workflow from' and run it again."
           exit 1
 
-      - name: Check the version name
-        run: |
-          if ! [[ "$BUILD_NAME" =~ ^[0-9]+(\.[0-9]+){0,2}$ ]]; then
-            echo "::error::Version name '$BUILD_NAME' must look like 1.04 or 1.4.0"
-            exit 1
-          fi
+      # Only for its credentials: the tags are read from the remote, which a shallow clone lacks.
+      - uses: actions/checkout@v5
 
-      # Computed once so both apps ship the same number, and shown on the run's summary page.
+      # The last release is the highest v<major>.<minor>.<patch>-<build> tag, which the tag job
+      # writes once a release has gone out; a run that failed partway left none, so re-running it
+      # arrives at the same version. Computed once so both apps ship the same name and number.
       - name: Resolve the version
         id: version
+        env:
+          RELEASE: ${{ inputs.release }}
         run: |
+          last=$(git ls-remote --tags --refs origin 'v*' \
+            | sed 's|.*refs/tags/||' \
+            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$' \
+            | sort -V | tail -n 1)
+          if [ -z "$last" ]; then
+            echo "::error::No previous release tag (like v1.2.3-250) was found, so there is nothing to count from."
+            exit 1
+          fi
+          IFS=. read -r major minor patch <<< "${last#v}"
+          patch=${patch%%-*}
+          case "$RELEASE" in
+            major) major=$((major + 1)); minor=0; patch=0 ;;
+            minor) minor=$((minor + 1)); patch=0 ;;
+            hotfix) patch=$((patch + 1)) ;;
+          esac
+          BUILD_NAME="$major.$minor.$patch"
           number=$((BUILD_NUMBER + BUILD_NUMBER_OFFSET))
+          echo "versionName=$BUILD_NAME" >> "$GITHUB_OUTPUT"
           echo "buildNumber=$number" >> "$GITHUB_OUTPUT"
+          echo "Previous release: $last ($RELEASE)"
           echo "Version name: $BUILD_NAME"
           echo "Build number: $number (versionCode on Android, CFBundleVersion on iOS)"
           {
             echo "### Version"
-            echo "| Version name | Build number |"
-            echo "|---|---|"
-            echo "| \`$BUILD_NAME\` | \`$number\` |"
+            echo "| Version name | Build number | Release | Previous |"
+            echo "|---|---|---|---|"
+            echo "| \`$BUILD_NAME\` | \`$number\` | $RELEASE | \`$last\` |"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Warn that the tests were skipped
@@ -102,6 +122,8 @@ jobs:
       (inputs.platforms == 'both' || inputs.platforms == 'android')
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    env:
+      BUILD_NAME: ${{ needs.validate.outputs.versionName }}
     steps:
       - uses: actions/checkout@v5
 
@@ -158,6 +180,8 @@ jobs:
       (inputs.platforms == 'both' || inputs.platforms == 'ios')
     runs-on: macos-26
     timeout-minutes: 90
+    env:
+      BUILD_NAME: ${{ needs.validate.outputs.versionName }}
     steps:
       - uses: actions/checkout@v5
 
@@ -238,7 +262,7 @@ jobs:
 
       - name: Tag the release
         env:
-          TAG: v${{ inputs.versionName }}-${{ needs.validate.outputs.buildNumber }}
+          TAG: v${{ needs.validate.outputs.versionName }}-${{ needs.validate.outputs.buildNumber }}
           PLATFORMS: ${{ inputs.platforms }}
         run: |
           if git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null; then
