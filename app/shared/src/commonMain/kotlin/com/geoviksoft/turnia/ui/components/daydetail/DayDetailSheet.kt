@@ -35,11 +35,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.geoviksoft.turnia.core.domain.model.EventId
-import com.geoviksoft.turnia.core.domain.model.EventType
-import com.geoviksoft.turnia.core.domain.model.EventTypeId
-import com.geoviksoft.turnia.core.domain.model.GroupEventType
 import com.geoviksoft.turnia.core.domain.model.GroupId
-import com.geoviksoft.turnia.core.domain.model.PersonalEventType
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
 import com.geoviksoft.turnia.ui.components.calendar.model.EventSource
@@ -48,15 +44,13 @@ import com.geoviksoft.turnia.ui.components.calendar.model.TransferHolderUi
 import com.geoviksoft.turnia.ui.components.daydetail.components.DayDetailAddEvent
 import com.geoviksoft.turnia.ui.components.daydetail.components.DayDetailHeader
 import com.geoviksoft.turnia.ui.components.daydetail.components.DayEventRow
-import com.geoviksoft.turnia.ui.components.daydetail.components.EventTypeChipUi
+import com.geoviksoft.turnia.ui.components.daydetail.components.PreviewEventTypeSections
 import com.geoviksoft.turnia.ui.components.daydetail.model.AddEventTypesError
 import com.geoviksoft.turnia.ui.components.daydetail.model.AddEventTypesUi
 import com.geoviksoft.turnia.ui.components.daydetail.model.DaySwapMessage
-import com.geoviksoft.turnia.ui.components.daydetail.model.EventTypeSectionUi
 import com.geoviksoft.turnia.ui.components.daydetail.model.EventTypeUi
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
 import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
-import com.geoviksoft.turnia.ui.system.color.toComposeColorOr
 import com.geoviksoft.turnia.ui.system.components.TurniaErrorContent
 import com.geoviksoft.turnia.ui.system.toErrorSnackbar
 import kotlinx.datetime.LocalDate
@@ -275,18 +269,18 @@ private fun DayDetailContent(
                     if (isAdding) {
                         // Only the add pane needs the loaded types; the day's events arrive as a
                         // parameter, so they must stay on screen while these load or fail.
-                        when (val state = addTypes) {
+                        when (addTypes) {
                             AddEventTypesUi.Loading -> AddPaneLoading()
 
                             is AddEventTypesUi.Error -> TurniaErrorContent(
-                                message = state.error.message(),
+                                message = addTypes.error.message(),
                                 modifier = Modifier.fillMaxWidth(),
                                 onRetry = onRetryTypes,
                             )
 
                             is AddEventTypesUi.Success -> DayDetailAddEvent(
                                 addMode = addMode,
-                                sections = state.sections,
+                                sections = addTypes.sections,
                                 onPickEventType = onPickEventType,
                                 onEditGroup = onEditGroup,
                                 onAddPersonalEventType = onAddPersonalEventType,
@@ -466,68 +460,6 @@ private val previewEvents = listOf(
     ),
 )
 
-private fun previewGroupType(
-    group: String,
-    groupName: String,
-    name: String,
-    acronym: String,
-    hours: Pair<String, String>,
-    color: String,
-) = GroupEventType(
-    id = EventTypeId("preview-$group-$acronym"),
-    groupId = GroupId(group),
-    groupName = groupName,
-    name = name,
-    acronym = acronym,
-    description = null,
-    startTime = hours.first,
-    endTime = hours.second,
-    swappable = true,
-    defaultColor = color,
-    userColor = null,
-)
-
-private fun previewPersonalType(name: String, acronym: String, color: String) = PersonalEventType(
-    id = EventTypeId("preview-personal-$acronym"),
-    name = name,
-    color = color,
-    acronym = acronym,
-    description = null,
-    startTime = null,
-    endTime = null,
-)
-
-private fun EventType.previewUi() = EventTypeUi(
-    chipUi = EventTypeChipUi(title = acronym ?: name, color = color.toComposeColorOr(Color.Gray)),
-    eventType = this,
-)
-
-/** My personal types, a group I administer, and one where I am a plain member. */
-private val previewTypeSections = listOf(
-    EventTypeSectionUi(
-        source = EventTypeSectionUi.Source.Personal,
-        events = listOf(
-            previewPersonalType("Training", "T", "#00897B"),
-            previewPersonalType("Holiday", "H", "#F9A825"),
-        ).map { it.previewUi() },
-    ),
-    EventTypeSectionUi(
-        source = EventTypeSectionUi.Source.Group("preview-emergency", "Emergency", isAdmin = true),
-        events = listOf(
-            previewGroupType("preview-emergency", "Emergency", "Morning", "M", "08:00" to "15:00", "#039BE5"),
-            previewGroupType("preview-emergency", "Emergency", "Afternoon", "A", "15:00" to "22:00", "#FB8C00"),
-            previewGroupType("preview-emergency", "Emergency", "Night", "N", "22:00" to "08:00", "#5E35B1"),
-            previewGroupType("preview-emergency", "Emergency", "24 h on call", "OC", "08:00" to "08:00", "#E53935"),
-        ).map { it.previewUi() },
-    ),
-    EventTypeSectionUi(
-        source = EventTypeSectionUi.Source.Group("preview-icu", "Paediatric ICU", isAdmin = false),
-        events = listOf(
-            previewGroupType("preview-icu", "Paediatric ICU", "Extra shift", "X", "10:00" to "18:00", "#43A047"),
-        ).map { it.previewUi() },
-    ),
-)
-
 @Composable
 private fun PreviewDayDetail(
     events: List<DayEventUi>,
@@ -577,7 +509,7 @@ fun DayDetailSheetAddPreview() {
     PreviewDayDetail(
         events = previewEvents,
         adding = true,
-        addTypes = AddEventTypesUi.Success(previewTypeSections),
+        addTypes = AddEventTypesUi.Success(PreviewEventTypeSections),
     )
 }
 

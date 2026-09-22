@@ -19,13 +19,22 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.geoviksoft.turnia.core.domain.model.EventType
+import com.geoviksoft.turnia.core.domain.model.EventTypeId
+import com.geoviksoft.turnia.core.domain.model.GroupEventType
+import com.geoviksoft.turnia.core.domain.model.GroupId
+import com.geoviksoft.turnia.core.domain.model.PersonalEventType
 import com.geoviksoft.turnia.ui.components.daydetail.DayAddMode
 import com.geoviksoft.turnia.ui.components.daydetail.model.EventTypeSectionUi
 import com.geoviksoft.turnia.ui.components.daydetail.model.EventTypeUi
+import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
 import com.geoviksoft.turnia.ui.system.TestTags
+import com.geoviksoft.turnia.ui.system.color.toComposeColorOr
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.day_detail_group_events
@@ -193,6 +202,122 @@ private fun InfoBanner(text: String) {
             Text(
                 text = text,
                 style = MaterialTheme.typography.bodySmall,
+            )
+        }
+    }
+}
+
+// Previews. The labels are developer-facing, so they stay here rather than in composeResources.
+
+private fun previewGroupType(
+    group: String,
+    groupName: String,
+    name: String,
+    acronym: String,
+    hours: Pair<String, String>,
+    color: String,
+) = GroupEventType(
+    id = EventTypeId("preview-$group-$acronym"),
+    groupId = GroupId(group),
+    groupName = groupName,
+    name = name,
+    acronym = acronym,
+    description = null,
+    startTime = hours.first,
+    endTime = hours.second,
+    swappable = true,
+    defaultColor = color,
+    userColor = null,
+)
+
+private fun previewPersonalType(name: String, acronym: String, color: String) = PersonalEventType(
+    id = EventTypeId("preview-personal-$acronym"),
+    name = name,
+    color = color,
+    acronym = acronym,
+    description = null,
+    startTime = null,
+    endTime = null,
+)
+
+private fun EventType.previewUi() = EventTypeUi(
+    chipUi = EventTypeChipUi(title = acronym ?: name, color = color.toComposeColorOr(Color.Gray)),
+    eventType = this,
+)
+
+/** My personal types, a group I administer, and one where I am a plain member. */
+internal val PreviewEventTypeSections = listOf(
+    EventTypeSectionUi(
+        source = EventTypeSectionUi.Source.Personal,
+        events = listOf(
+            previewPersonalType("Training", "T", "#00897B"),
+            previewPersonalType("Holiday", "H", "#F9A825"),
+        ).map { it.previewUi() },
+    ),
+    EventTypeSectionUi(
+        source = EventTypeSectionUi.Source.Group("preview-emergency", "Emergency", isAdmin = true),
+        events = listOf(
+            previewGroupType("preview-emergency", "Emergency", "Morning", "M", "08:00" to "15:00", "#039BE5"),
+            previewGroupType("preview-emergency", "Emergency", "Afternoon", "A", "15:00" to "22:00", "#FB8C00"),
+            previewGroupType("preview-emergency", "Emergency", "Night", "N", "22:00" to "08:00", "#5E35B1"),
+            previewGroupType("preview-emergency", "Emergency", "24 h on call", "OC", "08:00" to "08:00", "#E53935"),
+        ).map { it.previewUi() },
+    ),
+    EventTypeSectionUi(
+        source = EventTypeSectionUi.Source.Group("preview-icu", "Paediatric ICU", isAdmin = false),
+        events = listOf(
+            previewGroupType("preview-icu", "Paediatric ICU", "Extra shift", "X", "10:00" to "18:00", "#43A047"),
+        ).map { it.previewUi() },
+    ),
+)
+
+/** My own calendar: personal types and every group. */
+@Preview
+@Composable
+fun DayDetailAddEventPreview() {
+    PreviewAddEvent(DayAddMode.Full, PreviewEventTypeSections)
+}
+
+/** A group's calendar: only that group's types, under the banner that says so. */
+@Preview
+@Composable
+fun DayDetailAddEventGroupOnlyPreview() {
+    PreviewAddEvent(
+        addMode = DayAddMode.GroupOnly(GroupId("preview-emergency")),
+        sections = PreviewEventTypeSections.filter {
+            (it.source as? EventTypeSectionUi.Source.Group)?.groupId == "preview-emergency"
+        },
+    )
+}
+
+/** An admin's group with no types yet, which offers to create the first one. */
+@Preview
+@Composable
+fun DayDetailAddEventNoTypesPreview() {
+    PreviewAddEvent(
+        addMode = DayAddMode.Full,
+        sections = listOf(
+            PreviewEventTypeSections.first(),
+            EventTypeSectionUi(
+                source = EventTypeSectionUi.Source.Group("preview-new", "New ward", isAdmin = true),
+                events = emptyList(),
+            ),
+        ),
+    )
+}
+
+@Composable
+private fun PreviewAddEvent(addMode: DayAddMode, sections: List<EventTypeSectionUi>) {
+    PreviewTurniaTheme {
+        Surface {
+            DayDetailAddEvent(
+                addMode = addMode,
+                sections = sections,
+                onPickEventType = {},
+                onEditGroup = { _, _ -> },
+                onAddPersonalEventType = {},
+                onAddGroupEventType = {},
+                modifier = Modifier.padding(20.dp),
             )
         }
     }
