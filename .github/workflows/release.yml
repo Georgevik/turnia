@@ -245,6 +245,16 @@ jobs:
         if: always()
         run: rm -rf "$RUNNER_TEMP/asc"
 
+  # A TestFlight upload carries no notes, unlike Play's, so they are added once the build is there.
+  testflight-notes:
+    needs: [validate, ios]
+    if: ${{ !cancelled() && needs.ios.result == 'success' }}
+    uses: ./.github/workflows/release-notes.yml
+    with:
+      buildNumber: ${{ needs.validate.outputs.buildNumber }}
+      platforms: ios
+    secrets: inherit
+
   # Marks the commit that shipped, once every chosen upload has succeeded. A run that failed partway
   # gets its tag from the "Re-run failed jobs" that finishes it.
   tag:

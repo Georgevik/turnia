@@ -1,0 +1,83 @@
+# Puts the notes in .github/whatsnew onto a build that is already uploaded: Play's internal-track
+# release and TestFlight's "What to Test". Run it from Actions after editing the notes, or let
+# release.yml call it for TestFlight, whose upload carries no notes of its own.
+
+name: Release notes
+
+on:
+  workflow_dispatch:
+    inputs:
+      buildNumber:
+        description: Build number to update. Leave empty for the last release.
+        type: string
+        required: false
+
+      platforms:
+        description: Which stores to update
+        type: choice
+        default: both
+        options:
+          - both
+          - android
+          - ios
+
+  workflow_call:
+    inputs:
+      buildNumber:
+        type: string
+        required: true
+      platforms:
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  release-notes:
+    runs-on: ubuntu-latest
+    # TestFlight can take a while to finish processing a build before it accepts notes.
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Resolve the build
+        id: build
+        env:
+          BUILD: ${{ inputs.buildNumber }}
+        run: |
+          if [ -z "$BUILD" ]; then
+            last=$(git ls-remote --tags --refs origin 'v*' \
+              | sed 's|.*refs/tags/||' \
+              | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$' \
+              | sort -V | tail -n 1)
+            if [ -z "$last" ]; then
+              echo "::error::No release tag found. Type the build number instead."
+              exit 1
+            fi
+            BUILD=${last##*-}
+            echo "Last release: $last"
+          fi
+          echo "number=$BUILD" >> "$GITHUB_OUTPUT"
+          echo "### Release notes for build \`$BUILD\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install the store clients
+        run: pip install google-auth requests "pyjwt[crypto]"
+
+      - name: Update Play
+        if: inputs.platforms == 'both' || inputs.platforms == 'android'
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: python3 .github/scripts/release-notes.py play "${{ steps.build.outputs.number }}" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Update TestFlight
+        if: inputs.platforms == 'both' || inputs.platforms == 'ios'
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: python3 .github/scripts/release-notes.py testflight "${{ steps.build.outputs.number }}" | tee -a "$GITHUB_STEP_SUMMARY"

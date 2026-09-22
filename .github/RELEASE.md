@@ -41,6 +41,16 @@ Tick each one off before running the workflow:
 
 When it finishes green, the builds are with testers and the release is **tagged** (see *Tags*).
 
+## Changing the release notes after a release
+
+The notes in `.github/whatsnew/` go to both stores with every release: to Play with the upload, and
+to TestFlight as *What to Test* a few minutes later, once Apple has processed the build.
+
+To change them for a build that is already out, edit the files on `main`, then open GitHub →
+**Actions** → **Release notes** → **Run workflow**. Leave the build number empty to update the last
+release. On Play the notes go with the release when it is promoted to production. For the App Store,
+the public *What's New* text is still typed in App Store Connect when the version is submitted.
+
 ## If a run fails partway
 
 Open the failed run and click **Re-run failed jobs**, never **Re-run all jobs**.
