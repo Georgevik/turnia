@@ -14,6 +14,8 @@ data class SharedCalendarRequest(
 data class SharedCalendarResponse(
     @SerialName("groupEvents") val groupEvents: List<SharedGroupEventResponse> = emptyList(),
     @SerialName("personalEvents") val personalEvents: List<SharedPersonalEventResponse> = emptyList(),
+    @SerialName("personalOneOffEvents")
+    val personalOneOffEvents: List<SharedPersonalOneOffEventResponse> = emptyList(),
     @SerialName("personalEventTypes")
     val personalEventTypes: List<SharedPersonalEventTypeResponse> = emptyList(),
     @SerialName("groupEventTypeColors") val groupEventTypeColors: Map<String, String> = emptyMap(),
@@ -44,6 +46,18 @@ data class SharedPersonalEventResponse(
     @SerialName("eventId") val eventId: String,
     @SerialName("personalEventTypeId") val personalEventTypeId: String? = null,
     @SerialName("date") val date: String,
+    @SerialName("notes") val notes: String? = null,
+)
+
+@Serializable
+data class SharedPersonalOneOffEventResponse(
+    @SerialName("eventId") val eventId: String,
+    @SerialName("name") val name: String,
+    @SerialName("color") val color: String,
+    @SerialName("dateStart") val dateStart: String,
+    @SerialName("dateEnd") val dateEnd: String,
+    @SerialName("timeStart") val timeStart: String,
+    @SerialName("timeEnd") val timeEnd: String,
     @SerialName("notes") val notes: String? = null,
 )
 

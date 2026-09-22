@@ -12,7 +12,7 @@ const MAX_RANGE_DAYS = 92; // ~3 months
  * Group events live under their group, so a non-member cannot read them
  * directly. This callable runs with admin privileges: it checks the caller is
  * allowed (owner, or listed in the owner's `calendarSharedWith`), then gathers
- * the owner's group events (across all their groups) and personal events for a
+ * the owner's group events (across all their groups), personal events and one-off events for a
  * bounded date range, plus the lookups needed to render them — each shift's chain
  * of holders included, since the chain is part of the owner's calendar. Nothing is stored
  * — no mirror, no duplication.
@@ -122,6 +122,28 @@ export const getSharedCalendar = onCall(async (request) => {
       notes: doc.get("notes") ?? null,
     }));
 
+  // One-off events carry their own name and colour, so they need no type lookup. They may span
+  // several months, so the query is by overlap on the month fields — the same index the app's own
+  // sync uses — and the days are trimmed here: a month overlapping the range is not a day inside it.
+  const oneOffSnap = await db
+    .collection(`users/${ownerUid}/personalOneOffEvents`)
+    .where("yearMonthStart", "<=", to.slice(0, 7))
+    .where("yearMonthEnd", ">=", from.slice(0, 7))
+    .get();
+  const personalOneOffEvents = oneOffSnap.docs
+    .filter((doc) => doc.get("isDeleted") !== true)
+    .filter((doc) => doc.get("dateStart") <= to && doc.get("dateEnd") >= from)
+    .map((doc) => ({
+      eventId: doc.id,
+      name: doc.get("name"),
+      color: doc.get("color"),
+      dateStart: doc.get("dateStart"),
+      dateEnd: doc.get("dateEnd"),
+      timeStart: doc.get("timeStart"),
+      timeEnd: doc.get("timeEnd"),
+      notes: doc.get("notes") ?? null,
+    }));
+
   // Lookups for rendering: personal types, the owner's colors, and group types per group.
   const personalTypesSnap = await db.collection(`users/${ownerUid}/personalEventTypes`).get();
   const personalEventTypes = personalTypesSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
@@ -157,6 +179,7 @@ export const getSharedCalendar = onCall(async (request) => {
   return {
     groupEvents,
     personalEvents,
+    personalOneOffEvents,
     personalEventTypes,
     groupEventTypeColors,
     groupEventTypes,

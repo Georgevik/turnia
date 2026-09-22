@@ -5,6 +5,7 @@ import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.requests.Sh
 import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.requests.SharedGroupEventResponse
 import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.requests.SharedPersonalEventResponse
 import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.requests.SharedPersonalEventTypeResponse
+import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.requests.SharedPersonalOneOffEventResponse
 import com.geoviksoft.turnia.core.domain.model.EventHistoryEntry
 import com.geoviksoft.turnia.core.domain.model.EventId
 import com.geoviksoft.turnia.core.domain.model.EventTypeId
@@ -13,9 +14,11 @@ import com.geoviksoft.turnia.core.domain.model.GroupEventType
 import com.geoviksoft.turnia.core.domain.model.GroupId
 import com.geoviksoft.turnia.core.domain.model.PersonalEvent
 import com.geoviksoft.turnia.core.domain.model.PersonalEventType
+import com.geoviksoft.turnia.core.domain.model.PersonalOneOffEvent
 import com.geoviksoft.turnia.core.domain.model.SharedCalendar
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.system.parseEventDate
+import com.geoviksoft.turnia.core.system.parseEventTime
 import kotlinx.datetime.LocalDate
 
 /**
@@ -35,6 +38,7 @@ class SharedCalendarMapper {
                 map(it, groupTypes, response.userNames)
             },
             personalEvents = response.personalEvents.mapNotNull { map(it, personalTypes) },
+            personalOneOffEvents = response.personalOneOffEvents.mapNotNull { map(it) },
         )
     }
 
@@ -103,6 +107,17 @@ class SharedCalendarMapper {
             notes = event.notes.takeIf { it?.isNotEmpty() == true },
         )
     }
+
+    private fun map(event: SharedPersonalOneOffEventResponse): PersonalOneOffEvent? = PersonalOneOffEvent(
+        id = EventId(event.eventId),
+        name = event.name,
+        notes = event.notes.takeIf { it?.isNotEmpty() == true },
+        dateStart = parseEventDate(event.dateStart) ?: return null,
+        dateEnd = parseEventDate(event.dateEnd) ?: return null,
+        timeStart = parseEventTime(event.timeStart) ?: return null,
+        timeEnd = parseEventTime(event.timeEnd) ?: return null,
+        color = event.color,
+    )
 
     private fun map(type: SharedPersonalEventTypeResponse) = PersonalEventType(
         id = EventTypeId(type.id),

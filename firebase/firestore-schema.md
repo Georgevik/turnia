@@ -300,6 +300,32 @@ An instance of a personal event type on a date. Notes live **on the event**, not
 
 **Access**: written by the owner; read by the owner and by UIDs in `calendarSharedWith`.
 
+### `users/{uid}/personalOneOffEvents/{eventId}`
+
+A personal event with **no type**: it carries its own name, colour and times, and may span several
+days — and several months.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Event name. |
+| `color` | string | Hex `#RRGGBB`. |
+| `dateStart` | string | `YYYY-MM-DD`, first day. |
+| `dateEnd` | string | `YYYY-MM-DD`, last day (inclusive). |
+| `timeStart` | string | `HH:mm`. |
+| `timeEnd` | string | `HH:mm`. |
+| `yearMonthStart` | string | `YYYY-MM` of `dateStart`. |
+| `yearMonthEnd` | string | `YYYY-MM` of `dateEnd`. |
+| `notes` | string \| null | Free-text notes. Blank is stored as `null`. |
+| `isDeleted` | bool | Soft delete, so the delta sync can tell other devices it is gone. |
+| `updateAt` | timestamp | Server timestamp of the last write. |
+
+A month's query matches by **overlap** — `yearMonthStart <= month` and `yearMonthEnd >= month` —
+never by the start month alone, or an event running from September into November would be missing
+from October. Indexed by (`yearMonthStart`, `yearMonthEnd`) and (`yearMonthStart`, `yearMonthEnd`,
+`updateAt`), the second for the delta sync.
+
+**Access**: written by the owner; read by the owner and by UIDs in `calendarSharedWith`.
+
 ### `users/{uid}/sync/updates`
 
 A single document (`updates`) holding **when each part of the user's calendar last changed**. A reader —
@@ -309,6 +335,7 @@ what it already cached to decide whether it has to query the server at all.
 | Field | Type | Description |
 |-------|------|-------------|
 | `personalEventsUpdatedAt` | timestamp \| null | Last write to `personalEvents` (server timestamp). |
+| `personalOneOffEvents` | map&lt;`YYYY-MM`, { `updatedAt`: timestamp }&gt; | Last write to `personalOneOffEvents`, **per month**. A write stamps every month the event spans, and an edit that moves it also stamps the months it leaves — a device showing only those would otherwise keep it on its old date. |
 | `personalEventTypesUpdatedAt` | timestamp \| null | Last write to `personalEventTypes` (server timestamp). |
 | `revokedGroups` | timestamp \| null | Last write to `revokedGroups` — a revocation or a rejoin. Moved **only** by `leaveGroup` / `removeMember` / the rejoin path, never by a client. |
 | `account` | timestamp \| null | Last write to `private/account`. |
@@ -666,7 +693,8 @@ Firestore keeps only a **recent window** of events; older events are purged and 
 - **Colors**: `groupEventType` has no color (the user's `private/preferences.groupEventTypeColors` decides it); `personalEventType` and `group` carry their own — a group's is the admin's pick and is the same for every member.
 - **Group-wide event queries are bounded to a ≤ 3-month `date` range** (collection-group on `event`, filtered by `groupId`).
 - **Cross-group shared calendars** are served on demand by the `getSharedCalendar` Cloud Function
-  (collection-group on `event` filtered by `assigneeId` + date range); nothing is mirrored.
+  (collection-group on `event` filtered by `assigneeId` + date range, plus the owner's personal and
+  one-off events in range); nothing is mirrored.
 - **A username is unique and reserved**: `usernames/{username}` holds it; claim the reservation *before*
   writing `users/{uid}.username`, and release the old one after.
 - **A grant lives in one place**: `users/{owner}.calendarSharedWith`, written only by the owner. No mirrored list.
@@ -677,7 +705,7 @@ Firestore keeps only a **recent window** of events; older events are purged and 
   `usernames/{username}.updateAt` in the **same commit**, or no reader's cache ever settles.
 - **The name has a keeper, the avatar does not**: `name` and `username` are copied into every group,
   so only `updateProfile` may change them; the avatar is copied nowhere and the client writes it.
-- **Sync timestamps are bumped on every personal write**: a write to `personalEvents` / `personalEventTypes` must also
+- **Sync timestamps are bumped on every personal write**: a write to `personalEvents` / `personalOneOffEvents` / `personalEventTypes` must also
   merge the matching field of `users/{uid}/sync/updates`, or readers keep serving a stale cache.
 - **`subscription` is server-only**: only the subscription-verification Cloud Function writes `users/{uid}/private/subscription`; the client can never set itself premium.
 - **Firestore holds only recent events**: events with `date` older than 1 month are purged by the scheduled cleanup function; older events live only in the client's local NoSQL cache. History is append-only *within the retention window*, not forever in Firebase.
