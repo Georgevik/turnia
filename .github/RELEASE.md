@@ -1,35 +1,80 @@
-# Release pipeline
+# Releasing Turnia
 
-[`workflows/release.yml`](workflows/release.yml) builds both apps in release and uploads them:
-Android to Play's **internal testing** track, iOS to **TestFlight**. Run it from
-GitHub → **Actions** → **Release** → **Run workflow**, typing the version name and choosing `both`,
-`android` or `ios`.
+The **Release** workflow ([`workflows/release.yml`](workflows/release.yml)) builds the app and sends
+it to testers: the Android app to Play's **internal testing** track, the iPhone app to **TestFlight**.
+It does not publish to the public. Moving a tested build to production is still done by hand, in
+Play Console and App Store Connect.
 
-Promoting a build to production is still done by hand, in Play Console and App Store Connect.
+## Before you release
 
-Before either app is built for upload, the `android-e2e` job runs the E2E suite on an Android
-emulator — it calls [android-e2e.yml](workflows/android-e2e.yml), which can also be run by itself from
-Actions → AndroidE2E — against the Firebase emulators ([firebase/test/README.md](../firebase/test/README.md)). It
-runs whatever platforms were chosen, needs no secrets, and a failure stops both uploads. The
-**Run the Android E2E suite** box (ticked by default) skips it when unticked, and the uploads then
-go ahead without it. Its report
-is attached to the run as the `android-e2e-report` artifact, and every failure message ends with
-what was on screen at that moment.
+Tick each one off before running the workflow:
 
-## Versions
+1. **The backend is up to date.** If this release needs new or changed server code (Cloud
+   Functions, Firestore rules or indexes), deploy it first, from the `firebase/` folder:
+   `firebase deploy --only functions,firestore`. The app must never reach users before the server
+   it talks to.
+2. **The invitation page is up to date.** If anything in `firebase/hosting/` changed:
+   `firebase deploy --only hosting`.
+3. **Invitation links open the app** *(once, before the first production release)*.
+   `firebase/hosting/.well-known/assetlinks.json` must list the SHA-256 of the Play App Signing key
+   (Play Console → *App integrity*). Without it, Android users who tap an invitation link see the web
+   page instead of the app.
+4. **The release notes say what you want.** They are the files in `.github/whatsnew/`, one per
+   language, 500 characters at most each. Keep them short and plain.
 
-- The **version name** users see (`1.04`) is typed when the workflow is run, and set as
-  `-Pturnia.versionName` on Android and `MARKETING_VERSION` on iOS. It must be up to three
-  period-separated integers, which is all App Store Connect accepts; the first job checks it before
-  anything is built. The values in the repo only apply to local builds.
-- The build number is the workflow's run number plus `BUILD_NUMBER_OFFSET` (100), passed as
-  `-Pturnia.versionCode` on Android and `CURRENT_PROJECT_VERSION` on iOS. Both stores refuse a
-  build number they have already seen, and this one never repeats. The offset keeps it past every
-  build uploaded by hand before the pipeline existed.
+## Running a release
 
-## Secrets
+1. Open GitHub → **Actions** → **Release** → **Run workflow**.
+2. Leave **Use workflow from** on `main`. Any other branch is refused.
+3. Type the **version name** users will see, such as `1.04`: up to three numbers separated by dots.
+4. Choose which apps to send: `both`, `android` or `ios`.
+5. Leave **Run the Android E2E suite** ticked (see *Skipping the tests* below).
+6. Click **Run workflow**. Recent releases have taken 10–20 minutes.
 
-Repository → Settings → Secrets and variables → **Actions**.
+When it finishes green, the builds are with testers and the release is **tagged** (see *Tags*).
+
+## If a run fails partway
+
+Open the failed run and click **Re-run failed jobs**, never **Re-run all jobs**.
+
+Each build gets a number that the stores accept only once. If one app was already uploaded,
+*Re-run all jobs* tries to send it again with the same number, the store refuses it, and the run
+fails even when everything else works. *Re-run failed jobs* repeats only what failed.
+
+## Skipping the tests
+
+Before uploading, the workflow runs the automated tests on an Android emulator. If they fail,
+nothing is uploaded.
+
+Unticking **Run the Android E2E suite** skips them, and the builds are uploaded untested. The run's
+summary page then shows a **Tests skipped** warning. Only do this when the tests fail for a reason
+that has nothing to do with the app (the emulator itself misbehaving, for example) and the release
+cannot wait. Check the build by hand before promoting it.
+
+The test report is attached to every run as `android-e2e-report`, and each failure ends with what was
+on screen at that moment.
+
+## Tags
+
+Once every chosen app has been uploaded, the workflow tags the code it built, such as `v1.04-247`:
+the version name, then the build number. The tag's message says which apps went out. A tag lets
+anyone find exactly the code behind a build, for example when looking into a crash report.
+
+A run that failed gets no tag. The *Re-run failed jobs* that completes it adds the tag.
+
+## Version and build numbers
+
+- The **version name** (`1.04`) is what users see. It is typed when the workflow is run. The value in
+  the code only applies to builds made on a developer's machine.
+- The **build number** is set automatically: the run's number plus 100, the same for both apps.
+  The stores refuse a build number they have already seen, and this one never repeats. The +100 keeps
+  it past the builds uploaded by hand before this workflow existed.
+
+---
+
+## One-time setup (for engineers)
+
+The workflow reads these from Repository → Settings → Secrets and variables → **Actions**.
 
 ### Android
 
@@ -45,9 +90,6 @@ The service account: Google Cloud console → IAM → Service accounts → creat
 Then Play Console → **Users and permissions** → invite its email, with *Release apps to testing
 tracks* for Turnia. Play only accepts API uploads once the app has had one bundle uploaded by hand.
 
-Every upload carries the release notes in `.github/whatsnew/`, one `whatsnew-<locale>` file per
-store language (500 characters at most). Edit them there before running the workflow.
-
 ### iOS
 
 | Secret | What it is |
@@ -60,3 +102,12 @@ App Store Connect → **Users and Access** → **Integrations** → **App Store 
 a team key with the **Admin** role. Admin is what lets Xcode create the distribution certificate
 and profile on the runner (cloud signing), so no certificate or profile is stored anywhere. The
 `.p8` can only be downloaded once.
+
+### Build machines
+
+The iOS build runs on the `macos-26` runner with Xcode 26.6, pinned so that an update from Apple or
+GitHub cannot change a release unannounced. To move to a newer Xcode, change both in `release.yml`
+and run a release to check it.
+
+The tag job pushes with the workflow's own token (`contents: write`). If the repository ever protects
+tags, allow GitHub Actions to create `v*` tags.

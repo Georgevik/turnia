@@ -47,6 +47,13 @@ jobs:
     outputs:
       buildNumber: ${{ steps.version.outputs.buildNumber }}
     steps:
+      # A release from any other branch would ship code nobody reviewed into the stores.
+      - name: Check the branch
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Releases can only be made from main. Choose main in 'Use workflow from' and run it again."
+          exit 1
+
       - name: Check the version name
         run: |
           if ! [[ "$BUILD_NAME" =~ ^[0-9]+(\.[0-9]+){0,2}$ ]]; then
@@ -69,7 +76,16 @@ jobs:
             echo "| \`$BUILD_NAME\` | \`$number\` |"
           } >> "$GITHUB_STEP_SUMMARY"
 
-  # The 20 critical happy paths, on an Android emulator against the Firebase emulators. Android only,
+      - name: Warn that the tests were skipped
+        if: ${{ !inputs.runTests }}
+        run: |
+          echo "::warning::The tests were skipped: this build is uploaded without being tested."
+          {
+            echo "### ⚠️ Tests skipped"
+            echo "This build is uploaded **without running the tests**. Check it by hand before promoting it."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # The 21 critical happy paths, on an Android emulator against the Firebase emulators. Android only,
   # but it gates both uploads: the two apps share every line of logic it covers.
   android-e2e:
     needs: validate
@@ -140,14 +156,14 @@ jobs:
       needs.validate.result == 'success' &&
       contains(fromJSON('["success", "skipped"]'), needs.android-e2e.result) &&
       (inputs.platforms == 'both' || inputs.platforms == 'ios')
-    runs-on: macos-latest
+    runs-on: macos-26
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v5
 
       - uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: latest-stable
+          xcode-version: '26.6'
 
       # The "Compile Kotlin Framework" build phase runs Gradle from inside Xcode.
       - uses: actions/setup-java@v5
@@ -204,3 +220,33 @@ jobs:
       - name: Remove the API key
         if: always()
         run: rm -rf "$RUNNER_TEMP/asc"
+
+  # Marks the commit that shipped, once every chosen upload has succeeded. A run that failed partway
+  # gets its tag from the "Re-run failed jobs" that finishes it.
+  tag:
+    needs: [validate, android, ios]
+    if: >-
+      !cancelled() &&
+      needs.validate.result == 'success' &&
+      (inputs.platforms == 'ios' || needs.android.result == 'success') &&
+      (inputs.platforms == 'android' || needs.ios.result == 'success')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Tag the release
+        env:
+          TAG: v${{ inputs.versionName }}-${{ needs.validate.outputs.buildNumber }}
+          PLATFORMS: ${{ inputs.platforms }}
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null; then
+            echo "$TAG already exists"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Release $TAG ($PLATFORMS)" "$GITHUB_SHA"
+          git push origin "$TAG"
+          echo "### Tagged \`$TAG\` ($PLATFORMS)" >> "$GITHUB_STEP_SUMMARY"

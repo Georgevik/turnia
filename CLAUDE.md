@@ -466,7 +466,9 @@ variables on CI. Without either the build still runs and produces an unsigned AP
 
 A manual GitHub Actions workflow builds both apps and uploads them — Android to Play's internal
 track, iOS to TestFlight. The version name is typed when it is run and the build number is set by
-the workflow, on both platforms. Neither app is uploaded unless the Android E2E suite passes first.
+the workflow, on both platforms. It runs from `main` only, and once every chosen upload succeeds it
+tags the commit `v<versionName>-<buildNumber>`. Neither app is uploaded unless the Android E2E suite
+passes first.
 Secrets and setup: [.github/RELEASE.md](.github/RELEASE.md).
 
 ## iOS signing & Apple setup
