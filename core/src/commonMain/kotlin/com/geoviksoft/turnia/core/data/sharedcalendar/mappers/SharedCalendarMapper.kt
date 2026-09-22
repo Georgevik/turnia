@@ -18,7 +18,7 @@ import com.geoviksoft.turnia.core.domain.model.PersonalTypedEvent
 import com.geoviksoft.turnia.core.domain.model.SharedCalendar
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.system.parseEventDate
-import com.geoviksoft.turnia.core.system.parseEventTime
+import com.geoviksoft.turnia.core.system.parseEventDateTime
 import kotlinx.datetime.LocalDate
 
 /**
@@ -112,10 +112,9 @@ class SharedCalendarMapper {
         id = EventId(event.eventId),
         name = event.name,
         notes = event.notes.takeIf { it?.isNotEmpty() == true },
-        dateStart = parseEventDate(event.dateStart) ?: return null,
-        dateEnd = parseEventDate(event.dateEnd) ?: return null,
-        timeStart = parseEventTime(event.timeStart) ?: return null,
-        timeEnd = parseEventTime(event.timeEnd) ?: return null,
+        start = parseEventDateTime(event.start) ?: return null,
+        end = parseEventDateTime(event.end) ?: return null,
+        allDay = event.allDay,
         color = event.color,
     )
 

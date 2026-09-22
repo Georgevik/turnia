@@ -1,7 +1,7 @@
 package com.geoviksoft.turnia.core.domain.model
 
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.LocalTime
+import kotlinx.datetime.LocalDateTime
 
 /**
  * An event that belongs to one user and no group: either a [PersonalTypedEvent], an instance of
@@ -23,9 +23,8 @@ data class PersonalOneOffEvent(
     override val id: EventId,
     val name: String,
     val notes: String?,
-    val dateStart: LocalDate,
-    val dateEnd: LocalDate,
-    val timeStart: LocalTime,
-    val timeEnd: LocalTime,
+    val start: LocalDateTime,
+    val end: LocalDateTime,
+    val allDay: Boolean,
     val color: String,
 ) : PersonalEvent

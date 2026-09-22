@@ -125,6 +125,7 @@ export const getSharedCalendar = onCall(async (request) => {
   // One-off events carry their own name and colour, so they need no type lookup. They may span
   // several months, so the query is by overlap on the month fields — the same index the app's own
   // sync uses — and the days are trimmed here: a month overlapping the range is not a day inside it.
+  // `start` and `end` are ISO 8601 date-times, so their first ten characters are the day.
   const oneOffSnap = await db
     .collection(`users/${ownerUid}/personalOneOffEvents`)
     .where("yearMonthStart", "<=", to.slice(0, 7))
@@ -132,15 +133,14 @@ export const getSharedCalendar = onCall(async (request) => {
     .get();
   const personalOneOffEvents = oneOffSnap.docs
     .filter((doc) => doc.get("isDeleted") !== true)
-    .filter((doc) => doc.get("dateStart") <= to && doc.get("dateEnd") >= from)
+    .filter((doc) => day(doc.get("start")) <= to && day(doc.get("end")) >= from)
     .map((doc) => ({
       eventId: doc.id,
       name: doc.get("name"),
       color: doc.get("color"),
-      dateStart: doc.get("dateStart"),
-      dateEnd: doc.get("dateEnd"),
-      timeStart: doc.get("timeStart"),
-      timeEnd: doc.get("timeEnd"),
+      start: doc.get("start"),
+      end: doc.get("end"),
+      allDay: doc.get("allDay") === true,
       notes: doc.get("notes") ?? null,
     }));
 
@@ -202,4 +202,9 @@ function holdersOf(doc: DocumentSnapshot): { holderUids: string[]; holderReturne
     holderUids: [doc.get("ownerId") as string, ...steps.map((entry) => entry.toUid as string)],
     holderReturned: [false, ...steps.map((entry) => entry.type === "returned")],
   };
+}
+
+/** The `YYYY-MM-DD` of a stored ISO 8601 date-time. */
+function day(dateTime: string): string {
+  return dateTime.slice(0, 10);
 }

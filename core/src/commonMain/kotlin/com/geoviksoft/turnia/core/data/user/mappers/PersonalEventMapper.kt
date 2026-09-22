@@ -9,8 +9,7 @@ import com.geoviksoft.turnia.core.domain.model.PersonalEventType
 import com.geoviksoft.turnia.core.domain.model.PersonalOneOffEvent
 import com.geoviksoft.turnia.core.domain.model.PersonalTypedEvent
 import com.geoviksoft.turnia.core.system.parseEventDate
-import com.geoviksoft.turnia.core.system.parseEventTime
-import com.geoviksoft.turnia.core.system.toISOString
+import com.geoviksoft.turnia.core.system.parseEventDateTime
 import dev.gitlive.firebase.firestore.DocumentSnapshot
 import kotlinx.datetime.yearMonth
 
@@ -29,13 +28,12 @@ class PersonalEventMapper {
         return PersonalOneOffDocument(
             name = event.name,
             color = event.color,
-            dateStart = event.dateStart.toString(),
-            dateEnd = event.dateEnd.toString(),
-            timeStart = event.timeStart.toISOString(),
-            timeEnd = event.timeEnd.toISOString(),
+            start = event.start.toString(),
+            end = event.end.toString(),
+            allDay = event.allDay,
             notes = event.notes.takeIf { it?.isNotEmpty() == true },
-            yearMonthStart = event.dateStart.yearMonth.toString(),
-            yearMonthEnd = event.dateEnd.yearMonth.toString()
+            yearMonthStart = event.start.date.yearMonth.toString(),
+            yearMonthEnd = event.end.date.yearMonth.toString()
         )
     }
 
@@ -72,10 +70,9 @@ class PersonalEventMapper {
             id = EventId(holder.id),
             name = doc.name,
             notes = doc.notes.takeIf { it?.isNotEmpty() == true },
-            dateStart = parseEventDate(doc.dateStart) ?: return null,
-            dateEnd = parseEventDate(doc.dateEnd) ?: return null,
-            timeStart = parseEventTime(doc.timeStart) ?: return null,
-            timeEnd = parseEventTime(doc.timeEnd) ?: return null,
+            start = parseEventDateTime(doc.start) ?: return null,
+            end = parseEventDateTime(doc.end) ?: return null,
+            allDay = doc.allDay,
             color = doc.color
         )
     }

@@ -54,10 +54,9 @@ data class SharedPersonalOneOffEventResponse(
     @SerialName("eventId") val eventId: String,
     @SerialName("name") val name: String,
     @SerialName("color") val color: String,
-    @SerialName("dateStart") val dateStart: String,
-    @SerialName("dateEnd") val dateEnd: String,
-    @SerialName("timeStart") val timeStart: String,
-    @SerialName("timeEnd") val timeEnd: String,
+    @SerialName("start") val start: String,
+    @SerialName("end") val end: String,
+    @SerialName("allDay") val allDay: Boolean = false,
     @SerialName("notes") val notes: String? = null,
 )
 

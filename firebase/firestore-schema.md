@@ -309,12 +309,11 @@ days — and several months.
 |-------|------|-------------|
 | `name` | string | Event name. |
 | `color` | string | Hex `#RRGGBB`. |
-| `dateStart` | string | `YYYY-MM-DD`, first day. |
-| `dateEnd` | string | `YYYY-MM-DD`, last day (inclusive). |
-| `timeStart` | string | `HH:mm`. |
-| `timeEnd` | string | `HH:mm`. |
-| `yearMonthStart` | string | `YYYY-MM` of `dateStart`. |
-| `yearMonthEnd` | string | `YYYY-MM` of `dateEnd`. |
+| `start` | string | ISO 8601 date-time, e.g. `2026-09-24T17:00`. The first ten characters are the day. |
+| `end` | string | ISO 8601 date-time; its day is the last one the event covers (inclusive). |
+| `allDay` | bool | Spans whole days: only the days of `start` and `end` count. Their times are kept anyway, so switching it off restores them. |
+| `yearMonthStart` | string | `YYYY-MM` of `start`. |
+| `yearMonthEnd` | string | `YYYY-MM` of `end`. |
 | `notes` | string \| null | Free-text notes. Blank is stored as `null`. |
 | `isDeleted` | bool | Soft delete, so the delta sync can tell other devices it is gone. |
 | `updateAt` | timestamp | Server timestamp of the last write. |

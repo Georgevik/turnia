@@ -18,6 +18,7 @@ import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.domain.model.UserProfile
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
@@ -284,10 +285,9 @@ internal class DemoWorld(val today: LocalDate, text: DemoText = DemoText.current
             id = EventId("demo-dentist"),
             name = text.dentist,
             notes = null,
-            dateStart = dentistDay,
-            dateEnd = dentistDay,
-            timeStart = LocalTime(10, 0),
-            timeEnd = LocalTime(11, 0),
+            start = LocalDateTime(dentistDay, LocalTime(10, 0)),
+            end = LocalDateTime(dentistDay, LocalTime(11, 0)),
+            allDay = false,
             color = "#6D4C41",
         )
 
@@ -301,10 +301,9 @@ internal class DemoWorld(val today: LocalDate, text: DemoText = DemoText.current
             id = EventId("demo-congress"),
             name = text.congress,
             notes = text.congressNote,
-            dateStart = congressStart,
-            dateEnd = congressEnd,
-            timeStart = LocalTime(9, 0),
-            timeEnd = LocalTime(18, 0),
+            start = LocalDateTime(congressStart, LocalTime(9, 0)),
+            end = LocalDateTime(congressEnd, LocalTime(18, 0)),
+            allDay = false,
             color = "#3949AB",
         )
 

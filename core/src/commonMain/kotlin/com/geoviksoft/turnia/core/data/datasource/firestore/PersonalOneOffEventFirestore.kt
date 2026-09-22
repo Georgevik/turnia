@@ -12,7 +12,6 @@ import com.geoviksoft.turnia.core.domain.model.PersonalOneOffEvent
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.system.Outcome
 import com.geoviksoft.turnia.core.system.outcomeCatching
-import com.geoviksoft.turnia.core.system.toISOString
 import com.geoviksoft.turnia.core.system.toInstantOrNull
 import com.geoviksoft.turnia.core.system.toTimestamp
 import com.geoviksoft.turnia.core.system.toYearMonth
@@ -103,13 +102,12 @@ class PersonalOneOffEventFirestore(
         ) {
             PersonalOneOffDocument.FIELD_NAME to event.name
             PersonalOneOffDocument.FIELD_COLOR to event.color
-            PersonalOneOffDocument.FIELD_DATE_START to event.dateStart.toString()
-            PersonalOneOffDocument.FIELD_DATE_END to event.dateEnd.toString()
-            PersonalOneOffDocument.FIELD_TIME_START to event.timeStart.toISOString()
-            PersonalOneOffDocument.FIELD_TIME_END to event.timeEnd.toISOString()
+            PersonalOneOffDocument.FIELD_START to event.start.toString()
+            PersonalOneOffDocument.FIELD_END to event.end.toString()
+            PersonalOneOffDocument.FIELD_ALL_DAY to event.allDay
             PersonalOneOffDocument.FIELD_NOTES to event.notes
-            PersonalOneOffDocument.FIELD_YEAR_MONTH_START to event.dateStart.yearMonth.toString()
-            PersonalOneOffDocument.FIELD_YEAR_MONTH_END to event.dateEnd.yearMonth.toString()
+            PersonalOneOffDocument.FIELD_YEAR_MONTH_START to event.start.date.yearMonth.toString()
+            PersonalOneOffDocument.FIELD_YEAR_MONTH_END to event.end.date.yearMonth.toString()
             PersonalOneOffDocument.FIELD_UPDATE_AT to Timestamp.ServerTimestamp
         }
         val syncWrite = userSyncFirestore.writePersonalOneOffEvents(
@@ -167,7 +165,7 @@ class PersonalOneOffEventFirestore(
     }
 
     private fun PersonalOneOffEvent.months(): Set<YearMonth> =
-        (dateStart.yearMonth..dateEnd.yearMonth).toSet()
+        (start.date.yearMonth..end.date.yearMonth).toSet()
 
     private fun List<DocHolder<PersonalOneOffDocument>>.areNotDeleted() =
         filterNot { it.doc.isDeleted }

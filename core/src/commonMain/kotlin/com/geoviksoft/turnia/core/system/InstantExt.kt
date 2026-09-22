@@ -4,6 +4,7 @@ import com.geoviksoft.turnia.core.data.logger.Logger
 import dev.gitlive.firebase.firestore.BaseTimestamp
 import dev.gitlive.firebase.firestore.Timestamp
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.YearMonth
@@ -51,6 +52,14 @@ fun parseEventTime(value: String): LocalTime? =
 
 fun LocalTime.toISOString() =
     this.format(LocalTime.Format { byUnicodePattern("HH:mm") })
+
+fun parseEventDateTime(value: String): LocalDateTime? =
+    try {
+        LocalDateTime.parse(value)
+    } catch (e: IllegalArgumentException) {
+        Logger.e(TAG, e)
+        null
+    }
 
 
 fun BaseTimestamp?.toInstantOrNull(): Instant? = when (this) {

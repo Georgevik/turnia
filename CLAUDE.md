@@ -31,7 +31,7 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
 | **Group event** | Stored under its group (`groups/{groupId}/events`); has an `ownerId` (creator) and an `assigneeId` (who performs it). Can be offered for swap. |
 | **Personal event type** | A template a user defines for themselves (name, color, optional description/times). |
 | **Personal event** | Belongs to one user and no group. Sealed: a **personal typed event** (`PersonalTypedEvent`), an instance of a personal event type on a date, or a personal one-off event. |
-| **Personal one-off event** | A personal event with no type: it carries its own name, color, notes and a start/end date and time, and may span several months. |
+| **Personal one-off event** | A personal event with no type: it carries its own name, color, notes and a start and end date-time, or is **all day** and only its dates count. It may span several months. |
 | **Swap offer** | The assignee offers their event; another member can take it. |
 | **Transfer** | A member takes an event offered for swap; it moves to the new assignee and is logged (A→B). |
 | **Shared calendar** | A user can grant another user full read access to their calendar (across groups). |
