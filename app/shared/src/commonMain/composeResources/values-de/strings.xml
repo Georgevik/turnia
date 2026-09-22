@@ -410,6 +410,17 @@
 
     <!-- Day detail sheet -->
     <string name="day_detail_personal_events">PERSÖNLICHE TERMINE</string>
+    <string name="day_detail_personal_one_off_events">EINZELTERMIN</string>
+    <string name="one_off_event_hint">Neuer Termin…</string>
+    <string name="one_off_event_name">Name</string>
+    <string name="one_off_event_start">Beginn</string>
+    <string name="one_off_event_end">Ende</string>
+    <string name="one_off_event_all_day">Ganztägig</string>
+    <string name="one_off_event_notes">Notizen</string>
+    <string name="one_off_event_end_before_start">Das Ende liegt vor dem Beginn</string>
+    <string name="one_off_event_save">Speichern</string>
+    <string name="one_off_event_cancel">Abbrechen</string>
+    <string name="one_off_event_picker_ok">OK</string>
     <string name="day_detail_group_events">GRUPPENTERMINE</string>
     <string name="day_detail_add_event">Hinzufügen</string>
     <string name="day_detail_load_error">Wir konnten deine Terminarten nicht laden.</string>

@@ -410,6 +410,17 @@
 
     <!-- Day detail sheet -->
     <string name="day_detail_personal_events">EVENTI PERSONALI</string>
+    <string name="day_detail_personal_one_off_events">EVENTO SINGOLO</string>
+    <string name="one_off_event_hint">Nuovo evento…</string>
+    <string name="one_off_event_name">Nome</string>
+    <string name="one_off_event_start">Inizio</string>
+    <string name="one_off_event_end">Fine</string>
+    <string name="one_off_event_all_day">Tutto il giorno</string>
+    <string name="one_off_event_notes">Note</string>
+    <string name="one_off_event_end_before_start">Finisce prima di iniziare</string>
+    <string name="one_off_event_save">Salva</string>
+    <string name="one_off_event_cancel">Annulla</string>
+    <string name="one_off_event_picker_ok">OK</string>
     <string name="day_detail_group_events">EVENTI DEL GRUPPO</string>
     <string name="day_detail_add_event">Aggiungi</string>
     <string name="day_detail_load_error">Non siamo riusciti a caricare i tuoi tipi di evento.</string>

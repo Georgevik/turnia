@@ -22,6 +22,10 @@ import com.geoviksoft.turnia.ui.components.daydetail.model.AddEventTypesUi
 import com.geoviksoft.turnia.ui.components.daydetail.model.DaySwapMessage
 import com.geoviksoft.turnia.ui.components.daydetail.model.EventTypeSectionUi
 import com.geoviksoft.turnia.ui.components.daydetail.model.EventTypeUi
+import com.geoviksoft.turnia.ui.components.daydetail.model.OneOffEventFormUi
+import com.geoviksoft.turnia.ui.components.daydetail.model.OneOffEventUi
+import com.geoviksoft.turnia.ui.components.daydetail.model.OneOffFormAction
+import com.geoviksoft.turnia.ui.system.color.EntityPalette
 import com.geoviksoft.turnia.ui.system.color.entityColor
 import com.geoviksoft.turnia.ui.system.color.toComposeColorOr
 import com.geoviksoft.turnia.ui.system.color.toHex
@@ -30,7 +34,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.plus
 import kotlin.uuid.Uuid
 
 class DayDetailSheetViewModel(
@@ -44,6 +52,12 @@ class DayDetailSheetViewModel(
 
     private val _uiState = MutableStateFlow<AddEventTypesUi>(AddEventTypesUi.Loading)
     val uiState = _uiState.asStateFlow()
+
+    private val _oneOffForm = MutableStateFlow<OneOffEventFormUi?>(null)
+    val oneOffForm = _oneOffForm.asStateFlow()
+
+    private val _oneOffEvents = MutableStateFlow<List<OneOffEventUi>>(emptyList())
+    val oneOffEvents = _oneOffEvents.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -150,6 +164,58 @@ class DayDetailSheetViewModel(
         SwapError.SaveFailed -> DaySwapMessage.SaveFailed
     }
 
+    fun onOneOffAction(action: OneOffFormAction) {
+        when (action) {
+            OneOffFormAction.Open -> _oneOffForm.value = OneOffEventFormUi(
+                start = LocalDateTime(date, DEFAULT_ONE_OFF_START),
+                end = LocalDateTime(date, DEFAULT_ONE_OFF_START).plusOneHour(),
+                color = EntityPalette.first(),
+            )
+
+            OneOffFormAction.Cancel -> _oneOffForm.value = null
+
+            OneOffFormAction.Save -> {
+                val form = _oneOffForm.value?.takeIf { it.canSave } ?: return
+                // TODO: persist as a PersonalOneOffEvent. UI only for now: the event lives as long
+                //  as this view model, which is enough to see it on the sheet.
+                _oneOffEvents.update { events ->
+                    (events + form.toUi()).sortedBy { it.start }
+                }
+                _oneOffForm.value = null
+            }
+
+            is OneOffFormAction.NameChanged -> updateForm { copy(name = action.name) }
+            is OneOffFormAction.NotesChanged -> updateForm { copy(notes = action.notes) }
+            // Moving the start past the end would leave a form that cannot be saved until the end
+            // is fixed too, so the end follows it.
+            is OneOffFormAction.StartChanged -> updateForm {
+                copy(start = action.start, end = endFollowing(action.start))
+            }
+            is OneOffFormAction.EndChanged -> updateForm { copy(end = action.end) }
+            is OneOffFormAction.AllDayChanged -> updateForm { copy(allDay = action.allDay) }
+            is OneOffFormAction.ColorPicked -> updateForm { copy(color = action.color) }
+        }
+    }
+
+    private fun updateForm(transform: OneOffEventFormUi.() -> OneOffEventFormUi) =
+        _oneOffForm.update { it?.transform() }
+
+    private fun OneOffEventFormUi.endFollowing(start: LocalDateTime): LocalDateTime = when {
+        allDay -> if (end.date >= start.date) end else LocalDateTime(start.date, end.time)
+        end > start -> end
+        else -> start.plusOneHour()
+    }
+
+    private fun OneOffEventFormUi.toUi() = OneOffEventUi(
+        id = Uuid.random().toString(),
+        name = name.trim(),
+        notes = notes.trim().ifBlank { null },
+        start = start,
+        end = end,
+        allDay = allDay,
+        color = color,
+    )
+
     fun addEventOfType(eventTypeUi: EventTypeUi) {
         when (val eventType = eventTypeUi.eventType) {
             is GroupEventType -> addNewEvent(eventType, eventTypeUi)
@@ -232,3 +298,9 @@ class DayDetailSheetViewModel(
         eventType = this,
     )
 }
+
+private val DEFAULT_ONE_OFF_START = LocalTime(9, 0)
+
+private fun LocalDateTime.plusOneHour(): LocalDateTime =
+    if (hour < 23) LocalDateTime(date, LocalTime(hour + 1, minute))
+    else LocalDateTime(date.plus(1, DateTimeUnit.DAY), LocalTime(0, minute))

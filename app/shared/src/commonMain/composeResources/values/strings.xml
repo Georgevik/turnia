@@ -410,6 +410,17 @@
 
     <!-- Day detail sheet -->
     <string name="day_detail_personal_events">PERSONAL EVENTS</string>
+    <string name="day_detail_personal_one_off_events">ONE-OFF EVENT</string>
+    <string name="one_off_event_hint">New event…</string>
+    <string name="one_off_event_name">Name</string>
+    <string name="one_off_event_start">Starts</string>
+    <string name="one_off_event_end">Ends</string>
+    <string name="one_off_event_all_day">All day</string>
+    <string name="one_off_event_notes">Notes</string>
+    <string name="one_off_event_end_before_start">It ends before it starts</string>
+    <string name="one_off_event_save">Save</string>
+    <string name="one_off_event_cancel">Cancel</string>
+    <string name="one_off_event_picker_ok">OK</string>
     <string name="day_detail_group_events">GROUP EVENTS</string>
     <string name="day_detail_add_event">Add</string>
     <string name="day_detail_load_error">We couldn't load your event types.</string>

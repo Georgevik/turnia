@@ -409,7 +409,18 @@
     <string name="calendar_more_options">Más opciones</string>
 
     <!-- Day detail sheet -->
+    <string name="day_detail_personal_one_off_events">EVENTO LIBRE</string>
     <string name="day_detail_personal_events">EVENTOS PERSONALES</string>
+    <string name="one_off_event_hint">Nuevo evento…</string>
+    <string name="one_off_event_name">Nombre</string>
+    <string name="one_off_event_start">Empieza</string>
+    <string name="one_off_event_end">Termina</string>
+    <string name="one_off_event_all_day">Todo el día</string>
+    <string name="one_off_event_notes">Notas</string>
+    <string name="one_off_event_end_before_start">Termina antes de empezar</string>
+    <string name="one_off_event_save">Guardar</string>
+    <string name="one_off_event_cancel">Cancelar</string>
+    <string name="one_off_event_picker_ok">Aceptar</string>
     <string name="day_detail_group_events">EVENTOS DE GRUPO</string>
     <string name="day_detail_add_event">Añadir</string>
     <string name="day_detail_load_error">No hemos podido cargar tus tipos de evento.</string>

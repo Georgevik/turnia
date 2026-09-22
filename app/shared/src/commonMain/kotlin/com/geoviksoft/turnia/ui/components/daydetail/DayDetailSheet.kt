@@ -44,6 +44,10 @@ import com.geoviksoft.turnia.ui.components.calendar.model.TransferHolderUi
 import com.geoviksoft.turnia.ui.components.daydetail.components.DayDetailAddEvent
 import com.geoviksoft.turnia.ui.components.daydetail.components.DayDetailHeader
 import com.geoviksoft.turnia.ui.components.daydetail.components.DayEventRow
+import com.geoviksoft.turnia.ui.components.daydetail.components.OneOffEventRow
+import com.geoviksoft.turnia.ui.components.daydetail.model.OneOffEventFormUi
+import com.geoviksoft.turnia.ui.components.daydetail.model.OneOffEventUi
+import com.geoviksoft.turnia.ui.components.daydetail.model.OneOffFormAction
 import com.geoviksoft.turnia.ui.components.daydetail.components.PreviewEventTypeSections
 import com.geoviksoft.turnia.ui.components.daydetail.model.AddEventTypesError
 import com.geoviksoft.turnia.ui.components.daydetail.model.AddEventTypesUi
@@ -51,9 +55,12 @@ import com.geoviksoft.turnia.ui.components.daydetail.model.DaySwapMessage
 import com.geoviksoft.turnia.ui.components.daydetail.model.EventTypeUi
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
 import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
+import com.geoviksoft.turnia.ui.system.color.EntityPalette
 import com.geoviksoft.turnia.ui.system.components.TurniaErrorContent
 import com.geoviksoft.turnia.ui.system.toErrorSnackbar
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -101,6 +108,8 @@ fun DayDetailSheet(
     },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val oneOffForm by viewModel.oneOffForm.collectAsStateWithLifecycle()
+    val oneOffEvents by viewModel.oneOffEvents.collectAsStateWithLifecycle()
     var adding by rememberSaveable { mutableStateOf(false) }
     var pendingDelete by remember { mutableStateOf<DayEventUi?>(null) }
     var pendingReturn by remember { mutableStateOf<DayEventUi?>(null) }
@@ -203,9 +212,21 @@ fun DayDetailSheet(
         date = date,
         events = events,
         addMode = addMode,
+        oneOffEvents = oneOffEvents,
         addTypes = uiState,
+        oneOffForm = oneOffForm,
         adding = adding,
-        onToggleAdd = { adding = !adding },
+        onToggleAdd = {
+            // Closing the pane drops a half-written one-off event rather than keeping it for later.
+            if (adding) viewModel.onOneOffAction(OneOffFormAction.Cancel)
+            adding = !adding
+        },
+        onOneOffAction = { action ->
+            val saving = action == OneOffFormAction.Save && oneOffForm?.canSave == true
+            viewModel.onOneOffAction(action)
+            // Back to the day's list, where the event just saved is now shown.
+            if (saving) adding = false
+        },
         onRetryTypes = viewModel::retry,
         onPickEventType = { eventType ->
             viewModel.addEventOfType(eventType)
@@ -228,10 +249,13 @@ fun DayDetailSheet(
 private fun DayDetailContent(
     date: LocalDate,
     events: List<DayEventUi>,
+    oneOffEvents: List<OneOffEventUi>,
     addMode: DayAddMode,
     addTypes: AddEventTypesUi,
+    oneOffForm: OneOffEventFormUi?,
     adding: Boolean,
     onToggleAdd: () -> Unit,
+    onOneOffAction: (OneOffFormAction) -> Unit,
     onRetryTypes: () -> Unit,
     onPickEventType: (EventTypeUi) -> Unit,
     onEditGroup: (groupId: String, groupName: String) -> Unit,
@@ -254,7 +278,7 @@ private fun DayDetailContent(
     ) {
         DayDetailHeader(
             date = date,
-            eventCount = events.size,
+            eventCount = events.size + oneOffEvents.size,
             adding = adding,
             showAdd = addMode.canAdd,
             onToggleAdd = onToggleAdd,
@@ -281,13 +305,15 @@ private fun DayDetailContent(
                             is AddEventTypesUi.Success -> DayDetailAddEvent(
                                 addMode = addMode,
                                 sections = addTypes.sections,
+                                oneOffForm = oneOffForm,
+                                onOneOffAction = onOneOffAction,
                                 onPickEventType = onPickEventType,
                                 onEditGroup = onEditGroup,
                                 onAddPersonalEventType = onAddPersonalEventType,
                                 onAddGroupEventType = onAddGroupEventType,
                             )
                         }
-                    } else if (events.isEmpty()) {
+                    } else if (events.isEmpty() && oneOffEvents.isEmpty()) {
                         Text(
                             text = stringResource(Res.string.event_details_empty),
                             style = MaterialTheme.typography.bodyMedium,
@@ -325,6 +351,10 @@ private fun DayDetailContent(
                                         null
                                     },
                                 )
+                            }
+                            oneOffEvents.forEachIndexed { index, event ->
+                                if (index > 0 || events.isNotEmpty()) Spacer(Modifier.height(12.dp))
+                                OneOffEventRow(event = event)
                             }
                         }
                     }
@@ -465,16 +495,20 @@ private fun PreviewDayDetail(
     events: List<DayEventUi>,
     adding: Boolean = false,
     addTypes: AddEventTypesUi = AddEventTypesUi.Loading,
+    oneOffEvents: List<OneOffEventUi> = emptyList(),
 ) {
     PreviewTurniaTheme {
         Surface {
             DayDetailContent(
                 date = previewDate,
                 events = events,
+                oneOffEvents = oneOffEvents,
                 addMode = DayAddMode.Full,
                 addTypes = addTypes,
+                oneOffForm = null,
                 adding = adding,
                 onToggleAdd = {},
+                onOneOffAction = {},
                 onRetryTypes = {},
                 onPickEventType = {},
                 onEditGroup = { _, _ -> },
@@ -495,6 +529,26 @@ private fun PreviewDayDetail(
 @Composable
 fun DayDetailSheetPreview() {
     PreviewDayDetail(events = previewEvents)
+}
+
+/** A one-off event saved from the add pane, listed after the day's shifts. */
+@Preview
+@Composable
+fun DayDetailSheetOneOffPreview() {
+    PreviewDayDetail(
+        events = previewEvents.take(1),
+        oneOffEvents = listOf(
+            OneOffEventUi(
+                id = "preview-dentist",
+                name = "Dentista",
+                notes = "Llevar la tarjeta del seguro",
+                start = LocalDateTime(previewDate, LocalTime(17, 30)),
+                end = LocalDateTime(previewDate, LocalTime(18, 15)),
+                allDay = false,
+                color = EntityPalette.first(),
+            ),
+        ),
+    )
 }
 
 @Preview

@@ -1,5 +1,17 @@
 package com.geoviksoft.turnia.ui.components.daydetail.components
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.BoundsTransform
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -32,26 +44,122 @@ import com.geoviksoft.turnia.core.domain.model.PersonalEventType
 import com.geoviksoft.turnia.ui.components.daydetail.DayAddMode
 import com.geoviksoft.turnia.ui.components.daydetail.model.EventTypeSectionUi
 import com.geoviksoft.turnia.ui.components.daydetail.model.EventTypeUi
+import com.geoviksoft.turnia.ui.components.daydetail.model.OneOffEventFormUi
+import com.geoviksoft.turnia.ui.components.daydetail.model.OneOffFormAction
 import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
 import com.geoviksoft.turnia.ui.system.TestTags
+import com.geoviksoft.turnia.ui.system.color.EntityPalette
 import com.geoviksoft.turnia.ui.system.color.toComposeColorOr
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.day_detail_group_events
 import turnia.app.shared.generated.resources.day_detail_personal_events
+import turnia.app.shared.generated.resources.day_detail_personal_one_off_events
 import turnia.app.shared.generated.resources.event_group_no_types
 import turnia.app.shared.generated.resources.event_group_no_types_action
 import turnia.app.shared.generated.resources.event_group_only_banner
 
+/** The one-off field and the form it becomes are one element as far as the transition goes. */
+private const val ONE_OFF_BOUNDS_KEY = "oneOffEvent"
+private const val ONE_OFF_LABEL_KEY = "oneOffEventLabel"
+private const val ONE_OFF_BOUNDS_MS = 320
+
+/**
+ * The add pane. Writing a one-off event takes it over: the field grows into the form while the
+ * templates slide away below it, since nothing else on the pane applies while the form is open.
+ */
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun DayDetailAddEvent(
     addMode: DayAddMode,
     sections: List<EventTypeSectionUi>,
+    oneOffForm: OneOffEventFormUi?,
+    onOneOffAction: (OneOffFormAction) -> Unit,
     onPickEventType: (eventType: EventTypeUi) -> Unit,
     onEditGroup: (groupId: String, groupName: String) -> Unit,
     onAddPersonalEventType: () -> Unit,
     onAddGroupEventType: (groupId: String) -> Unit,
     modifier: Modifier = Modifier
+) {
+    SharedTransitionLayout(modifier = modifier) {
+        AnimatedContent(
+            targetState = oneOffForm,
+            // Typing changes the form but not what is on screen: only opening and closing animate.
+            contentKey = { it != null },
+            transitionSpec = {
+                if (targetState != null) {
+                    fadeIn(tween(durationMillis = 200, delayMillis = 120)) togetherWith
+                        (slideOutVertically(tween(ONE_OFF_BOUNDS_MS)) { it / 2 } + fadeOut(tween(200)))
+                } else {
+                    (slideInVertically(tween(ONE_OFF_BOUNDS_MS)) { it / 2 } + fadeIn(tween(250))) togetherWith
+                        fadeOut(tween(150))
+                } using SizeTransform(clip = false)
+            },
+            label = "oneOffForm",
+        ) { form ->
+            val boundsTransform = BoundsTransform { _, _ ->
+                tween(ONE_OFF_BOUNDS_MS, easing = FastOutSlowInEasing)
+            }
+            val label: @Composable () -> Unit = {
+                DayCategoryLabel(
+                    text = stringResource(Res.string.day_detail_personal_one_off_events),
+                    modifier = Modifier.sharedElement(
+                        rememberSharedContentState(ONE_OFF_LABEL_KEY),
+                        animatedVisibilityScope = this@AnimatedContent,
+                        boundsTransform = boundsTransform,
+                    ),
+                )
+            }
+            val bounds = Modifier.sharedBounds(
+                rememberSharedContentState(ONE_OFF_BOUNDS_KEY),
+                animatedVisibilityScope = this@AnimatedContent,
+                boundsTransform = boundsTransform,
+            )
+
+            if (form != null) {
+                Column(
+                    modifier = Modifier.padding(vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    label()
+                    OneOffEventForm(form = form, onAction = onOneOffAction, modifier = bounds)
+                }
+            } else {
+                EventTypePane(
+                    addMode = addMode,
+                    sections = sections,
+                    oneOffEntry = {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            label()
+                            OneOffEventField(
+                                onClick = { onOneOffAction(OneOffFormAction.Open) },
+                                modifier = bounds,
+                            )
+                        }
+                    },
+                    onPickEventType = onPickEventType,
+                    onEditGroup = onEditGroup,
+                    onAddPersonalEventType = onAddPersonalEventType,
+                    onAddGroupEventType = onAddGroupEventType,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun EventTypePane(
+    addMode: DayAddMode,
+    sections: List<EventTypeSectionUi>,
+    oneOffEntry: @Composable () -> Unit,
+    onPickEventType: (eventType: EventTypeUi) -> Unit,
+    onEditGroup: (groupId: String, groupName: String) -> Unit,
+    onAddPersonalEventType: () -> Unit,
+    onAddGroupEventType: (groupId: String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val personalSection = sections.firstOrNull { it.source is EventTypeSectionUi.Source.Personal }
     val groupSections = sections.filter { section ->
@@ -65,12 +173,15 @@ fun DayDetailAddEvent(
     ) {
         when (addMode) {
             DayAddMode.Disabled -> Unit
-            DayAddMode.Full -> CategoryArea(label = stringResource(Res.string.day_detail_personal_events)) {
-                EventTypeChipRow(
-                    events = personalSection?.events.orEmpty(),
-                    onPick = onPickEventType,
-                    trailing = { AddEventChip(onClick = onAddPersonalEventType) },
-                )
+            DayAddMode.Full -> {
+                oneOffEntry()
+                CategoryArea(label = stringResource(Res.string.day_detail_personal_events)) {
+                    EventTypeChipRow(
+                        events = personalSection?.events.orEmpty(),
+                        onPick = onPickEventType,
+                        trailing = { AddEventChip(onClick = onAddPersonalEventType) },
+                    )
+                }
             }
             is DayAddMode.GroupOnly -> if (groupSections.isEmpty()) {
                 NoTypesPrompt(onManage = { onEditGroup(addMode.groupId.value, "") })
@@ -306,13 +417,36 @@ fun DayDetailAddEventNoTypesPreview() {
     )
 }
 
+/** Writing a one-off event: the form has taken the pane over. */
+@Preview
 @Composable
-private fun PreviewAddEvent(addMode: DayAddMode, sections: List<EventTypeSectionUi>) {
+fun DayDetailAddEventOneOffPreview() {
+    val start = LocalDateTime(LocalDate(2026, 10, 3), LocalTime(17, 30))
+    PreviewAddEvent(
+        addMode = DayAddMode.Full,
+        sections = PreviewEventTypeSections,
+        oneOffForm = OneOffEventFormUi(
+            name = "Dentista",
+            start = start,
+            end = LocalDateTime(start.date, LocalTime(18, 15)),
+            color = EntityPalette.first(),
+        ),
+    )
+}
+
+@Composable
+private fun PreviewAddEvent(
+    addMode: DayAddMode,
+    sections: List<EventTypeSectionUi>,
+    oneOffForm: OneOffEventFormUi? = null,
+) {
     PreviewTurniaTheme {
         Surface {
             DayDetailAddEvent(
                 addMode = addMode,
                 sections = sections,
+                oneOffForm = oneOffForm,
+                onOneOffAction = {},
                 onPickEventType = {},
                 onEditGroup = { _, _ -> },
                 onAddPersonalEventType = {},
