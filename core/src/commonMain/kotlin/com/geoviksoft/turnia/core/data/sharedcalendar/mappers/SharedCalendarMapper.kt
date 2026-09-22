@@ -99,7 +99,7 @@ class SharedCalendarMapper {
         return PersonalEvent(
             id = EventId(event.eventId),
             type = type,
-            date = parseEventDate(event.date),
+            date = parseEventDate(event.date) ?: return null,
             notes = event.notes.takeIf { it?.isNotEmpty() == true },
         )
     }

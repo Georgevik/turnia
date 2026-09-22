@@ -66,6 +66,12 @@ service cloud.firestore {
         allow write: if false;
       }
 
+      // Personal one off events
+      match /personalOneOffEvents/{eventId} {
+        allow read: if ownerOrShared(uid);
+        allow write: if isSignedIn() && request.auth.uid == uid;
+      }
+
       // Personal event types & events: owner writes; owner and shared users read.
       match /personalEventTypes/{typeId} {
         allow read: if ownerOrShared(uid);

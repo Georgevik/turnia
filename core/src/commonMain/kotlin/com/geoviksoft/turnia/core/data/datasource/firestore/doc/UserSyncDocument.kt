@@ -12,6 +12,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class UserSyncDocument(
     @SerialName("personalEvents") val personalEventsUpdatedAt: Map<YearMonth, EventSyncUpdateAt> = emptyMap(),
+    @SerialName("personalOneOffEvents") val personalOneOffEventsUpdatedAt: Map<YearMonth, EventSyncUpdateAt> = emptyMap(),
     @SerialName("personalEventTypesUpdatedAt") val personalEventTypesUpdatedAt: BaseTimestamp? = null,
     @SerialName("revokedGroups") val revokedGroupsUpdatedAt: BaseTimestamp? = null,
     @SerialName(FIELD_ACCOUNT) val accountUpdatedAt: BaseTimestamp? = null,

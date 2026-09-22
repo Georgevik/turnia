@@ -1,8 +1,8 @@
 package com.geoviksoft.turnia.core.data.datasource.firestore
 
 import com.geoviksoft.turnia.core.data.datasource.firestore.analytics.PendingWrite
-import com.geoviksoft.turnia.core.data.datasource.firestore.analytics.trackedSnapshots
 import com.geoviksoft.turnia.core.data.datasource.firestore.analytics.trackWrite
+import com.geoviksoft.turnia.core.data.datasource.firestore.analytics.trackedSnapshots
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.EventSyncUpdateAt
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.UserSyncDocument
 import com.geoviksoft.turnia.core.data.datasource.firestore.errors.GenericFirestoreError
@@ -37,7 +37,8 @@ class UserSyncFirestore(
     scope: CoroutineScope,
 ) {
 
-    private val listeners = SharedListeners<UserId, Synced<UserSyncDocument>>(scope, keepAlive = 10.minutes)
+    private val listeners =
+        SharedListeners<UserId, Synced<UserSyncDocument>>(scope, keepAlive = 10.minutes)
 
     fun observe(uid: UserId): Flow<UserSyncDocument> =
         synced(uid).map { it.value }.distinctUntilChanged()
@@ -71,6 +72,17 @@ class UserSyncFirestore(
             personalEventsUpdatedAt = mapOf(
                 yearMonth to EventSyncUpdateAt(Timestamp.ServerTimestamp)
             ),
+        ),
+    )
+
+    fun writePersonalOneOffEvents(batch: WriteBatch, uid: UserId, months: Set<YearMonth>) = write(
+        "writePersonalOneOffEvents",
+        batch,
+        uid,
+        UserSyncDocument(
+            personalOneOffEventsUpdatedAt = months.associateWith {
+                EventSyncUpdateAt(Timestamp.ServerTimestamp)
+            }
         ),
     )
 

@@ -1,11 +1,15 @@
 package com.geoviksoft.turnia.core.system
 
+import com.geoviksoft.turnia.core.data.logger.Logger
 import dev.gitlive.firebase.firestore.BaseTimestamp
 import dev.gitlive.firebase.firestore.Timestamp
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.format
+import kotlinx.datetime.format.byUnicodePattern
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Instant
 
@@ -29,8 +33,25 @@ fun LocalDate.toInstant() = atStartOfDayIn(TimeZone.currentSystemDefault())
  * midnight as a UTC instant instead; those are read back as the day of that instant here, which is
  * the day their author picked whenever this device shares their time zone.
  */
-fun parseEventDate(value: String): LocalDate =
-    Instant.parseOrNull(value)?.toLocalDate() ?: LocalDate.parse(value)
+fun parseEventDate(value: String): LocalDate? =
+    Instant.parseOrNull(value)?.toLocalDate() ?: try {
+        LocalDate.parse(value)
+    } catch (e: IllegalArgumentException) {
+        Logger.e(TAG, e)
+        null
+    }
+
+fun parseEventTime(value: String): LocalTime? =
+    try {
+        LocalTime.parse(value)
+    } catch (e: IllegalArgumentException) {
+        Logger.e(TAG, e)
+        null
+    }
+
+fun LocalTime.toISOString() =
+    this.format(LocalTime.Format { byUnicodePattern("HH:mm") })
+
 
 fun BaseTimestamp?.toInstantOrNull(): Instant? = when (this) {
     is Timestamp -> this.toInstant()
@@ -38,3 +59,5 @@ fun BaseTimestamp?.toInstantOrNull(): Instant? = when (this) {
 }
 
 fun Timestamp.toInstant(): Instant = Instant.fromEpochSeconds(seconds, nanoseconds)
+
+private const val TAG = "InstantExt"
