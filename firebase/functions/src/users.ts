@@ -78,33 +78,33 @@ export const updateProfile = onCall(async (request) => {
 
   const db = getFirestore();
   const userRef = db.doc(`users/${uid}`);
-  const user = await userRef.get();
-  const previousUsername = user.get("username") as string | undefined;
+  const reservationRef = db.doc(`usernames/${username}`);
 
-  // Claim first, in a transaction: the reservation is what makes a username unique, and a name
-  // published against a handle somebody else holds would be worse than a rejected rename.
-  if (username !== previousUsername) {
-    const reservationRef = db.doc(`usernames/${username}`);
-    await db.runTransaction(async (tx) => {
-      const reservation = await tx.get(reservationRef);
-      if (reservation.exists && reservation.get("uid") !== uid) {
-        throw TurniaError.UpdateProfileUsernameTaken;
-      }
-      tx.set(reservationRef, { username, uid, updateAt: FieldValue.serverTimestamp() });
-    });
-  } else {
+  // Claim, release and profile in one commit. The reservation is what makes a username unique, so
+  // a name published against a handle somebody else holds would be worse than a rejected rename; and
+  // a release left for a later commit is a handle the user keeps forever once anything in between
+  // fails. Reading the current username inside the transaction is what lets two renames racing
+  // from the same handle each release the one they actually replaced.
+  await db.runTransaction(async (tx) => {
+    const user = await tx.get(userRef);
+    const previousUsername = user.get("username") as string | undefined;
+    const renamed = previousUsername !== undefined && previousUsername !== username;
+    const previousRef = renamed ? db.doc(`usernames/${previousUsername}`) : null;
 
-    await db.doc(`usernames/${username}`).set(
-      { updateAt: FieldValue.serverTimestamp() },
-      { merge: true },
-    );
-  }
+    const reservation = await tx.get(reservationRef);
+    if (reservation.exists && reservation.get("uid") !== uid) {
+      throw TurniaError.UpdateProfileUsernameTaken;
+    }
+    const previous = previousRef ? await tx.get(previousRef) : null;
 
-  // With its marker, so the user's other devices know their cached profile is behind.
-  const profileBatch = db.batch();
-  profileBatch.set(userRef, { name, username, updateAt: FieldValue.serverTimestamp() }, { merge: true });
-  markUserUpdated(db, profileBatch, uid, "profile");
-  await profileBatch.commit();
+    // The reservation's `updateAt` is the marker a searcher compares their cached profile against,
+    // so it has to resolve to the same instant as the profile's own.
+    tx.set(reservationRef, { username, uid, updateAt: FieldValue.serverTimestamp() });
+    if (previousRef && previous?.get("uid") === uid) tx.delete(previousRef);
+
+    tx.set(userRef, { name, username, updateAt: FieldValue.serverTimestamp() }, { merge: true });
+    markUserUpdated(db, tx, uid, "profile");
+  });
 
   // Every group carrying a copy of this name. Entry and sync marker in one batch per group, so a
   // reader sees them as equally old — written apart, the marker is always the later of the two and
@@ -121,11 +121,6 @@ export const updateProfile = onCall(async (request) => {
       return batch.commit();
     })
   );
-
-  // Only once everything points at the new handle is the old one free.
-  if (previousUsername && previousUsername !== username) {
-    await db.doc(`usernames/${previousUsername}`).delete();
-  }
 
   return { name, username, status: "updated" as const };
 });

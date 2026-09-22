@@ -165,7 +165,7 @@ class UserRepositoryImpl(
             return Unit.toFailure()
         }
 
-        return matches.mapNotNull { match ->
+        return matches.distinctBy { it.uid }.mapNotNull { match ->
             remoteProfiles.fetchProfile(match.uid, match.updateAt).valueOrNull()
         }.toSuccess()
     }
