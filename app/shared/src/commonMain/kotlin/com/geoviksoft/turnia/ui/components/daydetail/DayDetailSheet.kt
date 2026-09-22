@@ -18,6 +18,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -29,16 +30,33 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.geoviksoft.turnia.core.domain.model.EventId
+import com.geoviksoft.turnia.core.domain.model.EventType
+import com.geoviksoft.turnia.core.domain.model.EventTypeId
+import com.geoviksoft.turnia.core.domain.model.GroupEventType
+import com.geoviksoft.turnia.core.domain.model.GroupId
+import com.geoviksoft.turnia.core.domain.model.PersonalEventType
+import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
+import com.geoviksoft.turnia.ui.components.calendar.model.EventSource
+import com.geoviksoft.turnia.ui.components.calendar.model.HOURS_SEPARATOR
+import com.geoviksoft.turnia.ui.components.calendar.model.TransferHolderUi
 import com.geoviksoft.turnia.ui.components.daydetail.components.DayDetailAddEvent
 import com.geoviksoft.turnia.ui.components.daydetail.components.DayDetailHeader
 import com.geoviksoft.turnia.ui.components.daydetail.components.DayEventRow
+import com.geoviksoft.turnia.ui.components.daydetail.components.EventTypeChipUi
 import com.geoviksoft.turnia.ui.components.daydetail.model.AddEventTypesError
 import com.geoviksoft.turnia.ui.components.daydetail.model.AddEventTypesUi
 import com.geoviksoft.turnia.ui.components.daydetail.model.DaySwapMessage
+import com.geoviksoft.turnia.ui.components.daydetail.model.EventTypeSectionUi
+import com.geoviksoft.turnia.ui.components.daydetail.model.EventTypeUi
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
+import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
+import com.geoviksoft.turnia.ui.system.color.toComposeColorOr
 import com.geoviksoft.turnia.ui.system.components.TurniaErrorContent
 import com.geoviksoft.turnia.ui.system.toErrorSnackbar
 import kotlinx.datetime.LocalDate
@@ -187,6 +205,51 @@ fun DayDetailSheet(
         )
     }
 
+    DayDetailContent(
+        date = date,
+        events = events,
+        addMode = addMode,
+        addTypes = uiState,
+        adding = adding,
+        onToggleAdd = { adding = !adding },
+        onRetryTypes = viewModel::retry,
+        onPickEventType = { eventType ->
+            viewModel.addEventOfType(eventType)
+            onClose(true)
+        },
+        onEditGroup = openEditTypeScreen,
+        onAddPersonalEventType = openNewPersonalTypeScreen,
+        onAddGroupEventType = openNewGroupTypeScreen,
+        onRemove = { pendingDelete = it },
+        onReturn = { pendingReturn = it },
+        onEditNotes = { editingNotes = it },
+        onSwapChange = viewModel::setOnSwap,
+        onTake = { pendingTake = it },
+        modifier = modifier,
+    )
+}
+
+/** The sheet without its view model, so it can be previewed; the dialogs stay with the caller. */
+@Composable
+private fun DayDetailContent(
+    date: LocalDate,
+    events: List<DayEventUi>,
+    addMode: DayAddMode,
+    addTypes: AddEventTypesUi,
+    adding: Boolean,
+    onToggleAdd: () -> Unit,
+    onRetryTypes: () -> Unit,
+    onPickEventType: (EventTypeUi) -> Unit,
+    onEditGroup: (groupId: String, groupName: String) -> Unit,
+    onAddPersonalEventType: () -> Unit,
+    onAddGroupEventType: (groupId: String) -> Unit,
+    onRemove: (DayEventUi) -> Unit,
+    onReturn: (DayEventUi) -> Unit,
+    onEditNotes: (DayEventUi) -> Unit,
+    onSwapChange: (DayEventUi, Boolean) -> Unit,
+    onTake: (DayEventUi) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -200,7 +263,7 @@ fun DayDetailSheet(
             eventCount = events.size,
             adding = adding,
             showAdd = addMode.canAdd,
-            onToggleAdd = { adding = !adding },
+            onToggleAdd = onToggleAdd,
         )
 
         Spacer(Modifier.height(16.dp))
@@ -212,25 +275,22 @@ fun DayDetailSheet(
                     if (isAdding) {
                         // Only the add pane needs the loaded types; the day's events arrive as a
                         // parameter, so they must stay on screen while these load or fail.
-                        when (val state = uiState) {
+                        when (val state = addTypes) {
                             AddEventTypesUi.Loading -> AddPaneLoading()
 
                             is AddEventTypesUi.Error -> TurniaErrorContent(
                                 message = state.error.message(),
                                 modifier = Modifier.fillMaxWidth(),
-                                onRetry = viewModel::retry,
+                                onRetry = onRetryTypes,
                             )
 
                             is AddEventTypesUi.Success -> DayDetailAddEvent(
                                 addMode = addMode,
                                 sections = state.sections,
-                                onPickEventType = { eventType ->
-                                    viewModel.addEventOfType(eventType)
-                                    onClose(true)
-                                },
-                                onEditGroup = openEditTypeScreen,
-                                onAddPersonalEventType = openNewPersonalTypeScreen,
-                                onAddGroupEventType = openNewGroupTypeScreen,
+                                onPickEventType = onPickEventType,
+                                onEditGroup = onEditGroup,
+                                onAddPersonalEventType = onAddPersonalEventType,
+                                onAddGroupEventType = onAddGroupEventType,
                             )
                         }
                     } else if (events.isEmpty()) {
@@ -248,25 +308,25 @@ fun DayDetailSheet(
                                     event = event,
                                     onRemove = when {
                                         event.removable -> {
-                                            { pendingDelete = event }
+                                            { onRemove(event) }
                                         }
                                         event.canReturn -> {
-                                            { pendingReturn = event }
+                                            { onReturn(event) }
                                         }
                                         else -> null
                                     },
                                     onEditNotes = if (event.notesEditable) {
-                                        { editingNotes = event }
+                                        { onEditNotes(event) }
                                     } else {
                                         null
                                     },
                                     onSwapChange = if (event.canOfferSwap) {
-                                        { onSwap -> viewModel.setOnSwap(event, onSwap) }
+                                        { onSwap -> onSwapChange(event, onSwap) }
                                     } else {
                                         null
                                     },
                                     onTake = if (event.canTake) {
-                                        { pendingTake = event }
+                                        { onTake(event) }
                                     } else {
                                         null
                                     },
@@ -343,3 +403,190 @@ private fun DaySwapMessage.text(): String = stringResource(
         DaySwapMessage.SaveFailed -> Res.string.event_swap_error_save
     }
 )
+
+// Previews. The labels are developer-facing, so they stay here rather than in composeResources.
+
+private val previewDate = LocalDate(2026, 9, 10)
+
+private val previewEvents = listOf(
+    DayEventUi(
+        id = EventId("preview-morning"),
+        groupId = GroupId("preview-emergency"),
+        ownerId = UserId("me"),
+        assigneeId = UserId("me"),
+        source = EventSource.GROUP,
+        name = "Morning",
+        acronym = "M",
+        background = Color(0xFF039BE5),
+        date = previewDate,
+        timeRange = "08:00${HOURS_SEPARATOR}15:00",
+        swappable = true,
+        activeMember = true,
+        isOwner = true,
+        assigneeName = "Lucía Fernández",
+        assigneeIsMe = true,
+        groupName = "Emergency",
+        removable = true,
+    ),
+    DayEventUi(
+        id = EventId("preview-night"),
+        groupId = GroupId("preview-emergency"),
+        ownerId = UserId("marta"),
+        assigneeId = UserId("carlos"),
+        source = EventSource.GROUP,
+        name = "Night",
+        acronym = "N",
+        background = Color(0xFF5E35B1),
+        date = previewDate,
+        timeRange = "22:00${HOURS_SEPARATOR}08:00",
+        onSwap = true,
+        swappable = true,
+        activeMember = true,
+        assigneeName = "Carlos Ruiz",
+        groupName = "Emergency",
+        transferChain = listOf(
+            TransferHolderUi("Marta Gil", isMe = false),
+            TransferHolderUi("Lucía Fernández", isMe = true),
+            TransferHolderUi("Carlos Ruiz", isMe = false),
+        ),
+    ),
+    DayEventUi(
+        id = EventId("preview-course"),
+        groupId = null,
+        ownerId = null,
+        assigneeId = null,
+        source = EventSource.PERSONAL,
+        name = "Training",
+        acronym = "T",
+        background = Color(0xFF00897B),
+        date = previewDate,
+        removable = true,
+        notes = "Advanced life support course · Room 3, 4 pm",
+        notesEditable = true,
+    ),
+)
+
+private fun previewGroupType(
+    group: String,
+    groupName: String,
+    name: String,
+    acronym: String,
+    hours: Pair<String, String>,
+    color: String,
+) = GroupEventType(
+    id = EventTypeId("preview-$group-$acronym"),
+    groupId = GroupId(group),
+    groupName = groupName,
+    name = name,
+    acronym = acronym,
+    description = null,
+    startTime = hours.first,
+    endTime = hours.second,
+    swappable = true,
+    defaultColor = color,
+    userColor = null,
+)
+
+private fun previewPersonalType(name: String, acronym: String, color: String) = PersonalEventType(
+    id = EventTypeId("preview-personal-$acronym"),
+    name = name,
+    color = color,
+    acronym = acronym,
+    description = null,
+    startTime = null,
+    endTime = null,
+)
+
+private fun EventType.previewUi() = EventTypeUi(
+    chipUi = EventTypeChipUi(title = acronym ?: name, color = color.toComposeColorOr(Color.Gray)),
+    eventType = this,
+)
+
+/** My personal types, a group I administer, and one where I am a plain member. */
+private val previewTypeSections = listOf(
+    EventTypeSectionUi(
+        source = EventTypeSectionUi.Source.Personal,
+        events = listOf(
+            previewPersonalType("Training", "T", "#00897B"),
+            previewPersonalType("Holiday", "H", "#F9A825"),
+        ).map { it.previewUi() },
+    ),
+    EventTypeSectionUi(
+        source = EventTypeSectionUi.Source.Group("preview-emergency", "Emergency", isAdmin = true),
+        events = listOf(
+            previewGroupType("preview-emergency", "Emergency", "Morning", "M", "08:00" to "15:00", "#039BE5"),
+            previewGroupType("preview-emergency", "Emergency", "Afternoon", "A", "15:00" to "22:00", "#FB8C00"),
+            previewGroupType("preview-emergency", "Emergency", "Night", "N", "22:00" to "08:00", "#5E35B1"),
+            previewGroupType("preview-emergency", "Emergency", "24 h on call", "OC", "08:00" to "08:00", "#E53935"),
+        ).map { it.previewUi() },
+    ),
+    EventTypeSectionUi(
+        source = EventTypeSectionUi.Source.Group("preview-icu", "Paediatric ICU", isAdmin = false),
+        events = listOf(
+            previewGroupType("preview-icu", "Paediatric ICU", "Extra shift", "X", "10:00" to "18:00", "#43A047"),
+        ).map { it.previewUi() },
+    ),
+)
+
+@Composable
+private fun PreviewDayDetail(
+    events: List<DayEventUi>,
+    adding: Boolean = false,
+    addTypes: AddEventTypesUi = AddEventTypesUi.Loading,
+) {
+    PreviewTurniaTheme {
+        Surface {
+            DayDetailContent(
+                date = previewDate,
+                events = events,
+                addMode = DayAddMode.Full,
+                addTypes = addTypes,
+                adding = adding,
+                onToggleAdd = {},
+                onRetryTypes = {},
+                onPickEventType = {},
+                onEditGroup = { _, _ -> },
+                onAddPersonalEventType = {},
+                onAddGroupEventType = {},
+                onRemove = {},
+                onReturn = {},
+                onEditNotes = {},
+                onSwapChange = { _, _ -> },
+                onTake = {},
+            )
+        }
+    }
+}
+
+/** A shift of mine, one on swap with a chain behind it, and a personal event with notes. */
+@Preview
+@Composable
+fun DayDetailSheetPreview() {
+    PreviewDayDetail(events = previewEvents)
+}
+
+@Preview
+@Composable
+fun DayDetailSheetEmptyPreview() {
+    PreviewDayDetail(events = emptyList())
+}
+
+@Preview
+@Composable
+fun DayDetailSheetAddPreview() {
+    PreviewDayDetail(
+        events = previewEvents,
+        adding = true,
+        addTypes = AddEventTypesUi.Success(previewTypeSections),
+    )
+}
+
+@Preview
+@Composable
+fun DayDetailSheetAddErrorPreview() {
+    PreviewDayDetail(
+        events = previewEvents,
+        adding = true,
+        addTypes = AddEventTypesUi.Error(AddEventTypesError.LoadFailed),
+    )
+}
