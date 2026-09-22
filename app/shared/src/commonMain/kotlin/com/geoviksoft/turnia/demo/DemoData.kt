@@ -11,12 +11,14 @@ import com.geoviksoft.turnia.core.domain.model.GroupId
 import com.geoviksoft.turnia.core.domain.model.GroupMember
 import com.geoviksoft.turnia.core.domain.model.Membership
 import com.geoviksoft.turnia.core.domain.model.PersonalEventType
+import com.geoviksoft.turnia.core.domain.model.PersonalOneOffEvent
 import com.geoviksoft.turnia.core.domain.model.PersonalTypedEvent
 import com.geoviksoft.turnia.core.domain.model.User
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.domain.model.UserProfile
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 
@@ -69,6 +71,9 @@ internal data class DemoText(
     val trainingDescription: String,
     val holidays: Pair<String, String>,
     val courseNote: String,
+    val dentist: String,
+    val congress: String,
+    val congressNote: String,
 ) {
     companion object {
         /** Read once, when the demo starts: a store screenshot is taken with the language already set. */
@@ -77,26 +82,31 @@ internal data class DemoText(
                 "Emergency", "Paediatric ICU", "Morning" to "M", "Afternoon" to "A", "Night" to "N",
                 "24 h on call" to "OC", "Extra shift" to "X", "Training" to "T",
                 "Courses and clinical sessions", "Holiday" to "H", "Advanced life support course · Room 3, 4 pm",
+                "Dentist", "Nursing congress", "Poster presentation on day two",
             )
             "fr" -> DemoText(
                 "Urgences", "Réa pédiatrique", "Matin" to "M", "Soir" to "S", "Nuit" to "N",
                 "Garde 24 h" to "G", "Renfort" to "R", "Formation" to "F",
                 "Cours et staffs cliniques", "Congés" to "C", "Formation RCP avancée · Salle 3, 16 h",
+                "Dentiste", "Congrès infirmier", "Présentation du poster le deuxième jour",
             )
             "de" -> DemoText(
                 "Notaufnahme", "Kinder-Intensiv", "Frühdienst" to "F", "Spätdienst" to "S", "Nachtdienst" to "N",
                 "24-h-Dienst" to "D", "Verstärkung" to "V", "Fortbildung" to "FB",
                 "Kurse und Fallbesprechungen", "Urlaub" to "U", "Reanimationskurs · Raum 3, 16:00 Uhr",
+                "Zahnarzt", "Pflegekongress", "Posterpräsentation am zweiten Tag",
             )
             "it" -> DemoText(
                 "Pronto soccorso", "Terapia intensiva ped.", "Mattina" to "M", "Pomeriggio" to "P", "Notte" to "N",
                 "Guardia 24 h" to "G", "Rinforzo" to "R", "Formazione" to "F",
                 "Corsi e riunioni cliniche", "Ferie" to "FE", "Corso di rianimazione avanzata · Aula 3, ore 16",
+                "Dentista", "Congresso infermieristico", "Presentazione del poster il secondo giorno",
             )
             else -> DemoText(
                 "Urgencias", "UCI Pediátrica", "Mañana" to "M", "Tarde" to "T", "Noche" to "N",
                 "Guardia 24 h" to "G", "Refuerzo" to "R", "Formación" to "F",
                 "Cursos y sesiones clínicas", "Vacaciones" to "V", "Curso de RCP avanzada · Aula 3, 16:00",
+                "Dentista", "Congreso de enfermería", "Presento el póster el segundo día",
             )
         }
     }
@@ -178,10 +188,12 @@ internal class DemoWorld(val today: LocalDate, text: DemoText = DemoText.current
 
     val groupEvents: List<GroupEvent>
     val personalEvents: List<PersonalTypedEvent>
+    val personalOneOffEvents: List<PersonalOneOffEvent>
 
     init {
         val events = rotations().toMutableList()
         val personal = mutableListOf<PersonalTypedEvent>()
+        val oneOff = mutableListOf<PersonalOneOffEvent>()
         val lucia = DemoPeople.lucia
 
         fun luciaOn(date: LocalDate) = events.any { it.assigneeId == lucia.id && it.date == date }
@@ -265,8 +277,40 @@ internal class DemoWorld(val today: LocalDate, text: DemoText = DemoText.current
             personal += PersonalTypedEvent(EventId("demo-holiday-$date"), vacaciones, date, null)
         }
 
+        // A dentist appointment on a free morning.
+        val dentistDay = (5..25).map { today.plus(it, DateTimeUnit.DAY) }.first(::luciaFree)
+        claimed += dentistDay
+        oneOff += PersonalOneOffEvent(
+            id = EventId("demo-dentist"),
+            name = text.dentist,
+            notes = null,
+            dateStart = dentistDay,
+            dateEnd = dentistDay,
+            timeStart = LocalTime(10, 0),
+            timeEnd = LocalTime(11, 0),
+            color = "#6D4C41",
+        )
+
+        // A three-day congress straddling the end of next month, so it spans two months.
+        val congressStart = LocalDate(today.year, today.month, 1).plus(2, DateTimeUnit.MONTH).minus(2, DateTimeUnit.DAY)
+        val congressEnd = congressStart.plus(2, DateTimeUnit.DAY)
+        (0..2).map { congressStart.plus(it, DateTimeUnit.DAY) }.forEach { date ->
+            events.removeAll { it.assigneeId == lucia.id && it.date == date }
+        }
+        oneOff += PersonalOneOffEvent(
+            id = EventId("demo-congress"),
+            name = text.congress,
+            notes = text.congressNote,
+            dateStart = congressStart,
+            dateEnd = congressEnd,
+            timeStart = LocalTime(9, 0),
+            timeEnd = LocalTime(18, 0),
+            color = "#3949AB",
+        )
+
         groupEvents = events
         personalEvents = personal
+        personalOneOffEvents = oneOff
     }
 
     /** Six on, four off — mañanas, tardes, noches — each member a few days out of step. */
