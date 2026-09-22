@@ -31,6 +31,7 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
 | **Group event** | Stored under its group (`groups/{groupId}/events`); has an `ownerId` (creator) and an `assigneeId` (who performs it). Can be offered for swap. |
 | **Personal event type** | A template a user defines for themselves (name, color, optional description/times). |
 | **Personal event** | An instance of a personal event type on a date; belongs to no group. |
+| **Personal one-off event** | A personal event with no type: it carries its own name, color, notes and a start/end date and time, and may span several months. |
 | **Swap offer** | The assignee offers their event; another member can take it. |
 | **Transfer** | A member takes an event offered for swap; it moves to the new assignee and is logged (A→B). |
 | **Shared calendar** | A user can grant another user full read access to their calendar (across groups). |
@@ -59,6 +60,13 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
   holder has left the group cannot be given back.
 - **Personal events** can carry notes (on the event); group event docs are shared with all members, so they hold no private notes.
 - A user can define their own **personal event types** and add **personal events** (no group), each colored by its type.
+- A **personal one-off event** (`users/{uid}/personalOneOffEvents`) is filed under every month it
+  spans, not only the one it starts in: it stores `yearMonthStart` and `yearMonthEnd`, a month's query
+  matches `yearMonthStart <= month <= yearMonthEnd`, and every write marks **all** those months in
+  `users/{uid}/sync/updates.personalOneOffEvents`. An edit that moves it also marks the months it
+  leaves, which is why `update` takes the event as it was before — a device showing only those
+  months would otherwise keep it on its old date. Deleting it sets `isDeleted` instead of removing
+  the document, so the delta sync can tell other devices it is gone.
 - **Colors**: a group event type carries a **default color**, the one whoever created the type
   picked, which is what every member sees until they choose otherwise — without it a shift would
   have no background at all. It is **fixed at creation and never changes again**: an admin who
