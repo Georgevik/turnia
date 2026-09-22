@@ -5,9 +5,9 @@ import com.geoviksoft.turnia.core.data.datasource.firestore.doc.PersonalEventDoc
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.PersonalOneOffDocument
 import com.geoviksoft.turnia.core.domain.model.EventId
 import com.geoviksoft.turnia.core.domain.model.EventTypeId
-import com.geoviksoft.turnia.core.domain.model.PersonalEvent
 import com.geoviksoft.turnia.core.domain.model.PersonalEventType
 import com.geoviksoft.turnia.core.domain.model.PersonalOneOffEvent
+import com.geoviksoft.turnia.core.domain.model.PersonalTypedEvent
 import com.geoviksoft.turnia.core.system.parseEventDate
 import com.geoviksoft.turnia.core.system.parseEventTime
 import com.geoviksoft.turnia.core.system.toISOString
@@ -16,7 +16,7 @@ import kotlinx.datetime.yearMonth
 
 class PersonalEventMapper {
 
-    fun map(event: PersonalEvent): PersonalEventDocument {
+    fun map(event: PersonalTypedEvent): PersonalEventDocument {
         return PersonalEventDocument(
             typeId = event.type.id.value,
             date = event.date.toString(),
@@ -53,11 +53,11 @@ class PersonalEventMapper {
     fun map(
         holder: DocHolder<PersonalEventDocument>,
         types: Map<EventTypeId, PersonalEventType>
-    ): PersonalEvent? {
+    ): PersonalTypedEvent? {
         val doc = holder.doc
         val type = types[EventTypeId(doc.typeId)] ?: return null
 
-        return PersonalEvent(
+        return PersonalTypedEvent(
             id = EventId(holder.id),
             type = type,
             date = parseEventDate(doc.date) ?: return null,

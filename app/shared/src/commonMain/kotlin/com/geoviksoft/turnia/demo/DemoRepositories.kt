@@ -18,8 +18,8 @@ import com.geoviksoft.turnia.core.domain.model.JoinGroupStatus
 import com.geoviksoft.turnia.core.domain.model.JoinRequest
 import com.geoviksoft.turnia.core.domain.model.MyJoinRequest
 import com.geoviksoft.turnia.core.domain.model.NewGroup
-import com.geoviksoft.turnia.core.domain.model.PersonalEvent
 import com.geoviksoft.turnia.core.domain.model.PersonalEventType
+import com.geoviksoft.turnia.core.domain.model.PersonalTypedEvent
 import com.geoviksoft.turnia.core.domain.model.SharedCalendar
 import com.geoviksoft.turnia.core.domain.model.SharedCalendarError
 import com.geoviksoft.turnia.core.domain.model.SwapError
@@ -305,7 +305,7 @@ internal class DemoPersonalEventRepository(world: DemoWorld) : PersonalEventRepo
     override fun getMyEventTypes(includeDeleted: Boolean): Flow<List<PersonalEventType>> =
         types.map { all -> all.filter { includeDeleted || !it.isDeleted } }
 
-    override suspend fun addEvent(event: PersonalEvent) = events.update { it + event }
+    override suspend fun addEvent(event: PersonalTypedEvent) = events.update { it + event }
 
     override suspend fun deleteEvent(eventId: EventId, eventDate: LocalDate) =
         events.update { all -> all.filterNot { it.id == eventId } }
@@ -325,7 +325,7 @@ internal class DemoPersonalEventRepository(world: DemoWorld) : PersonalEventRepo
         return Unit.toSuccess()
     }
 
-    override fun getEvents(uid: UserId, date: LocalDate, monthDelta: Int): Flow<List<PersonalEvent>> =
+    override fun getEvents(uid: UserId, date: LocalDate, monthDelta: Int): Flow<List<PersonalTypedEvent>> =
         events.map { all ->
             val window = date.minus(monthDelta, DateTimeUnit.MONTH)..date.plus(monthDelta, DateTimeUnit.MONTH)
             all.filter { it.date in window }

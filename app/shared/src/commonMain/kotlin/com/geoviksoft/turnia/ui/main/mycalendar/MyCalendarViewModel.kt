@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.geoviksoft.turnia.core.domain.model.GroupEvent
 import com.geoviksoft.turnia.core.domain.model.GroupId
-import com.geoviksoft.turnia.core.domain.model.PersonalEvent
+import com.geoviksoft.turnia.core.domain.model.PersonalTypedEvent
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.domain.repository.GroupRepository
 import com.geoviksoft.turnia.core.domain.repository.PersonalEventRepository
@@ -82,7 +82,7 @@ class MyCalendarViewModel(
     private fun mapToUiState(
         userId: UserId,
         groupEvents: List<GroupEvent>,
-        personalEvents: List<PersonalEvent>,
+        personalEvents: List<PersonalTypedEvent>,
         revokedGroups: Set<GroupId>,
     ): Map<LocalDate, List<DayEventUi>> {
         val eventsByDate: Map<LocalDate, MutableList<DayEventUi>> = buildMap {

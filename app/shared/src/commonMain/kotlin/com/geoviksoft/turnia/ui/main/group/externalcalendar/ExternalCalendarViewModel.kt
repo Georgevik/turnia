@@ -3,6 +3,7 @@ package com.geoviksoft.turnia.ui.main.group.externalcalendar
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.geoviksoft.turnia.core.domain.model.GroupId
+import com.geoviksoft.turnia.core.domain.model.PersonalTypedEvent
 import com.geoviksoft.turnia.core.domain.model.SharedCalendarError
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.domain.repository.AdRepository
@@ -127,8 +128,10 @@ class ExternalCalendarViewModel(
                     val groupEvents = outcome.value.groupEvents.map {
                         it.toUi(currentUserId = viewerId, removable = false)
                     }
-                    val personalEvents =
-                        outcome.value.personalEvents.map { it.toUi(removable = false) }
+                    // One-off events have no calendar cell to be drawn in yet.
+                    val personalEvents = outcome.value.personalEvents
+                        .filterIsInstance<PersonalTypedEvent>()
+                        .map { it.toUi(removable = false) }
                     emit(groupEvents + personalEvents)
                 }
 

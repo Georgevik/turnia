@@ -6,8 +6,8 @@ import com.geoviksoft.turnia.core.data.logger.Logger
 import com.geoviksoft.turnia.core.data.user.mappers.PersonalEventMapper
 import com.geoviksoft.turnia.core.domain.model.EventId
 import com.geoviksoft.turnia.core.domain.model.EventTypeId
-import com.geoviksoft.turnia.core.domain.model.PersonalEvent
 import com.geoviksoft.turnia.core.domain.model.PersonalEventType
+import com.geoviksoft.turnia.core.domain.model.PersonalTypedEvent
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.domain.repository.PersonalEventRepository
 import com.geoviksoft.turnia.core.domain.repository.UserRepository
@@ -37,7 +37,7 @@ class PersonalEventRepositoryImpl(
             .map { types -> types.filterNot { !includeDeleted && it.isDeleted } }
     }
 
-    override suspend fun addEvent(event: PersonalEvent) {
+    override suspend fun addEvent(event: PersonalTypedEvent) {
         val uid = userRepository.loggedUser?.id ?: return
         personalEventFirestore.set(uid, event)
     }
@@ -80,7 +80,7 @@ class PersonalEventRepositoryImpl(
 
     override fun getEvents(
         uid: UserId, date: LocalDate, monthDelta: Int
-    ): Flow<List<PersonalEvent>> = combine(
+    ): Flow<List<PersonalTypedEvent>> = combine(
         getAllEventTypes(uid), personalEventFirestore.get(
             uid,
             from = date.minus(monthDelta, DateTimeUnit.MONTH).toInstant(),

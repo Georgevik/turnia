@@ -10,8 +10,8 @@ import com.geoviksoft.turnia.core.domain.model.GroupEventType
 import com.geoviksoft.turnia.core.domain.model.GroupId
 import com.geoviksoft.turnia.core.domain.model.GroupMember
 import com.geoviksoft.turnia.core.domain.model.Membership
-import com.geoviksoft.turnia.core.domain.model.PersonalEvent
 import com.geoviksoft.turnia.core.domain.model.PersonalEventType
+import com.geoviksoft.turnia.core.domain.model.PersonalTypedEvent
 import com.geoviksoft.turnia.core.domain.model.User
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.domain.model.UserProfile
@@ -177,11 +177,11 @@ internal class DemoWorld(val today: LocalDate, text: DemoText = DemoText.current
     val personalTypes = listOf(formacion, vacaciones)
 
     val groupEvents: List<GroupEvent>
-    val personalEvents: List<PersonalEvent>
+    val personalEvents: List<PersonalTypedEvent>
 
     init {
         val events = rotations().toMutableList()
-        val personal = mutableListOf<PersonalEvent>()
+        val personal = mutableListOf<PersonalTypedEvent>()
         val lucia = DemoPeople.lucia
 
         fun luciaOn(date: LocalDate) = events.any { it.assigneeId == lucia.id && it.date == date }
@@ -222,7 +222,7 @@ internal class DemoWorld(val today: LocalDate, text: DemoText = DemoText.current
         // A course on a free day.
         val courseDay = (4..20).map { today.plus(it, DateTimeUnit.DAY) }.first(::luciaFree)
         claimed += courseDay
-        personal += PersonalEvent(
+        personal += PersonalTypedEvent(
             id = EventId("demo-course"),
             type = formacion,
             date = courseDay,
@@ -262,7 +262,7 @@ internal class DemoWorld(val today: LocalDate, text: DemoText = DemoText.current
         val holidayStart = LocalDate(today.year, today.month, 1).plus(1, DateTimeUnit.MONTH).plus(11, DateTimeUnit.DAY)
         (0..4).map { holidayStart.plus(it, DateTimeUnit.DAY) }.forEach { date ->
             events.removeAll { it.assigneeId == lucia.id && it.date == date }
-            personal += PersonalEvent(EventId("demo-holiday-$date"), vacaciones, date, null)
+            personal += PersonalTypedEvent(EventId("demo-holiday-$date"), vacaciones, date, null)
         }
 
         groupEvents = events

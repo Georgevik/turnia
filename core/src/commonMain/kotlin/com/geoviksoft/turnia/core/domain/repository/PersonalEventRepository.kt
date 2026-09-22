@@ -2,8 +2,8 @@ package com.geoviksoft.turnia.core.domain.repository
 
 import com.geoviksoft.turnia.core.domain.model.EventId
 import com.geoviksoft.turnia.core.domain.model.EventTypeId
-import com.geoviksoft.turnia.core.domain.model.PersonalEvent
 import com.geoviksoft.turnia.core.domain.model.PersonalEventType
+import com.geoviksoft.turnia.core.domain.model.PersonalTypedEvent
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.system.Outcome
 import kotlinx.coroutines.flow.Flow
@@ -17,7 +17,7 @@ import kotlinx.datetime.LocalDate
 interface PersonalEventRepository {
     fun getMyEventTypes(includeDeleted: Boolean = false): Flow<List<PersonalEventType>>
 
-    suspend fun addEvent(event: PersonalEvent)
+    suspend fun addEvent(event: PersonalTypedEvent)
 
     suspend fun deleteEvent(eventId: EventId, eventDate: LocalDate)
 
@@ -39,5 +39,5 @@ interface PersonalEventRepository {
         uid: UserId,
         date: LocalDate,
         monthDelta: Int = 1,
-    ): Flow<List<PersonalEvent>>
+    ): Flow<List<PersonalTypedEvent>>
 }

@@ -6,7 +6,7 @@ import com.geoviksoft.turnia.core.domain.model.EventId
 import com.geoviksoft.turnia.core.domain.model.EventType
 import com.geoviksoft.turnia.core.domain.model.GroupEvent
 import com.geoviksoft.turnia.core.domain.model.GroupId
-import com.geoviksoft.turnia.core.domain.model.PersonalEvent
+import com.geoviksoft.turnia.core.domain.model.PersonalTypedEvent
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.ui.system.color.entityColor
 import com.geoviksoft.turnia.ui.system.color.readableTextColor
@@ -156,7 +156,7 @@ private fun GroupEvent.buildTransferChain(currentUserId: UserId?): List<Transfer
     }
 }
 
-fun PersonalEvent.toUi(
+fun PersonalTypedEvent.toUi(
     removable: Boolean = false,
     notesEditable: Boolean = false,
 ) = DayEventUi(

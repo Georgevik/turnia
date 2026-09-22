@@ -8,7 +8,6 @@ package com.geoviksoft.turnia.core.domain.model
 data class SharedCalendar(
     val groupEvents: List<GroupEvent>,
     val personalEvents: List<PersonalEvent>,
-    val personalOneOffEvents: List<PersonalOneOffEvent> = emptyList(),
 )
 
 enum class SharedCalendarError {

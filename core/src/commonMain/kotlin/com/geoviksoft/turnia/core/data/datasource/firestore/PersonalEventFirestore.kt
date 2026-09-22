@@ -9,7 +9,7 @@ import com.geoviksoft.turnia.core.data.datasource.firestore.errors.GenericFirest
 import com.geoviksoft.turnia.core.data.logger.Logger
 import com.geoviksoft.turnia.core.data.user.mappers.PersonalEventMapper
 import com.geoviksoft.turnia.core.domain.model.EventId
-import com.geoviksoft.turnia.core.domain.model.PersonalEvent
+import com.geoviksoft.turnia.core.domain.model.PersonalTypedEvent
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.system.Outcome
 import com.geoviksoft.turnia.core.system.outcomeCatching
@@ -79,7 +79,7 @@ class PersonalEventFirestore(
             )
         }
 
-    suspend fun set(uid: UserId, event: PersonalEvent): Outcome<Unit, GenericFirestoreError> =
+    suspend fun set(uid: UserId, event: PersonalTypedEvent): Outcome<Unit, GenericFirestoreError> =
         outcomeCatching(TAG, { GenericFirestoreError(it) }) {
             val doc = personalEventMapper.map(event)
             Logger.d(TAG, "Set personal event document")

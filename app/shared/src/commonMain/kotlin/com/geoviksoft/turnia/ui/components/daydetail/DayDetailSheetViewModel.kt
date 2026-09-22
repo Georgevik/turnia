@@ -7,8 +7,8 @@ import com.geoviksoft.turnia.core.domain.model.EventType
 import com.geoviksoft.turnia.core.domain.model.Group
 import com.geoviksoft.turnia.core.domain.model.GroupEvent
 import com.geoviksoft.turnia.core.domain.model.GroupEventType
-import com.geoviksoft.turnia.core.domain.model.PersonalEvent
 import com.geoviksoft.turnia.core.domain.model.PersonalEventType
+import com.geoviksoft.turnia.core.domain.model.PersonalTypedEvent
 import com.geoviksoft.turnia.core.domain.model.SwapError
 import com.geoviksoft.turnia.core.domain.repository.AdRepository
 import com.geoviksoft.turnia.core.domain.repository.GroupRepository
@@ -182,7 +182,7 @@ class DayDetailSheetViewModel(
     private fun addNewEvent(type: PersonalEventType) {
         viewModelScope.launch {
             personalRepository.addEvent(
-                PersonalEvent(
+                PersonalTypedEvent(
                     id = EventId(Uuid.random().toString()),
                     type = type,
                     date = date,

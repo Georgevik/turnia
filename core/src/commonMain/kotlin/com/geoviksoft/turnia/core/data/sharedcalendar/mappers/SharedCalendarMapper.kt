@@ -12,9 +12,9 @@ import com.geoviksoft.turnia.core.domain.model.EventTypeId
 import com.geoviksoft.turnia.core.domain.model.GroupEvent
 import com.geoviksoft.turnia.core.domain.model.GroupEventType
 import com.geoviksoft.turnia.core.domain.model.GroupId
-import com.geoviksoft.turnia.core.domain.model.PersonalEvent
 import com.geoviksoft.turnia.core.domain.model.PersonalEventType
 import com.geoviksoft.turnia.core.domain.model.PersonalOneOffEvent
+import com.geoviksoft.turnia.core.domain.model.PersonalTypedEvent
 import com.geoviksoft.turnia.core.domain.model.SharedCalendar
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.system.parseEventDate
@@ -37,8 +37,8 @@ class SharedCalendarMapper {
             groupEvents = response.groupEvents.mapNotNull {
                 map(it, groupTypes, response.userNames)
             },
-            personalEvents = response.personalEvents.mapNotNull { map(it, personalTypes) },
-            personalOneOffEvents = response.personalOneOffEvents.mapNotNull { map(it) },
+            personalEvents = response.personalEvents.mapNotNull { map(it, personalTypes) } +
+                response.personalOneOffEvents.mapNotNull { map(it) },
         )
     }
 
@@ -97,10 +97,10 @@ class SharedCalendarMapper {
     private fun map(
         event: SharedPersonalEventResponse,
         types: Map<EventTypeId, PersonalEventType>,
-    ): PersonalEvent? {
+    ): PersonalTypedEvent? {
         val type = event.personalEventTypeId?.let { types[EventTypeId(it)] } ?: return null
 
-        return PersonalEvent(
+        return PersonalTypedEvent(
             id = EventId(event.eventId),
             type = type,
             date = parseEventDate(event.date) ?: return null,
