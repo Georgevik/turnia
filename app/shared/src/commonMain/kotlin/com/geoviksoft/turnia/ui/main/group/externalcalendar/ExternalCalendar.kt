@@ -94,6 +94,7 @@ private fun ExternalCalendarContent(
             rootNavigator.goTo(RootRoute.EventTypeDetailKey(EventTypeDetailData.NewGroup(groupId)))
         },
         eventsByDate = uiState.events,
+        oneOffsByDate = uiState.oneOffs,
         isLoading = uiState.loading,
     )
 }

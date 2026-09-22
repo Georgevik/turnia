@@ -102,6 +102,7 @@ import turnia.app.shared.generated.resources.one_off_event_save_error
 fun DayDetailSheet(
     date: LocalDate,
     events: List<DayEventUi>,
+    oneOffEvents: List<OneOffEventUi>,
     addMode: DayAddMode,
     openEditTypeScreen: (groupId: String, groupName: String) -> Unit,
     openNewPersonalTypeScreen: () -> Unit,
@@ -116,7 +117,6 @@ fun DayDetailSheet(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val oneOffForm by viewModel.oneOffForm.collectAsStateWithLifecycle()
-    val oneOffEvents by viewModel.oneOffEvents.collectAsStateWithLifecycle()
     var adding by rememberSaveable { mutableStateOf(false) }
     var pendingDelete by remember { mutableStateOf<DayEventUi?>(null) }
     var confirmOneOffDelete by remember { mutableStateOf(false) }
@@ -238,7 +238,12 @@ fun DayDetailSheet(
             onDismissRequest = { pendingReturn = null },
             title = { Text(stringResource(Res.string.event_return_confirm_title)) },
             text = {
-                Text(stringResource(Res.string.event_return_confirm_body, event.returnsTo.orEmpty()))
+                Text(
+                    stringResource(
+                        Res.string.event_return_confirm_body,
+                        event.returnsTo.orEmpty()
+                    )
+                )
             },
             confirmButton = {
                 TextButton(onClick = {
@@ -291,7 +296,7 @@ fun DayDetailSheet(
         onSwapChange = viewModel::setOnSwap,
         onTake = { pendingTake = it },
         onEditOneOff = { event ->
-            viewModel.onOneOffAction(OneOffFormAction.Edit(event.id))
+            viewModel.onOneOffAction(OneOffFormAction.Edit(event))
             adding = true
         },
         modifier = modifier,
@@ -342,81 +347,88 @@ private fun DayDetailContent(
         Spacer(Modifier.height(16.dp))
 
         Box {
-                AnimatedContent(adding, transitionSpec = {
-                    fadeIn() togetherWith fadeOut(animationSpec = tween(90))
-                }) { isAdding ->
-                    if (isAdding) {
-                        // Only the add pane needs the loaded types; the day's events arrive as a
-                        // parameter, so they must stay on screen while these load or fail.
-                        when (addTypes) {
-                            AddEventTypesUi.Loading -> AddPaneLoading()
+            AnimatedContent(adding, transitionSpec = {
+                fadeIn() togetherWith fadeOut(animationSpec = tween(90))
+            }) { isAdding ->
+                if (isAdding) {
+                    // Only the add pane needs the loaded types; the day's events arrive as a
+                    // parameter, so they must stay on screen while these load or fail.
+                    when (addTypes) {
+                        AddEventTypesUi.Loading -> AddPaneLoading()
 
-                            is AddEventTypesUi.Error -> TurniaErrorContent(
-                                message = addTypes.error.message(),
-                                modifier = Modifier.fillMaxWidth(),
-                                onRetry = onRetryTypes,
-                            )
+                        is AddEventTypesUi.Error -> TurniaErrorContent(
+                            message = addTypes.error.message(),
+                            modifier = Modifier.fillMaxWidth(),
+                            onRetry = onRetryTypes,
+                        )
 
-                            is AddEventTypesUi.Success -> DayDetailAddEvent(
-                                addMode = addMode,
-                                sections = addTypes.sections,
-                                oneOffForm = oneOffForm,
-                                onOneOffAction = onOneOffAction,
-                                onPickEventType = onPickEventType,
-                                onEditGroup = onEditGroup,
-                                onAddPersonalEventType = onAddPersonalEventType,
-                                onAddGroupEventType = onAddGroupEventType,
+                        is AddEventTypesUi.Success -> DayDetailAddEvent(
+                            addMode = addMode,
+                            sections = addTypes.sections,
+                            oneOffForm = oneOffForm,
+                            onOneOffAction = onOneOffAction,
+                            onPickEventType = onPickEventType,
+                            onEditGroup = onEditGroup,
+                            onAddPersonalEventType = onAddPersonalEventType,
+                            onAddGroupEventType = onAddGroupEventType,
+                        )
+                    }
+                } else if (events.isEmpty() && oneOffEvents.isEmpty()) {
+                    Text(
+                        text = stringResource(Res.string.event_details_empty),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 24.dp),
+                    )
+                } else {
+                    Column {
+                        events.forEachIndexed { index, event ->
+                            if (index > 0) Spacer(Modifier.height(12.dp))
+                            DayEventRow(
+                                event = event,
+                                onRemove = when {
+                                    event.removable -> {
+                                        { onRemove(event) }
+                                    }
+
+                                    event.canReturn -> {
+                                        { onReturn(event) }
+                                    }
+
+                                    else -> null
+                                },
+                                onEditNotes = if (event.notesEditable) {
+                                    { onEditNotes(event) }
+                                } else {
+                                    null
+                                },
+                                onSwapChange = if (event.canOfferSwap) {
+                                    { onSwap -> onSwapChange(event, onSwap) }
+                                } else {
+                                    null
+                                },
+                                onTake = if (event.canTake) {
+                                    { onTake(event) }
+                                } else {
+                                    null
+                                },
                             )
                         }
-                    } else if (events.isEmpty() && oneOffEvents.isEmpty()) {
-                        Text(
-                            text = stringResource(Res.string.event_details_empty),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(vertical = 24.dp),
-                        )
-                    } else {
-                        Column {
-                            events.forEachIndexed { index, event ->
-                                if (index > 0) Spacer(Modifier.height(12.dp))
-                                DayEventRow(
-                                    event = event,
-                                    onRemove = when {
-                                        event.removable -> {
-                                            { onRemove(event) }
-                                        }
-                                        event.canReturn -> {
-                                            { onReturn(event) }
-                                        }
-                                        else -> null
-                                    },
-                                    onEditNotes = if (event.notesEditable) {
-                                        { onEditNotes(event) }
-                                    } else {
-                                        null
-                                    },
-                                    onSwapChange = if (event.canOfferSwap) {
-                                        { onSwap -> onSwapChange(event, onSwap) }
-                                    } else {
-                                        null
-                                    },
-                                    onTake = if (event.canTake) {
-                                        { onTake(event) }
-                                    } else {
-                                        null
-                                    },
-                                )
-                            }
-                            oneOffEvents.forEachIndexed { index, event ->
-                                if (index > 0 || events.isNotEmpty()) Spacer(Modifier.height(12.dp))
-                                OneOffEventRow(
-                                    event = event,
-                                    onEdit = { onEditOneOff(event) },
-                                )
-                            }
+                        oneOffEvents.forEachIndexed { index, event ->
+                            if (index > 0 || events.isNotEmpty()) Spacer(Modifier.height(12.dp))
+                            OneOffEventRow(
+                                event = event,
+                                // Only the user's own calendar lists events they may change.
+                                onEdit = if (addMode == DayAddMode.Full) {
+                                    { onEditOneOff(event) }
+                                } else {
+                                    null
+                                },
+                            )
                         }
                     }
                 }
+            }
         }
     }
 }

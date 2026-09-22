@@ -3,6 +3,7 @@ package com.geoviksoft.turnia.ui.main.group.externalcalendar
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.geoviksoft.turnia.core.domain.model.GroupId
+import com.geoviksoft.turnia.core.domain.model.PersonalOneOffEvent
 import com.geoviksoft.turnia.core.domain.model.PersonalTypedEvent
 import com.geoviksoft.turnia.core.domain.model.SharedCalendarError
 import com.geoviksoft.turnia.core.domain.model.UserId
@@ -15,6 +16,8 @@ import com.geoviksoft.turnia.navigation.main.routes.ExternalCalendarData
 import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
 import com.geoviksoft.turnia.ui.components.calendar.model.swapFirst
 import com.geoviksoft.turnia.ui.components.calendar.model.toUi
+import com.geoviksoft.turnia.ui.components.daydetail.model.OneOffEventUi
+import com.geoviksoft.turnia.ui.components.daydetail.model.toUiByDate
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -58,8 +61,10 @@ class ExternalCalendarViewModel(
         viewModelScope.launch {
             combine(monthDate, invalidateData) { date, _ -> date }
                 .flatMapLatest { date -> events(date) }
-                .collect { eventsByDate ->
-                    _uiState.update { it.copy(loading = false, events = eventsByDate) }
+                .collect { month ->
+                    _uiState.update {
+                        it.copy(loading = false, events = month.events, oneOffs = month.oneOffs)
+                    }
                 }
         }
 
@@ -77,7 +82,7 @@ class ExternalCalendarViewModel(
      * A group's events come from the cache first and again once the server has something newer, so
      * the month paints without waiting on a round trip. A colleague's cannot: see [sharedCalendar].
      */
-    private fun events(date: LocalDate): Flow<Map<LocalDate, List<DayEventUi>>> =
+    private fun events(date: LocalDate): Flow<MonthEvents> =
         userRepository.loggedUserFlow.flatMapLatest { user ->
             val uid = user.id
             val events = when (data) {
@@ -86,13 +91,15 @@ class ExternalCalendarViewModel(
                 is ExternalCalendarData.Group -> isRevoked().flatMapLatest { revoked ->
                     groupRepository.getEventsByGroup(GroupId(data.id), date, monthDelta = 2)
                         .map { list ->
-                            list.map {
+                            val events = list.map {
                                 it.toUi(
                                     currentUserId = uid,
                                     removable = it.ownerId == uid && it.assigneeId == uid,
                                     activeMember = !revoked,
                                 )
                             }
+                            // One-off events are personal: a group's calendar has none.
+                            MonthEvents(events.groupBy { it.date }.swapFirst(), emptyMap())
                         }
                 }
 
@@ -100,8 +107,7 @@ class ExternalCalendarViewModel(
                     sharedCalendar(UserId(data.id), viewerId = uid, date = date)
             }
 
-            events.map { list -> list.groupBy { event -> event.date }.swapFirst() }
-
+            events
         }
 
     private fun isRevoked(): Flow<Boolean> = groupRepository.getGroups()
@@ -112,7 +118,7 @@ class ExternalCalendarViewModel(
         ownerId: UserId,
         viewerId: UserId,
         date: LocalDate,
-    ): Flow<List<DayEventUi>> =
+    ): Flow<MonthEvents> =
         flow {
             // Flagged here rather than emitted: an empty emission would wipe the month on screen
             // while the next one is on its way, and one callable answers for both.
@@ -128,16 +134,25 @@ class ExternalCalendarViewModel(
                     val groupEvents = outcome.value.groupEvents.map {
                         it.toUi(currentUserId = viewerId, removable = false)
                     }
-                    // One-off events have no calendar cell to be drawn in yet.
                     val personalEvents = outcome.value.personalEvents
                         .filterIsInstance<PersonalTypedEvent>()
                         .map { it.toUi(removable = false) }
-                    emit(groupEvents + personalEvents)
+                    // The owner's, shown as they are: the sheet offers no way to change them on a
+                    // calendar that is not the viewer's, and the rules would refuse the write.
+                    val oneOffs = outcome.value.personalEvents
+                        .filterIsInstance<PersonalOneOffEvent>()
+                        .toUiByDate()
+                    emit(
+                        MonthEvents(
+                            events = (groupEvents + personalEvents).groupBy { it.date }.swapFirst(),
+                            oneOffs = oneOffs,
+                        ),
+                    )
                 }
 
                 is Outcome.Failure -> {
                     _uiState.update { it.copy(userMessage = outcome.error) }
-                    emit(emptyList())
+                    emit(MonthEvents(emptyMap(), emptyMap()))
                 }
             }
         }
@@ -154,8 +169,14 @@ class ExternalCalendarViewModel(
 }
 
 
+private data class MonthEvents(
+    val events: Map<LocalDate, List<DayEventUi>>,
+    val oneOffs: Map<LocalDate, List<OneOffEventUi>>,
+)
+
 data class GroupCalendarUi(
     val events: Map<LocalDate, List<DayEventUi>> = emptyMap(),
+    val oneOffs: Map<LocalDate, List<OneOffEventUi>> = emptyMap(),
     val loading: Boolean = true,
     /** The user was removed from this group: the leftover events show, nothing can be added. */
     val isRevoked: Boolean = false,

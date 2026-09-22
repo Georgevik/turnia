@@ -47,6 +47,24 @@
       ]
     },
     {
+      "collectionGroup": "personalOneOffEvents",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "updateAt",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "yearMonthEnd",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "yearMonthStart",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "events",
       "queryScope": "COLLECTION",
       "fields": [

@@ -13,6 +13,8 @@ import com.geoviksoft.turnia.core.domain.repository.UserRepository
 import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
 import com.geoviksoft.turnia.ui.components.calendar.model.swapFirst
 import com.geoviksoft.turnia.ui.components.calendar.model.toUi
+import com.geoviksoft.turnia.ui.components.daydetail.model.OneOffEventUi
+import com.geoviksoft.turnia.ui.components.daydetail.model.toUiByDate
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,6 +22,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -30,7 +33,10 @@ import kotlin.time.Clock
 @Immutable
 sealed interface MyCalendarUiState {
     object Loading : MyCalendarUiState
-    data class Success(val eventsByDate: Map<LocalDate, List<DayEventUi>>) : MyCalendarUiState
+    data class Success(
+        val eventsByDate: Map<LocalDate, List<DayEventUi>>,
+        val oneOffsByDate: Map<LocalDate, List<OneOffEventUi>> = emptyMap(),
+    ) : MyCalendarUiState
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -47,10 +53,16 @@ class MyCalendarViewModel(
     init {
         viewModelScope.launch {
             combine(userRepository.loggedUserFlow, targetDay) { user, date -> user.id to date }
-                .flatMapLatest { (userId, date) -> events(userId, date) }
-                .collect { events ->
+                .flatMapLatest { (userId, date) ->
+                    combine(
+                        events(userId, date),
+                        personalRepository.getOneOffEvents(userId, date, monthDelta = 2)
+                            .onStart { emit(emptyList()) },
+                    ) { events, oneOffs -> events to oneOffs.toUiByDate() }
+                }
+                .collect { (events, oneOffs) ->
                     _uiState.update {
-                        MyCalendarUiState.Success(eventsByDate = events)
+                        MyCalendarUiState.Success(eventsByDate = events, oneOffsByDate = oneOffs)
                     }
                 }
         }

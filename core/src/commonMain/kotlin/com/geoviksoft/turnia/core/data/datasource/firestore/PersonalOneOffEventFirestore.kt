@@ -18,10 +18,15 @@ import com.geoviksoft.turnia.core.system.toYearMonth
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Source
 import dev.gitlive.firebase.firestore.Timestamp
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.YearMonthRange
 import kotlinx.datetime.yearMonth
@@ -35,6 +40,9 @@ class PersonalOneOffEventFirestore(
     private val personalEventMapper: PersonalEventMapper,
     private val userSyncFirestore: UserSyncFirestore
 ) {
+
+    private val checkedMarkers = mutableMapOf<Pair<UserId, YearMonth>, Instant>()
+    private val checkedMarkersLock = Mutex()
 
     fun get(
         userId: UserId, from: Instant, until: Instant
@@ -51,7 +59,9 @@ class PersonalOneOffEventFirestore(
 
         emitAll(
             userSyncFirestore.observe(userId).mapNotNull { sync ->
-                val staleMonths = staleEventMonths(months, sync, known.updatedByMonth())
+                val staleMonths = staleEventMonths(
+                    months, sync, known.updatedByMonth().withChecked(userId, months)
+                )
 
                 if (staleMonths.isEmpty()) {
                     // Nothing moved: the emission before this one still stands
@@ -65,6 +75,8 @@ class PersonalOneOffEventFirestore(
                     staleMonths.mapValues { (_, updatedAt) -> updatedAt?.toTimestamp() },
                     Source.SERVER
                 ).associateBy { it.id }.toMutableMap()
+
+                recordChecked(userId, staleMonths.keys, sync)
 
                 val merged = known.map { cached -> serverEvents.remove(cached.id) ?: cached }
                 known = merged + serverEvents.values
@@ -141,27 +153,29 @@ class PersonalOneOffEventFirestore(
     ): List<DocHolder<PersonalOneOffDocument>> {
         if (months.isEmpty()) return emptyList()
 
-        val snapshot = firestore.collection(PATH_EVENTS(uid.value)).where {
-            val clauses = months.map { (month, sinceUpdateAt) ->
-                val monthStart =
-                    PersonalOneOffDocument.FIELD_YEAR_MONTH_START lessThanOrEqualTo month.toString()
-                val monthEnd = PersonalOneOffDocument.FIELD_YEAR_MONTH_END greaterThanOrEqualTo month.toString()
-                val inMonth = monthStart and monthEnd
+        val snapshotResults = coroutineScope {
+            months.map { (month, sinceUpdateAt) ->
+                async {
+                    val monthStr = month.toString()
+                    firestore.collection(PATH_EVENTS(uid.value)).where {
+                        val inMonth =
+                            (PersonalOneOffDocument.FIELD_YEAR_MONTH_START lessThanOrEqualTo monthStr) and
+                                    (PersonalOneOffDocument.FIELD_YEAR_MONTH_END greaterThanOrEqualTo monthStr)
 
-                val changed =
-                    sinceUpdateAt?.let { PersonalOneOffDocument.FIELD_UPDATE_AT greaterThan it }
+                        sinceUpdateAt?.let { inMonth and (PersonalOneOffDocument.FIELD_UPDATE_AT greaterThan it) }
+                            ?: inMonth
+                    }.get(source).trackData(TAG, "events($source)")
+                }
+            }.awaitAll()
+        }
 
-                if (changed == null) inMonth else inMonth and changed
-            }
-
-            any(*clauses.toTypedArray())
-        }.get(source).trackData(TAG, "events($source)")
-
-        Logger.d(
-            TAG,
-            "Personal oneOff events for (${months.keys.joinToString()}). Source: ${source}. " + "Amount: ${snapshot.documents.size}. " + "Changes: ${snapshot.documentChanges.size}"
-        )
-        return snapshot.documents.map { personalEventMapper.mapOneOff(it) }
+        return snapshotResults.flatMap { snapshotResult ->
+            Logger.d(
+                TAG,
+                "Personal oneOff events for (${months.keys.joinToString()}). Source: ${source}. " + "Amount: ${snapshotResult.documents.size}. " + "Changes: ${snapshotResult.documentChanges.size}"
+            )
+            snapshotResult.documents.map { doc -> personalEventMapper.mapOneOff(doc) }
+        }
     }
 
     private fun PersonalOneOffEvent.months(): Set<YearMonth> =
@@ -188,6 +202,27 @@ class PersonalOneOffEventFirestore(
         }
     }
 
+
+    /** What the cache holds of each month, or the marker it was last checked at if that is newer. */
+    private suspend fun Map<YearMonth, Instant>.withChecked(
+        uid: UserId, months: YearMonthRange,
+    ): Map<YearMonth, Instant> = checkedMarkersLock.withLock {
+        months.mapNotNull { month ->
+            val cached = this[month]
+            val checked = checkedMarkers[uid to month]
+            val newest =
+                if (cached != null && checked != null) maxOf(cached, checked) else cached ?: checked
+            newest?.let { month to it }
+        }.toMap()
+    }
+
+    private suspend fun recordChecked(uid: UserId, months: Set<YearMonth>, sync: UserSyncDocument) =
+        checkedMarkersLock.withLock {
+            months.forEach { month ->
+                sync.personalOneOffEventsUpdatedAt[month]?.updatedAt.toInstantOrNull()
+                    ?.let { checkedMarkers[uid to month] = it }
+            }
+        }
 
     private fun staleEventMonths(
         months: YearMonthRange, sync: UserSyncDocument, cacheUpdatedAt: Map<YearMonth, Instant>

@@ -31,7 +31,7 @@ of its last listen pays nothing.
 | People tab, first time per 30 min | 2 | **1** | `calendarsSharedWithMe` listener attach (empty result = 1). |
 | Groups / Swaps / Settings tabs | 0–1 | 0 | — |
 | Save a group, a type or a colour | 0 reads | 0 reads | 2 writes: the document and its marker. |
-| Open a day in my calendar | — | **0** | One-off events come from the cache, following the user sync listener already open; the server is asked only for a month whose marker moved. |
+| Open a day in my calendar | — | **0** | The day's one-off events arrive with the month, like its shifts: the sheet reads nothing of its own. |
 | Add, edit or delete a one-off event | — | 0 reads | 2 writes: the event and the marker of every month it spans (an edit also marks the months it leaves). |
 | Rename yourself (`updateProfile`) | — | 1 call | Server: profile + marker + reservation + 2 per group. Your other devices pay 1 profile read; every member pays 1 group read per shared group. |
 
@@ -69,6 +69,8 @@ function reads and writes on the server does not appear in the client audit.
 | `profile` marker for the user's own document | 2 reads per session |
 | Groups followed through a membership index instead of a `memberUids` listener | G reads per launch |
 | Unbounded Firestore cache | Protects events older than the retention window from LRU eviction |
+| A month a one-off event moved out of is remembered as checked | 1 empty read per sync change and per calendar page, for as long as the month stays in view |
+| The day sheet takes its one-off events from the calendar instead of querying them | A second cache query and staleness check per open sheet |
 
 ## Keeping it this way
 

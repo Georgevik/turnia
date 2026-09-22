@@ -51,6 +51,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.geoviksoft.turnia.core.data.logger.Logger
 import com.geoviksoft.turnia.ui.components.calendar.model.CalendarCellEventUi
+import com.geoviksoft.turnia.ui.components.calendar.model.CalendarCellOneOffUi
+import com.geoviksoft.turnia.ui.components.calendar.model.cellsFor
+import com.geoviksoft.turnia.ui.components.daydetail.model.OneOffEventUi
 import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
 import com.geoviksoft.turnia.ui.components.calendar.model.ThreeDotsOption
 import com.geoviksoft.turnia.ui.components.daydetail.DayAddMode
@@ -93,6 +96,7 @@ fun CalendarViewer(
     modifier: Modifier = Modifier,
     theme: CalendarTheme = CalendarThemes.myCalendar(),
     eventsByDate: Map<LocalDate, List<DayEventUi>> = emptyMap(),
+    oneOffsByDate: Map<LocalDate, List<OneOffEventUi>> = emptyMap(),
     isLoading: Boolean = false,
     addMode: DayAddMode,
     titleBar: @Composable () -> Unit = {},
@@ -111,6 +115,9 @@ fun CalendarViewer(
 
     val cellsByDate = remember(eventsByDate) {
         eventsByDate.mapValues { (_, events) -> events.map { it.cell } }
+    }
+    val oneOffCellsByDate = remember(oneOffsByDate) {
+        oneOffsByDate.mapValues { (date, events) -> events.cellsFor(date) }
     }
     fun monthForPage(page: Int): LocalDate =
         anchorMonth.plus(page - MONTH_PAGE_ANCHOR, DateTimeUnit.MONTH)
@@ -190,6 +197,7 @@ fun CalendarViewer(
                             // Highlight the open day's tile while its sheet is up.
                             selectedDate = sheetDate,
                             cellsByDate = cellsByDate,
+                            oneOffCellsByDate = oneOffCellsByDate,
                             onDateSelected = { date -> sheetDate = date },
                             onMonthChanged = { newMonth ->
                                 scope.launch {
@@ -223,6 +231,7 @@ fun CalendarViewer(
                 DayDetailSheet(
                     date = date,
                     events = eventsByDate[date].orEmpty(),
+                    oneOffEvents = oneOffsByDate[date].orEmpty(),
                     addMode = addMode,
                     openEditTypeScreen = { groupId, groupName ->
                         onEditGroup(groupId, groupName)
@@ -365,6 +374,7 @@ private fun CalendarGrid(
     calendarTheme: CalendarTheme,
     selectedDate: LocalDate?,
     cellsByDate: Map<LocalDate, List<CalendarCellEventUi>>,
+    oneOffCellsByDate: Map<LocalDate, List<CalendarCellOneOffUi>>,
     onDateSelected: (LocalDate) -> Unit,
     onMonthChanged: (LocalDate) -> Unit,
 ) {
@@ -396,6 +406,7 @@ private fun CalendarGrid(
                         isSelected = date == selectedDate,
                         theme = calendarTheme,
                         events = cellsByDate[date].orEmpty(),
+                        oneOffs = oneOffCellsByDate[date].orEmpty(),
                         stagger = stagger,
                         onClick = {
                             if (!dateInMonth) {

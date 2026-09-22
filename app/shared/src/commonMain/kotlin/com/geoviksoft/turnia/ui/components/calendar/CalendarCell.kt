@@ -9,7 +9,9 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -41,12 +43,15 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.geoviksoft.turnia.core.domain.model.EventId
 import com.geoviksoft.turnia.ui.components.calendar.model.CalendarCellEventUi
+import com.geoviksoft.turnia.ui.components.calendar.model.CalendarCellOneOffUi
 import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
 import com.geoviksoft.turnia.ui.system.color.EntityPalette
 import kotlinx.coroutines.delay
@@ -73,6 +78,14 @@ private val EventEntranceOffset = 6.dp
 /** One lap of the swap arrows round an event's chip. */
 private const val SWAP_ARROWS_LAP_MS = 3000
 
+// Sizes once one-off events share the cell: shifts stop stretching to fill it, so lines fit under
+// them, and whatever still does not fit is counted rather than squeezed.
+private val MixedShiftHeight = 24.dp
+private val MixedTwoShiftsHeight = 20.dp
+private val OneOffLineHeight = 12.dp
+private val OverflowHeight = 12.dp
+private val MixedGap = 2.dp
+
 @Composable
 fun CalendarCell(
     date: LocalDate,
@@ -83,6 +96,7 @@ fun CalendarCell(
     onClick: () -> Unit,
     modifier: Modifier = Modifier.Companion,
     events: List<CalendarCellEventUi> = emptyList(),
+    oneOffs: List<CalendarCellOneOffUi> = emptyList(),
     stagger: EventEntranceStagger? = null,
 ) {
     val indicatorColor = if (isToday) theme.accentColor else Color.Transparent
@@ -136,28 +150,39 @@ fun CalendarCell(
                 }
             }
 
-            if (events.isNotEmpty()) {
-                // One layout for any count, keyed by id: a chip that is already on screen keeps its
-                // state when a second one joins it, so only the newcomer animates in.
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                ) {
-                    events.take(2).forEach { event ->
-                        key(event.id) {
-                            EventRow(
-                                modifier = Modifier.weight(1f),
-                                event = event,
-                                entranceDelay = { stagger?.delayFor(date) ?: Duration.ZERO },
-                            )
+            val entranceDelay: suspend () -> Duration = { stagger?.delayFor(date) ?: Duration.ZERO }
+            when {
+                oneOffs.isNotEmpty() -> {
+                    MixedEvents(
+                        shifts = events,
+                        oneOffs = oneOffs,
+                        entranceDelay = entranceDelay,
+                        modifier = Modifier.fillMaxWidth().weight(1f),
+                    )
+                }
+                events.isNotEmpty() -> {
+                    // One layout for any count, keyed by id: a chip that is already on screen keeps its
+                    // state when a second one joins it, so only the newcomer animates in.
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                    ) {
+                        events.take(2).forEach { event ->
+                            key(event.id) {
+                                EventRow(
+                                    modifier = Modifier.weight(1f),
+                                    event = event,
+                                    entranceDelay = entranceDelay,
+                                )
+                            }
                         }
-                    }
-                    if (events.size == 1) {
-                        Spacer(Modifier.weight(1f))
-                    }
-                    if (events.size > 2) {
-                        OverflowRow()
+                        if (events.size == 1) {
+                            Spacer(Modifier.weight(1f))
+                        }
+                        if (events.size > 2) {
+                            OverflowRow()
+                        }
                     }
                 }
             }
@@ -234,10 +259,109 @@ private fun EventRow(
     }
 }
 
+/** What a cell with one-off events can show, worked out from the height it has. */
+private data class MixedLayout(
+    val shifts: Int,
+    val oneOffs: Int,
+    val hidden: Int,
+    val shiftHeight: Dp,
+)
+
+/**
+ * Shifts first, at most two, then the one-off lines, for as long as they fit; the last slot goes
+ * to the count of what is left whenever something is.
+ */
+private fun mixedLayout(shiftCount: Int, oneOffCount: Int, available: Dp): MixedLayout {
+    val shiftHeight = if (shiftCount >= 2) MixedTwoShiftsHeight else MixedShiftHeight
+    val heights = List(minOf(shiftCount, 2)) { shiftHeight } + List(oneOffCount) { OneOffLineHeight }
+    val total = shiftCount + oneOffCount
+
+    var used = 0.dp
+    var shown = 0
+    for (height in heights) {
+        val gap = if (shown > 0) MixedGap else 0.dp
+        val leftAfter = total - shown - 1
+        val overflow = if (leftAfter > 0) MixedGap + OverflowHeight else 0.dp
+
+        if (used + gap + height + overflow > available) break
+        used += gap + height
+        shown++
+    }
+
+    val shifts = minOf(shown, minOf(shiftCount, 2))
+    return MixedLayout(
+        shifts = shifts,
+        oneOffs = shown - shifts,
+        hidden = total - shown,
+        shiftHeight = shiftHeight,
+    )
+}
+
+@Composable
+private fun MixedEvents(
+    shifts: List<CalendarCellEventUi>,
+    oneOffs: List<CalendarCellOneOffUi>,
+    entranceDelay: suspend () -> Duration,
+    modifier: Modifier = Modifier,
+) {
+    BoxWithConstraints(modifier = modifier) {
+        val layout = mixedLayout(shifts.size, oneOffs.size, maxHeight)
+        Column(verticalArrangement = Arrangement.spacedBy(MixedGap)) {
+            shifts.take(layout.shifts).forEach { event ->
+                key(event.id) {
+                    EventRow(
+                        modifier = Modifier.height(layout.shiftHeight),
+                        event = event,
+                        entranceDelay = entranceDelay,
+                    )
+                }
+            }
+            oneOffs.take(layout.oneOffs).forEach { event ->
+                key(event.id) { OneOffLine(event) }
+            }
+            if (layout.hidden > 0) OverflowRow()
+        }
+    }
+}
+
+/** A dot of the event's colour and its time, or its name: never a block, which reads as a shift. */
+@Composable
+private fun OneOffLine(event: CalendarCellOneOffUi) {
+    Row(
+        modifier = Modifier.fillMaxWidth().height(OneOffLineHeight),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            Modifier
+                .padding(start = 1.dp, end = 3.dp)
+                .size(5.dp)
+                .clip(CircleShape)
+                .background(event.color),
+        )
+        Text(
+            text = event.label,
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontSize = 10.sp,
+                lineHeight = 12.sp,
+                fontFeatureSettings = "tnum",
+            ),
+            fontWeight = if (event.timed) FontWeight.SemiBold else FontWeight.Medium,
+            color = if (event.timed) {
+                MaterialTheme.colorScheme.onSurface
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+/** How many more there are, where there is no room left to show them. */
 @Composable
 private fun OverflowRow() {
     Box(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().height(OverflowHeight),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -309,10 +433,48 @@ fun CalendarCellEventPreview() {
     }
 }
 
+/** One-off events beside shifts: lines under them, and a count once they no longer fit. */
+@Preview
+@Composable
+fun CalendarCellOneOffPreview() {
+    val dentist = demoOneOff("17:30", EntityPalette[6])
+    val meeting = demoOneOff("09:00", EntityPalette[10])
+    val birthday = demoOneOff("Cumple Ana", EntityPalette[2], timed = false)
+    val gym = demoOneOff("19:00", EntityPalette[9])
+    PreviewTurniaTheme {
+        Column {
+            Row {
+                LabelledCell("event only", events = emptyList(), oneOffs = listOf(dentist))
+                LabelledCell("shift + 1", events = listOf(demoCell()), oneOffs = listOf(dentist))
+                LabelledCell("shift + 2", events = listOf(demoCell()), oneOffs = listOf(meeting, dentist))
+                LabelledCell("all day", events = listOf(demoCell()), oneOffs = listOf(birthday))
+            }
+            Row {
+                LabelledCell(
+                    label = "shift + 4",
+                    events = listOf(demoCell()),
+                    oneOffs = listOf(birthday, meeting, dentist, gym),
+                )
+                LabelledCell(
+                    label = "two shifts + 2",
+                    events = listOf(demoCell(), demoCell(label = "N", background = EntityPalette[8])),
+                    oneOffs = listOf(meeting, dentist),
+                )
+                LabelledCell("4 events", events = emptyList(), oneOffs = listOf(birthday, meeting, dentist, gym))
+                LabelledCell(
+                    label = "three shifts",
+                    events = List(3) { demoCell(label = "T$it") },
+                )
+            }
+        }
+    }
+}
+
 @Composable
 private fun LabelledCell(
     label: String,
     events: List<CalendarCellEventUi>,
+    oneOffs: List<CalendarCellOneOffUi> = emptyList(),
     inMonth: Boolean = false,
     isToday: Boolean = false,
     isSelected: Boolean = false,
@@ -330,6 +492,7 @@ private fun LabelledCell(
                 theme = CalendarThemes.myCalendar(),
                 onClick = {},
                 events = events,
+                oneOffs = oneOffs,
             )
         }
         Text(
@@ -352,4 +515,11 @@ private fun demoCell(
     background = background,
     onSwap = onSwap,
     assignedToOther = assignedToOther,
+)
+
+private fun demoOneOff(label: String, color: Color, timed: Boolean = true) = CalendarCellOneOffUi(
+    id = "preview-$label",
+    label = label,
+    color = color,
+    timed = timed,
 )

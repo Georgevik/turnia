@@ -35,6 +35,7 @@ fun MyCalendarScreen(viewModel: MyCalendarViewModel = koinViewModel()) {
         CalendarViewer(
             modifier = Modifier.weight(1f),
             eventsByDate = (uiState as? MyCalendarUiState.Success)?.eventsByDate.orEmpty(),
+            oneOffsByDate = (uiState as? MyCalendarUiState.Success)?.oneOffsByDate.orEmpty(),
             isLoading = uiState is MyCalendarUiState.Loading,
             onMonthChanged = viewModel::onMonthChanged,
             addMode = DayAddMode.Full,

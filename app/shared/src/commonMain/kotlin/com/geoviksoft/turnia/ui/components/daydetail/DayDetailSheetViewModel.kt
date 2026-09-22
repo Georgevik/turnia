@@ -31,16 +31,9 @@ import com.geoviksoft.turnia.ui.system.color.EntityPalette
 import com.geoviksoft.turnia.ui.system.color.entityColor
 import com.geoviksoft.turnia.ui.system.color.toComposeColorOr
 import com.geoviksoft.turnia.ui.system.color.toHex
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
@@ -64,22 +57,6 @@ class DayDetailSheetViewModel(
 
     private val _oneOffForm = MutableStateFlow<OneOffEventFormUi?>(null)
     val oneOffForm = _oneOffForm.asStateFlow()
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val oneOffDomainEvents: StateFlow<List<PersonalOneOffEvent>> =
-        if (addMode == DayAddMode.Full) {
-            userRepository.loggedUserFlow
-                .flatMapLatest { user -> personalRepository.getOneOffEvents(user.id, date) }
-                .map { events ->
-                    events.filter { it.start.date <= date && it.end.date >= date }.sortedBy { it.start }
-                }
-        } else {
-            flowOf(emptyList())
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-
-    val oneOffEvents: StateFlow<List<OneOffEventUi>> = oneOffDomainEvents
-        .map { events -> events.map { it.toUi() } }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val _oneOffMessage = MutableStateFlow<OneOffEventMessage?>(null)
     val oneOffMessage = _oneOffMessage.asStateFlow()
@@ -202,24 +179,24 @@ class DayDetailSheetViewModel(
             )
 
             is OneOffFormAction.Edit -> {
-                val event = findOneOff(action.eventId) ?: return
+                val event = action.event
                 _oneOffForm.value = OneOffEventFormUi(
                     name = event.name,
                     notes = event.notes.orEmpty(),
                     start = event.start,
                     end = event.end,
                     allDay = event.allDay,
-                    color = event.toUi().color,
-                    editingId = action.eventId,
+                    color = event.color,
+                    editing = event,
                 )
             }
 
             OneOffFormAction.Cancel -> _oneOffForm.value = null
 
             OneOffFormAction.Delete -> {
-                val eventId = _oneOffForm.value?.editingId ?: return
+                val event = _oneOffForm.value?.editing ?: return
                 _oneOffForm.value = null
-                deleteOneOffEvent(eventId)
+                deleteOneOffEvent(event)
             }
 
             OneOffFormAction.Save -> {
@@ -235,6 +212,7 @@ class DayDetailSheetViewModel(
             is OneOffFormAction.StartChanged -> updateForm {
                 copy(start = action.start, end = endFollowing(action.start))
             }
+
             is OneOffFormAction.EndChanged -> updateForm { copy(end = action.end) }
             is OneOffFormAction.AllDayChanged -> updateForm { copy(allDay = action.allDay) }
             is OneOffFormAction.ColorPicked -> updateForm { copy(color = action.color) }
@@ -252,7 +230,7 @@ class DayDetailSheetViewModel(
 
     private fun saveOneOff(form: OneOffEventFormUi) {
         viewModelScope.launch {
-            val previous = form.editingId?.let(::findOneOff)
+            val previous = form.editing?.toDomain()
             val outcome = if (previous == null) {
                 personalRepository.addOneOffEvent(form.toDomain(EventId(Uuid.random().toString())))
                     .also { adRepository.actionPerformed() }
@@ -263,16 +241,12 @@ class DayDetailSheetViewModel(
         }
     }
 
-    private fun deleteOneOffEvent(eventId: String) {
-        val event = findOneOff(eventId) ?: return
+    private fun deleteOneOffEvent(event: OneOffEventUi) {
         viewModelScope.launch {
-            personalRepository.deleteOneOffEvent(event)
+            personalRepository.deleteOneOffEvent(event.toDomain())
                 .onFailure { _oneOffMessage.value = OneOffEventMessage.DeleteFailed }
         }
     }
-
-    private fun findOneOff(eventId: String): PersonalOneOffEvent? =
-        oneOffDomainEvents.value.firstOrNull { it.id.value == eventId }
 
     private fun OneOffEventFormUi.toDomain(id: EventId) = PersonalOneOffEvent(
         id = id,
@@ -282,16 +256,6 @@ class DayDetailSheetViewModel(
         end = end,
         allDay = allDay,
         color = color.toHex(),
-    )
-
-    private fun PersonalOneOffEvent.toUi() = OneOffEventUi(
-        id = id.value,
-        name = name,
-        notes = notes,
-        start = start,
-        end = end,
-        allDay = allDay,
-        color = color.toComposeColorOr(entityColor(id.value)),
     )
 
     fun addEventOfType(eventTypeUi: EventTypeUi) {

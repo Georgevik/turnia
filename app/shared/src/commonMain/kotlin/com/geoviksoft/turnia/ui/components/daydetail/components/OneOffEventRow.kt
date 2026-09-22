@@ -41,7 +41,6 @@ import turnia.app.shared.generated.resources.one_off_event_edit
 fun OneOffEventRow(
     event: OneOffEventUi,
     modifier: Modifier = Modifier,
-    /** Tapping the row edits the event, deleting included; null leaves it read-only. */
     onEdit: (() -> Unit)? = null,
 ) {
     val editLabel = stringResource(Res.string.one_off_event_edit)

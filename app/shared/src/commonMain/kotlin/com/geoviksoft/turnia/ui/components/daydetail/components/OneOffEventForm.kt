@@ -89,7 +89,7 @@ fun OneOffEventForm(
     // Only a new event starts typing: an existing one is often opened to be read or deleted, and a
     // keyboard would cover half of it.
     LaunchedEffect(Unit) {
-        if (form.editingId != null) return@LaunchedEffect
+        if (form.editing != null) return@LaunchedEffect
         delay(FOCUS_DELAY_MS)
         nameFocus.requestFocus()
     }
@@ -186,7 +186,7 @@ fun OneOffEventForm(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (form.editingId != null) {
+                if (form.editing != null) {
                     TextButton(
                         onClick = { onAction(OneOffFormAction.Delete) },
                         colors = ButtonDefaults.textButtonColors(
