@@ -361,6 +361,16 @@
     <string name="people_shared_empty_title">Il tuo calendario è solo tuo</string>
     <string name="people_filter_shared_by_me">Condivisi da me</string>
     <string name="people_filter_shared_with_me">Condivisi con me</string>
+    <string name="people_filter_hidden">Nascosti · %1$d</string>
+    <string name="people_hide">Nascondi calendario</string>
+    <string name="people_unhide">Mostra calendario</string>
+    <string name="people_hidden_message">Calendario nascosto</string>
+    <string name="people_unhidden_message">Calendario di nuovo visibile</string>
+    <string name="people_undo">Annulla</string>
+    <string name="people_hide_error">Impossibile nascondere il calendario</string>
+    <string name="people_unhide_error">Impossibile mostrare il calendario</string>
+    <string name="people_all_hidden_title">Hai nascosto tutti i calendari</string>
+    <string name="people_all_hidden_body">Li trovi in Nascosti.</string>
     <string name="groups_title">Gruppi</string>
     <string name="groups_empty_title">Nessun gruppo da queste parti</string>
     <string name="groups_empty_body">Creane uno, e fai uscire i tuoi turni da una chat di WhatsApp.</string>

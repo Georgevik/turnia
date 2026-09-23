@@ -361,6 +361,16 @@
     <string name="people_shared_empty_title">Your calendar is yours alone</string>
     <string name="people_filter_shared_by_me">Shared by me</string>
     <string name="people_filter_shared_with_me">Shared with me</string>
+    <string name="people_filter_hidden">Hidden · %1$d</string>
+    <string name="people_hide">Hide calendar</string>
+    <string name="people_unhide">Show calendar</string>
+    <string name="people_hidden_message">Calendar hidden</string>
+    <string name="people_unhidden_message">Calendar shown again</string>
+    <string name="people_undo">Undo</string>
+    <string name="people_hide_error">Couldn't hide the calendar</string>
+    <string name="people_unhide_error">Couldn't show the calendar</string>
+    <string name="people_all_hidden_title">You've hidden every calendar</string>
+    <string name="people_all_hidden_body">You'll find them under Hidden.</string>
     <string name="groups_title">Groups</string>
     <string name="groups_empty_title">No groups around here</string>
     <string name="groups_empty_body">Create one, and let your shifts stop living in a WhatsApp chat.</string>

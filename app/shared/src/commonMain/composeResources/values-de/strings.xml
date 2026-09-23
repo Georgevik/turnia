@@ -361,6 +361,16 @@
     <string name="people_shared_empty_title">Dein Kalender gehört nur dir</string>
     <string name="people_filter_shared_by_me">Von mir geteilt</string>
     <string name="people_filter_shared_with_me">Mit mir geteilt</string>
+    <string name="people_filter_hidden">Ausgeblendet · %1$d</string>
+    <string name="people_hide">Kalender ausblenden</string>
+    <string name="people_unhide">Kalender einblenden</string>
+    <string name="people_hidden_message">Kalender ausgeblendet</string>
+    <string name="people_unhidden_message">Kalender wieder sichtbar</string>
+    <string name="people_undo">Rückgängig</string>
+    <string name="people_hide_error">Kalender konnte nicht ausgeblendet werden</string>
+    <string name="people_unhide_error">Kalender konnte nicht eingeblendet werden</string>
+    <string name="people_all_hidden_title">Du hast alle Kalender ausgeblendet</string>
+    <string name="people_all_hidden_body">Du findest sie unter Ausgeblendet.</string>
     <string name="groups_title">Gruppen</string>
     <string name="groups_empty_title">Hier gibt es noch keine Gruppen</string>
     <string name="groups_empty_body">Erstelle eine, damit deine Dienste nicht mehr in einem WhatsApp-Chat leben.</string>

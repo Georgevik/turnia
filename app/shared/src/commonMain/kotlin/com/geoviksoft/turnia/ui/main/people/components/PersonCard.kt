@@ -19,13 +19,17 @@ import turnia.app.shared.generated.resources.share_calendar_unknown_user
 @Composable
 fun PersonCard(
     person: PersonRowUi,
+    modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
     trailing: @Composable (() -> Unit)? = null,
 ) {
     TListItem(
         title = person.displayName(),
+        modifier = modifier,
         subtitle = person.username.takeIf { it.isNotBlank() }?.let { "@$it" },
         onClick = onClick,
+        onLongClick = onLongClick,
         leading = { UserAvatar(avatar = person.avatar) },
         trailing = trailing,
     )

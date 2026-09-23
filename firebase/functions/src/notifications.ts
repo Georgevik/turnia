@@ -287,8 +287,13 @@ export const onCalendarShared = onDocumentWritten("users/{uid}", async (event) =
     return;
   }
 
+  const recipients = await notHiding(granted, event.params.uid);
+  if (recipients.length === 0) {
+    return;
+  }
+
   const owner = displayName(event.data?.after.get("name"), event.data?.after.get("username"));
-  await notify(granted, {
+  await notify(recipients, {
     title: "Turnia",
     body: {
       key: "push_calendar_shared",
@@ -299,3 +304,19 @@ export const onCalendarShared = onDocumentWritten("users/{uid}", async (event) =
     data: { ownerUid: event.params.uid },
   });
 });
+
+/**
+ * The grantees who have not hidden [ownerUid]'s calendar. A grant revoked and made again is the
+ * spam that hiding exists to stop, so a hidden calendar stays silent when it is shared once more.
+ */
+async function notHiding(granteeUids: string[], ownerUid: string): Promise<string[]> {
+  const db = getFirestore();
+  const preferences = await db.getAll(
+    ...granteeUids.map((uid) => db.doc(`users/${uid}/private/preferences`))
+  );
+  return granteeUids.filter((_, index) => {
+    // Checked, not cast: the rules only promise a list, and a string's `includes` would match substrings.
+    const hidden: unknown = preferences[index].get("hiddenSharedCalendars");
+    return !(Array.isArray(hidden) && hidden.includes(ownerUid));
+  });
+}

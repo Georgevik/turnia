@@ -3,6 +3,7 @@ package com.geoviksoft.turnia.ui.system.components
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +27,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.onLongClick
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -51,13 +55,17 @@ fun TListItem(
             .fillMaxWidth()
             .clip(shape)
             .then(
-                if (onClick != null || onLongClick != null) {
-                    Modifier.combinedClickable(
-                        onClick = onClick ?: {},
+                when {
+                    onClick != null -> Modifier.combinedClickable(
+                        onClick = onClick,
                         onLongClick = onLongClick,
                     )
-                } else {
-                    Modifier
+                    // A long press alone: no ripple on a tap and no "double-tap to activate" for
+                    // TalkBack, since a tap does nothing.
+                    onLongClick != null -> Modifier
+                        .pointerInput(onLongClick) { detectTapGestures(onLongPress = { onLongClick() }) }
+                        .semantics { onLongClick { onLongClick(); true } }
+                    else -> Modifier
                 }
             ),
     ) {

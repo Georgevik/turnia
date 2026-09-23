@@ -13,6 +13,7 @@ sealed interface PeopleUi {
         val filter: PeopleFilter,
         val sharedByMe: List<PersonRowUi> = emptyList(),
         val sharedWithMe: List<PersonRowUi> = emptyList(),
+        val hidden: List<PersonRowUi> = emptyList(),
         val search: SearchUi = SearchUi(),
         val userMessage: PeopleMessage? = null,
     ) : PeopleUi
@@ -38,4 +39,15 @@ data class SearchResultUi(
     val avatar: UserProfile.AnimalAvatar = UserProfile.AnimalAvatar.NONE,
 )
 
-enum class PeopleMessage { SharedWithMeLoadFailed, SharedByMeLoadFailed, GrantFailed, RevokeFailed }
+sealed interface PeopleMessage {
+    data object SharedWithMeLoadFailed : PeopleMessage
+    data object SharedByMeLoadFailed : PeopleMessage
+    data object GrantFailed : PeopleMessage
+    data object RevokeFailed : PeopleMessage
+    data object HideFailed : PeopleMessage
+    data object UnhideFailed : PeopleMessage
+
+    /** Offers to undo, which is why it names whose calendar it was. */
+    data class Hidden(val userId: UserId) : PeopleMessage
+    data class Unhidden(val userId: UserId) : PeopleMessage
+}

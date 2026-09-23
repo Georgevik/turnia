@@ -36,7 +36,7 @@ The Release workflow runs the same thing in the `android-e2e` job, and a red run
 | `alice` | Admin of **Urgencias** (manual approval, code `URG001`); personal type `Curso` and one event on it |
 | `bruno` | Member of Urgencias, admin of **Planta** (auto-approve, code `PLA001`); shares his calendar with alice |
 | `carla` | Member of Urgencias, holds `e5` |
-| `dana` | In no group |
+| `dana` | In no group; shares her calendar with alice |
 | `irene` | A pending join request to Urgencias |
 | `nameless` | A profile with a blank name |
 
@@ -44,6 +44,13 @@ Urgencias' shifts: `e1` alice's, offered; `e2` alice's, taken by bruno; `e3` ali
 and offered again; `e4` alice's, not offered; `e5` carla's, of the non-swappable type `NC`.
 
 Every account's password is `Turnia-e2e-1`.
+
+## `hidden-calendar.json`
+
+Layered over `base` by `HiddenSharedCalendarFlowsTest`: alice's `private/preferences` already lists
+dana under `hiddenSharedCalendars`, as if she had hidden it on another device. `base` gives nobody
+a `private/preferences`, so this fixture is the only one that creates it — and with it the
+`preferences` marker.
 
 ## Placeholders
 
@@ -61,7 +68,9 @@ retention window:
 A fresh install fetches only what a sync marker says has moved, so a document with no marker never
 reaches the screen. The seeder (`Fixtures.kt`) writes `groups/{g}/sync/updates` and
 `users/{u}/sync/updates` for every group and user in the fixture, the way the real writers would —
-event months, pending join requests, group membership. A marker a fixture writes itself wins.
+event months, pending join requests, group membership. `preferences` is only derived for a user
+whose `private/preferences` exists: in production it is written with that document, and a user who
+has never picked a colour or hidden a calendar has neither. A marker a fixture writes itself wins.
 
 ## Changing the data model
 

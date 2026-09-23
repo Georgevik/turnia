@@ -90,6 +90,10 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
   **copied nowhere**: it is read from the profile wherever a person is shown, so changing it needs
   no fan-out and no Cloud Function.
 - A user can belong to **several groups** and can invite another user to view **their entire calendar** (crossing groups).
+- Whoever a calendar is shared with can **hide** it: it leaves "Shared with me" for a *Hidden* chip,
+  by swipe or long press, and comes back the same way. It is their view only — the owner's grant
+  stands and the owner is never told. The list lives in `users/{uid}/private/preferences.hiddenSharedCalendars`
+  and survives a revoke and a new grant, so a hidden owner who shares again sends no push.
 - A user can **leave** a group, and an **admin** can **remove** a member. Either way, if they still hold events
   there they become **revoked**: moved from `memberUids` to `revokedUids`, dropped from `members`, and left
   able to see only their own events and only the event types those events use. They can no longer create
@@ -432,7 +436,7 @@ Use the run configurations provided by the run widget in your IDE's toolbar. You
 
 ### E2E tests
 
-The 21 critical happy paths run on an Android emulator against the Firebase emulators, seeded from
+The 26 critical happy paths run on an Android emulator against the Firebase emulators, seeded from
 [`firebase/test/fixtures`](firebase/test/README.md) — see that README to run them. They live in
 `app/androidApp/src/androidTest/.../e2e`: `flows/` holds the tests, `robots/` drives the screens,
 `infra/` seeds the emulators and points the app at them (`TurniaTestApplication`).

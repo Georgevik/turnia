@@ -26,7 +26,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class PeopleViewModel(private val userRepository: UserRepository) : ViewModel() {
 
-    private val filter = MutableStateFlow(PeopleFilter.SHARED_WITH_ME)
+    private val filterSelected = MutableStateFlow(PeopleFilter.SHARED_WITH_ME)
 
     private val sharedByMe = MutableStateFlow<List<PersonRowUi>?>(null)
 
@@ -34,27 +34,35 @@ class PeopleViewModel(private val userRepository: UserRepository) : ViewModel() 
     private val searchQuery = MutableStateFlow("")
     private val userMessage = MutableStateFlow<PeopleMessage?>(null)
 
-    private val sharedWithMe = userRepository.getCalendarsSharedWithMe()
-        .onEach { outcome ->
-            outcome.onFailure { userMessage.value = PeopleMessage.SharedWithMeLoadFailed }
-        }
-        .map { outcome -> outcome.valueOrEmpty().map(::toRow) }
+    /** Hiding filters the one query rather than narrowing it: a `not-in` would re-bill it on every change. */
+    private val sharedWithMe = combine(
+        userRepository.getCalendarsSharedWithMe()
+            .onEach { outcome ->
+                outcome.onFailure { userMessage.value = PeopleMessage.SharedWithMeLoadFailed }
+            }
+            .map { outcome -> outcome.valueOrEmpty() },
+        userRepository.getHiddenSharedCalendars(),
+    ) { profiles, hiddenUserIds ->
+        val (hidden, visible) = profiles.partition { it.id in hiddenUserIds }
+        SharedWithMe(visible = visible.map(::toRow), hidden = hidden.map(::toRow))
+    }
 
     val uiState: StateFlow<PeopleUi> =
         combine(
-            filter,
+            filterSelected,
             sharedByMe,
             sharedWithMe,
             search,
             userMessage,
-        ) { filter, byMe, withMe, search, message ->
+        ) { selected, byMe, withMe, search, message ->
             if (byMe == null) {
                 PeopleUi.Loading
             } else {
                 PeopleUi.Success(
-                    filter = filter,
+                    filter = shownFilter(selected, withMe),
                     sharedByMe = byMe,
-                    sharedWithMe = withMe,
+                    sharedWithMe = withMe.visible,
+                    hidden = withMe.hidden,
                     search = search,
                     userMessage = message,
                 )
@@ -73,7 +81,7 @@ class PeopleViewModel(private val userRepository: UserRepository) : ViewModel() 
     }
 
     fun filterSelected(selected: PeopleFilter) {
-        filter.value = selected
+        filterSelected.value = selected
     }
 
     fun refresh() {
@@ -123,9 +131,48 @@ class PeopleViewModel(private val userRepository: UserRepository) : ViewModel() 
         }
     }
 
-    fun userMessageShown() {
-        userMessage.value = null
+    fun onHide(userId: UserId) {
+        filterSelected.value = PeopleFilter.SHARED_WITH_ME
+        userMessage.value = PeopleMessage.Hidden(userId)
+
+        viewModelScope.launch {
+            userRepository.hideSharedCalendar(userId)
+                .onFailure { userMessage.value = PeopleMessage.HideFailed }
+        }
     }
+
+    fun onUnhide(userId: UserId) {
+        val hidden = (uiState.value as? PeopleUi.Success)?.hidden.orEmpty()
+        if (hidden.singleOrNull()?.id == userId) filterSelected.value = PeopleFilter.SHARED_WITH_ME
+        userMessage.value = PeopleMessage.Unhidden(userId)
+
+        viewModelScope.launch {
+            userRepository.unhideSharedCalendar(userId)
+                .onFailure { userMessage.value = PeopleMessage.UnhideFailed }
+        }
+    }
+
+    fun userMessageShown(shown: PeopleMessage, undo: Boolean = false) {
+        userMessage.compareAndSet(shown, null)
+        if (!undo) return
+
+        viewModelScope.launch {
+            when (shown) {
+                is PeopleMessage.Hidden -> userRepository.unhideSharedCalendar(shown.userId)
+                    .onFailure { userMessage.value = PeopleMessage.UnhideFailed }
+
+                is PeopleMessage.Unhidden -> userRepository.hideSharedCalendar(shown.userId)
+                    .onFailure { userMessage.value = PeopleMessage.HideFailed }
+
+                else -> Unit
+            }
+        }
+    }
+
+    /** The hidden chip is not drawn without rows, so neither can it be the one on screen. */
+    private fun shownFilter(selected: PeopleFilter, withMe: SharedWithMe): PeopleFilter =
+        if (selected == PeopleFilter.HIDDEN && withMe.hidden.isEmpty()) PeopleFilter.SHARED_WITH_ME
+        else selected
 
     private suspend fun runSearch(query: String) {
         val prefix = query.trim()
@@ -174,6 +221,8 @@ class PeopleViewModel(private val userRepository: UserRepository) : ViewModel() 
         username = user.username,
         avatar = user.avatar,
     )
+
+    private data class SharedWithMe(val visible: List<PersonRowUi>, val hidden: List<PersonRowUi>)
 
     private companion object {
         const val SUBSCRIPTION_TIMEOUT = 5_000L

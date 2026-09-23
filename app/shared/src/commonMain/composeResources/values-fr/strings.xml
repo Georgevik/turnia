@@ -361,6 +361,16 @@
     <string name="people_shared_empty_title">Ton calendrier n'appartient qu'à toi</string>
     <string name="people_filter_shared_by_me">Partagés par moi</string>
     <string name="people_filter_shared_with_me">Partagés avec moi</string>
+    <string name="people_filter_hidden">Masqués · %1$d</string>
+    <string name="people_hide">Masquer le calendrier</string>
+    <string name="people_unhide">Afficher le calendrier</string>
+    <string name="people_hidden_message">Calendrier masqué</string>
+    <string name="people_unhidden_message">Calendrier de nouveau visible</string>
+    <string name="people_undo">Annuler</string>
+    <string name="people_hide_error">Impossible de masquer le calendrier</string>
+    <string name="people_unhide_error">Impossible d'afficher le calendrier</string>
+    <string name="people_all_hidden_title">Tu as masqué tous les calendriers</string>
+    <string name="people_all_hidden_body">Tu les trouveras dans Masqués.</string>
     <string name="groups_title">Groupes</string>
     <string name="groups_empty_title">Aucun groupe par ici</string>
     <string name="groups_empty_body">Crées-en un, et que tes gardes arrêtent de vivre dans un chat WhatsApp.</string>
