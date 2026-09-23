@@ -18,11 +18,14 @@ import kotlinx.serialization.Serializable
 data class UserPreferencesDocument(
     /** Colour per group event type, keyed `"{groupId}_{typeId}"`: the type carries the default. */
     @SerialName(FIELD_TYPE_COLORS) val groupEventTypeColors: Map<String, String> = emptyMap(),
+    /** Uids whose shared calendar this user has hidden. Their grant stands; only this user stops seeing it. */
+    @SerialName(FIELD_HIDDEN_SHARED_CALENDARS) val hiddenSharedCalendars: List<String> = emptyList(),
     // Nullable: a write reads back with the server timestamp unresolved until it is acknowledged.
     @SerialName(FIELD_UPDATE_AT) val updateAt: BaseTimestamp? = Timestamp.ServerTimestamp,
 ) {
     companion object {
         const val FIELD_TYPE_COLORS = "groupEventTypeColors"
+        const val FIELD_HIDDEN_SHARED_CALENDARS = "hiddenSharedCalendars"
         const val FIELD_UPDATE_AT = "updateAt"
 
         fun typeColorKey(groupId: String, typeId: String) = "${groupId}_${typeId}"

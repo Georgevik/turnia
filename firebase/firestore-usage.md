@@ -29,6 +29,8 @@ of its last listen pays nothing.
 | Open a group calendar | 0 | 0 | — |
 | Open group info (admin) | 4–5 | **0** | Requests and types follow the sync listener. |
 | People tab, first time per 30 min | 2 | **1** | `calendarsSharedWithMe` listener attach (empty result = 1). |
+| Hide or show a shared calendar | — | 0 reads | 2 writes: `private/preferences` and its marker. The list is filtered on the device from the query already listened to; your other devices pay 1 preferences read. |
+| Somebody shares their calendar with you | — | — | Server: `onCalendarShared` reads each new grantee's `private/preferences` (1 read each) to stay silent for a calendar they hid. |
 | Groups / Swaps / Settings tabs | 0–1 | 0 | — |
 | Save a group, a type or a colour | 0 reads | 0 reads | 2 writes: the document and its marker. |
 | Open a day in my calendar | — | **0** | The day's one-off events arrive with the month, like its shifts: the sheet reads nothing of its own. |

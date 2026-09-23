@@ -1,0 +1,12 @@
+{
+  "_comment": "Layered over base: alice has already hidden dana's calendar.",
+  "firestore": {
+    "users/alice/private/preferences": {
+      "groupEventTypeColors": {},
+      "hiddenSharedCalendars": [
+        "dana"
+      ],
+      "updateAt": "$now"
+    }
+  }
+}

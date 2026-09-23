@@ -33,6 +33,12 @@ interface UserRepository : FcmDelegate {
 
     fun getCalendarsSharedWithMe(): Flow<Outcome<List<UserProfile>, Unit>>
 
+    fun getHiddenSharedCalendars(): Flow<Set<UserId>>
+
+    suspend fun hideSharedCalendar(userId: UserId): Outcome<Unit, Unit>
+
+    suspend fun unhideSharedCalendar(userId: UserId): Outcome<Unit, Unit>
+
     suspend fun updateProfile(name: String, username: String): Outcome<Unit, UsernameError>
 
     suspend fun updateAvatar(animalIconId: String?, backgroundColor: String?): Outcome<Unit, Unit>

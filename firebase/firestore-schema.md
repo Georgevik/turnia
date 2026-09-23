@@ -136,7 +136,20 @@ What the user has chosen for themselves. Readable and writable **only by the own
 | Field | Type | Description |
 |-------|------|-------------|
 | `groupEventTypeColors` | map&lt;string,string&gt; | Color per group event type, keyed by `"{groupId}_{groupEventTypeId}"` → hex. |
+| `hiddenSharedCalendars` | string[] | UIDs whose shared calendar this user has hidden. At most 200, by rule. |
 | `updateAt` | timestamp | Server timestamp of the last write. What a reader compares the `preferences` marker against. |
+
+> **Hiding a shared calendar touches no grant.** `users/{owner}.calendarSharedWith` is the owner's,
+> and the owner is never told: the viewer only stops seeing that calendar in "Shared with me" and
+> finds it under a *Hidden* chip instead. The list is written one uid at a time with `arrayUnion` /
+> `arrayRemove`, so two devices never overwrite each other, and every write to this document is a
+> per-field merge for the same reason — encoding the whole document would reset whichever field the
+> write did not mean to touch. A uid stays hidden through a revoke and a new grant, and nothing prunes
+> it: that is what lets `onCalendarShared` skip the push when a hidden owner shares again.
+>
+> The "shared with me" query is not narrowed to leave the hidden ones out. A `not-in` holds 10 values
+> at most and would give the listener a new key on every hide, billing its whole result set again;
+> the client filters the same result instead, and the *Hidden* chip needs those profiles anyway.
 
 > It has **its own marker**, `preferences` on `users/{uid}/sync/updates`, written in the same commit
 > as the document. That is what lets every group screen read the colours from the cache instead of

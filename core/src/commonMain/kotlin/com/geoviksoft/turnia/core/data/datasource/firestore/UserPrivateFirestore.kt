@@ -68,24 +68,49 @@ class UserPrivateFirestore(
         outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
             Logger.i(TAG, "Update group event type colour")
             val key = UserPreferencesDocument.typeColorKey(groupId.value, typeId.value)
-
-            val batch = firestore.batch()
-            // `set(merge)` and not `updateFields`: the document does not exist until the first pick.
-            // Firestore merges map fields key by key, so the other types keep their colours.
-            batch.set(
-                document(DOCUMENT_PREFERENCES, uid),
-                UserPreferencesDocument(groupEventTypeColors = mapOf(key to color)),
-                merge = true,
+            patchPreferences(
+                uid,
+                "updateTypeColor",
+                UserPreferencesDocument.FIELD_TYPE_COLORS to mapOf(key to color),
             )
-            val syncWrite = userSyncFirestore.writePreferences(batch, uid)
-            batch.commit()
-            trackWrite(TAG, "updateTypeColor")
-            syncWrite.committed()
         }
 
+    suspend fun hideSharedCalendar(uid: UserId, ownerUid: UserId): Outcome<Unit, UserProfileError> =
+        outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
+            Logger.i(TAG, "Hide a shared calendar")
+            patchPreferences(
+                uid,
+                "hideSharedCalendar",
+                UserPreferencesDocument.FIELD_HIDDEN_SHARED_CALENDARS to FieldValue.arrayUnion(ownerUid.value),
+            )
+        }
+
+    suspend fun unhideSharedCalendar(uid: UserId, ownerUid: UserId): Outcome<Unit, UserProfileError> =
+        outcomeCatching(TAG, { UserProfileError.LoadFailed(it) }) {
+            Logger.i(TAG, "Unhide a shared calendar")
+            patchPreferences(
+                uid,
+                "unhideSharedCalendar",
+                UserPreferencesDocument.FIELD_HIDDEN_SHARED_CALENDARS to FieldValue.arrayRemove(ownerUid.value),
+            )
+        }
+
+    private suspend fun patchPreferences(uid: UserId, operation: String, field: Pair<String, Any>) {
+        val batch = firestore.batch()
+        batch.set(
+            document(DOCUMENT_PREFERENCES, uid),
+            mapOf(field, UserPreferencesDocument.FIELD_UPDATE_AT to FieldValue.serverTimestamp),
+            merge = true,
+        )
+        val syncWrite = userSyncFirestore.writePreferences(batch, uid)
+        batch.commit()
+        trackWrite(TAG, operation)
+        syncWrite.committed()
+    }
+
     private fun preferenceUpdates(uid: UserId): Flow<UserPreferencesDocument> =
-        userSyncFirestore.observe(uid)
-            .map { sync -> currentPreferences(uid, sync.preferencesUpdatedAt) }
+        userSyncFirestore.observeWithPendingWrites(uid)
+            .map { sync -> currentPreferences(uid, sync.value.preferencesUpdatedAt) }
             .distinctUntilChanged()
             .catch { throwable ->
                 Logger.e(TAG, "Preferences updates failed", throwable)
@@ -106,7 +131,9 @@ class UserPrivateFirestore(
         // who never picked a colour paid a server read on every call.
         if (marker.toInstantOrNull() == null) return UserPreferencesDocument(updateAt = null)
 
-        return serverPreferences(uid)
+        return outcomeCatching(TAG, { it }) { serverPreferences(uid) }.valueOrNull()
+            ?: cached
+            ?: UserPreferencesDocument(updateAt = null)
     }
 
     private fun UserPreferencesDocument.isSettledAgainst(marker: BaseTimestamp?): Boolean {

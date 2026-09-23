@@ -31,6 +31,11 @@ service cloud.firestore {
       return isSignedIn() && (request.auth.uid == uid ||
         request.auth.uid in get(/databases/$(database)/documents/users/$(uid)).data.get('calendarSharedWith', []));
     }
+    // Capped because the whole preferences document is read whenever its marker moves.
+    function validHiddenSharedCalendars(data) {
+      return data.get('hiddenSharedCalendars', []) is list &&
+        data.get('hiddenSharedCalendars', []).size() <= 200;
+    }
     // The public profile: name, username and avatar, readable by any signed-in user — a searcher
     // has to render a result for someone who has never shared anything with them. `calendarSharedWith`
     // rides along because the rules read it to authorize the very access it grants and the sharing
@@ -58,7 +63,9 @@ service cloud.firestore {
       // seen the outcome, and the array holds nothing but ids to documents guarded by their own rule.
       match /private/{docId} {
         allow read: if isSignedIn() && request.auth.uid == uid;
-        allow write: if isSignedIn() && request.auth.uid == uid && docId != 'subscription';
+        allow write: if isSignedIn() && request.auth.uid == uid && docId != 'subscription' &&
+          (docId != 'preferences' || request.resource == null ||
+            validHiddenSharedCalendars(request.resource.data));
       }
       // Entitlement is server-verified: only the receipt-verification Cloud Function writes it.
       match /private/subscription {

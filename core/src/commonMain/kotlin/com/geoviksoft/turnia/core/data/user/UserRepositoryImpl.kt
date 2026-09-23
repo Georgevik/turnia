@@ -40,6 +40,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
@@ -75,6 +76,7 @@ class UserRepositoryImpl(
 
     override val loggedUserFlow: Flow<User> =
         _userSession.filterIsInstance(UserSession.Authenticated::class).map { it.user }
+            .distinctUntilChangedBy { it.id }
 
     override val loggedUser: User? get() = (_userSession.value as? UserSession.Authenticated)?.user
 
@@ -119,25 +121,45 @@ class UserRepositoryImpl(
 
                 UserProfileError.NotFound -> {
                     // A brand-new account has no subscription document: absent means free tier.
-                    provisioner.create(firebaseUser, pendingSignUpName.also { pendingSignUpName = null })
+                    provisioner.create(
+                        firebaseUser, pendingSignUpName.also { pendingSignUpName = null })
                         .valueOrNull()?.let { created ->
-                        emit(
-                            UserSession.Authenticated(
-                                userMapper.map(firebaseUser, created, subscription = null)
+                            emit(
+                                UserSession.Authenticated(
+                                    userMapper.map(firebaseUser, created, subscription = null)
+                                )
                             )
-                        )
-                    }
+                        }
                 }
             }
         }
     }
 
     override fun getCalendarsSharedWithMe(): Flow<Outcome<List<UserProfile>, Unit>> =
-        loggedUserFlow
-            .flatMapLatest { user -> remoteProfiles.fetchCalendarsSharedWithMe(user.id) }
+        loggedUserFlow.flatMapLatest { user -> remoteProfiles.fetchCalendarsSharedWithMe(user.id) }
             .map { outcome ->
                 outcome.mapError { Logger.e(TAG, "Failed load shared calendars: $it") }
             }
+
+    override fun getHiddenSharedCalendars(): Flow<Set<UserId>> =
+        loggedUserFlow.flatMapLatest { user -> remotePrivate.observePreferences(user.id) }
+            .map { pref ->
+                pref.hiddenSharedCalendars.mapTo(mutableSetOf()) { userId -> UserId(userId) }
+            }.distinctUntilChanged()
+
+    override suspend fun hideSharedCalendar(userId: UserId): Outcome<Unit, Unit> {
+        val uid = loggedUser?.id ?: return Unit.toFailure()
+
+        return remotePrivate.hideSharedCalendar(uid, userId)
+            .mapError { error -> Logger.e(TAG, "Failed to hide a shared calendar: $error") }
+    }
+
+    override suspend fun unhideSharedCalendar(userId: UserId): Outcome<Unit, Unit> {
+        val uid = loggedUser?.id ?: return Unit.toFailure()
+
+        return remotePrivate.unhideSharedCalendar(uid, userId)
+            .mapError { error -> Logger.e(TAG, "Failed to unhide a shared calendar: $error") }
+    }
 
     override suspend fun updateProfile(
         name: String,
@@ -242,10 +264,11 @@ class UserRepositoryImpl(
 
     // Success returns nothing: `authStateChanged` picks the new user up and builds the session,
     // exactly as it does after Google or Apple.
-    override suspend fun signInWithEmail(email: String, password: String): Outcome<Unit, EmailAuthError> =
-        outcomeCatching(TAG, ::toEmailAuthError) {
-            auth.signInWithEmailAndPassword(email.trim(), password)
-        }
+    override suspend fun signInWithEmail(
+        email: String, password: String
+    ): Outcome<Unit, EmailAuthError> = outcomeCatching(TAG, ::toEmailAuthError) {
+        auth.signInWithEmailAndPassword(email.trim(), password)
+    }
 
     override suspend fun createAccountWithEmail(
         name: String,
@@ -269,7 +292,7 @@ class UserRepositoryImpl(
         error is FirebaseAuthUserCollisionException -> EmailAuthError.EmailInUse
         error is FirebaseAuthWeakPasswordException -> EmailAuthError.WeakPassword
         // The console's password policy is refused with a plain auth exception, told apart only by its code.
-        error.message.orEmpty().contains("PASSWORD_DOES_NOT_MEET_REQUIREMENTS") -> EmailAuthError.WeakPassword
+        error.message.orEmpty().contains(PASS_NOT_REQUIREMENTS) -> EmailAuthError.WeakPassword
         error is FirebaseAuthInvalidUserException -> EmailAuthError.InvalidCredentials
         // Also what a malformed address throws; the form checks the shape first, so here it is
         // almost always a wrong password.
@@ -294,5 +317,6 @@ class UserRepositoryImpl(
 
     companion object {
         private const val TAG = "UserRepositoryImpl"
+        private const val PASS_NOT_REQUIREMENTS = "PASSWORD_DOES_NOT_MEET_REQUIREMENTS"
     }
 }

@@ -59,6 +59,7 @@ internal class DemoUserRepository : UserRepository {
 
     private val session = MutableStateFlow<UserSession>(UserSession.Authenticated(DemoPeople.me))
     private val sharedByMe = MutableStateFlow(listOf(DemoPeople.elena.profile, DemoPeople.javier.profile))
+    private val hiddenSharedCalendars = MutableStateFlow(emptySet<UserId>())
     private val notifications = MutableStateFlow(true)
 
     override val loggedUser: User get() = DemoPeople.me
@@ -86,6 +87,18 @@ internal class DemoUserRepository : UserRepository {
 
     override fun getCalendarsSharedWithMe(): Flow<Outcome<List<UserProfile>, Unit>> =
         flowOf(listOf(DemoPeople.javier.profile, DemoPeople.marta.profile).toSuccess())
+
+    override fun getHiddenSharedCalendars(): Flow<Set<UserId>> = hiddenSharedCalendars
+
+    override suspend fun hideSharedCalendar(userId: UserId): Outcome<Unit, Unit> {
+        hiddenSharedCalendars.update { it + userId }
+        return Unit.toSuccess()
+    }
+
+    override suspend fun unhideSharedCalendar(userId: UserId): Outcome<Unit, Unit> {
+        hiddenSharedCalendars.update { it - userId }
+        return Unit.toSuccess()
+    }
 
     override suspend fun updateProfile(name: String, username: String): Outcome<Unit, UsernameError> =
         Unit.toSuccess()

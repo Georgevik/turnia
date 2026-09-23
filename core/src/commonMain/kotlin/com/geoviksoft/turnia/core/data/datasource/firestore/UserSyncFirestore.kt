@@ -43,6 +43,8 @@ class UserSyncFirestore(
     fun observe(uid: UserId): Flow<UserSyncDocument> =
         synced(uid).map { it.value }.distinctUntilChanged()
 
+    fun observeWithPendingWrites(uid: UserId): Flow<Synced<UserSyncDocument>> = synced(uid)
+
     /** The document as the server last confirmed it, served by the listener rather than a read. */
     suspend fun get(uid: UserId): Outcome<UserSyncDocument, GenericFirestoreError> =
         outcomeCatching(TAG, { GenericFirestoreError(it) }) { synced(uid).awaitConfirmed() }
