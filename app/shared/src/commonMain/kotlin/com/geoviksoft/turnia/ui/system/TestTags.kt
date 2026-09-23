@@ -2,6 +2,7 @@ package com.geoviksoft.turnia.ui.system
 
 import com.geoviksoft.turnia.core.domain.model.EventId
 import com.geoviksoft.turnia.core.domain.model.EventTypeId
+import com.geoviksoft.turnia.core.domain.model.UserId
 import kotlinx.datetime.LocalDate
 
 /**
@@ -14,6 +15,7 @@ object TestTags {
     fun dayEvent(id: EventId) = "event_${id.value}"
     fun swapEvent(id: EventId) = "swap_event_${id.value}"
     fun eventTypeChip(id: EventTypeId) = "event_type_${id.value}"
+    fun personRow(id: UserId) = "person_row_${id.value}"
 
     const val SWAP_TOGGLE = "swap_toggle"
     const val GROUPS_FAB = "groups_fab"

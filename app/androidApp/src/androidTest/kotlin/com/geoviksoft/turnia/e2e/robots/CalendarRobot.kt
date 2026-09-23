@@ -11,7 +11,6 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeTestRule
-import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performTextInput
 import com.geoviksoft.turnia.core.domain.model.EventId
 import com.geoviksoft.turnia.core.domain.model.EventTypeId
@@ -52,12 +51,16 @@ internal class CalendarRobot(compose: ComposeTestRule, today: LocalDate) : AppRo
         val target = date.yearMonth
         require(target >= shown) { "The robot only pages forward, from $shown to $target" }
         while (shown < target) {
-            compose.onAllNodes(hasContentDescription("Next month") and hasClickAction()).onFirst().scrollAndClick()
+            // Awaited: a test that pages first thing would otherwise tap while the splash is still up.
+            compose.awaitNode(hasContentDescription("Next month") and hasClickAction())
+                .scrollAndClick()
             shown = shown.plusMonth()
         }
         // The pager keeps the neighbouring months composed; only the shown one is on screen.
         compose.waitUntil(UI_TIMEOUT_MS) {
-            runCatching { compose.onNode(hasTestTag(TestTags.day(target.firstDay))).assertIsDisplayed() }.isSuccess
+            runCatching {
+                compose.onNode(hasTestTag(TestTags.day(target.firstDay))).assertIsDisplayed()
+            }.isSuccess
         }
     }
 
@@ -71,7 +74,8 @@ internal class CalendarRobot(compose: ComposeTestRule, today: LocalDate) : AppRo
     /** A type created during the test, whose id only its acronym on the chip gives away. */
     fun addEventOfTypeLabelled(acronym: String) {
         clickDescription("Add event")
-        compose.awaitNode(hasTestTagPrefix(EVENT_TYPE_CHIP_PREFIX) and hasText(acronym)).scrollAndClick()
+        compose.awaitNode(hasTestTagPrefix(EVENT_TYPE_CHIP_PREFIX) and hasText(acronym))
+            .scrollAndClick()
     }
 
     fun awaitEvent(eventId: String) {
@@ -87,7 +91,8 @@ internal class CalendarRobot(compose: ComposeTestRule, today: LocalDate) : AppRo
     }
 
     fun clickInEvent(eventId: String, text: String) {
-        compose.awaitNode(hasText(text) and hasClickAction() and hasAnyAncestor(row(eventId))).scrollAndClick()
+        compose.awaitNode(hasText(text) and hasClickAction() and hasAnyAncestor(row(eventId)))
+            .scrollAndClick()
     }
 
     fun clickDescriptionInEvent(eventId: String, description: String) {
@@ -97,7 +102,8 @@ internal class CalendarRobot(compose: ComposeTestRule, today: LocalDate) : AppRo
     }
 
     fun toggleSwap(eventId: String) {
-        compose.awaitNode(hasTestTag(TestTags.SWAP_TOGGLE) and hasAnyAncestor(row(eventId))).scrollAndClick()
+        compose.awaitNode(hasTestTag(TestTags.SWAP_TOGGLE) and hasAnyAncestor(row(eventId)))
+            .scrollAndClick()
     }
 
     fun writeNote(eventId: String, note: String) {
@@ -108,9 +114,10 @@ internal class CalendarRobot(compose: ComposeTestRule, today: LocalDate) : AppRo
 
     private fun row(eventId: String) = hasTestTag(TestTags.dayEvent(EventId(eventId)))
 
-    private fun hasTestTagPrefix(prefix: String) = SemanticsMatcher("TestTag starts with $prefix") { node ->
-        node.config.getOrNull(SemanticsProperties.TestTag)?.startsWith(prefix) == true
-    }
+    private fun hasTestTagPrefix(prefix: String) =
+        SemanticsMatcher("TestTag starts with $prefix") { node ->
+            node.config.getOrNull(SemanticsProperties.TestTag)?.startsWith(prefix) == true
+        }
 
     private companion object {
         val EVENT_TYPE_CHIP_PREFIX = TestTags.eventTypeChip(EventTypeId(""))

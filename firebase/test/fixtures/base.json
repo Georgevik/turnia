@@ -51,10 +51,6 @@
       "notificationsEnabled": true,
       "updateAt": "$now"
     },
-    "users/alice/private/preferences": {
-      "groupEventTypeColors": {},
-      "updateAt": "$now"
-    },
     "users/bruno": {
       "name": "Bruno Bravo",
       "username": "bruno",
@@ -75,10 +71,6 @@
       "notificationsEnabled": true,
       "updateAt": "$now"
     },
-    "users/bruno/private/preferences": {
-      "groupEventTypeColors": {},
-      "updateAt": "$now"
-    },
     "users/carla": {
       "name": "Carla Cruz",
       "username": "carla",
@@ -97,14 +89,12 @@
       "notificationsEnabled": true,
       "updateAt": "$now"
     },
-    "users/carla/private/preferences": {
-      "groupEventTypeColors": {},
-      "updateAt": "$now"
-    },
     "users/dana": {
       "name": "Dana Doe",
       "username": "dana",
-      "calendarSharedWith": [],
+      "calendarSharedWith": [
+        "alice"
+      ],
       "showAds": false,
       "updateAt": "$now"
     },
@@ -117,10 +107,6 @@
       "email": "dana@e2e.turnia.club",
       "fcmTokens": [],
       "notificationsEnabled": true,
-      "updateAt": "$now"
-    },
-    "users/dana/private/preferences": {
-      "groupEventTypeColors": {},
       "updateAt": "$now"
     },
     "users/irene": {
@@ -141,10 +127,6 @@
       "notificationsEnabled": true,
       "updateAt": "$now"
     },
-    "users/irene/private/preferences": {
-      "groupEventTypeColors": {},
-      "updateAt": "$now"
-    },
     "users/nameless": {
       "name": "",
       "username": "nameless1",
@@ -161,10 +143,6 @@
       "email": "nameless@e2e.turnia.club",
       "fcmTokens": [],
       "notificationsEnabled": true,
-      "updateAt": "$now"
-    },
-    "users/nameless/private/preferences": {
-      "groupEventTypeColors": {},
       "updateAt": "$now"
     },
     "groups/urgencias": {

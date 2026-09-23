@@ -75,9 +75,17 @@ internal object Fixtures {
 
     private fun resolve(element: JsonElement, today: LocalDate, now: Instant): JsonElement =
         when (element) {
-            is JsonObject -> JsonObject(element.mapValues { (_, value) -> resolve(value, today, now) })
+            is JsonObject -> JsonObject(element.mapValues { (_, value) ->
+                resolve(
+                    value,
+                    today,
+                    now
+                )
+            })
+
             is JsonArray -> JsonArray(element.map { resolve(it, today, now) })
-            is JsonPrimitive -> if (element.isString) placeholder(element.content, today, now) ?: element else element
+            is JsonPrimitive -> if (element.isString) placeholder(element.content, today, now)
+                ?: element else element
         }
 
     private fun placeholder(value: String, today: LocalDate, now: Instant): JsonElement? {
@@ -99,19 +107,25 @@ internal object Fixtures {
         val marker = timestamp(now)
         val markers = linkedMapOf<String, JsonObject>()
 
-        documents.keys.mapNotNull { GROUP.matchEntire(it)?.groupValues?.get(1) }.forEach { groupId ->
-            val months = monthsOf(documents, "groups/$groupId/events/")
-            val pending = documents
-                .filterKeys { it.startsWith("groups/$groupId/joinRequests/") }
-                .filterValues { it.stringOrNull("status") == "pending" }
-                .map { (path, request) -> path.substringAfterLast('/') to (request["requestedAt"] ?: marker) }
+        documents.keys.mapNotNull { GROUP.matchEntire(it)?.groupValues?.get(1) }
+            .forEach { groupId ->
+                val months = monthsOf(documents, "groups/$groupId/events/")
+                val pending = documents
+                    .filterKeys { it.startsWith("groups/$groupId/joinRequests/") }
+                    .filterValues { it.stringOrNull("status") == "pending" }
+                    .map { (path, request) ->
+                        path.substringAfterLast('/') to (request["requestedAt"] ?: marker)
+                    }
 
-            markers["groups/$groupId/sync/updates"] = buildJsonObject {
-                put("group", marker)
-                put("events", JsonObject(months.associate { it.toString() to updatedAt(marker) }))
-                put("joinRequests", JsonObject(pending.toMap()))
+                markers["groups/$groupId/sync/updates"] = buildJsonObject {
+                    put("group", marker)
+                    put(
+                        "events",
+                        JsonObject(months.associate { it.toString() to updatedAt(marker) })
+                    )
+                    put("joinRequests", JsonObject(pending.toMap()))
+                }
             }
-        }
 
         documents.keys.mapNotNull { USER.matchEntire(it)?.groupValues?.get(1) }.forEach { uid ->
             val months = monthsOf(documents, "users/$uid/personalEvents/")
@@ -121,11 +135,19 @@ internal object Fixtures {
                 .keys.map { it.substringAfter('/') }
 
             markers["users/$uid/sync/updates"] = buildJsonObject {
-                put("personalEvents", JsonObject(months.associate { it.toString() to updatedAt(marker) }))
+                put(
+                    "personalEvents",
+                    JsonObject(months.associate { it.toString() to updatedAt(marker) })
+                )
                 listOf(
                     "personalEventTypesUpdatedAt", "revokedGroups", "account", "profile",
-                    "joinRequests", "preferences",
+                    "joinRequests",
                 ).forEach { put(it, marker) }
+
+                if ("users/$uid/private/preferences" in documents) {
+                    put("preferences", marker)
+                }
+
                 put("groups", JsonObject(groups.associateWith { marker }))
                 put("groupsIndexed", true)
             }
@@ -143,10 +165,13 @@ internal object Fixtures {
 
     private fun updatedAt(marker: JsonElement) = buildJsonObject { put("updatedAt", marker) }
 
-    fun timestamp(instant: Instant): JsonObject = buildJsonObject { put(FirestoreRest.TIMESTAMP, instant.toString()) }
+    fun timestamp(instant: Instant): JsonObject =
+        buildJsonObject { put(FirestoreRest.TIMESTAMP, instant.toString()) }
 
     private fun JsonObject.string(key: String): String = getValue(key).jsonPrimitive.content
-    private fun JsonObject.stringOrNull(key: String): String? = get(key)?.jsonPrimitive?.contentOrNull
+    private fun JsonObject.stringOrNull(key: String): String? =
+        get(key)?.jsonPrimitive?.contentOrNull
+
     private fun JsonObject.strings(key: String): List<String> =
         get(key)?.jsonArray.orEmpty().map { it.jsonPrimitive.content }
 
