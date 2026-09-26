@@ -47,6 +47,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.YearMonth
+import kotlinx.datetime.minusMonth
+import kotlinx.datetime.plusMonth
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 
@@ -375,14 +378,20 @@ internal class DemoPersonalEventRepository(world: DemoWorld) : PersonalEventRepo
 /** A colleague's calendar is their shifts, whichever group they are in; they keep no personal ones here. */
 internal class DemoSharedCalendarRepository(private val world: DemoWorld) : SharedCalendarRepository {
 
-    override suspend fun getSharedCalendar(
+    override fun sharedCalendar(
         ownerId: UserId,
-        from: LocalDate,
-        to: LocalDate,
-    ): Outcome<SharedCalendar, SharedCalendarError> = SharedCalendar(
-        groupEvents = world.groupEvents.filter { it.assigneeId == ownerId && it.date in from..to },
-        personalEvents = emptyList(),
-    ).toSuccess()
+        month: YearMonth,
+    ): Flow<Outcome<SharedCalendar, SharedCalendarError>> {
+        val from = month.minusMonth().firstDay
+        val to = month.plusMonth().lastDay
+        return flowOf(
+            SharedCalendar(
+                groupEvents = world.groupEvents.filter { it.assigneeId == ownerId && it.date in from..to },
+                personalEvents = emptyList(),
+            ).toSuccess()
+        )
+    }
+
 }
 
 internal object DemoAnalytics : Analytics {

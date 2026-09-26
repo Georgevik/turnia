@@ -14,6 +14,8 @@ data class UserSyncDocument(
     @SerialName("personalEvents") val personalEventsUpdatedAt: Map<YearMonth, EventSyncUpdateAt> = emptyMap(),
     @SerialName("personalOneOffEvents") val personalOneOffEventsUpdatedAt: Map<YearMonth, EventSyncUpdateAt> = emptyMap(),
     @SerialName("personalEventTypesUpdatedAt") val personalEventTypesUpdatedAt: BaseTimestamp? = null,
+    /** Per month, the last change to a shift this user holds or just stopped holding. Server-only. */
+    @SerialName("groupEvents") val groupEventsUpdatedAt: Map<YearMonth, EventSyncUpdateAt> = emptyMap(),
     @SerialName("revokedGroups") val revokedGroupsUpdatedAt: BaseTimestamp? = null,
     @SerialName(FIELD_ACCOUNT) val accountUpdatedAt: BaseTimestamp? = null,
     /** Last write to the user's own `users/{uid}`, from any device or from `updateProfile`. */

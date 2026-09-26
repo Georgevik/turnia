@@ -8,7 +8,7 @@ import platform.Foundation.NSURL
 import platform.Foundation.NSUserDomainMask
 
 @OptIn(ExperimentalForeignApi::class)
-internal actual fun Scope.preferencesFilePath(): String {
+internal actual fun Scope.preferencesFilePath(fileName: String): String {
     val documents: NSURL? = NSFileManager.defaultManager.URLForDirectory(
         directory = NSDocumentDirectory,
         inDomain = NSUserDomainMask,
@@ -16,5 +16,5 @@ internal actual fun Scope.preferencesFilePath(): String {
         create = false,
         error = null,
     )
-    return requireNotNull(documents?.path) + "/" + PREFERENCES_FILE
+    return requireNotNull(documents?.path) + "/" + fileName
 }

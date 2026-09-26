@@ -68,7 +68,9 @@ retention window:
 A fresh install fetches only what a sync marker says has moved, so a document with no marker never
 reaches the screen. The seeder (`Fixtures.kt`) writes `groups/{g}/sync/updates` and
 `users/{u}/sync/updates` for every group and user in the fixture, the way the real writers would —
-event months, pending join requests, group membership. `preferences` is only derived for a user
+event months, pending join requests, group membership, and each user's `groupEvents` for the months of
+the shifts they hold. The Functions emulator's trigger stamps `groupEvents` again a moment after the
+seed; a test that counts calls waits for it to settle first. `preferences` is only derived for a user
 whose `private/preferences` exists: in production it is written with that document, and a user who
 has never picked a colour or hidden a calendar has neither. A marker a fixture writes itself wins.
 

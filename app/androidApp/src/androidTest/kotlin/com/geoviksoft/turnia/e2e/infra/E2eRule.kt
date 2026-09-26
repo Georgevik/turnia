@@ -6,6 +6,7 @@ import android.os.Build
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.printToString
+import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.geoviksoft.turnia.MainActivity
@@ -49,6 +50,10 @@ class E2eRule(
     lateinit var today: LocalDate
         private set
 
+    /** The instant the fixture's `$now` was resolved to: every seeded marker carries it. */
+    lateinit var seededAt: Instant
+        private set
+
     private lateinit var scenario: ActivityScenario<MainActivity>
     private var user: String? = null
 
@@ -80,6 +85,7 @@ class E2eRule(
         today = Clock.System.todayIn(TimeZone.currentSystemDefault())
         // Firestore keeps microseconds at most; a whole millisecond compares the same on both sides.
         val now = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds())
+        seededAt = now
         val fixture = Fixtures.load(fixtures, today, now)
 
         FirestoreRest.wipe()
@@ -110,6 +116,15 @@ class E2eRule(
             instrumentation.targetContext.packageName,
             Manifest.permission.POST_NOTIFICATIONS,
         )
+    }
+
+    /** Home pressed: the activity stops, as it does when the user switches app. */
+    fun moveToBackground() {
+        scenario.moveToState(Lifecycle.State.CREATED)
+    }
+
+    fun moveToForeground() {
+        scenario.moveToState(Lifecycle.State.RESUMED)
     }
 
     /** The day [days] from the one the fixture was seeded on, as `$date(+N)` names it. */

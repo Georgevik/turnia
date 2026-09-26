@@ -28,8 +28,12 @@ import com.geoviksoft.turnia.core.data.group.mappers.GroupErrorMapper
 import com.geoviksoft.turnia.core.data.group.mappers.GroupMapper
 import com.geoviksoft.turnia.core.data.invitation.InvitationLinkRepositoryImpl
 import com.geoviksoft.turnia.core.data.notification.NotificationRepositoryImpl
+import com.geoviksoft.turnia.core.data.preferences.PREFERENCES_FILE
+import com.geoviksoft.turnia.core.data.preferences.SHARED_CALENDARS_FILE
+import com.geoviksoft.turnia.core.data.preferences.SHARED_CALENDARS_STORE
 import com.geoviksoft.turnia.core.data.preferences.createPreferencesDataStore
 import com.geoviksoft.turnia.core.data.preferences.preferencesFilePath
+import com.geoviksoft.turnia.core.data.sharedcalendar.SharedCalendarCache
 import com.geoviksoft.turnia.core.data.sharedcalendar.SharedCalendarRepositoryImpl
 import com.geoviksoft.turnia.core.data.sharedcalendar.mappers.SharedCalendarErrorMapper
 import com.geoviksoft.turnia.core.data.sharedcalendar.mappers.SharedCalendarMapper
@@ -66,6 +70,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import org.koin.core.module.Module
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 /**
@@ -99,7 +104,10 @@ val dataModule: Module = module {
     single { Firebase.analytics }
     single { Firebase.remoteConfig }
     single<Analytics> { AnalyticsImpl(get()) }
-    single { createPreferencesDataStore(preferencesFilePath()) }
+    single { createPreferencesDataStore(preferencesFilePath(PREFERENCES_FILE)) }
+    single(named(SHARED_CALENDARS_STORE)) {
+        createPreferencesDataStore(preferencesFilePath(SHARED_CALENDARS_FILE))
+    }
 
     // Datasources.
     single { UserProfileFunction(get(), get()) }
@@ -163,6 +171,7 @@ val dataModule: Module = module {
         )
     }
     single<PersonalEventRepository> { PersonalEventRepositoryImpl(get(), get(), get(), get(), get()) }
-    single<SharedCalendarRepository> { SharedCalendarRepositoryImpl(get(), get()) }
+    single { SharedCalendarCache(get(named(SHARED_CALENDARS_STORE))) }
+    single<SharedCalendarRepository> { SharedCalendarRepositoryImpl(get(), get(), get(), get(), get()) }
     single<AdRepository> { AdRepositoryImpl(get(), get(), get()) }
 }

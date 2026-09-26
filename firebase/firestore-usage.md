@@ -29,6 +29,11 @@ of its last listen pays nothing.
 | Open a group calendar | 0 | 0 | — |
 | Open group info (admin) | 4–5 | **0** | Requests and types follow the sync listener. |
 | People tab, first time per 30 min | 2 | **1** | `calendarsSharedWithMe` listener attach (empty result = 1). |
+| Open a colleague's calendar, first time per month | — | 1 read + **1 call** | `sharedSync(snapshots)` attach on the owner's `sync/updates` (0 within 30 min of the last), and one `getSharedCalendar` for the month. Was 1 call per month visited and **2** on opening. |
+| Page back to, or reopen, a colleague's month already seen | — | **0** | Served from the device's cache, after the app was killed too, until the owner's markers move. |
+| The colleague changes a shift while their calendar is open | — | 1 read + 1 call | 1 read for their marker; `getSharedCalendar` with `since` returns only the changed documents — but to see shifts that left the colleague it reads every changed shift in their groups, not only theirs, so a cursor older than a day asks for the month whole instead. Server: `onGroupEventWrittenMarkHolders` adds 1 invocation and 1 write per holder (at most 2) to **every** group event write that changes what a calendar shows. Each holder also pays for the stamp (next row). |
+| A shift of yours is created, changed, taken, handed to you or given back | — | **+1 read per device** | New with `groupEvents`: the trigger stamps your own `sync/updates`, which every one of your signed-in devices already listens to, so each pays 1 read for it, whether or not anybody shares your calendar. Nothing else follows: the app has no use for its own `groupEvents`, so no other read or call is made. A take or a hand-back stamps two users, so both pay. |
+| Background, or another tab, with a colleague's calendar on screen | — | **0** | The calendar lets go of the owner's markers within 35 s (5 s for the screen, 30 s keep-alive). Coming back costs 1 re-attach read (free on Firestore's bill within 30 min) and 1 call only if something moved. |
 | Hide or show a shared calendar | — | 0 reads | 2 writes: `private/preferences` and its marker. The list is filtered on the device from the query already listened to; your other devices pay 1 preferences read. |
 | Somebody shares their calendar with you | — | — | Server: `onCalendarShared` reads each new grantee's `private/preferences` (1 read each) to stay silent for a calendar they hid. |
 | Groups / Swaps / Settings tabs | 0–1 | 0 | — |
@@ -39,7 +44,8 @@ of its last listen pays nothing.
 
 **Remote changes** are the part that scales with team activity and is the same before and after: when
 another member changes a shift in a month you are viewing, you pay 1 read for the sync document change
-and 1 per changed event.
+and 1 per changed event. On top of that, every change to a shift **you hold** now costs each of your
+devices 1 read for the `groupEvents` stamp on your own sync document, even when you are not looking at it.
 
 ## Expected daily usage
 
@@ -50,7 +56,7 @@ A typical user: 4 app launches more than 30 minutes apart, 2 group-info opens, 1
 | Before | ~55 | ~900 DAU | ~$9.00 / month |
 | After (3 groups) | **~17** | **~2 900 DAU** | **~$2.20 / month** |
 
-Formula for planning: `reads/day ≈ launches × (1 + groups) + People visits + remote changes seen`.
+Formula for planning: `reads/day ≈ launches × (1 + groups) + People visits + remote changes seen + devices × changes to your shifts`.
 
 Assumptions: $0.06 per 100 000 reads (the upper end of Firestore's location pricing; check the
 database's location), 30-day months, 50 000 free reads/day per project. Writes ($0.18 / 100 000) and
@@ -73,6 +79,7 @@ function reads and writes on the server does not appear in the client audit.
 | Unbounded Firestore cache | Protects events older than the retention window from LRU eviction |
 | A month a one-off event moved out of is remembered as checked | 1 empty read per sync change and per calendar page, for as long as the month stays in view |
 | The day sheet takes its one-off events from the calendar instead of querying them | A second cache query and staleness check per open sheet |
+| A colleague's calendar is cached per month on the device and caught up through the owner's markers (`groupEvents`) with `since` | 1 call per month visited, 1 on every reopen, a second call on every open |
 
 ## Keeping it this way
 

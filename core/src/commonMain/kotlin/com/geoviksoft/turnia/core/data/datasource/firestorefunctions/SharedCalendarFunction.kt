@@ -26,15 +26,17 @@ class SharedCalendarFunction(
         ownerId: UserId,
         from: LocalDate,
         to: LocalDate,
+        since: String?,
     ): Outcome<SharedCalendarResponse, SharedCalendarError> =
         outcomeCatching(TAG, errorMapper::map) {
-            Logger.i(TAG, "Get shared calendar")
+            Logger.i(TAG, "Get shared calendar${if (since == null) "" else " since $since"}")
             trackFunction(FUNCTION_GET_SHARED_CALENDAR)
             val result = functions.httpsCallable(FUNCTION_GET_SHARED_CALENDAR)(
                 SharedCalendarRequest(
                     ownerUid = ownerId.value,
                     from = from.toString(),
                     to = to.toString(),
+                    since = since,
                 )
             )
 

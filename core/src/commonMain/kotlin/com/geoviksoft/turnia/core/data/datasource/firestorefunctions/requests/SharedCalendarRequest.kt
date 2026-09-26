@@ -8,6 +8,8 @@ data class SharedCalendarRequest(
     @SerialName("ownerUid") val ownerUid: String,
     @SerialName("from") val from: String,
     @SerialName("to") val to: String,
+    /** Only what changed after this instant (ISO 8601): the previous answer's [SharedCalendarResponse.cursor]. */
+    @SerialName("since") val since: String? = null,
 )
 
 @Serializable
@@ -24,6 +26,15 @@ data class SharedCalendarResponse(
     @SerialName("groupNames") val groupNames: Map<String, String> = emptyMap(),
     /** The names of the holders in [SharedGroupEventResponse.holderUids], keyed by uid. */
     @SerialName("userNames") val userNames: Map<String, String> = emptyMap(),
+    /** `groupId/eventId` of shifts deleted, or no longer the owner's, since the request's `since`. */
+    @SerialName("removedGroupEventIds") val removedGroupEventIds: List<String> = emptyList(),
+    @SerialName("removedPersonalEventIds") val removedPersonalEventIds: List<String> = emptyList(),
+    @SerialName("removedPersonalOneOffEventIds")
+    val removedPersonalOneOffEventIds: List<String> = emptyList(),
+    /** Groups the owner was removed from: their types come narrowed to the shifts still on the server. */
+    @SerialName("revokedGroupIds") val revokedGroupIds: List<String> = emptyList(),
+    /** The earliest instant the server read at (ISO 8601), for the next request's `since`. */
+    @SerialName("cursor") val cursor: String? = null,
 )
 
 @Serializable

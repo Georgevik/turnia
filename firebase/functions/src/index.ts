@@ -31,5 +31,6 @@ export { deleteAccount } from "./account";
 // hold everything they need.
 export { onEventPutOnSwap, onCalendarShared } from "./notifications";
 
-// On-demand aggregation of another user's full calendar (cross-group).
-export { getSharedCalendar } from "./sharedCalendar";
+// On-demand aggregation of another user's full calendar (cross-group), and the per-holder marker
+// that tells whoever it is shared with when to ask again.
+export { getSharedCalendar, onGroupEventWrittenMarkHolders } from "./sharedCalendar";

@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.YearMonth
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Interacts with Firestore: `users/{uid}/sync/updates`
@@ -40,6 +41,12 @@ class UserSyncFirestore(
     private val listeners =
         SharedListeners<UserId, Synced<UserSyncDocument>>(scope, keepAlive = 10.minutes)
 
+    // Apart from [listeners] so the audit tells what a colleague's calendar costs from what the
+    // user's own sync does. A short keep-alive: it only has to ride out a quick back-and-forth, and
+    // every minute it lingers after the calendar is gone is a read for each change nobody sees.
+    private val sharedListeners =
+        SharedListeners<UserId, Synced<UserSyncDocument?>>(scope, keepAlive = 30.seconds)
+
     fun observe(uid: UserId): Flow<UserSyncDocument> =
         synced(uid).map { it.value }.distinctUntilChanged()
 
@@ -49,11 +56,32 @@ class UserSyncFirestore(
     suspend fun get(uid: UserId): Outcome<UserSyncDocument, GenericFirestoreError> =
         outcomeCatching(TAG, { GenericFirestoreError(it) }) { synced(uid).awaitConfirmed() }
 
-    private fun synced(uid: UserId): Flow<Synced<UserSyncDocument>> =
-        listeners.shared(uid) { snapshots(uid) }
+    /**
+     * Another user's markers, for a calendar they share with this one: what tells the viewer's cache
+     * of that calendar it is behind. A null value is a listener that failed — above all a grant that
+     * was withdrawn, which the rules answer by refusing the read — and unlike the user's own, it must
+     * not pass for "nothing changed", or the viewer would keep the calendar they lost.
+     */
+    fun observeShared(ownerId: UserId): Flow<Synced<UserSyncDocument?>> =
+        sharedListeners.shared(ownerId) {
+            snapshots(ownerId, "sharedSync(snapshots)")
+                .map { Synced<UserSyncDocument?>(it.value, it.confirmed) }
+                .catch { throwable ->
+                    Logger.e(TAG, "Shared sync updates listener failed", throwable)
+                    emit(Synced(null, confirmed = true))
+                }
+        }
 
-    private fun snapshots(uid: UserId): Flow<Synced<UserSyncDocument>> =
-        syncDocument(uid).trackedSnapshots(TAG, "sync(snapshots)")
+    private fun synced(uid: UserId): Flow<Synced<UserSyncDocument>> =
+        listeners.shared(uid) {
+            snapshots(uid, "sync(snapshots)").catch { throwable ->
+                Logger.e(TAG, "Sync updates listener failed", throwable)
+                emit(Synced(UserSyncDocument(), confirmed = true))
+            }
+        }
+
+    private fun snapshots(uid: UserId, operation: String): Flow<Synced<UserSyncDocument>> =
+        syncDocument(uid).trackedSnapshots(TAG, operation)
             .map { snapshot ->
                 // A user who has never written anything has no sync document: nothing to catch up with.
                 val document = if (!snapshot.exists) UserSyncDocument()
@@ -61,10 +89,6 @@ class UserSyncFirestore(
                 Synced(document, snapshot.metadata.isConfirmed)
             }
             .distinctUntilChanged()
-            .catch { throwable ->
-                Logger.e(TAG, "Sync updates listener failed", throwable)
-                emit(Synced(UserSyncDocument(), confirmed = true))
-            }
 
     fun writePersonalEvents(batch: WriteBatch, uid: UserId, yearMonth: YearMonth) = write(
         "writePersonalEvents",

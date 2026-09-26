@@ -21,6 +21,7 @@ import com.geoviksoft.turnia.e2e.infra.scrollAndClick
 import com.geoviksoft.turnia.ui.system.TestTags
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
+import kotlinx.datetime.minusMonth
 import kotlinx.datetime.plusMonth
 import kotlinx.datetime.yearMonth
 
@@ -60,6 +61,17 @@ internal class CalendarRobot(compose: ComposeTestRule, today: LocalDate) : AppRo
         compose.waitUntil(UI_TIMEOUT_MS) {
             runCatching {
                 compose.onNode(hasTestTag(TestTags.day(target.firstDay))).assertIsDisplayed()
+            }.isSuccess
+        }
+    }
+
+    /** Pages back one month, the way a user checks the one they just left. */
+    fun showPreviousMonth() {
+        compose.awaitNode(hasContentDescription("Previous month") and hasClickAction()).scrollAndClick()
+        shown = shown.minusMonth()
+        compose.waitUntil(UI_TIMEOUT_MS) {
+            runCatching {
+                compose.onNode(hasTestTag(TestTags.day(shown.firstDay))).assertIsDisplayed()
             }.isSuccess
         }
     }

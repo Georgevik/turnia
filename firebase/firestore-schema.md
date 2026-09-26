@@ -346,7 +346,8 @@ what it already cached to decide whether it has to query the server at all.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `personalEventsUpdatedAt` | timestamp \| null | Last write to `personalEvents` (server timestamp). |
+| `personalEvents` | map&lt;`YYYY-MM`, { `updatedAt`: timestamp }&gt; | Last write to `personalEvents`, **per month** of the event's `yearMonth`. |
+| `groupEvents` | map&lt;`YYYY-MM`, { `updatedAt`: timestamp }&gt; | Last change, **per month**, to a group event this user holds or has just stopped holding. **Server-only**: stamped by the `onGroupEventWrittenMarkHolders` trigger, and the rules refuse any client write that touches it. It is what a colleague the calendar is shared with listens to (see below). |
 | `personalOneOffEvents` | map&lt;`YYYY-MM`, { `updatedAt`: timestamp }&gt; | Last write to `personalOneOffEvents`, **per month**. A write stamps every month the event spans, and an edit that moves it also stamps the months it leaves — a device showing only those would otherwise keep it on its old date. |
 | `personalEventTypesUpdatedAt` | timestamp \| null | Last write to `personalEventTypes` (server timestamp). |
 | `revokedGroups` | timestamp \| null | Last write to `revokedGroups` — a revocation or a rejoin. Moved **only** by `leaveGroup` / `removeMember` / the rejoin path, never by a client. |
@@ -392,6 +393,21 @@ while the app already listens to this document and to each group's own `sync/upd
 the app follows each group it names from the cache and reads a group document only when that group's
 `group` marker moves. A key left behind for a group the user can no longer read costs one denied read
 and renders nothing.
+
+`groupEvents` exists for **whoever the calendar is shared with**, not for the owner. A group's own
+`sync/updates` is readable by its members only, so a colleague outside the group has no marker telling
+them the owner's shifts moved. `onGroupEventWrittenMarkHolders` fills that gap: on every write to
+`groups/{g}/events/{e}` that changes something a calendar renders (`assigneeId`, `date`, `yearMonth`,
+`groupEventTypeId`, `onSwap`, `isDeleted`, `history`), it stamps the month the shift was in and the month
+it is in, for the holder before and the holder after. A hard delete stamps nothing: only the retention
+cleanup and `deleteGroup` remove an event for real, and a viewer's device keeps what they remove.
+
+It is the one marker that **cannot** share its document's commit: the trigger runs after the event is
+written, so it is always later than the event's `updateAt`. That is harmless only because the reader
+never compares the two. The viewer's app records the marker values it caught up to and compares a
+marker only with its own earlier reading, and asks `getSharedCalendar` for `updateAt > since`, where
+`since` is the earliest instant the previous answer's queries read at — not the newest `updateAt` in it,
+which a change committed between two of those queries could be older than, and be skipped for good.
 
 `private/subscription` has its own marker, `subscription`, and it is the one marker no client may move:
 the rules reject a create that carries it and an update that touches it. A marker the client could hold
@@ -705,8 +721,11 @@ Firestore keeps only a **recent window** of events; older events are purged and 
 - **Colors**: `groupEventType` has no color (the user's `private/preferences.groupEventTypeColors` decides it); `personalEventType` and `group` carry their own — a group's is the admin's pick and is the same for every member.
 - **Group-wide event queries are bounded to a ≤ 3-month `date` range** (collection-group on `event`, filtered by `groupId`).
 - **Cross-group shared calendars** are served on demand by the `getSharedCalendar` Cloud Function
-  (collection-group on `event` filtered by `assigneeId` + date range, plus the owner's personal and
-  one-off events in range); nothing is mirrored.
+  (each of the owner's groups' `events` filtered by `assigneeId` + date range, plus the owner's
+  personal and one-off events in range); nothing is mirrored on the server. The viewer's device keeps
+  each month it was given and, while the calendar is open, listens to the owner's `sync/updates`: when a
+  relevant marker moves it asks again with `since`, and the function answers with only the documents
+  whose `updateAt` is newer, plus the ids of the deleted ones and of shifts that left the owner.
 - **A username is unique and reserved**: `usernames/{username}` holds it; claim the reservation *before*
   writing `users/{uid}.username`, and release the old one after.
 - **A grant lives in one place**: `users/{owner}.calendarSharedWith`, written only by the owner. No mirrored list.
