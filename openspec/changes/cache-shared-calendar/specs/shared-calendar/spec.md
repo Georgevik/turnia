@@ -10,8 +10,9 @@ server only the documents that changed since the cache last caught up.
 
 ### Requirement: A colleague's calendar is requested per month
 The system SHALL request a colleague's calendar one calendar month at a time. For a given month it
-SHALL always ask for the same window: from 14 days before the month's first day to 14 days after its
-last day. The window SHALL never be wider than the function's 92-day cap. The day of the month the
+SHALL always ask for the same window: the month itself and the whole month on either side, so the
+neighbouring month is already painted when the viewer pages to it. The window SHALL never be wider than
+the function's 92-day cap. The day of the month the
 viewer happens to be on SHALL NOT change the window.
 
 #### Scenario: Two dates in the same month make one request
@@ -20,7 +21,7 @@ viewer happens to be on SHALL NOT change the window.
 
 #### Scenario: The window covers the neighbouring days on the grid
 - **WHEN** the month of October 2026 is requested
-- **THEN** the call asks for 2026-09-17 through 2026-11-14
+- **THEN** the call asks for 2026-09-01 through 2026-11-30
 
 ### Requirement: A colleague's calendar survives the app being killed
 The system SHALL store each month on the device, in storage that outlives the process. Entries SHALL
@@ -130,9 +131,36 @@ SHALL be refreshed with every answer.
 - **WHEN** the owner's shift in October is taken by another member
 - **THEN** the gap lists it as removed and it no longer shows on the owner's calendar
 
+#### Scenario: A one-off event moves to a month outside the window
+- **WHEN** the owner moves a one-off event from 10 September to 10 December while the viewer has
+  September cached
+- **THEN** the catch-up lists it as removed and it no longer shows in September
+
+#### Scenario: A change lands while the server is answering
+- **WHEN** a shift of the owner's changes while a catch-up is being answered
+- **THEN** the next catch-up returns it, even if the answer already carried a later change to
+  another of the owner's documents
+
 #### Scenario: A purged month keeps its history
 - **WHEN** a cached month from last year is caught up after the server has purged its events
 - **THEN** the cached events stay on the device and are still shown
+
+### Requirement: A long absence refreshes the month whole
+When the cached month was last caught up more than a day ago, the system SHALL ask for the month
+whole rather than for the gap, and SHALL keep the cached days older than the server's retention
+window, which the server no longer has.
+
+#### Scenario: Back after two weeks
+- **WHEN** the viewer opens a month last caught up two weeks ago and a marker has moved
+- **THEN** one call is made without `since`, and days older than a month stay on the device
+
+### Requirement: A stale entry never crashes the app
+The system SHALL treat a cached entry written by another build's format, one it cannot decode, or one
+it cannot turn into a calendar as missing, and SHALL fetch the month again instead of failing.
+
+#### Scenario: A new build reads an old entry
+- **WHEN** a build whose cache format changed opens a month cached by the previous build
+- **THEN** the month is fetched whole and shown, and the app does not crash
 
 ### Requirement: A failed request keeps what was on screen
 The system SHALL keep the cached days on screen, without showing an error, when a request fails for
@@ -154,3 +182,8 @@ delete every cached month of that owner for that viewer and report the `NotShare
 #### Scenario: The owner revoked access
 - **WHEN** the viewer holds cached months of owner O and a request answers `NotShared`
 - **THEN** all of O's entries for this viewer are removed and the viewer sees the not-shared error
+
+#### Scenario: The owner revokes access while the calendar is open
+- **WHEN** O withdraws the grant while the viewer has O's calendar on screen, so the rules refuse the
+  viewer's marker listener
+- **THEN** one call is made, it answers `NotShared`, and O's entries leave the device

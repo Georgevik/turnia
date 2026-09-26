@@ -19,12 +19,17 @@ import com.geoviksoft.turnia.e2e.infra.string
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Timestamp
 import kotlinx.coroutines.runBlocking
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.plusMonth
 import kotlinx.datetime.yearMonth
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.put
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -38,7 +43,7 @@ import kotlin.time.Clock
 import kotlin.time.Instant
 
 /**
- * Paths 19–20, 22–25 and 27: calendars shared across groups, signed in as alice. Bruno and dana both
+ * Paths 19–20, 22–25 and 27–29: calendars shared across groups, signed in as alice. Bruno and dana both
  * share theirs with her, so hiding one still leaves a list to check the other against.
  */
 @RunWith(AndroidJUnit4::class)
@@ -179,6 +184,50 @@ class SharedCalendarFlowsTest {
         writeOwnSyncField("preferences")
     }
 
+    /** Bruno stops sharing while alice looks: the next call says so, and his months leave her device. */
+    @Test
+    fun aWithdrawnGrant_erasesTheCachedCalendar() {
+        awaitSeedTriggersSettled(owner = "bruno", seededAt = world.seededAt)
+        val thisMonth = world.today.yearMonth
+        openBrunosCalendar()
+        compose.awaitCalls(1)
+        compose.awaitCached(thisMonth) { true }
+
+        revokeAlicesGrant()
+
+        compose.awaitCalls(2)
+        people.awaitText(NOT_SHARED)
+        compose.waitUntil(CALL_TIMEOUT_MS) { cached(thisMonth) == null }
+    }
+
+    /** A one-off moved months away is no longer in the window it was cached in, and must leave it. */
+    @Test
+    fun aOneOffMovedToAnotherMonth_leavesTheCachedMonth() {
+        val thisMonth = world.today.yearMonth
+        val farMonth = thisMonth.plusMonth().plusMonth().plusMonth()
+        writeBrunosOneOff(day = world.today, markedMonths = setOf(thisMonth))
+        awaitSeedTriggersSettled(owner = "bruno", seededAt = world.seededAt)
+        openBrunosCalendar()
+        compose.awaitCalls(1)
+        compose.awaitCached(thisMonth) { entry ->
+            entry.response.personalOneOffEvents.any { it.eventId == ONE_OFF }
+        }
+
+        // Bruno's app stamps the month it leaves as well as the one it lands in.
+        writeBrunosOneOff(day = farMonth.firstDay, markedMonths = setOf(thisMonth, farMonth))
+
+        compose.awaitCalls(2)
+        compose.awaitCached(thisMonth) { entry ->
+            entry.response.personalOneOffEvents.none { it.eventId == ONE_OFF }
+        }
+    }
+
+    private fun openBrunosCalendar() {
+        people.openTab(AppRobot.TAB_PEOPLE)
+        people.showSharedWithMe()
+        people.click("Bruno Bravo")
+    }
+
     @Test
     fun hideASharedCalendar_bySwipe() {
         people.openTab(AppRobot.TAB_PEOPLE)
@@ -286,7 +335,9 @@ private fun awaitSeedTriggersSettled(owner: String, seededAt: Instant) {
         val stamps = sync.objectOrNull("groupEvents")?.values.orEmpty()
         stamps.isNotEmpty() && stamps.all { stamp ->
             val updatedAt = stamp.jsonObject["updatedAt"]?.jsonObject?.string(FirestoreRest.TIMESTAMP)
-            updatedAt != null && Instant.parse(updatedAt) > seededAt
+            // Compared for equality, not order: the stamps come from the host's clock, the seed from
+            // the device's, and the two need not agree.
+            updatedAt != null && Instant.parse(updatedAt) != seededAt
         }
     }
     // Two shifts in the same month are two triggers; wait for the second as well.
@@ -350,6 +401,47 @@ private fun changeEvent(eventId: String, change: (JsonObject) -> JsonObject) {
     FirestoreRest.write(mapOf(path to JsonObject(change(Documents.get(path)) + ("updateAt" to Fixtures.timestamp(now)))))
 }
 
+/** Bruno takes alice off his grant list, with his profile marker in the same commit, as his app does. */
+private fun revokeAlicesGrant() {
+    val now = Fixtures.timestamp(Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()))
+    val profile = Documents.get("users/bruno")
+    val sync = Documents.get("users/bruno/sync/updates")
+    val sharedWith = profile.strings("calendarSharedWith").filter { it != "alice" }.map(::JsonPrimitive)
+    FirestoreRest.write(
+        mapOf(
+            "users/bruno" to JsonObject(profile + ("calendarSharedWith" to JsonArray(sharedWith)) + ("updateAt" to now)),
+            "users/bruno/sync/updates" to JsonObject(sync + ("profile" to now)),
+        )
+    )
+}
+
+/** Bruno's one-off on [day], and the one-off markers of [markedMonths], in one commit, as his app writes them. */
+private fun writeBrunosOneOff(day: LocalDate, markedMonths: Set<YearMonth>) {
+    val now = Fixtures.timestamp(Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()))
+    val month = JsonPrimitive(day.yearMonth.toString())
+    val oneOff = buildJsonObject {
+        put("name", "Course")
+        put("color", "#3366FF")
+        put("start", "${day}T09:00")
+        put("end", "${day}T10:00")
+        put("allDay", false)
+        put("yearMonthStart", month)
+        put("yearMonthEnd", month)
+        put("notes", JsonNull)
+        put("isDeleted", false)
+        put("updateAt", now)
+    }
+    val sync = Documents.get("users/bruno/sync/updates")
+    val stamped = sync.objectOrNull("personalOneOffEvents").orEmpty() +
+        markedMonths.associate { it.toString() to buildJsonObject { put("updatedAt", now) } }
+    FirestoreRest.write(
+        mapOf(
+            "users/bruno/personalOneOffEvents/$ONE_OFF" to oneOff,
+            "users/bruno/sync/updates" to JsonObject(sync + ("personalOneOffEvents" to JsonObject(stamped))),
+        )
+    )
+}
+
 private fun writeOwnSyncField(field: String) = runBlocking {
     val firestore = GlobalContext.get().get<FirebaseFirestore>()
     val batch = firestore.batch()
@@ -360,6 +452,9 @@ private fun writeOwnSyncField(field: String) = runBlocking {
 }
 
 private fun JsonObject.objectOrNull(key: String): JsonObject? = get(key) as? JsonObject
+
+private const val ONE_OFF = "o-bruno"
+private const val NOT_SHARED = "This person no longer shares their calendar with you."
 
 private const val CALL_TIMEOUT_MS = 30_000L
 private const val QUIET_MS = 5_000L

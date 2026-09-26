@@ -62,9 +62,10 @@ This is how things stand today:
 A `Flow` is what lets the result be live: it emits the cache, then emits again after every
 catch-up.
 
-A month is what makes entries reusable. The window is `month.firstDay − 14 .. month.lastDay + 14`:
-at most 59 days, which spans three `yearMonth`s. That is why the repository watches the markers of
-`month − 1`, `month` and `month + 1`.
+A month is what makes entries reusable. The window is `(month − 1).firstDay .. (month + 1).lastDay`,
+per review: the neighbouring month is then already painted when the viewer pages to it. It is 92
+days at most, the function's cap, and spans exactly three `yearMonth`s — which is why the repository
+watches the markers of `month − 1`, `month` and `month + 1`.
 
 `ExternalCalendarViewModel.monthDate` becomes a `YearMonth` `StateFlow`, which already drops an
 equal value: kotlinx.coroutines refuses `distinctUntilChanged()` on a `StateFlow` at compile time. The group branch keeps calling `getEventsByGroup(…, month.firstDay, monthDelta = 2)`.
@@ -114,9 +115,14 @@ compared with `updateAt`.
 Each cache entry is `CachedSharedCalendar` and holds three values:
 
 - **`response`**: the merged `SharedCalendarResponse`.
-- **`cursor: Timestamp?`**: the newest `updateAt` the server has shown this entry, across every
-  document in every answer, removals included. This is what goes out as `since`. It only ever
-  comes from document timestamps, so it is on the same clock as the query it bounds.
+- **`cursor: String?`**: the earliest `readTime` among the answer's queries. This is what goes out as
+  `since`. The server's clock, so it is on the same clock as the `updateAt` it bounds. Not the newest
+  `updateAt`: the queries read at slightly different moments, and a change committed between two of
+  them would be older than a later change another query returned, and skipped for good (found in
+  review).
+- **`version: Int`**: `SharedCalendarCache.VERSION` when written. An entry of another version, one
+  that does not decode, or one the mapper cannot turn into a calendar, is dropped and fetched again,
+  so a stale entry can never crash a new build.
 - **`seen: Map<String, Timestamp?>`**: the relevant marker values, as the listener delivered them
   when the catch-up started. The keys are `groupEvents/yyyy-MM`, `personalEvents/yyyy-MM`,
   `personalOneOffEvents/yyyy-MM` and `personalEventTypes`.
@@ -138,7 +144,10 @@ The request is `{ ownerUid, from, to, since?: ISO-8601 }`, and the response gain
 - `removedGroupEventIds: string[]`, as `groupId/eventId`
 - `removedPersonalEventIds: string[]`
 - `removedPersonalOneOffEventIds: string[]`
-- `cursor: string | null`, the maximum `updateAt` among the documents it looked at
+- `revokedGroupIds: string[]`, the groups the owner was removed from; the client keeps their types
+  across answers, because after the retention purge the server no longer has the shifts that say
+  which types they use
+- `cursor: string | null`, the earliest `readTime` among its queries
 
 With `since`, the function queries as follows:
 
@@ -152,9 +161,10 @@ With `since`, the function queries as follows:
   - Neither: **dropped**. The owner never held it, so the viewer cannot have it cached, and ids of
     unrelated shifts do not leak.
 - **Personal events**: `yearMonth in [...]` and `updateAt > since`. Deleted ones become removals.
-- **One-offs**: the existing overlap query, plus `updateAt > since`, covered by
-  `(yearMonthStart, yearMonthEnd, updateAt)`. Deleted ones, and ones no longer in the window,
-  become removals.
+- **One-offs**: `updateAt > since` alone, on the single-field index. A query by the current months
+  could never find one that moved out of the window to report it (found in review). Deleted ones,
+  and ones no longer in the window, become removals. An owner's one-offs are few, and each is theirs
+  for the viewer to read anyway.
 - **Lookups** (types, colours, group names, holder names) are returned whole on every call, as
   today. They are what make a type rename show. They are also small: already one read per group,
   and paid for by the group queries anyway.
@@ -303,7 +313,24 @@ What the E2E cannot see:
   better than the earlier freeze proposal.
 - **[The cache file and marker maps only grow]** → A few KB per month per colleague, and one key per
   month on the sync doc. Pruning is left for later.
-- **[The response shape changes]** → Lenient decoding plus a full refetch on an unreadable entry.
+- **[The response shape changes]** → Every entry carries `SharedCalendarCache.VERSION`, bumped when the
+  stored shape or meaning changes; an entry of another version, one that fails to decode, or one the
+  mapper throws on is dropped and the month fetched whole. A stale entry costs one call, never a crash.
+- **[A gap can read more than a full fetch]** → The gap query drops the `assigneeId` filter to see shifts
+  that left the owner, so it reads every changed shift in the owner's groups. When the cursor is more
+  than a day old the client asks for the month whole instead, keeping the cached days older than the
+  retention window (the only copy left), and replacing the rest.
+- **[The owner withdraws the grant while the calendar is open]** → The rules then refuse the marker
+  listener. `observeShared` reports that as a failure (null), not as an empty document, and the
+  repository treats it as behind: the next call answers `NotShared` and `removeOwner` clears the device.
+- **[A lost trigger stamp]** → `onGroupEventWrittenMarkHolders` runs with `retry: true`; stamping the same
+  server timestamp twice is harmless.
+- **[Changes no marker tracks]** → The owner's colour picks now count (`preferences` is among the relevant
+  markers). A renamed group or group type, and a renamed holder, still show only with the next catch-up
+  for another reason: those live on the group document, whose marker the viewer cannot read, and
+  stamping every member's `groupEvents` on each group write was judged not worth its writes.
+- **[Cache housekeeping]** → Nothing evicts old entries or clears them on sign-out; entries are keyed by
+  viewer, so another account never sees them. `userNames` only grows. Left for a follow-up.
 - **[Schema doc drift]** → `firestore-schema.md` describes `personalEventsUpdatedAt` as one timestamp
   while the client writes a per-month `personalEvents` map. This change corrects the doc to match
   the code. The code is not changed.

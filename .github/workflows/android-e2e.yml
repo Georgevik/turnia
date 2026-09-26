@@ -15,7 +15,7 @@ permissions:
   contents: read
 
 jobs:
-  # The 27 critical happy paths (app/androidApp/src/androidTest), on an Android emulator against the
+  # The 29 critical happy paths (app/androidApp/src/androidTest), on an Android emulator against the
   # Firebase emulators seeded from firebase/test/fixtures. Android only, but it gates both uploads:
   # the two apps share every line of logic it covers.
   android-e2e:

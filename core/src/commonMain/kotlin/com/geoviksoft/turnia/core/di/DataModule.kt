@@ -46,7 +46,6 @@ import com.geoviksoft.turnia.core.data.user.mappers.PersonalEventTypeDocMapper
 import com.geoviksoft.turnia.core.data.user.mappers.UserDocumentMapper
 import com.geoviksoft.turnia.core.data.user.mappers.UsernameErrorMapper
 import com.geoviksoft.turnia.core.domain.analytics.Analytics
-import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.domain.repository.AdRepository
 import com.geoviksoft.turnia.core.domain.repository.AppConfigRepository
 import com.geoviksoft.turnia.core.domain.repository.FcmDelegate
@@ -173,16 +172,6 @@ val dataModule: Module = module {
     }
     single<PersonalEventRepository> { PersonalEventRepositoryImpl(get(), get(), get(), get(), get()) }
     single { SharedCalendarCache(get(named(SHARED_CALENDARS_STORE))) }
-    single<SharedCalendarRepository> {
-        val function = get<SharedCalendarFunction>()
-        val sync = get<UserSyncFirestore>()
-        SharedCalendarRepositoryImpl(
-            fetch = function::getSharedCalendar,
-            markers = sync::observeShared,
-            viewerId = { Firebase.auth.currentUser?.uid?.let(::UserId) },
-            cache = get(),
-            mapper = get(),
-        )
-    }
+    single<SharedCalendarRepository> { SharedCalendarRepositoryImpl(get(), get(), get(), get(), get()) }
     single<AdRepository> { AdRepositoryImpl(get(), get(), get()) }
 }

@@ -48,6 +48,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
+import kotlinx.datetime.minusMonth
+import kotlinx.datetime.plusMonth
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 
@@ -380,8 +382,8 @@ internal class DemoSharedCalendarRepository(private val world: DemoWorld) : Shar
         ownerId: UserId,
         month: YearMonth,
     ): Flow<Outcome<SharedCalendar, SharedCalendarError>> {
-        val from = month.firstDay.minus(NEIGHBOUR_DAYS, DateTimeUnit.DAY)
-        val to = month.lastDay.plus(NEIGHBOUR_DAYS, DateTimeUnit.DAY)
+        val from = month.minusMonth().firstDay
+        val to = month.plusMonth().lastDay
         return flowOf(
             SharedCalendar(
                 groupEvents = world.groupEvents.filter { it.assigneeId == ownerId && it.date in from..to },
@@ -390,9 +392,6 @@ internal class DemoSharedCalendarRepository(private val world: DemoWorld) : Shar
         )
     }
 
-    private companion object {
-        const val NEIGHBOUR_DAYS = 14
-    }
 }
 
 internal object DemoAnalytics : Analytics {

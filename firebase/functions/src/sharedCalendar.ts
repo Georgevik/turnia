@@ -1,6 +1,12 @@
 import { onCall } from "firebase-functions/v2/https";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
-import { DocumentData, DocumentSnapshot, getFirestore, Timestamp } from "firebase-admin/firestore";
+import {
+  DocumentData,
+  DocumentSnapshot,
+  getFirestore,
+  QuerySnapshot,
+  Timestamp,
+} from "firebase-admin/firestore";
 import { TurniaError } from "./errors";
 import { HistoryEntry } from "./events";
 import { requireFields, requireUid } from "./requests";
@@ -21,7 +27,9 @@ const MAX_RANGE_DAYS = 92; // ~3 months
  *
  * With `since`, only documents whose `updateAt` is newer come back. Deleted ones, and shifts that
  * are no longer the owner's, are listed by id in `removed*Ids`, since the viewer may have cached
- * them. `cursor` is the newest `updateAt` looked at, for the next `since`. The lookups always come
+ * them. `cursor` is the earliest instant any of the queries read at, for the next `since`: the
+ * queries run at slightly different moments, and a change committed between two of them would be
+ * skipped for good by a cursor taken from the newest `updateAt`. The lookups always come
  * whole: they are what make a renamed type show.
  *
  * Request data: `{ ownerUid: string, from: "YYYY-MM-DD", to: "YYYY-MM-DD", since?: ISO 8601 }`
@@ -66,12 +74,11 @@ export const getSharedCalendar = onCall(async (request) => {
   const ownerGroups = { docs: [...memberOf.docs, ...revokedFrom.docs] };
 
   const months = monthsBetween(from, to);
+  // Everything committed before the earliest read is in every answer; anything after it is asked
+  // for again next time, and merging a document twice changes nothing.
   let cursor: Timestamp | null = null;
-  const seen = (doc: DocumentSnapshot) => {
-    const updateAt = doc.get("updateAt");
-    if (updateAt instanceof Timestamp && (cursor === null || updateAt.toMillis() > cursor.toMillis())) {
-      cursor = updateAt;
-    }
+  const readAt = (snap: QuerySnapshot) => {
+    if (cursor === null || snap.readTime.toMillis() < cursor.toMillis()) cursor = snap.readTime;
   };
   const inRange = (date: unknown) => typeof date === "string" && date >= from && date <= to;
 
@@ -93,7 +100,7 @@ export const getSharedCalendar = onCall(async (request) => {
           .where("date", "<=", to)
           .get();
 
-      snap.docs.forEach(seen);
+      readAt(snap);
       const upserts = snap.docs.filter((doc) =>
         doc.get("assigneeId") === ownerUid && doc.get("isDeleted") !== true && inRange(doc.get("date"))
       );
@@ -154,7 +161,7 @@ export const getSharedCalendar = onCall(async (request) => {
       .where("date", ">=", dayShift(from, -1))
       .where("date", "<=", dayShift(to, 2))
       .get();
-  personalSnap.docs.forEach(seen);
+  readAt(personalSnap);
   const removedPersonalEventIds = personalSnap.docs
     .filter((doc) => doc.get("isDeleted") === true)
     .map((doc) => doc.id);
@@ -173,13 +180,17 @@ export const getSharedCalendar = onCall(async (request) => {
   // several months, so the query is by overlap on the month fields — the same index the app's own
   // sync uses — and the days are trimmed here: a month overlapping the range is not a day inside it.
   // `start` and `end` are ISO 8601 date-times, so their first ten characters are the day.
-  let oneOffQuery = db
-    .collection(`users/${ownerUid}/personalOneOffEvents`)
-    .where("yearMonthStart", "<=", to.slice(0, 7))
-    .where("yearMonthEnd", ">=", from.slice(0, 7));
-  if (since) oneOffQuery = oneOffQuery.where("updateAt", ">", since);
-  const oneOffSnap = await oneOffQuery.get();
-  oneOffSnap.docs.forEach(seen);
+  // A gap asks by `updateAt` alone: a one-off moved to another month no longer overlaps the window,
+  // and a query by its current months would never find it to tell the viewer it left. An owner's
+  // one-offs are few, and every one the viewer is told about is theirs to read anyway.
+  const oneOffCollection = db.collection(`users/${ownerUid}/personalOneOffEvents`);
+  const oneOffSnap = since
+    ? await oneOffCollection.where("updateAt", ">", since).get()
+    : await oneOffCollection
+      .where("yearMonthStart", "<=", to.slice(0, 7))
+      .where("yearMonthEnd", ">=", from.slice(0, 7))
+      .get();
+  readAt(oneOffSnap);
   const oneOffUpserts = oneOffSnap.docs
     .filter((doc) => doc.get("isDeleted") !== true)
     .filter((doc) => day(doc.get("start")) <= to && day(doc.get("end")) >= from);
@@ -239,6 +250,9 @@ export const getSharedCalendar = onCall(async (request) => {
     removedGroupEventIds,
     removedPersonalEventIds,
     removedPersonalOneOffEventIds,
+    // The viewer keeps the types of these groups across answers: after the retention purge the
+    // server no longer has the events that say which ones they use.
+    revokedGroupIds: [...revokedGroupIds],
     cursor: cursor === null ? null : (cursor as Timestamp).toDate().toISOString(),
   };
 });
@@ -329,7 +343,9 @@ const RENDERED_FIELDS = [
  * real, and a viewer's cache has to keep what they remove.
  */
 export const onGroupEventWrittenMarkHolders = onDocumentWritten(
-  "groups/{groupId}/events/{eventId}",
+  // Retried: a stamp that never lands leaves the viewer behind until an unrelated change, and
+  // writing the same server timestamp again is harmless.
+  { document: "groups/{groupId}/events/{eventId}", retry: true },
   async (event) => {
     const before = event.data?.before.data();
     const after = event.data?.after.data();

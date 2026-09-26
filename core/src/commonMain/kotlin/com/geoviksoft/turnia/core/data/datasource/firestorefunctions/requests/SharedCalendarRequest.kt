@@ -31,7 +31,9 @@ data class SharedCalendarResponse(
     @SerialName("removedPersonalEventIds") val removedPersonalEventIds: List<String> = emptyList(),
     @SerialName("removedPersonalOneOffEventIds")
     val removedPersonalOneOffEventIds: List<String> = emptyList(),
-    /** The newest `updateAt` the server looked at (ISO 8601), for the next request's `since`. */
+    /** Groups the owner was removed from: their types come narrowed to the shifts still on the server. */
+    @SerialName("revokedGroupIds") val revokedGroupIds: List<String> = emptyList(),
+    /** The earliest instant the server read at (ISO 8601), for the next request's `since`. */
     @SerialName("cursor") val cursor: String? = null,
 )
 

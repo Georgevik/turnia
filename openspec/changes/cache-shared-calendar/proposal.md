@@ -29,10 +29,10 @@ and asks the server only for the gap.
 
 - **BREAKING (internal API)**: `SharedCalendarRepository.getSharedCalendar(ownerId, from, to)` is
   replaced by `sharedCalendar(ownerId, month): Flow<Outcome<SharedCalendar, SharedCalendarError>>`.
-  The repository derives a fixed window per month:
-  `[first day − 14 days, last day + 14 days]`, which is ≤ 92 days, the function's cap.
-- `ExternalCalendarViewModel` reduces its date to a month with `distinctUntilChanged()`, so two dates
-  in the same month make one request. `DemoSharedCalendarRepository` follows the new API.
+  The repository derives a fixed window per month: the month and the whole month either side,
+  which is ≤ 92 days, the function's cap.
+- `ExternalCalendarViewModel` holds a month rather than a date, so two dates in the same month make
+  one request. `DemoSharedCalendarRepository` follows the new API.
 - **A new server-maintained marker for the owner's group shifts**:
   `users/{uid}/sync/updates.groupEvents: map<YYYY-MM, {updatedAt}>`. A new Firestore trigger on
   `groups/{g}/events/{e}` stamps it for the previous and the new assignee, and for both months when

@@ -406,7 +406,8 @@ It is the one marker that **cannot** share its document's commit: the trigger ru
 written, so it is always later than the event's `updateAt`. That is harmless only because the reader
 never compares the two. The viewer's app records the marker values it caught up to and compares a
 marker only with its own earlier reading, and asks `getSharedCalendar` for `updateAt > since`, where
-`since` is the newest `updateAt` it has been given.
+`since` is the earliest instant the previous answer's queries read at — not the newest `updateAt` in it,
+which a change committed between two of those queries could be older than, and be skipped for good.
 
 `private/subscription` has its own marker, `subscription`, and it is the one marker no client may move:
 the rules reject a create that carries it and an update that touches it. A marker the client could hold

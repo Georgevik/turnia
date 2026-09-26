@@ -35,7 +35,7 @@ deploying to the emulators. Their behaviour is proven by task 7.2.
     Personal events use the same filter. One-offs use the overlap filter plus `updateAt > since`.
     Classify each document as an upsert, a removal (the owner is among its holders but it is no
     longer theirs, not deleted, or not in range) or dropped.
-  - **Always:** return `cursor`, the maximum `updateAt` seen, and the `removed*Ids` lists. The
+  - **Always:** return `cursor`, the earliest query `readTime`, and the `removed*Ids` lists. The
     lookups stay whole.
   - Update the KDoc ("Nothing is stored").
 
@@ -83,7 +83,7 @@ deploying to the emulators. Their behaviour is proven by task 7.2.
 - [x] 5.1 Change `SharedCalendarRepository` to `sharedCalendar(ownerId, month: YearMonth): Flow<Outcome<…>>`.
   - Implement design Decision 6 in `SharedCalendarRepositoryImpl`, taking `fetch`, `markers`
     (`UserSyncFirestore::observeShared`), `viewerId`, `cache` and `mapper` in its constructor.
-  - The window is `firstDay − 14 .. lastDay + 14`.
+  - The window is the month and the whole month either side.
   - The relevant markers are `groupEvents`, `personalEvents` and `personalOneOffEvents` for months
     m−1..m+1, plus `personalEventTypesUpdatedAt`.
   - Add `groupEvents` to `UserSyncDocument`.
@@ -132,6 +132,20 @@ deploying to the emulators. Their behaviour is proven by task 7.2.
   and assert no marker read and no call; on return, assert exactly one call and one re-attach, with
   `e3` updated in the cache. Repeat behind the Calendar tab, with one call on returning to People.
   Verify that the full suite passes.
+
+## 7b. Review fixes (the PR author's comments and the review agent's)
+
+- [x] 7b.1 Inject `SharedCalendarFunction`, `UserSyncFirestore` and `UserRepository` into
+  `SharedCalendarRepositoryImpl` instead of lambdas. Verify that core compiles.
+- [x] 7b.2 Widen the window to a whole month either side. Verify that the spec's window scenario matches.
+- [x] 7b.3 Version cache entries and drop one the mapper cannot read. Verify that core compiles.
+- [x] 7b.4 Server: cursor from the earliest query `readTime`; one-offs in a gap by `updateAt` alone;
+  `revokedGroupIds` in the answer; retries on the trigger. Verify that `npm run build` passes.
+- [x] 7b.5 Client: a failed owner-marker listener counts as behind; a cursor older than a day asks for
+  the month whole, keeping the purged days; `preferences` among the relevant markers; merges in one
+  `edit`; revoked groups keep their cached types.
+- [x] 7b.6 E2E: a withdrawn grant while the calendar is open erases the cached months, and a one-off
+  moved out of the window leaves the cached month. Verify that the full suite passes.
 
 ## 8. Docs and integration checks
 
