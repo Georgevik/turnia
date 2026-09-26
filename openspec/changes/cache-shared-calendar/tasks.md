@@ -107,6 +107,11 @@ deploying to the emulators. Their behaviour is proven by task 7.2.
 - [x] 6.2 Update `DemoSharedCalendarRepository` to the new API: `flowOf` the month's window. Verify
   the demo build compiles and shows a colleague's shifts.
 
+- [x] 6.3 Follow the events only while the calendar is visible. `ExternalCalendarViewModel.uiState`
+  becomes `stateIn(viewModelScope, WhileSubscribed(5 s))` over the events collection, which the
+  screen already collects with `collectAsStateWithLifecycle()`. `UserSyncFirestore.observeShared`
+  gets its own 30-second keep-alive. Verify with 7.3.
+
 ## 7. E2E: the proof
 
 - [x] 7.1 Add `showPreviousMonth()` to `CalendarRobot`. It uses the `Previous month` content
@@ -122,6 +127,11 @@ deploying to the emulators. Their behaviour is proven by task 7.2.
   It ends by checking that the rules deny alice's own write of `groupEvents`. Verify that
   `./gradlew :app:androidApp:connectedDebugAndroidTest` passes with no regression in the existing
   shared-calendar tests.
+
+- [x] 7.3 Extend the 7.2 test. Send the app to the background for 40 s, change `e3` on the server,
+  and assert no marker read and no call; on return, assert exactly one call and one re-attach, with
+  `e3` updated in the cache. Repeat behind the Calendar tab, with one call on returning to People.
+  Verify that the full suite passes.
 
 ## 8. Docs and integration checks
 

@@ -77,8 +77,9 @@ class SharedCalendarFlowsTest {
     /**
      * What a colleague's calendar costs, step by step: one call per month the first time, nothing
      * on the way back or on reopening, and after that one call per change the owner makes, answered
-     * with only what changed. Each count is checked as a difference, on the owner's marker listener
-     * and on the callable, and the device's cache is read back to show where the days came from.
+     * with only what changed — and nothing at all while the app is in the background or behind
+     * another tab. Each count is checked as a difference, on the owner's marker listener and on the
+     * callable, and the device's cache is read back to show where the days came from.
      */
     @Test
     fun aColleaguesCalendar_isCachedAndCaughtUpByTheGap() {
@@ -114,7 +115,7 @@ class SharedCalendarFlowsTest {
 
         // A change bruno's shift gets on the server wakes the open calendar through his marker.
         val before = checkNotNull(cached(shiftMonth))
-        changeE2 { JsonObject(it + ("onSwap" to JsonPrimitive(true))) }
+        changeEvent("e2") { JsonObject(it + ("onSwap" to JsonPrimitive(true))) }
         compose.awaitCalls(3)
         assertEquals(reads + 1, markerReads())
         val swapped = compose.awaitCached(shiftMonth) { entry ->
@@ -132,7 +133,7 @@ class SharedCalendarFlowsTest {
 
         // Given away: it leaves bruno's calendar and his cache, while e3, untouched, stays cached.
         // Not looked for on screen: day 5 may be next month, and paging there would catch it up too.
-        changeE2 { JsonObject(it + ("assigneeId" to JsonPrimitive("carla"))) }
+        changeEvent("e2") { JsonObject(it + ("assigneeId" to JsonPrimitive("carla"))) }
         compose.awaitCalls(4)
         reopened.awaitDayDoesNotShow(world.day(4), "MN")
         val handedAway = compose.awaitCached(shiftMonth) { entry ->
@@ -140,6 +141,32 @@ class SharedCalendarFlowsTest {
         }
         assertTrue("e3 was dropped", handedAway.response.groupEvents.any { it.eventId == "e3" })
         compose.assertStill(calls = 4, markerReads = reads + 2)
+
+        // In the background nothing is followed: bruno's next change costs nothing until the user is back.
+        world.moveToBackground()
+        compose.idleFor(DETACH_MS)
+        val readsInBackground = markerReads()
+        // e3 is seeded offered for swap, so withdrawing it is a change.
+        changeEvent("e3") { JsonObject(it + ("onSwap" to JsonPrimitive(false))) }
+        compose.assertStill(calls = 4, markerReads = readsInBackground)
+        world.moveToForeground()
+        compose.awaitCalls(5)
+        compose.awaitCached(shiftMonth) { entry ->
+            entry.response.groupEvents.any { it.eventId == "e3" && !it.onSwap }
+        }
+        assertEquals("Coming back re-attached more than once", readsInBackground + 1, markerReads())
+
+        // Behind another tab the People back stack keeps the calendar, but nothing is followed either.
+        people.openTab(AppRobot.TAB_CALENDAR)
+        compose.idleFor(DETACH_MS)
+        val readsOnAnotherTab = markerReads()
+        changeEvent("e3") { JsonObject(it + ("onSwap" to JsonPrimitive(true))) }
+        compose.assertStill(calls = 5, markerReads = readsOnAnotherTab)
+        people.openTab(AppRobot.TAB_PEOPLE)
+        compose.awaitCalls(6)
+        compose.awaitCached(shiftMonth) { entry ->
+            entry.response.groupEvents.any { it.eventId == "e3" && it.onSwap }
+        }
 
         // Nobody but the server may move the marker the calendar above depends on.
         val refused = try {
@@ -316,9 +343,9 @@ private fun ComposeTestRule.awaitCached(
     return checkNotNull(cached(month))
 }
 
-/** Bruno's `e2`, changed on the server as any other client's write would, `updateAt` included. */
-private fun changeE2(change: (JsonObject) -> JsonObject) {
-    val path = "groups/urgencias/events/e2"
+/** An Urgencias shift, changed on the server as any other client's write would, `updateAt` included. */
+private fun changeEvent(eventId: String, change: (JsonObject) -> JsonObject) {
+    val path = "groups/urgencias/events/$eventId"
     val now = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds())
     FirestoreRest.write(mapOf(path to JsonObject(change(Documents.get(path)) + ("updateAt" to Fixtures.timestamp(now)))))
 }
@@ -336,6 +363,9 @@ private fun JsonObject.objectOrNull(key: String): JsonObject? = get(key) as? Jso
 
 private const val CALL_TIMEOUT_MS = 30_000L
 private const val QUIET_MS = 5_000L
+
+// The screen lets go 5 s after it stops watching, the owner's listener 30 s after that.
+private const val DETACH_MS = 40_000L
 private const val POLL_MS = 250L
 
 private const val PREFERENCES = "users/alice/private/preferences"

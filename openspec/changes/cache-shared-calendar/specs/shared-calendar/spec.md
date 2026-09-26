@@ -76,8 +76,10 @@ to. It SHALL request data only when a relevant marker is newer. The relevant mar
   neighbouring months the window covers;
 - the owner's personal-event-types marker.
 
-The system SHALL stop following the markers once the calendar is closed, allowing only the short
-keep-alive that listeners already get across a quick back-and-forth.
+The system SHALL follow the markers only while the calendar is visible to the viewer. It SHALL stop
+within 35 seconds of the calendar being closed, the app going to the background, or another tab being
+shown. When the calendar is visible again it SHALL show the cached days at once and make at most one
+call, only if a relevant marker moved in the meantime.
 
 #### Scenario: Nothing changed
 - **WHEN** a cached month is opened and no relevant marker is newer than the cache
@@ -94,8 +96,20 @@ keep-alive that listeners already get across a quick back-and-forth.
 - **THEN** no call is made
 
 #### Scenario: The calendar was closed
-- **WHEN** the viewer leaves a colleague's calendar and does not come back within the keep-alive
+- **WHEN** the viewer leaves a colleague's calendar and does not come back within 35 seconds
 - **THEN** the app no longer listens to that owner's markers
+
+#### Scenario: The app goes to the background on the calendar
+- **WHEN** the app has been in the background for 35 seconds with a colleague's calendar on screen,
+  and the owner then changes a shift in the shown month
+- **THEN** no marker read and no call are made while the app stays in the background
+- **AND** on returning, the cached days show at once and exactly one call catches the month up
+
+#### Scenario: Another tab is shown
+- **WHEN** the viewer switches to another tab for 35 seconds with a colleague's calendar kept in the
+  People tab, and the owner then changes a shift in the shown month
+- **THEN** no marker read and no call are made until the People tab is shown again, and then exactly
+  one call catches the month up
 
 ### Requirement: Catching up reads only the gap
 When a cached month is behind, the system SHALL ask the server only for documents changed after the

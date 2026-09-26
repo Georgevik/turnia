@@ -257,6 +257,10 @@ difference from the previous step:
 | `FirestoreRest` flips `e2.onSwap` | +1 | +1 | the cursor moves forward; the other events are kept |
 | Wait 5 s | +0 | +0 | no loop: a marker that trails its event settles |
 | `FirestoreRest` gives `e2` to carla | +1 | +1 | `MN` disappears; `e2` is gone from the entry |
+| App in the background 40 s; the server withdraws `e3` from swap | +0 | +0 | — |
+| Back to the foreground | +1 (with `since`) | +1 (re-attach) | `e3` updated |
+| Calendar tab for 40 s; the server offers `e3` again | +0 | +0 | — |
+| Back to the People tab | +1 (with `since`) | not asserted | `e3` updated |
 | Alice writes `groupEvents` on her own sync doc | — | — | the rules deny it; her other markers still write |
 
 The live steps depend on the Functions emulator running the new trigger. The suite already relies on
@@ -283,9 +287,15 @@ What the E2E cannot see:
   and the cost goes into `firestore-usage.md`.
 - **[`personalEvents` markers move for the owner's own edits in any month]** → Only the months in the
   shown window count, so an edit elsewhere wakes nobody.
-- **[The listener outlives the screen by 10 minutes]** → This is the existing `SharedListeners`
-  keep-alive. It saves a billed re-attach on a quick back-and-forth, and the spec's scenario allows
-  it.
+- **[The listener outlives the screen]** → By 35 seconds at most. `ExternalCalendarViewModel` exposes
+  its state with `stateIn(WhileSubscribed(5 s))` and the screen collects it with
+  `collectAsStateWithLifecycle()`, so the repository flow stops 5 s after the screen stops being
+  visible. The owner-marker listener (`observeShared`) then has its own 30-second keep-alive, apart
+  from the user's own sync listener, which keeps its 10 minutes. This matters because the
+  ViewModel outlives the screen twice over: in the background, and behind another tab, whose back
+  stack keeps the entry and its ViewModel (`MainNavigationState`). Firestore does not bill a re-attach
+  within 30 minutes of the last listen, so the short keep-alive costs nothing extra; the audit still
+  counts it as one attach, an upper bound.
 - **[Existing shifts have no marker yet]** → No backfill is needed. Every cache starts empty with this
   release, so a first view fetches the month whole. The first write after deploy creates the marker,
   and a marker present in the snapshot but missing from `seen` reads as behind.

@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.YearMonth
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Interacts with Firestore: `users/{uid}/sync/updates`
@@ -41,9 +42,10 @@ class UserSyncFirestore(
         SharedListeners<UserId, Synced<UserSyncDocument>>(scope, keepAlive = 10.minutes)
 
     // Apart from [listeners] so the audit tells what a colleague's calendar costs from what the
-    // user's own sync does.
+    // user's own sync does. A short keep-alive: it only has to ride out a quick back-and-forth, and
+    // every minute it lingers after the calendar is gone is a read for each change nobody sees.
     private val sharedListeners =
-        SharedListeners<UserId, Synced<UserSyncDocument>>(scope, keepAlive = 10.minutes)
+        SharedListeners<UserId, Synced<UserSyncDocument>>(scope, keepAlive = 30.seconds)
 
     fun observe(uid: UserId): Flow<UserSyncDocument> =
         synced(uid).map { it.value }.distinctUntilChanged()

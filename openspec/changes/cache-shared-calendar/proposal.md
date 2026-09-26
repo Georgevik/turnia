@@ -48,8 +48,9 @@ and asks the server only for the gap.
   - `personalOneOffEvents[month]`
   - `personalEventTypesUpdatedAt`
 
-  A month is caught up only when one of them moved. The listener is `UserSyncFirestore.observe`'s,
-  so it detaches 10 minutes after the screen closes.
+  A month is caught up only when one of them moved. It follows them only while the calendar is
+  visible: closing it, sending the app to the background or showing another tab stops the listener
+  within 35 seconds (5 s for the screen, then a 30-second keep-alive).
 - **`getSharedCalendar` gains an optional `since` cursor.**
   - With it, the function returns only documents whose `updateAt` is newer. Soft-deleted events come
     back, and so do shifts that left the owner (transferred or handed back), listed as removals by

@@ -21,8 +21,9 @@ import com.geoviksoft.turnia.ui.components.daydetail.model.toUiByDate
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
@@ -30,6 +31,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -53,13 +55,15 @@ class ExternalCalendarViewModel(
     private val invalidateData = MutableStateFlow(1)
 
     private val _uiState = MutableStateFlow(GroupCalendarUi())
-    val uiState: StateFlow<GroupCalendarUi> = _uiState.asStateFlow()
 
-    init {
-        // Here and not in the screen: the ViewModel lives once per visit, the composable recomposes.
-        adRepository.actionPerformed()
-
-        viewModelScope.launch {
+    /**
+     * The events are followed only while somebody watches: the ViewModel outlives its screen — in
+     * the background, or behind another tab, whose back stack keeps it — and a colleague's calendar
+     * followed then would pay a marker read and a call for every change nobody sees. On return the
+     * device's copy paints at once and one catch-up brings it level.
+     */
+    val uiState: StateFlow<GroupCalendarUi> = channelFlow {
+        launch {
             combine(month, invalidateData) { month, _ -> month }
                 .flatMapLatest { month -> events(month) }
                 .collect { month ->
@@ -68,6 +72,12 @@ class ExternalCalendarViewModel(
                     }
                 }
         }
+        _uiState.collect { send(it) }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), _uiState.value)
+
+    init {
+        // Here and not in the screen: the ViewModel lives once per visit, the composable recomposes.
+        adRepository.actionPerformed()
 
         if (data is ExternalCalendarData.Group) {
             groupRepository.getGroups()
@@ -158,6 +168,11 @@ class ExternalCalendarViewModel(
     }
 
     fun userMessageShown() = _uiState.update { it.copy(userMessage = null) }
+
+    private companion object {
+        /** Long enough to ride out a rotation without dropping the listeners. */
+        const val STOP_TIMEOUT_MS = 5_000L
+    }
 }
 
 
