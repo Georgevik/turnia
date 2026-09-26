@@ -26,18 +26,17 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.minus
-import kotlinx.datetime.plus
+import kotlinx.datetime.YearMonth
 import kotlinx.datetime.todayIn
+import kotlinx.datetime.yearMonth
 import kotlin.time.Clock
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -48,7 +47,9 @@ class ExternalCalendarViewModel(
     private val userRepository: UserRepository,
     adRepository: AdRepository,
 ) : ViewModel() {
-    private val monthDate = MutableStateFlow(Clock.System.todayIn(TimeZone.currentSystemDefault()))
+    // A month, not a day: the screen opens on today and the grid then reports the 1st. A StateFlow
+    // drops an equal value, so two days of the same month ask once.
+    private val month = MutableStateFlow(Clock.System.todayIn(TimeZone.currentSystemDefault()).yearMonth)
     private val invalidateData = MutableStateFlow(1)
 
     private val _uiState = MutableStateFlow(GroupCalendarUi())
@@ -59,8 +60,8 @@ class ExternalCalendarViewModel(
         adRepository.actionPerformed()
 
         viewModelScope.launch {
-            combine(monthDate, invalidateData) { date, _ -> date }
-                .flatMapLatest { date -> events(date) }
+            combine(month, invalidateData) { month, _ -> month }
+                .flatMapLatest { month -> events(month) }
                 .collect { month ->
                     _uiState.update {
                         it.copy(loading = false, events = month.events, oneOffs = month.oneOffs)
@@ -79,17 +80,18 @@ class ExternalCalendarViewModel(
     }
 
     /**
-     * A group's events come from the cache first and again once the server has something newer, so
-     * the month paints without waiting on a round trip. A colleague's cannot: see [sharedCalendar].
+     * Both paint from the device first and again once the server has something newer, so the month
+     * shows without waiting on a round trip: a group's through Firestore's own cache, a colleague's
+     * through the shared calendar's, which follows their changes for as long as it is on screen.
      */
-    private fun events(date: LocalDate): Flow<MonthEvents> =
+    private fun events(month: YearMonth): Flow<MonthEvents> =
         userRepository.loggedUserFlow.flatMapLatest { user ->
             val uid = user.id
             val events = when (data) {
                 // Revocation is followed rather than read once: a member removed while the
                 // calendar is open must lose the swap controls, not keep them until a reload.
                 is ExternalCalendarData.Group -> isRevoked().flatMapLatest { revoked ->
-                    groupRepository.getEventsByGroup(GroupId(data.id), date, monthDelta = 2)
+                    groupRepository.getEventsByGroup(GroupId(data.id), month.firstDay, monthDelta = 2)
                         .map { list ->
                             val events = list.map {
                                 it.toUi(
@@ -104,7 +106,7 @@ class ExternalCalendarViewModel(
                 }
 
                 is ExternalCalendarData.Personal ->
-                    sharedCalendar(UserId(data.id), viewerId = uid, date = date)
+                    sharedCalendar(UserId(data.id), viewerId = uid, month = month)
             }
 
             events
@@ -117,55 +119,45 @@ class ExternalCalendarViewModel(
     private fun sharedCalendar(
         ownerId: UserId,
         viewerId: UserId,
-        date: LocalDate,
+        month: YearMonth,
     ): Flow<MonthEvents> =
-        flow {
+        sharedCalendarRepository.sharedCalendar(ownerId, month)
             // Flagged here rather than emitted: an empty emission would wipe the month on screen
-            // while the next one is on its way, and one callable answers for both.
-            _uiState.update { it.copy(loading = true) }
-            val outcome = sharedCalendarRepository.getSharedCalendar(
-                ownerId = ownerId,
-                from = date.minus(SHARED_MONTH_DELTA, DateTimeUnit.MONTH),
-                to = date.plus(SHARED_MONTH_DELTA, DateTimeUnit.MONTH),
-            )
-
-            when (outcome) {
-                is Outcome.Success -> {
-                    val groupEvents = outcome.value.groupEvents.map {
-                        it.toUi(currentUserId = viewerId, removable = false)
-                    }
-                    val personalEvents = outcome.value.personalEvents
-                        .filterIsInstance<PersonalTypedEvent>()
-                        .map { it.toUi(removable = false) }
-                    // The owner's, shown as they are: the sheet offers no way to change them on a
-                    // calendar that is not the viewer's, and the rules would refuse the write.
-                    val oneOffs = outcome.value.personalEvents
-                        .filterIsInstance<PersonalOneOffEvent>()
-                        .toUiByDate()
-                    emit(
+            // while the next one is on its way. A month the device has answers in milliseconds.
+            .onStart { _uiState.update { it.copy(loading = true) } }
+            .map { outcome ->
+                when (outcome) {
+                    is Outcome.Success -> {
+                        val groupEvents = outcome.value.groupEvents.map {
+                            it.toUi(currentUserId = viewerId, removable = false)
+                        }
+                        val personalEvents = outcome.value.personalEvents
+                            .filterIsInstance<PersonalTypedEvent>()
+                            .map { it.toUi(removable = false) }
+                        // The owner's, shown as they are: the sheet offers no way to change them on a
+                        // calendar that is not the viewer's, and the rules would refuse the write.
+                        val oneOffs = outcome.value.personalEvents
+                            .filterIsInstance<PersonalOneOffEvent>()
+                            .toUiByDate()
                         MonthEvents(
                             events = (groupEvents + personalEvents).groupBy { it.date }.swapFirst(),
                             oneOffs = oneOffs,
-                        ),
-                    )
-                }
+                        )
+                    }
 
-                is Outcome.Failure -> {
-                    _uiState.update { it.copy(userMessage = outcome.error) }
-                    emit(MonthEvents(emptyMap(), emptyMap()))
+                    // Only reached with nothing cached for the month, or once the grant is gone.
+                    is Outcome.Failure -> {
+                        _uiState.update { it.copy(userMessage = outcome.error) }
+                        MonthEvents(emptyMap(), emptyMap())
+                    }
                 }
             }
-        }
 
     fun onMonthChanged(date: LocalDate) {
-        monthDate.update { date }
+        month.update { date.yearMonth }
     }
 
     fun userMessageShown() = _uiState.update { it.copy(userMessage = null) }
-
-    private companion object {
-        const val SHARED_MONTH_DELTA = 1
-    }
 }
 
 

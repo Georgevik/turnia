@@ -127,3 +127,21 @@ export function markGroupEventsUpdated(
     { merge: true },
   );
 }
+
+/**
+ * A shift the user holds, or has just stopped holding, moved in the given `YYYY-MM`. Kept on the
+ * user's own sync document because that is the one a colleague the calendar is shared with can
+ * read: the group's own marker is for members only.
+ */
+export function markUserGroupEventsUpdated(
+  db: Firestore,
+  writer: SyncWriter,
+  uid: string,
+  yearMonth: string,
+) {
+  writer.set(
+    db.doc(`users/${uid}/sync/updates`),
+    { groupEvents: { [yearMonth]: { updatedAt: FieldValue.serverTimestamp() } } },
+    { merge: true },
+  );
+}

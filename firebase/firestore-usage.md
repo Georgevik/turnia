@@ -29,6 +29,9 @@ of its last listen pays nothing.
 | Open a group calendar | 0 | 0 | — |
 | Open group info (admin) | 4–5 | **0** | Requests and types follow the sync listener. |
 | People tab, first time per 30 min | 2 | **1** | `calendarsSharedWithMe` listener attach (empty result = 1). |
+| Open a colleague's calendar, first time per month | — | 1 read + **1 call** | `sharedSync(snapshots)` attach on the owner's `sync/updates` (0 within 30 min of the last), and one `getSharedCalendar` for the month. Was 1 call per month visited and **2** on opening. |
+| Page back to, or reopen, a colleague's month already seen | — | **0** | Served from the device's cache, after the app was killed too, until the owner's markers move. |
+| The colleague changes a shift while their calendar is open | — | 1 read + 1 call | 1 read for their marker; `getSharedCalendar` with `since` returns only the changed documents. Server: `onGroupEventWrittenMarkHolders` adds 1 invocation and 1 write per holder (at most 2) to **every** group event write that changes what a calendar shows. |
 | Hide or show a shared calendar | — | 0 reads | 2 writes: `private/preferences` and its marker. The list is filtered on the device from the query already listened to; your other devices pay 1 preferences read. |
 | Somebody shares their calendar with you | — | — | Server: `onCalendarShared` reads each new grantee's `private/preferences` (1 read each) to stay silent for a calendar they hid. |
 | Groups / Swaps / Settings tabs | 0–1 | 0 | — |
@@ -73,6 +76,7 @@ function reads and writes on the server does not appear in the client audit.
 | Unbounded Firestore cache | Protects events older than the retention window from LRU eviction |
 | A month a one-off event moved out of is remembered as checked | 1 empty read per sync change and per calendar page, for as long as the month stays in view |
 | The day sheet takes its one-off events from the calendar instead of querying them | A second cache query and staleness check per open sheet |
+| A colleague's calendar is cached per month on the device and caught up through the owner's markers (`groupEvents`) with `since` | 1 call per month visited, 1 on every reopen, a second call on every open |
 
 ## Keeping it this way
 

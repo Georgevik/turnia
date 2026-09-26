@@ -40,6 +40,11 @@ class UserSyncFirestore(
     private val listeners =
         SharedListeners<UserId, Synced<UserSyncDocument>>(scope, keepAlive = 10.minutes)
 
+    // Apart from [listeners] so the audit tells what a colleague's calendar costs from what the
+    // user's own sync does.
+    private val sharedListeners =
+        SharedListeners<UserId, Synced<UserSyncDocument>>(scope, keepAlive = 10.minutes)
+
     fun observe(uid: UserId): Flow<UserSyncDocument> =
         synced(uid).map { it.value }.distinctUntilChanged()
 
@@ -49,11 +54,18 @@ class UserSyncFirestore(
     suspend fun get(uid: UserId): Outcome<UserSyncDocument, GenericFirestoreError> =
         outcomeCatching(TAG, { GenericFirestoreError(it) }) { synced(uid).awaitConfirmed() }
 
-    private fun synced(uid: UserId): Flow<Synced<UserSyncDocument>> =
-        listeners.shared(uid) { snapshots(uid) }
+    /**
+     * Another user's markers, for a calendar they share with this one: what tells the viewer's cache
+     * of that calendar it is behind.
+     */
+    fun observeShared(ownerId: UserId): Flow<Synced<UserSyncDocument>> =
+        sharedListeners.shared(ownerId) { snapshots(ownerId, "sharedSync(snapshots)") }
 
-    private fun snapshots(uid: UserId): Flow<Synced<UserSyncDocument>> =
-        syncDocument(uid).trackedSnapshots(TAG, "sync(snapshots)")
+    private fun synced(uid: UserId): Flow<Synced<UserSyncDocument>> =
+        listeners.shared(uid) { snapshots(uid, "sync(snapshots)") }
+
+    private fun snapshots(uid: UserId, operation: String): Flow<Synced<UserSyncDocument>> =
+        syncDocument(uid).trackedSnapshots(TAG, operation)
             .map { snapshot ->
                 // A user who has never written anything has no sync document: nothing to catch up with.
                 val document = if (!snapshot.exists) UserSyncDocument()

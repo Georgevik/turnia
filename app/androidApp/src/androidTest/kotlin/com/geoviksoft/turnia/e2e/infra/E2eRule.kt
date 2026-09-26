@@ -49,6 +49,10 @@ class E2eRule(
     lateinit var today: LocalDate
         private set
 
+    /** The instant the fixture's `$now` was resolved to: every seeded marker carries it. */
+    lateinit var seededAt: Instant
+        private set
+
     private lateinit var scenario: ActivityScenario<MainActivity>
     private var user: String? = null
 
@@ -80,6 +84,7 @@ class E2eRule(
         today = Clock.System.todayIn(TimeZone.currentSystemDefault())
         // Firestore keeps microseconds at most; a whole millisecond compares the same on both sides.
         val now = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds())
+        seededAt = now
         val fixture = Fixtures.load(fixtures, today, now)
 
         FirestoreRest.wipe()

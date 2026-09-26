@@ -129,6 +129,11 @@ internal object Fixtures {
 
         documents.keys.mapNotNull { USER.matchEntire(it)?.groupValues?.get(1) }.forEach { uid ->
             val months = monthsOf(documents, "users/$uid/personalEvents/")
+            val heldMonths = documents
+                .filterKeys { GROUP_EVENT.matches(it) }
+                .filterValues { it.stringOrNull("assigneeId") == uid }
+                .values.mapNotNull { it.stringOrNull("yearMonth") }
+                .toSet()
             val groups = documents
                 .filterKeys { GROUP.matches(it) }
                 .filterValues { group -> group.strings("memberUids").contains(uid) }
@@ -139,6 +144,7 @@ internal object Fixtures {
                     "personalEvents",
                     JsonObject(months.associate { it.toString() to updatedAt(marker) })
                 )
+                put("groupEvents", JsonObject(heldMonths.associateWith { updatedAt(marker) }))
                 listOf(
                     "personalEventTypesUpdatedAt", "revokedGroups", "account", "profile",
                     "joinRequests",
@@ -178,4 +184,5 @@ internal object Fixtures {
     private val PLACEHOLDER = Regex("""\$(date|yearMonth)\(([+-]\d+)\)""")
     private val GROUP = Regex("""groups/([^/]+)""")
     private val USER = Regex("""users/([^/]+)""")
+    private val GROUP_EVENT = Regex("""groups/[^/]+/events/[^/]+""")
 }

@@ -80,6 +80,13 @@ object FirestoreAudit {
         }
     }
 
+    /** Invocations of the callable [name] so far in this process. */
+    fun callsTo(name: String): Int = usage(name, name).calls
+
+    /** What one call of one reporting class has spent so far in this process. */
+    fun usage(tag: String, operation: String): FirestoreUsage =
+        usageByTag.load()[tag]?.get(operation) ?: FirestoreUsage()
+
     fun triggerSummary() {
         summaryLogger.tryEmit(Random.nextInt())
     }
