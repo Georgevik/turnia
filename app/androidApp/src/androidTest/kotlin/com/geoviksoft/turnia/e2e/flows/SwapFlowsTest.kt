@@ -5,6 +5,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.geoviksoft.turnia.e2e.infra.Documents
 import com.geoviksoft.turnia.e2e.infra.E2eRule
 import com.geoviksoft.turnia.e2e.infra.SignedInAs
+import com.geoviksoft.turnia.e2e.infra.awaitLogged
 import com.geoviksoft.turnia.e2e.infra.boolean
 import com.geoviksoft.turnia.e2e.infra.objects
 import com.geoviksoft.turnia.e2e.infra.string
@@ -42,6 +43,7 @@ class SwapFlowsTest {
 
         val event = Documents.await("groups/urgencias/events/e4") { it.boolean("onSwap") == true }
         assertEquals(emptyList<Any>(), event.objects("history"))
+        compose.awaitLogged("swap_offered")
 
         calendar.back()
         swaps.openMine()
@@ -56,6 +58,7 @@ class SwapFlowsTest {
 
         val event = Documents.await("groups/urgencias/events/e1") { it.string("assigneeId") == "carla" }
         assertEquals(false, event.boolean("onSwap"))
+        compose.awaitLogged("swap_taken")
         val history = event.objects("history")
         assertEquals(1, history.size)
         assertEquals(
@@ -93,5 +96,6 @@ class SwapFlowsTest {
         val event = Documents.await("groups/urgencias/events/e2") { it.string("assigneeId") == "alice" }
         assertEquals(true, event.boolean("onSwap"))
         assertEquals("returned", event.objects("history").last().string("type"))
+        compose.awaitLogged("swap_returned")
     }
 }

@@ -6,6 +6,7 @@ import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import com.geoviksoft.turnia.core.domain.analytics.AnalyticsEvent
 
 // Long enough for a first read from the emulator, or a callable's cold start, to land on screen.
 internal const val UI_TIMEOUT_MS = 30_000L
@@ -54,4 +55,25 @@ private fun ComposeTestRule.count(matcher: SemanticsMatcher, useUnmergedTree: Bo
 internal fun SemanticsNodeInteraction.scrollAndClick(): SemanticsNodeInteraction {
     runCatching { performScrollTo() }
     return performClick()
+}
+
+/**
+ * Waits until [name] has been logged [count] times and returns those events. The report follows
+ * the backend's answer, not the screen, so it can land after the UI already shows the result.
+ */
+internal fun ComposeTestRule.awaitLogged(
+    name: String,
+    count: Int = 1,
+    timeoutMs: Long = UI_TIMEOUT_MS,
+): List<AnalyticsEvent> {
+    waitUntil(timeoutMs) { RecordingAnalytics.named(name).size >= count }
+    return RecordingAnalytics.named(name)
+}
+
+internal fun ComposeTestRule.awaitUserProperty(
+    name: String,
+    value: String,
+    timeoutMs: Long = UI_TIMEOUT_MS,
+) {
+    waitUntil(timeoutMs) { RecordingAnalytics.property(name) == value }
 }

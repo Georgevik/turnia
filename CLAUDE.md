@@ -137,6 +137,30 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
 - **Analytics:** `share_prompt_shown`, `share_prompt_shared` and `share_prompt_dismissed` with
   `audience` and `milestone`, and `sign_up` with its `method` when an account is created.
 
+## Analytics
+
+- **Every name lives in `AnalyticsEvent` and `AnalyticsUserProperty`**, never written at a call
+  site. The console groups by the literal string, so a renamed event starts a new series and
+  orphans the old one: existing names are never changed.
+- **An action is logged in its repository, once it has succeeded** — after the `Outcome` says so,
+  never before the write. The repository is the one place every screen that reaches the action
+  passes through. The app layer logs only what no repository sees: `screen_view`, the group
+  invitation's share sheet, opening a colleague's calendar, and the `app_language` property.
+- **Nothing that identifies a person**: no id, name, username, email, invitation code, notes or
+  other free text in a parameter or a property. Every value is a boolean (sent as `"true"` /
+  `"false"`), a small count or one of a fixed set of strings. The account is tied to its reports
+  only by `setUser`.
+- **`login` is a sign-in, not a launch**: it is logged only when a user follows a signed-out state
+  in the same process, and only for an account that already existed — a new one logs `sign_up`.
+- **User properties cost no listener**: `group_count` and `is_admin` ride on `getGroups()`, which the
+  Calendar tab already collects, and are set only when they change.
+- **Parameters and properties must be registered by hand** in the GA console (*Admin → Custom
+  definitions*), or they show only in DebugView and BigQuery. Event-scoped: `screen_name`,
+  `method`, `audience`, `milestone`, `auto_approve`, `type_count`, `all_day`, `multi_month`, `via`,
+  `type`. User-scoped: `group_count`, `is_admin`, `app_language`. A new one is added there too.
+- The E2E suite swaps `Analytics` for `RecordingAnalytics`; assert through `awaitLogged` and
+  `awaitUserProperty`, since a report follows the backend's answer, not the screen.
+
 ## Data retention & local cache
 
 Firebase must **not** accumulate every past event forever. The backend keeps only a **recent window**; anything older is purged from Firestore and preserved **on the device**.
@@ -470,7 +494,7 @@ Use the run configurations provided by the run widget in your IDE's toolbar. You
 
 ### E2E tests
 
-The 39 critical happy paths run on an Android emulator against the Firebase emulators, seeded from
+The 40 critical happy paths run on an Android emulator against the Firebase emulators, seeded from
 [`firebase/test/fixtures`](firebase/test/README.md) — see that README to run them. They live in
 `app/androidApp/src/androidTest/.../e2e`: `flows/` holds the tests, `robots/` drives the screens,
 `infra/` seeds the emulators and points the app at them (`TurniaTestApplication`).

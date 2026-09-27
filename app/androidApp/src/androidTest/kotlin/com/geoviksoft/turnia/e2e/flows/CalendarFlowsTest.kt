@@ -4,11 +4,15 @@ import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.geoviksoft.turnia.e2e.infra.Documents
 import com.geoviksoft.turnia.e2e.infra.E2eRule
+import com.geoviksoft.turnia.e2e.infra.RecordingAnalytics
+import com.geoviksoft.turnia.e2e.infra.awaitLogged
 import com.geoviksoft.turnia.e2e.infra.boolean
 import com.geoviksoft.turnia.e2e.infra.string
 import com.geoviksoft.turnia.e2e.robots.AppRobot
 import com.geoviksoft.turnia.e2e.robots.CalendarRobot
 import kotlinx.datetime.yearMonth
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
@@ -37,6 +41,7 @@ class CalendarFlowsTest {
         calendar.awaitDayShows(world.day(6), "MN")
         // Moving on a month still draws a grid.
         calendar.showMonthOf(world.day(40))
+        assertTrue("A restored session is no login", RecordingAnalytics.named("login").isEmpty())
     }
 
     @Test
@@ -53,6 +58,7 @@ class CalendarFlowsTest {
                 it.string("assigneeId") == "alice" &&
                 it.string("groupEventTypeId") == "manana"
         }
+        compose.awaitLogged("group_event_created")
     }
 
     @Test
@@ -69,6 +75,7 @@ class CalendarFlowsTest {
         val (typeId, _) = Documents.awaitIn("users/alice/personalEventTypes") {
             it.string("name") == "Guardia extra" && it.string("acronym") == "GX"
         }
+        compose.awaitLogged("personal_event_type_created")
 
         // My events sits above the tabs.
         calendar.back()
@@ -81,12 +88,19 @@ class CalendarFlowsTest {
                 it.string("date") == date.toString() &&
                 it.string("yearMonth") == date.yearMonth.toString()
         }
+        compose.awaitLogged("personal_event_created")
 
         calendar.openDay(date)
         calendar.writeNote(eventId, "Traer bata")
 
         calendar.awaitEventShows(eventId, "Traer bata")
         Documents.await("users/alice/personalEvents/$eventId") { it.string("notes") == "Traer bata" }
+        compose.awaitLogged("event_notes_saved")
+        assertEquals(
+            "Saving the type once is one creation",
+            1,
+            RecordingAnalytics.named("personal_event_type_created").size,
+        )
     }
 
     @Test
@@ -97,5 +111,6 @@ class CalendarFlowsTest {
 
         calendar.awaitNoEvent("e4")
         Documents.await("groups/urgencias/events/e4") { it.boolean("isDeleted") == true }
+        compose.awaitLogged("group_event_deleted")
     }
 }

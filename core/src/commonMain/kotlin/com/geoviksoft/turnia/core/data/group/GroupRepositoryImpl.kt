@@ -15,6 +15,7 @@ import com.geoviksoft.turnia.core.data.group.mappers.GroupMapper
 import com.geoviksoft.turnia.core.data.logger.Logger
 import com.geoviksoft.turnia.core.domain.analytics.Analytics
 import com.geoviksoft.turnia.core.domain.analytics.AnalyticsEvent
+import com.geoviksoft.turnia.core.domain.analytics.AnalyticsUserProperty
 import com.geoviksoft.turnia.core.domain.model.EventId
 import com.geoviksoft.turnia.core.domain.model.EventTypeId
 import com.geoviksoft.turnia.core.domain.model.Group
@@ -38,6 +39,8 @@ import com.geoviksoft.turnia.core.system.errorOrNull
 import com.geoviksoft.turnia.core.system.isSuccess
 import com.geoviksoft.turnia.core.system.map
 import com.geoviksoft.turnia.core.system.mapError
+import com.geoviksoft.turnia.core.system.onFailure
+import com.geoviksoft.turnia.core.system.onSuccess
 import com.geoviksoft.turnia.core.system.toFailure
 import com.geoviksoft.turnia.core.system.toInstant
 import com.geoviksoft.turnia.core.system.toSuccess
@@ -56,6 +59,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.withIndex
 import kotlinx.datetime.DateTimeUnit
@@ -85,6 +89,8 @@ class GroupRepositoryImpl(
     override val pendingEventTypes: StateFlow<List<GroupEventType>> =
         _pendingEventTypes.asStateFlow()
 
+    private val reportedMembership = MutableStateFlow<Pair<Int, Boolean>?>(null)
+
     /**
      * The groups the user belongs to, plus the ones they were removed from while still holding
      * events. The second kind comes from the user's own snapshots, not from `groups`: a revoked
@@ -102,8 +108,21 @@ class GroupRepositoryImpl(
                 val colors = preferences.groupEventTypeColors
                 mine.map { groupMapper.map(it, userId, colors) } +
                         revoked.map { groupMapper.map(it, colors) }
-            }
+            }.onEach(::reportMembership)
         }
+
+    /**
+     * Rides on whichever screen is already listening, so the user properties cost no listener of
+     * their own. Several collectors see the same groups; only a change is reported.
+     */
+    private fun reportMembership(groups: List<Group>) {
+        val member = groups.filterNot { it.isRevoked }
+        val membership = member.size to member.any { it.isAdmin }
+        if (reportedMembership.getAndUpdate { membership } == membership) return
+
+        analytics.setUserProperty(AnalyticsUserProperty.GroupCount(membership.first))
+        analytics.setUserProperty(AnalyticsUserProperty.IsAdmin(membership.second))
+    }
 
     override fun createInvitationCode(): String =
         invitationCodeFactory.create(appConfigRepository.featureFlags.value.invitationCodeLength)
@@ -148,7 +167,9 @@ class GroupRepositoryImpl(
             return GroupError.NotFound.toFailure()
         }
 
-        analytics.log(AnalyticsEvent.GroupCreated)
+        // A group's first types are written with it and never pass through saveEventType.
+        created.types.forEach { analytics.log(AnalyticsEvent.GroupEventTypeCreated) }
+        analytics.log(AnalyticsEvent.GroupCreated(created.autoApprove, created.types.size))
 
         return created.toSuccess()
     }
@@ -216,19 +237,23 @@ class GroupRepositoryImpl(
 
     override suspend fun leaveGroup(groupId: GroupId): Outcome<Unit, GroupError> =
         groupMembershipFunction.leaveGroup(groupId)
+            .onSuccess { analytics.log(AnalyticsEvent.GroupLeft) }
 
     override suspend fun removeMember(
         groupId: GroupId,
         userId: UserId,
     ): Outcome<Unit, GroupError> = groupMembershipFunction.removeMember(groupId, userId)
+        .onSuccess { analytics.log(AnalyticsEvent.MemberRemoved) }
 
     override suspend fun deleteGroup(groupId: GroupId): Outcome<Unit, GroupError> =
         groupFunction.deleteGroup(groupId)
+            .onSuccess { analytics.log(AnalyticsEvent.GroupDeleted) }
 
     override suspend fun rejectJoinRequest(
         groupId: GroupId,
         userId: UserId,
     ): Outcome<Unit, GroupError> = groupMembershipFunction.rejectJoinRequest(groupId, userId)
+        .onSuccess { analytics.log(AnalyticsEvent.JoinRequestRejected) }
 
     /**
      * One read for the pointer list and one per request it names. A pointer to a request that is no
@@ -276,7 +301,9 @@ class GroupRepositoryImpl(
 
         val types = group.types.filterNot { it.id == type.id } + saved
 
-        return updateGroup(group.copy(types = types)).map { }
+        return updateGroup(group.copy(types = types))
+            .onSuccess { if (existing == null) analytics.log(AnalyticsEvent.GroupEventTypeCreated) }
+            .map { }
     }
 
     override suspend fun saveTypeColor(
@@ -303,7 +330,7 @@ class GroupRepositoryImpl(
         }
 
         groupEventFirestore.set(event.groupId, event.id, groupMapper.map(event))
-        analytics.log(AnalyticsEvent.GroupEventCreated)
+            .onSuccess { analytics.log(AnalyticsEvent.GroupEventCreated) }
     }
 
     private suspend fun isRevoked(userId: UserId, groupId: GroupId): Boolean =
@@ -325,6 +352,7 @@ class GroupRepositoryImpl(
         }
 
         return groupEventFirestore.delete(groupId, eventId, eventDate)
+            .onSuccess { analytics.log(AnalyticsEvent.GroupEventDeleted) }
             .mapError { error -> Logger.e(TAG, "Failed to delete the group event: $error") }
     }
 
@@ -348,6 +376,9 @@ class GroupRepositoryImpl(
         }
 
         return groupEventFirestore.updateOnSwap(groupId, eventId, eventDate, onSwap)
+            .onSuccess {
+                analytics.log(if (onSwap) AnalyticsEvent.SwapOffered else AnalyticsEvent.SwapWithdrawn)
+            }
             .mapError { error ->
                 Logger.e(TAG, "Failed to set the group event onSwap: $error")
                 SwapError.SaveFailed
@@ -356,9 +387,14 @@ class GroupRepositoryImpl(
 
     override suspend fun takeEvent(groupId: GroupId, eventId: EventId): Outcome<Unit, SwapError> =
         groupEventFunction.takeEvent(groupId, eventId)
+            .onSuccess { analytics.log(AnalyticsEvent.SwapTaken) }
+            .onFailure { error ->
+                if (error == SwapError.TakenBySomeoneElse) analytics.log(AnalyticsEvent.SwapTakeLost)
+            }
 
     override suspend fun returnEvent(groupId: GroupId, eventId: EventId): Outcome<Unit, SwapError> =
         groupEventFunction.returnEvent(groupId, eventId)
+            .onSuccess { analytics.log(AnalyticsEvent.SwapReturned) }
 
     override fun getEventsByGroup(
         groupId: GroupId,

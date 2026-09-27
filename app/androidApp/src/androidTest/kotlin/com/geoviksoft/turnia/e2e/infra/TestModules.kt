@@ -4,6 +4,7 @@ import com.geoviksoft.turnia.core.data.config.SharePromptRepositoryImpl
 import com.geoviksoft.turnia.core.data.config.mappers.SharePromptMilestonesMapper
 import com.geoviksoft.turnia.core.domain.analytics.Analytics
 import com.geoviksoft.turnia.core.domain.analytics.AnalyticsEvent
+import com.geoviksoft.turnia.core.domain.analytics.AnalyticsUserProperty
 import com.geoviksoft.turnia.core.domain.model.EventKind
 import com.geoviksoft.turnia.core.domain.model.FeatureFlags
 import com.geoviksoft.turnia.core.domain.model.UserId
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import org.koin.dsl.module
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -91,8 +93,17 @@ internal object RecordingAnalytics : Analytics {
 
     fun named(name: String): List<AnalyticsEvent> = events.filter { it.name == name }
 
+    private val properties = ConcurrentHashMap<String, String>()
+
+    /** The last value each user property was set to, as the console would hold it. */
+    fun property(name: String): String? = properties[name]
+
     override fun log(event: AnalyticsEvent) {
         logged += event
+    }
+
+    override fun setUserProperty(property: AnalyticsUserProperty) {
+        properties[property.name] = property.value
     }
 
     override fun setUser(userId: UserId?) = Unit

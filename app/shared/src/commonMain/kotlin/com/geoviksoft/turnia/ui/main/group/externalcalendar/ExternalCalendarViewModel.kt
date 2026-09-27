@@ -2,6 +2,8 @@ package com.geoviksoft.turnia.ui.main.group.externalcalendar
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.geoviksoft.turnia.core.domain.analytics.Analytics
+import com.geoviksoft.turnia.core.domain.analytics.AnalyticsEvent
 import com.geoviksoft.turnia.core.domain.model.GroupId
 import com.geoviksoft.turnia.core.domain.model.PersonalOneOffEvent
 import com.geoviksoft.turnia.core.domain.model.PersonalTypedEvent
@@ -48,6 +50,7 @@ class ExternalCalendarViewModel(
     private val sharedCalendarRepository: SharedCalendarRepository,
     private val userRepository: UserRepository,
     adRepository: AdRepository,
+    analytics: Analytics,
 ) : ViewModel() {
     // A month, not a day: the screen opens on today and the grid then reports the 1st. A StateFlow
     // drops an equal value, so two days of the same month ask once.
@@ -78,6 +81,7 @@ class ExternalCalendarViewModel(
     init {
         // Here and not in the screen: the ViewModel lives once per visit, the composable recomposes.
         adRepository.actionPerformed()
+        if (data is ExternalCalendarData.Personal) analytics.log(AnalyticsEvent.SharedCalendarViewed)
 
         if (data is ExternalCalendarData.Group) {
             groupRepository.getGroups()

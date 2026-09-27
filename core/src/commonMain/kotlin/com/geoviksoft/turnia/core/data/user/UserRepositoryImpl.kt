@@ -8,6 +8,7 @@ import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.UserProfile
 import com.geoviksoft.turnia.core.data.logger.Logger
 import com.geoviksoft.turnia.core.data.user.mappers.UserDocumentMapper
 import com.geoviksoft.turnia.core.domain.analytics.Analytics
+import com.geoviksoft.turnia.core.domain.analytics.AnalyticsEvent
 import com.geoviksoft.turnia.core.domain.model.DeleteAccountError
 import com.geoviksoft.turnia.core.domain.model.EmailAuthError
 import com.geoviksoft.turnia.core.domain.model.User
@@ -82,18 +83,28 @@ class UserRepositoryImpl(
 
     init {
         scope.launch {
+            // A session restored at launch arrives first, with no sign-out before it; only a user
+            // who follows a signed-out state actually signed in.
+            var signedOutSeen = false
             auth.authStateChanged
                 // authStateChanged also fires on token refresh; only a different account is a new session.
                 .distinctUntilChangedBy { it?.uid }
                 .onEach { firebaseUser -> analytics.setUser(firebaseUser?.uid?.let(::UserId)) }
                 .flatMapLatest { firebaseUser ->
-                    if (firebaseUser == null) flowOf(UserSession.Unauthenticated)
-                    else gatherUserInfo(firebaseUser)
+                    if (firebaseUser == null) {
+                        signedOutSeen = true
+                        flowOf(UserSession.Unauthenticated)
+                    } else {
+                        gatherUserInfo(firebaseUser, signedIn = signedOutSeen)
+                    }
                 }.collect { session -> _userSession.value = session }
         }
     }
 
-    private fun gatherUserInfo(firebaseUser: FirebaseUser): Flow<UserSession.Authenticated> = flow {
+    private fun gatherUserInfo(
+        firebaseUser: FirebaseUser,
+        signedIn: Boolean,
+    ): Flow<UserSession.Authenticated> = flow {
         val userId = UserId(firebaseUser.uid)
         // Emit what auth already knows so the UI is never blocked on the profile read.
         emit(UserSession.Authenticated(userMapper.map(firebaseUser)))
@@ -106,6 +117,8 @@ class UserRepositoryImpl(
         val remoteUserResult = remoteProfiles.fetch(userId)
         remoteUserResult.valueOrNull()?.let { fetchedUser ->
             Logger.i(TAG, "Success user info for users/<uid>")
+            // An account found is an account that existed: a new one logs `sign_up` instead.
+            if (signedIn) analytics.log(AnalyticsEvent.Login(signInMethod(firebaseUser)))
             val subscription = remotePrivate.fetchSubscription(userId).valueOrNull()
             val profile = provisioner.backfillUsername(userId, fetchedUser)
             // Emit session with updated userinfo
@@ -151,6 +164,7 @@ class UserRepositoryImpl(
         val uid = loggedUser?.id ?: return Unit.toFailure()
 
         return remotePrivate.hideSharedCalendar(uid, userId)
+            .onSuccess { analytics.log(AnalyticsEvent.SharedCalendarHidden) }
             .mapError { error -> Logger.e(TAG, "Failed to hide a shared calendar: $error") }
     }
 
@@ -252,6 +266,7 @@ class UserRepositoryImpl(
         val uid = loggedUser?.id ?: return Unit.toFailure()
 
         return remoteProfiles.grantCalendarAccess(uid, userId)
+            .onSuccess { analytics.log(AnalyticsEvent.CalendarShared) }
             .mapError { error -> Logger.e(TAG, "Failed to grant calendar access: $error") }
     }
 
@@ -259,6 +274,7 @@ class UserRepositoryImpl(
         val uid = loggedUser?.id ?: return Unit.toFailure()
 
         return remoteProfiles.revokeCalendarAccess(uid, userId)
+            .onSuccess { analytics.log(AnalyticsEvent.CalendarShareRevoked) }
             .mapError { error -> Logger.e(TAG, "Failed to revoke calendar access: $error") }
     }
 
@@ -309,6 +325,8 @@ class UserRepositoryImpl(
 
     override suspend fun deleteAccount(): Outcome<Unit, DeleteAccountError> =
         userProfileFunction.deleteAccount().onSuccess {
+            // Before signing out, while the reports are still bound to the account being deleted.
+            analytics.log(AnalyticsEvent.AccountDeleted)
             // Not `signOut()`: unregistering the push token writes to `private/account`, and the
             // session's token is still valid for a while, so it would recreate a document the
             // server has just deleted. There is nothing left to push to anyway.

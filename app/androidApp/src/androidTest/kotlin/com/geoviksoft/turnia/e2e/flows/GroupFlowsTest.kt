@@ -6,7 +6,12 @@ import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.geoviksoft.turnia.e2e.infra.Documents
 import com.geoviksoft.turnia.e2e.infra.E2eRule
+import com.geoviksoft.turnia.e2e.infra.RecordingAnalytics
+import com.geoviksoft.turnia.e2e.infra.RecordingTextSharer
 import com.geoviksoft.turnia.e2e.infra.SignedInAs
+import com.geoviksoft.turnia.e2e.infra.UI_TIMEOUT_MS
+import com.geoviksoft.turnia.e2e.infra.awaitLogged
+import com.geoviksoft.turnia.e2e.infra.awaitUserProperty
 import com.geoviksoft.turnia.e2e.infra.objects
 import com.geoviksoft.turnia.e2e.infra.string
 import com.geoviksoft.turnia.e2e.infra.strings
@@ -15,6 +20,7 @@ import com.geoviksoft.turnia.e2e.robots.CalendarRobot
 import com.geoviksoft.turnia.e2e.robots.GroupsRobot
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
@@ -40,6 +46,16 @@ class JoinGroupFlowsTest {
         assertEquals(listOf("dana"), group.strings("memberUids"))
         assertEquals(listOf("dana"), group.strings("adminUids"))
         assertEquals(listOf("Guardia"), group.objects("groupEventTypes").map { it.string("name") })
+
+        val created = compose.awaitLogged("group_created").single()
+        assertEquals(1L, created.parameters["type_count"])
+        assertEquals(
+            "One type created with the group",
+            1,
+            RecordingAnalytics.named("group_event_type_created").size,
+        )
+        compose.awaitUserProperty("group_count", "1")
+        compose.awaitUserProperty("is_admin", "true")
     }
 
     @Test
@@ -81,10 +97,12 @@ class InvitationLinkFlowTest {
     @Test
     fun invitationLink_prefillsTheJoinSheet() {
         GroupsRobot(compose).awaitJoinCode("URG001")
+        val opened = compose.awaitLogged("invitation_opened").single()
+        assertEquals("link", opened.parameters["via"])
     }
 }
 
-/** Paths 11, 13 and 14: groups seen from inside. */
+/** Paths 11, 13, 14 and 40: groups seen from inside. */
 @RunWith(AndroidJUnit4::class)
 class GroupMembershipFlowsTest {
 
@@ -133,5 +151,17 @@ class GroupMembershipFlowsTest {
         assertFalse("carla" in group.strings("memberUids"))
         groups.openTab(AppRobot.TAB_GROUPS)
         groups.awaitText("No groups around here")
+        compose.awaitLogged("group_left")
+    }
+
+    @Test
+    @SignedInAs("bruno")
+    fun anyMemberInvites_withTheShareButton() {
+        groups.openGroupFromSettings("Urgencias")
+        groups.clickDescription("Invite to group")
+
+        compose.waitUntil(UI_TIMEOUT_MS) { RecordingTextSharer.shared.isNotEmpty() }
+        assertTrue(RecordingTextSharer.shared.single().contains("https://turnia.club/join/URG001"))
+        compose.awaitLogged("group_invite_shared")
     }
 }

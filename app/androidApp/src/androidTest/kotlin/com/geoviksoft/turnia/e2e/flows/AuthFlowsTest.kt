@@ -4,11 +4,14 @@ import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.geoviksoft.turnia.e2e.infra.Documents
 import com.geoviksoft.turnia.e2e.infra.E2eRule
+import com.geoviksoft.turnia.e2e.infra.RecordingAnalytics
+import com.geoviksoft.turnia.e2e.infra.awaitLogged
 import com.geoviksoft.turnia.e2e.infra.string
 import com.geoviksoft.turnia.e2e.robots.SignInRobot
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
@@ -32,6 +35,9 @@ class AuthFlowsTest {
         robot.signIn("alice@e2e.turnia.club", PASSWORD)
 
         robot.awaitMain()
+        val login = compose.awaitLogged("login").single()
+        assertEquals("email", login.parameters["method"])
+        assertTrue("An existing account is no sign-up", RecordingAnalytics.named("sign_up").isEmpty())
     }
 
     @Test
@@ -44,6 +50,8 @@ class AuthFlowsTest {
         val username = checkNotNull(profile.string("username"))
         assertEquals(uid, Documents.get("usernames/$username").string("uid"))
         assertEquals("nuria@e2e.turnia.club", Documents.get("users/$uid/private/account").string("email"))
+        assertEquals("email", compose.awaitLogged("sign_up").single().parameters["method"])
+        assertTrue("A new account is no login", RecordingAnalytics.named("login").isEmpty())
     }
 
     private companion object {
