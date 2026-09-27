@@ -24,6 +24,7 @@ dependencies {
     implementation(libs.play.services.ads)
     implementation(libs.koin.android)
     implementation(libs.firebase.messaging.android)
+    implementation(libs.firebase.analytics.android)
     implementation(libs.firebase.crashlytics)
     // App Check: Play Integrity attests the Play build; the debug provider never ships in it.
     releaseImplementation(libs.firebase.appcheck.playintegrity)

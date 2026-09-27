@@ -75,6 +75,7 @@ firebase-config = { module = "dev.gitlive:firebase-config", version.ref = "fireb
 firebase-messaging = { module = "dev.gitlive:firebase-messaging", version.ref = "firebase" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-messaging-android = { module = "com.google.firebase:firebase-messaging" }
+firebase-analytics-android = { module = "com.google.firebase:firebase-analytics" }
 firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }
 firebase-appcheck-playintegrity = { module = "com.google.firebase:firebase-appcheck-playintegrity" }
 firebase-appcheck-debug = { module = "com.google.firebase:firebase-appcheck-debug" }

@@ -20,6 +20,9 @@
 	<string>$(ADMOB_APP_ID)</string>
 	<key>AdMobBannerUnitId</key>
 	<string>$(ADMOB_BANNER_UNIT_ID)</string>
+	<!-- Deactivated in Debug, by build configuration (Configuration/Config.xcconfig). -->
+	<key>FIREBASE_ANALYTICS_COLLECTION_DEACTIVATED</key>
+	<string>$(ANALYTICS_COLLECTION_DEACTIVATED)</string>
 	<!-- iOS OAuth client id (from GoogleService-Info.plist CLIENT_ID). The GoogleSignIn
 	     SDK reads this to build its active configuration; KMPAuth never sets one itself,
 	     so without this key signInWithPresentingViewController has no configuration and fails.
