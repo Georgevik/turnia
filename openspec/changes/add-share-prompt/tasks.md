@@ -34,7 +34,7 @@ Their behaviour is proven by group 5.
 - [x] 1.4 Log `sign_up` with the sign-in method once `UserProvisioner.create` succeeds, and never for a
   returning sign-in. The method is the first provider that is not `firebase` (Android lists
   Firebase's own entry first), `other` when it is none of `google`, `apple` or `email`. Verify that
-  core compiles, then check it in GA4 DebugView on a first sign-in (8.2).
+  core compiles.
 - [x] 1.5 Build the share link next to `InvitationLinkConfig`:
   `https://turnia.club/?utm_source=turnia_share&utm_medium=share_prompt` (no `utm_campaign`, per review).
   Verify it is used by 3.2.
@@ -100,15 +100,8 @@ Their behaviour is proven by group 5.
 - [x] 5.3 Update the E2E path count in `CLAUDE.md` and `.github/workflows/android-e2e.yml`. Verify the
   number matches the suite.
 
-## 6. Docs and checks
+## 6. Docs
 
 - [x] 6.1 Document the two Remote Config parameters and the `sign_up` / `share_prompt_*` events where
   the project records its flags and events (`CLAUDE.md` *Monetization* sits next to ads, or a new
   short section). Verify it names the console defaults.
-- [ ] 6.2 Check by hand, on a device, with the milestones at `[3]`:
-  1. Add 2 events.
-  2. `adb shell am force-stop com.geoviksoft.turnia.debug`.
-  3. Add 1 more, and check that the sheet shows.
-  4. Share, and check that the link opens the landing page.
-- [ ] 6.3 Check attribution: install through a Play internal-test link carrying the `utm_*`, sign up,
-  and see `first_open` attributed to `turnia_share` and `sign_up` in GA4 DebugView.

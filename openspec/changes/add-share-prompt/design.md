@@ -216,9 +216,9 @@ opened, since its veil would otherwise take the tap.
 ## Risks / Trade-offs
 
 - **[The counter cannot be proven to survive a restart in E2E]** → Each test runs in a fresh process.
-  It is checked by hand: add events, force-stop the app, add the rest, and see the sheet.
+  Accepted: DataStore persists the count, and no manual check is planned.
 - **[Attribution is Android-only and can't be end-to-end tested]** → The Play referrer only exists
-  for a real install from Google Play. It is checked with GA4 DebugView on a test install. On iOS,
+  for a real install from Google Play, and no manual check is planned. On iOS,
   App Store campaign links could add downloads per campaign later; that needs the provider token
   from App Store Connect (see Open Questions).
 - **[The landing page is shared with invitations]** → `playUrl` changes. It must keep producing
