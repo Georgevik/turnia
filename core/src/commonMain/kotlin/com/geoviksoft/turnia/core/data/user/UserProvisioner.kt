@@ -47,7 +47,7 @@ class UserProvisioner(
         ).fold(
             onSuccess = {
                 Logger.i(TAG, "Created users/${firebaseUser.uid}")
-                analytics.log(AnalyticsEvent.SignUp(signUpMethod(firebaseUser)))
+                analytics.log(AnalyticsEvent.SignUp(signInMethod(firebaseUser)))
                 UserProfile(id = userId, name = name, username = username).toSuccess()
             },
             onFailure = { error ->
@@ -56,18 +56,6 @@ class UserProvisioner(
             },
         )
     }
-
-    /**
-     * The provider the account was made with, in the words Google's `sign_up` report expects.
-     * Android lists Firebase's own `firebase` entry first, so it is skipped.
-     */
-    private fun signUpMethod(firebaseUser: FirebaseUser): String =
-        when (firebaseUser.providerData.firstOrNull { it.providerId != "firebase" }?.providerId) {
-            "google.com" -> "google"
-            "apple.com" -> "apple"
-            "password" -> "email"
-            else -> "other"
-        }
 
     fun isValidUsername(username:String) : Boolean {
         return usernameFactory.isValid(username)

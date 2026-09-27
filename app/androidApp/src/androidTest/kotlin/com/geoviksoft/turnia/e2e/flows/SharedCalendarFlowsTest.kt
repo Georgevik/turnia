@@ -16,6 +16,7 @@ import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.e2e.infra.Fixtures
 import com.geoviksoft.turnia.e2e.infra.FirestoreRest
 import com.geoviksoft.turnia.e2e.infra.string
+import com.geoviksoft.turnia.e2e.infra.awaitLogged
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Timestamp
 import kotlinx.coroutines.runBlocking
@@ -65,6 +66,7 @@ class SharedCalendarFlowsTest {
         Documents.await("users/alice") { "carla" in it.strings("calendarSharedWith") }
         people.showSharedByMe()
         people.awaitText("Carla Cruz")
+        compose.awaitLogged("calendar_shared")
     }
 
     @Test
@@ -77,6 +79,7 @@ class SharedCalendarFlowsTest {
 
         // e2, which bruno covers, served by getSharedCalendar.
         calendar.awaitDayShows(world.day(4), "MN")
+        compose.awaitLogged("shared_calendar_viewed")
     }
 
     /**
@@ -238,6 +241,7 @@ class SharedCalendarFlowsTest {
         people.awaitNoText("Bruno Bravo")
         people.awaitText("Dana Doe")
         Documents.await(PREFERENCES) { "bruno" in it.strings(HIDDEN) }
+        compose.awaitLogged("shared_calendar_hidden")
 
         people.showHidden(count = 1)
         people.awaitText("Bruno Bravo")

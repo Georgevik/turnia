@@ -167,15 +167,15 @@ val dataModule: Module = module {
     single { RemoteConfigService(get(), get(), get()) }
     single<AppConfigRepository> { AppConfigRepositoryImpl(get(), get()) }
     single<SharePromptRepository> { SharePromptRepositoryImpl(get(), get(), get()) }
-    single<NotificationRepository> { NotificationRepositoryImpl() }
-    single<InvitationLinkRepository> { InvitationLinkRepositoryImpl() }
+    single<NotificationRepository> { NotificationRepositoryImpl(get()) }
+    single<InvitationLinkRepository> { InvitationLinkRepositoryImpl(get()) }
     single<GroupRepository> {
         GroupRepositoryImpl(
             get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(),
             get(), get()
         )
     }
-    single<PersonalEventRepository> { PersonalEventRepositoryImpl(get(), get(), get(), get(), get()) }
+    single<PersonalEventRepository> { PersonalEventRepositoryImpl(get(), get(), get(), get(), get(), get()) }
     single { SharedCalendarCache(get(named(SHARED_CALENDARS_STORE))) }
     single<SharedCalendarRepository> { SharedCalendarRepositoryImpl(get(), get(), get(), get(), get()) }
     single<AdRepository> { AdRepositoryImpl(get(), get(), get()) }

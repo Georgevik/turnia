@@ -31,7 +31,8 @@ interface PersonalEventRepository {
         notes: String?
     ): Outcome<Unit, Unit>
 
-    suspend fun saveEventType(type: PersonalEventType): Outcome<Unit, Unit>
+    /** [isNew] tells a created type from an edited one, which only the caller knows. */
+    suspend fun saveEventType(type: PersonalEventType, isNew: Boolean): Outcome<Unit, Unit>
 
     suspend fun deleteEventType(typeId: EventTypeId): Outcome<Unit, Unit>
 

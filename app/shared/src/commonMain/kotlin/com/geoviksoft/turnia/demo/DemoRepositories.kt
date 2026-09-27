@@ -2,6 +2,7 @@ package com.geoviksoft.turnia.demo
 
 import com.geoviksoft.turnia.core.domain.analytics.Analytics
 import com.geoviksoft.turnia.core.domain.analytics.AnalyticsEvent
+import com.geoviksoft.turnia.core.domain.analytics.AnalyticsUserProperty
 import com.geoviksoft.turnia.core.domain.model.DeleteAccountError
 import com.geoviksoft.turnia.core.domain.model.EmailAuthError
 import com.geoviksoft.turnia.core.domain.model.EventHistoryEntry
@@ -333,7 +334,7 @@ internal class DemoPersonalEventRepository(world: DemoWorld) : PersonalEventRepo
         return Unit.toSuccess()
     }
 
-    override suspend fun saveEventType(type: PersonalEventType): Outcome<Unit, Unit> {
+    override suspend fun saveEventType(type: PersonalEventType, isNew: Boolean): Outcome<Unit, Unit> {
         types.update { all -> all.filterNot { it.id == type.id } + type }
         return Unit.toSuccess()
     }
@@ -396,6 +397,8 @@ internal class DemoSharedCalendarRepository(private val world: DemoWorld) : Shar
 
 internal object DemoAnalytics : Analytics {
     override fun log(event: AnalyticsEvent) = Unit
+
+    override fun setUserProperty(property: AnalyticsUserProperty) = Unit
 
     override fun setUser(userId: UserId?) = Unit
 }

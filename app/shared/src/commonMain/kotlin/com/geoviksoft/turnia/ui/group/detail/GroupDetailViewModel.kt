@@ -3,6 +3,8 @@ package com.geoviksoft.turnia.ui.group.detail
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.geoviksoft.turnia.core.domain.analytics.Analytics
+import com.geoviksoft.turnia.core.domain.analytics.AnalyticsEvent
 import com.geoviksoft.turnia.core.domain.model.Group
 import com.geoviksoft.turnia.core.domain.model.GroupError
 import com.geoviksoft.turnia.core.domain.model.GroupEventType
@@ -52,6 +54,7 @@ class GroupDetailViewModel(
     private val groupId: GroupId?,
     private val groupRepository: GroupRepository,
     private val userRepository: UserRepository,
+    private val analytics: Analytics,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<GroupDetailUi>(GroupDetailUi.Loading)
@@ -235,6 +238,8 @@ class GroupDetailViewModel(
             }
         }
     }
+
+    fun onInvitationShared() = analytics.log(AnalyticsEvent.GroupInviteShared)
 
     fun onLeaveGroup() {
         val groupId = groupId ?: return

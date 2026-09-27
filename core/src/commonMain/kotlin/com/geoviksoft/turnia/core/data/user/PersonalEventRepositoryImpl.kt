@@ -5,6 +5,8 @@ import com.geoviksoft.turnia.core.data.datasource.firestore.PersonalEventTypesFi
 import com.geoviksoft.turnia.core.data.datasource.firestore.PersonalOneOffEventFirestore
 import com.geoviksoft.turnia.core.data.logger.Logger
 import com.geoviksoft.turnia.core.data.user.mappers.PersonalEventMapper
+import com.geoviksoft.turnia.core.domain.analytics.Analytics
+import com.geoviksoft.turnia.core.domain.analytics.AnalyticsEvent
 import com.geoviksoft.turnia.core.domain.model.EventId
 import com.geoviksoft.turnia.core.domain.model.EventTypeId
 import com.geoviksoft.turnia.core.domain.model.PersonalEventType
@@ -15,6 +17,7 @@ import com.geoviksoft.turnia.core.domain.repository.PersonalEventRepository
 import com.geoviksoft.turnia.core.domain.repository.UserRepository
 import com.geoviksoft.turnia.core.system.Outcome
 import com.geoviksoft.turnia.core.system.errorOrNull
+import com.geoviksoft.turnia.core.system.onSuccess
 import com.geoviksoft.turnia.core.system.toFailure
 import com.geoviksoft.turnia.core.system.toInstant
 import com.geoviksoft.turnia.core.system.toSuccess
@@ -33,6 +36,7 @@ class PersonalEventRepositoryImpl(
     private val personalEventFirestore: PersonalEventFirestore,
     private val personalEventTypesFirestore: PersonalEventTypesFirestore,
     private val personalOneOffEventFirestore: PersonalOneOffEventFirestore,
+    private val analytics: Analytics,
 ) : PersonalEventRepository {
 
     override fun getMyEventTypes(includeDeleted: Boolean): Flow<List<PersonalEventType>> {
@@ -43,11 +47,13 @@ class PersonalEventRepositoryImpl(
     override suspend fun addEvent(event: PersonalTypedEvent) {
         val uid = userRepository.loggedUser?.id ?: return
         personalEventFirestore.set(uid, event)
+            .onSuccess { analytics.log(AnalyticsEvent.PersonalEventCreated) }
     }
 
     override suspend fun deleteEvent(eventId: EventId, eventDate: LocalDate) {
         val uid = userRepository.loggedUser?.id ?: return
         personalEventFirestore.delete(uid, eventId, eventDate)
+            .onSuccess { analytics.log(AnalyticsEvent.PersonalEventDeleted) }
     }
 
     override suspend fun saveNotes(
@@ -61,12 +67,14 @@ class PersonalEventRepositoryImpl(
                 return Unit.toFailure()
             }
 
+        analytics.log(AnalyticsEvent.EventNotesSaved)
         return Unit.toSuccess()
     }
 
-    override suspend fun saveEventType(type: PersonalEventType): Outcome<Unit, Unit> {
+    override suspend fun saveEventType(type: PersonalEventType, isNew: Boolean): Outcome<Unit, Unit> {
         val userId = userRepository.loggedUser?.id ?: return Unit.toFailure()
         personalEventTypesFirestore.set(userId, type)
+            .onSuccess { if (isNew) analytics.log(AnalyticsEvent.PersonalEventTypeCreated) }
         return Unit.toSuccess()
     }
 
@@ -109,6 +117,12 @@ class PersonalEventRepositoryImpl(
             Logger.e(TAG, "Error adding personal one-off event", error.error)
             return Unit.toFailure()
         }
+        analytics.log(
+            AnalyticsEvent.OneOffEventCreated(
+                allDay = event.allDay,
+                multiMonth = event.start.year != event.end.year || event.start.month != event.end.month,
+            )
+        )
         return Unit.toSuccess()
     }
 
@@ -120,6 +134,7 @@ class PersonalEventRepositoryImpl(
             Logger.e(TAG, "Error updating personal one-off event", error.error)
             return Unit.toFailure()
         }
+        analytics.log(AnalyticsEvent.OneOffEventUpdated)
         return Unit.toSuccess()
     }
 
@@ -129,6 +144,7 @@ class PersonalEventRepositoryImpl(
             Logger.e(TAG, "Error deleting personal one-off event", error.error)
             return Unit.toFailure()
         }
+        analytics.log(AnalyticsEvent.OneOffEventDeleted)
         return Unit.toSuccess()
     }
 

@@ -177,8 +177,8 @@ class EventTypeDetailViewModel(
         }
 
         when (key) {
-            is EventTypeDetailData.EditPersonal -> savePersonal(EventTypeId(key.typeId), form)
-            EventTypeDetailData.NewPersonal -> savePersonal(EventTypeId(createId()), form)
+            is EventTypeDetailData.EditPersonal -> savePersonal(EventTypeId(key.typeId), form, isNew = false)
+            EventTypeDetailData.NewPersonal -> savePersonal(EventTypeId(createId()), form, isNew = true)
             is EventTypeDetailData.NewGroup ->
                 saveGroupType(key.groupId?.let(::GroupId), EventTypeId(createId()), form)
 
@@ -187,7 +187,7 @@ class EventTypeDetailViewModel(
         }
     }
 
-    private fun savePersonal(typeId: EventTypeId, form: EventTypeForm) {
+    private fun savePersonal(typeId: EventTypeId, form: EventTypeForm, isNew: Boolean) {
         val type = PersonalEventType(
             id = typeId,
             name = form.name.trim(),
@@ -201,7 +201,7 @@ class EventTypeDetailViewModel(
         viewModelScope.launch {
             updateSuccess { it.copy(saveButtonLoading = true) }
 
-            personalRepository.saveEventType(type).fold(
+            personalRepository.saveEventType(type, isNew).fold(
                 onSuccess = {
                     updateSuccess {
                         it.copy(

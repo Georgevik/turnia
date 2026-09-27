@@ -197,7 +197,7 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
                 actions = {
                     val state = uiState
                     if (state is GroupDetailUi.Success && state.form.canPassOnCode) {
-                        ShareInvitationAction(state.form)
+                        ShareInvitationAction(state.form, onShared = viewModel::onInvitationShared)
                     }
                     if (state is GroupDetailUi.Success && !state.isNew) {
                         GroupExitAction(
@@ -644,7 +644,7 @@ private fun InvitationSection(
 
 /** Any member can invite: the link carries the code, and an admin still answers the request. */
 @Composable
-private fun ShareInvitationAction(form: GroupDetailUi.GroupForm) {
+private fun ShareInvitationAction(form: GroupDetailUi.GroupForm, onShared: () -> Unit) {
     val code = form.invitationCode ?: return
     val sharer = LocalTextSharer.current
     val shareText = stringResource(
@@ -653,7 +653,10 @@ private fun ShareInvitationAction(form: GroupDetailUi.GroupForm) {
         InvitationLink.of(code),
     )
 
-    IconButton(onClick = { sharer.share(shareText) }) {
+    IconButton(onClick = {
+        sharer.share(shareText)
+        onShared()
+    }) {
         Icon(
             imageVector = Icons.Default.Share,
             contentDescription = stringResource(Res.string.group_detail_share_invitation),

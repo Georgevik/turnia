@@ -1,6 +1,8 @@
 package com.geoviksoft.turnia.core.data.notification
 
 import com.geoviksoft.turnia.core.data.logger.Logger
+import com.geoviksoft.turnia.core.domain.analytics.Analytics
+import com.geoviksoft.turnia.core.domain.analytics.AnalyticsEvent
 import com.geoviksoft.turnia.core.domain.model.GroupId
 import com.geoviksoft.turnia.core.domain.model.PushDestination
 import com.geoviksoft.turnia.core.domain.repository.NotificationRepository
@@ -11,7 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 /**
  * Reads the `type` the Cloud Functions put on every push and turns it into a destination.
  */
-class NotificationRepositoryImpl : NotificationRepository {
+class NotificationRepositoryImpl(private val analytics: Analytics) : NotificationRepository {
 
     private val _pendingDestination = MutableStateFlow<PushDestination?>(null)
     override val pendingDestination: StateFlow<PushDestination?> = _pendingDestination.asStateFlow()
@@ -19,6 +21,8 @@ class NotificationRepositoryImpl : NotificationRepository {
     override fun opened(data: Map<String, String>) {
         val destination = destinationOf(data) ?: return
         Logger.i(TAG, "Notification opened, going to $destination")
+        // Only a type the `when` below recognised gets this far, so the value is always a known one.
+        data[FIELD_TYPE]?.let { analytics.log(AnalyticsEvent.NotificationOpened(it)) }
 
         _pendingDestination.value = destination
     }

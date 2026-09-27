@@ -6,6 +6,7 @@ import com.geoviksoft.turnia.e2e.infra.E2eRule
 import com.geoviksoft.turnia.e2e.infra.FixedAppConfigRepository
 import com.geoviksoft.turnia.e2e.infra.RecordingAnalytics
 import com.geoviksoft.turnia.e2e.infra.RecordingTextSharer
+import com.geoviksoft.turnia.e2e.infra.awaitLogged
 import com.geoviksoft.turnia.e2e.robots.CalendarRobot
 import com.geoviksoft.turnia.e2e.robots.GroupsRobot
 import com.geoviksoft.turnia.e2e.robots.SharePromptRobot
@@ -118,6 +119,8 @@ class SharePromptFlowsTest {
         calendar.editOneOff(day, "Late dinner", "Later dinner")
 
         prompt.assertNoPrompt(eventsAdded = 1)
+        compose.awaitLogged("one_off_event_updated", count = 2)
+        assertEquals("An edit is not a creation", 1, RecordingAnalytics.named("one_off_event_created").size)
     }
 
     @Test

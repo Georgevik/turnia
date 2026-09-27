@@ -2,6 +2,8 @@ package com.geoviksoft.turnia.ui.main.preferences
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.geoviksoft.turnia.core.domain.analytics.Analytics
+import com.geoviksoft.turnia.core.domain.analytics.AnalyticsUserProperty
 import com.geoviksoft.turnia.core.domain.repository.UserRepository
 import com.geoviksoft.turnia.core.system.onFailure
 import com.geoviksoft.turnia.ui.system.AppLanguage
@@ -19,6 +21,7 @@ import kotlinx.coroutines.launch
 class PreferencesViewModel(
     private val userRepository: UserRepository,
     private val adConsent: AdConsent,
+    private val analytics: Analytics,
 ) : ViewModel() {
 
     private val userMessage = MutableStateFlow<PreferencesMessage?>(null)
@@ -54,6 +57,8 @@ class PreferencesViewModel(
 
     fun onLanguageSelected(selected: AppLanguage) {
         if (selected == language.value) return
+        // Before applying: on Android the change recreates the activity.
+        analytics.setUserProperty(AnalyticsUserProperty.AppLanguage(selected.tag))
         applyAppLanguage(selected)
         language.value = selected
     }

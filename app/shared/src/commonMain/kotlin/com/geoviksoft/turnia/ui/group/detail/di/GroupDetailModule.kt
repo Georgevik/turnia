@@ -10,6 +10,6 @@ import org.koin.dsl.module
 /** Group detail, which is also where a group is created — hence the nullable id. */
 val groupDetailModule: Module = module {
     viewModel { (key: MainRoute.GroupDetail) ->
-        GroupDetailViewModel(key.groupId?.let(::GroupId), get(), get())
+        GroupDetailViewModel(key.groupId?.let(::GroupId), get(), get(), get())
     }
 }
