@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <application android:networkSecurityConfig="@xml/network_security_config" />
+    <application android:networkSecurityConfig="@xml/network_security_config">
+
+        <!-- No debug build reports to Analytics, and nothing at runtime can turn it back on. The
+             E2E suite runs this build with its data cleared before every test, so each test would
+             otherwise arrive as a new install. -->
+        <meta-data
+                android:name="firebase_analytics_collection_deactivated"
+                android:value="true" />
+    </application>
 
 </manifest>

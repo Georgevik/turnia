@@ -13,3 +13,8 @@ ADMOB_BANNER_UNIT_ID[config=Debug] = ca-app-pub-3940256099942544/2435281174
 ADMOB_APP_ID[config=Release] = ca-app-pub-8803819741412121~7996285292
 // calendar_groups_people_banner
 ADMOB_BANNER_UNIT_ID[config=Release] = ca-app-pub-8803819741412121/3305222086
+
+// Analytics, read through Info.plist. No Debug build reports to it, so development runs never
+// reach the production stream this bundle id shares with the App Store build.
+ANALYTICS_COLLECTION_DEACTIVATED[config=Debug] = YES
+ANALYTICS_COLLECTION_DEACTIVATED[config=Release] = NO

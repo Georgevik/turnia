@@ -4,10 +4,12 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
+import android.provider.Settings
 import com.geoviksoft.turnia.core.system.BuildInfo
 import com.geoviksoft.turnia.di.AndroidAppModule
 import com.geoviksoft.turnia.di.initKoin
 import com.google.firebase.Firebase
+import com.google.firebase.analytics.analytics
 import com.google.firebase.appcheck.appCheck
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
@@ -19,6 +21,7 @@ open class TurniaApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         installFirebase()
+        enableAnalytics()
         initKoin(
             webClientId = BuildConfig.WEB_CLIENT_ID,
             buildInfo = BuildInfo(isDebug = BuildConfig.DEBUG),
@@ -36,6 +39,16 @@ open class TurniaApplication : Application() {
     /** Runs before anything reaches Firebase: a call made earlier would go out with no App Check token. */
     protected open fun installFirebase() {
         Firebase.appCheck.installAppCheckProviderFactory(appCheckProviderFactory())
+    }
+
+    /**
+     * Collection starts off in the manifest, so nothing leaves before this runs. Test Lab devices,
+     * where Play's pre-launch report crawls every upload, keep it off; in a debug build the manifest
+     * deactivates it and this call is ignored.
+     */
+    private fun enableAnalytics() {
+        val onTestLab = Settings.System.getString(contentResolver, "firebase.test.lab") == "true"
+        if (!onTestLab) Firebase.analytics.setAnalyticsCollectionEnabled(true)
     }
 
     /** Loaded last, so the E2E tests can replace what has no emulator (Remote Config, FCM, consent). */

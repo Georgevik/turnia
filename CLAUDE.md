@@ -270,6 +270,14 @@ Build one with `value.toSuccess()` / `error.toFailure()` — both work on any re
     to start it. It has no GitLive wrapper, so only the **Android** `Logger` reports through it
     (breadcrumbs for every line, a non-fatal for every error carrying a throwable) — on iOS it
     catches crashes on its own and hears nothing from shared code.
+  - **Analytics** — only real users of release builds report to it. **Debug builds never do**, and
+    nothing at runtime can switch them on: `firebase_analytics_collection_deactivated` in the debug
+    `AndroidManifest.xml`, `ANALYTICS_COLLECTION_DEACTIVATED` in `Config.xcconfig` on iOS. That
+    covers the E2E suite, whose tests each clear the app's data and would otherwise arrive as a
+    new install. **A release build starts with collection off** (`firebase_analytics_collection_enabled`
+    in the main manifest), because the SDK logs `first_open` before any app code runs;
+    `TurniaApplication` turns it on unless the device is on **Test Lab**, where Play's pre-launch
+    report crawls every upload.
   - **App Check** — proves requests come from the genuine app. Installed in platform code before
     Firebase is touched (`TurniaApplication`, `iOSApp.init`); the native SDKs under GitLive then
     attach the token on their own. Android release builds attest with **Play Integrity**, iOS
