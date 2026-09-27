@@ -112,6 +112,26 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
   with the app closed is in the same language.
 
 ## Monetization — pricing and ads/premium business rules redacted from this repository's history; see CLAUDE.local.md.
+## Growth: the share prompt
+
+- **A sheet asks the user to share Turnia at milestones of events added.** Every new event counts
+  — a shift of a type or a one-off, never an edit — and each milestone shows the sheet once, shared
+  or dismissed. Several milestones passed at once make one sheet, for the highest.
+- **Remote Config drives it, and it ships off:** `sharePromptEnabled` (Boolean, `false`) and
+  `sharePromptMilestones` (a JSON array in a string, e.g. `"[10, 100, 200]"`; anything that does
+  not parse means no milestones). The console keeps `sharePromptEnabled` off by default and turns
+  it on per app with a condition — iOS first, Android once the app is on Google Play.
+- **Nothing touches Firestore.** The count and the last milestone shown — its value, so the array
+  can be edited safely — live in the device's DataStore (`SharePromptRepository`). A milestone is
+  spent only once its sheet is on screen.
+- **The event that reached the milestone picks the message**: a typed event speaks to coworkers, a
+  one-off to friends.
+- **The link is the landing page with `utm_*` tags** (`ShareLink`), never `/join/`, which would open
+  an installed app. The page forwards the tags into Google Play's `referrer`, so Analytics attributes
+  an Android install on its own; iOS only gives downloads per campaign.
+- **Analytics:** `share_prompt_shown`, `share_prompt_shared` and `share_prompt_dismissed` with
+  `audience` and `milestone`, and `sign_up` with its `method` when an account is created.
+
 ## Data retention & local cache
 
 Firebase must **not** accumulate every past event forever. The backend keeps only a **recent window**; anything older is purged from Firestore and preserved **on the device**.
@@ -436,7 +456,7 @@ Use the run configurations provided by the run widget in your IDE's toolbar. You
 
 ### E2E tests
 
-The 29 critical happy paths run on an Android emulator against the Firebase emulators, seeded from
+The 37 critical happy paths run on an Android emulator against the Firebase emulators, seeded from
 [`firebase/test/fixtures`](firebase/test/README.md) — see that README to run them. They live in
 `app/androidApp/src/androidTest/.../e2e`: `flows/` holds the tests, `robots/` drives the screens,
 `infra/` seeds the emulators and points the app at them (`TurniaTestApplication`).

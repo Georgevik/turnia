@@ -43,11 +43,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.geoviksoft.turnia.navigation.LocalNavigator
 import com.geoviksoft.turnia.ui.system.AppStore
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
+import com.geoviksoft.turnia.ui.system.LocalTextSharer
 import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
 import com.geoviksoft.turnia.ui.system.components.TurniaLogo
 import com.geoviksoft.turnia.ui.system.rememberAppVersion
 import com.geoviksoft.turnia.ui.system.rememberStoreReview
-import com.geoviksoft.turnia.ui.system.rememberTextSharer
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -268,7 +268,7 @@ private fun LinkRow(icon: ImageVector, label: String, onClick: () -> Unit) {
 /** What support asks for to find an account: the one identifier that survives a rename. */
 @Composable
 private fun UserIdRow(userId: String) {
-    val sharer = rememberTextSharer()
+    val sharer = LocalTextSharer.current
     val snackbar = LocalSnackbar.current
     val scope = rememberCoroutineScope()
     val copied = stringResource(Res.string.about_user_id_copied)

@@ -231,6 +231,7 @@
     // `code=` this page hands the Play Store. Must match InvitationLinkConfig.
     var LINK = { scheme: "turnia", path: "join" };
     var PACKAGE = "com.geoviksoft.turnia";
+    var UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"];
     // Empty until the app is on the App Store: the badge is dimmed and marked "coming soon" without it.
     var APP_STORE_URL = "https://apps.apple.com/app/turnia-tus-turnos/id6811986973";
 
@@ -315,9 +316,18 @@
       if (/^[A-Z0-9]{4,16}$/.test(code)) showInvitation(code);
     }
 
+    // The referrer is what Play hands the installed app: `code=` for the join sheet
+    // (InstallReferrer), and the page's own utm_* tags, which Firebase Analytics reads on its own to
+    // attribute the install to the share prompt that sent the link (ShareLink in the app).
     function playUrl(code) {
       var url = "https://play.google.com/store/apps/details?id=" + PACKAGE;
-      return code ? url + "&referrer=" + encodeURIComponent("code=" + code) : url;
+      var parts = code ? ["code=" + code] : [];
+      var query = new URLSearchParams(location.search);
+      UTM_KEYS.forEach(function (key) {
+        var value = query.get(key);
+        if (value) parts.push(key + "=" + encodeURIComponent(value));
+      });
+      return parts.length ? url + "&referrer=" + encodeURIComponent(parts.join("&")) : url;
     }
 
     function showInvitation(code) {

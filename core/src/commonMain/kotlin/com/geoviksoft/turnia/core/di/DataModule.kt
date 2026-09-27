@@ -4,6 +4,7 @@ import com.geoviksoft.turnia.core.data.ads.AdRepositoryImpl
 import com.geoviksoft.turnia.core.data.analytics.AnalyticsImpl
 import com.geoviksoft.turnia.core.data.config.AppConfigRepositoryImpl
 import com.geoviksoft.turnia.core.data.config.RemoteConfigService
+import com.geoviksoft.turnia.core.data.config.SharePromptRepositoryImpl
 import com.geoviksoft.turnia.core.data.datasource.firestore.GroupEventFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.GroupFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.GroupJoinRequestFirestore
@@ -53,6 +54,7 @@ import com.geoviksoft.turnia.core.domain.repository.GroupRepository
 import com.geoviksoft.turnia.core.domain.repository.InvitationLinkRepository
 import com.geoviksoft.turnia.core.domain.repository.NotificationRepository
 import com.geoviksoft.turnia.core.domain.repository.PersonalEventRepository
+import com.geoviksoft.turnia.core.domain.repository.SharePromptRepository
 import com.geoviksoft.turnia.core.domain.repository.SharedCalendarRepository
 import com.geoviksoft.turnia.core.domain.repository.UserRepository
 import com.geoviksoft.turnia.core.domain.username.UsernameFactory
@@ -144,7 +146,7 @@ val dataModule: Module = module {
     factory { SharedCalendarErrorMapper() }
 
     // Repositories.
-    single { UserProvisioner(get(), get(), get(), get()) }
+    single { UserProvisioner(get(), get(), get(), get(), get()) }
     single<FcmDelegate> { FcmDelegateImpl(get(), get()) }
     single<UserRepository> {
         UserRepositoryImpl(
@@ -162,6 +164,7 @@ val dataModule: Module = module {
     }
     single { RemoteConfigService(get(), get()) }
     single<AppConfigRepository> { AppConfigRepositoryImpl(get(), get()) }
+    single<SharePromptRepository> { SharePromptRepositoryImpl(get(), get(), get()) }
     single<NotificationRepository> { NotificationRepositoryImpl() }
     single<InvitationLinkRepository> { InvitationLinkRepositoryImpl() }
     single<GroupRepository> {

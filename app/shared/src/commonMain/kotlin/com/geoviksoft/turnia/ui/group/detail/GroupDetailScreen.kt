@@ -74,6 +74,7 @@ import com.geoviksoft.turnia.ui.group.detail.model.GroupMemberUi
 import com.geoviksoft.turnia.ui.group.detail.model.GroupTypeRowUi
 import com.geoviksoft.turnia.ui.group.detail.model.JoinRequestUi
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
+import com.geoviksoft.turnia.ui.system.LocalTextSharer
 import com.geoviksoft.turnia.ui.system.TurniaSnackbarVisual
 import com.geoviksoft.turnia.ui.system.color.EntityPalette
 import com.geoviksoft.turnia.ui.system.components.AcronymBadge
@@ -91,7 +92,6 @@ import com.geoviksoft.turnia.ui.system.components.TurniaErrorContent
 import com.geoviksoft.turnia.ui.system.components.UserAvatar
 import com.geoviksoft.turnia.ui.system.components.UserAvatarSize
 import com.geoviksoft.turnia.ui.system.keyboardAware
-import com.geoviksoft.turnia.ui.system.rememberTextSharer
 import com.geoviksoft.turnia.ui.system.toErrorSnackbar
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -617,7 +617,7 @@ private fun InvitationSection(
 
         val invitationCode = form.invitationCode
         if (!invitationCode.isNullOrBlank()) {
-            val sharer = rememberTextSharer()
+            val sharer = LocalTextSharer.current
             val snackbar = LocalSnackbar.current
             val scope = rememberCoroutineScope()
             val copied = stringResource(Res.string.group_detail_code_copied)
@@ -646,7 +646,7 @@ private fun InvitationSection(
 @Composable
 private fun ShareInvitationAction(form: GroupDetailUi.GroupForm) {
     val code = form.invitationCode ?: return
-    val sharer = rememberTextSharer()
+    val sharer = LocalTextSharer.current
     val shareText = stringResource(
         Res.string.group_detail_share_invitation_text,
         form.name,

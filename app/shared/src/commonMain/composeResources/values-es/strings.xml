@@ -477,4 +477,14 @@
     <string name="swap_empty_colleagues_title">Nadie necesita cambio</string>
     <string name="swap_empty_colleagues_body">Ningún compañero ha pedido cambio. Cuando alguien necesite que le cubran, lo verás aquí.</string>
 
+
+    <!-- The share prompt, shown at milestones of events added. The message is followed by a link. -->
+    <string name="share_prompt_coworkers_title">¿Tu equipo sigue cambiando turnos por WhatsApp?</string>
+    <string name="share_prompt_coworkers_text">Comparte Turnia con tus compañeros: los turnos de todos en un sitio y cambios sin perder la pista.</string>
+    <string name="share_prompt_coworkers_message">Organizo mis turnos con Turnia. Descárgala y nos cambiamos los turnos sin el lío de WhatsApp:</string>
+    <string name="share_prompt_friends_title">Que tus amigos sepan cuándo libras</string>
+    <string name="share_prompt_friends_text">Comparte Turnia con tus amigos y quedad según vuestros turnos.</string>
+    <string name="share_prompt_friends_message">Llevo mis turnos y planes en Turnia. Descárgala y encontramos un día para quedar:</string>
+    <string name="share_prompt_share">Compartir Turnia</string>
+    <string name="share_prompt_not_now">Ahora no</string>
 </resources>

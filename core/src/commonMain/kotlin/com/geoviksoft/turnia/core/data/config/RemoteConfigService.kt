@@ -1,12 +1,13 @@
 package com.geoviksoft.turnia.core.data.config
 
 import com.geoviksoft.turnia.core.domain.model.FeatureFlags
+import com.geoviksoft.turnia.core.domain.model.SharePromptMilestones
 import com.geoviksoft.turnia.core.system.BuildInfo
 import dev.gitlive.firebase.remoteconfig.FirebaseRemoteConfig
 import dev.gitlive.firebase.remoteconfig.get
-import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
+import kotlinx.coroutines.runBlocking
 
 class RemoteConfigService(
     private val remoteConfig: FirebaseRemoteConfig,
@@ -44,6 +45,10 @@ class RemoteConfigService(
             supportEmail = remoteConfig.getSafe<String>(
                 RemoteKey.SUPPORT_EMAIL, DEFAULT_SUPPORT_EMAIL
             ).ifBlank { DEFAULT_SUPPORT_EMAIL },
+            sharePromptEnabled = remoteConfig.getSafe<Boolean>(RemoteKey.SHARE_PROMPT_ENABLED, false),
+            sharePromptMilestones = SharePromptMilestones.parse(
+                remoteConfig.getSafe<String>(RemoteKey.SHARE_PROMPT_MILESTONES, NO_MILESTONES)
+            ),
         )
     }
 
@@ -61,11 +66,14 @@ class RemoteConfigService(
             RemoteKey.INVITATION_CODE_LENGTH.value to 6,
             RemoteKey.ENABLE_SUBSCRIPTION.value to false,
             RemoteKey.SUPPORT_EMAIL.value to DEFAULT_SUPPORT_EMAIL,
+            RemoteKey.SHARE_PROMPT_ENABLED.value to false,
+            RemoteKey.SHARE_PROMPT_MILESTONES.value to NO_MILESTONES,
         )
     }
 
     companion object {
         private const val DEFAULT_SUPPORT_EMAIL = "geoviksoft@gmail.com"
+        private const val NO_MILESTONES = "[]"
     }
 
 }
@@ -75,4 +83,6 @@ enum class RemoteKey(val value: String) {
         "enableSubscription"
     ),
     SUPPORT_EMAIL("supportEmail"),
+    SHARE_PROMPT_ENABLED("sharePromptEnabled"),
+    SHARE_PROMPT_MILESTONES("sharePromptMilestones"),
 }

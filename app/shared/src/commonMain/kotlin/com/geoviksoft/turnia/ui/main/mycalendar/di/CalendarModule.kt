@@ -3,6 +3,7 @@ package com.geoviksoft.turnia.ui.main.mycalendar.di
 import com.geoviksoft.turnia.navigation.main.routes.ExternalCalendarData
 import com.geoviksoft.turnia.ui.components.daydetail.DayAddMode
 import com.geoviksoft.turnia.ui.components.daydetail.DayDetailSheetViewModel
+import com.geoviksoft.turnia.ui.components.shareprompt.SharePromptViewModel
 import com.geoviksoft.turnia.ui.main.group.externalcalendar.ExternalCalendarViewModel
 import com.geoviksoft.turnia.ui.main.mycalendar.MyCalendarViewModel
 import kotlinx.datetime.LocalDate
@@ -19,7 +20,8 @@ val calendarModule: Module = module {
     viewModel { (data: ExternalCalendarData) ->
         ExternalCalendarViewModel(data, get(), get(), get(), get())
     }
+    viewModelOf(::SharePromptViewModel)
     viewModel { (date: LocalDate, addMode: DayAddMode) ->
-        DayDetailSheetViewModel(date, addMode, get(), get(), get(), get())
+        DayDetailSheetViewModel(date, addMode, get(), get(), get(), get(), get())
     }
 }

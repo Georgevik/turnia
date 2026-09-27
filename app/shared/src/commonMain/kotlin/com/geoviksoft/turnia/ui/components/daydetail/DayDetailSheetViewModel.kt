@@ -3,6 +3,7 @@ package com.geoviksoft.turnia.ui.components.daydetail
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.geoviksoft.turnia.core.domain.model.EventId
+import com.geoviksoft.turnia.core.domain.model.EventKind
 import com.geoviksoft.turnia.core.domain.model.EventType
 import com.geoviksoft.turnia.core.domain.model.Group
 import com.geoviksoft.turnia.core.domain.model.GroupEvent
@@ -14,6 +15,7 @@ import com.geoviksoft.turnia.core.domain.model.SwapError
 import com.geoviksoft.turnia.core.domain.repository.AdRepository
 import com.geoviksoft.turnia.core.domain.repository.GroupRepository
 import com.geoviksoft.turnia.core.domain.repository.PersonalEventRepository
+import com.geoviksoft.turnia.core.domain.repository.SharePromptRepository
 import com.geoviksoft.turnia.core.domain.repository.UserRepository
 import com.geoviksoft.turnia.core.system.onFailure
 import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
@@ -31,6 +33,7 @@ import com.geoviksoft.turnia.ui.system.color.EntityPalette
 import com.geoviksoft.turnia.ui.system.color.entityColor
 import com.geoviksoft.turnia.ui.system.color.toComposeColorOr
 import com.geoviksoft.turnia.ui.system.color.toHex
+import kotlin.uuid.Uuid
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
@@ -41,7 +44,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.plus
-import kotlin.uuid.Uuid
 
 class DayDetailSheetViewModel(
     private val date: LocalDate,
@@ -50,6 +52,7 @@ class DayDetailSheetViewModel(
     private val personalRepository: PersonalEventRepository,
     private val userRepository: UserRepository,
     private val adRepository: AdRepository,
+    private val sharePromptRepository: SharePromptRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<AddEventTypesUi>(AddEventTypesUi.Loading)
@@ -233,7 +236,10 @@ class DayDetailSheetViewModel(
             val previous = form.editing?.toDomain()
             val outcome = if (previous == null) {
                 personalRepository.addOneOffEvent(form.toDomain(EventId(Uuid.random().toString())))
-                    .also { adRepository.actionPerformed() }
+                    .also {
+                        adRepository.actionPerformed()
+                        sharePromptRepository.eventAdded(EventKind.OneOff)
+                    }
             } else {
                 personalRepository.updateOneOffEvent(previous, form.toDomain(previous.id))
             }
@@ -264,6 +270,7 @@ class DayDetailSheetViewModel(
             is PersonalEventType -> addNewEvent(eventType)
         }
         adRepository.actionPerformed()
+        viewModelScope.launch { sharePromptRepository.eventAdded(EventKind.Typed) }
     }
 
     private fun addNewEvent(type: GroupEventType, eventTypeUi: EventTypeUi) {

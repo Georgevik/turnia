@@ -477,4 +477,14 @@
     <string name="swap_empty_colleagues_title">Personne n'a besoin d'échange</string>
     <string name="swap_empty_colleagues_body">Aucun collègue n'a demandé d'échange. Quand quelqu'un aura besoin d'un remplacement, tu le verras ici.</string>
 
+
+    <!-- The share prompt, shown at milestones of events added. The message is followed by a link. -->
+    <string name="share_prompt_coworkers_title">Ton équipe échange encore ses gardes sur WhatsApp ?</string>
+    <string name="share_prompt_coworkers_text">Partage Turnia avec tes collègues : les plannings de tous au même endroit, et des échanges bien suivis.</string>
+    <string name="share_prompt_coworkers_message">J'organise mes gardes avec Turnia. Télécharge-la et on échange nos gardes sans le chaos de WhatsApp :</string>
+    <string name="share_prompt_friends_title">Dis à tes amis quand tu es de repos</string>
+    <string name="share_prompt_friends_text">Partage Turnia avec tes amis et organisez-vous selon vos plannings.</string>
+    <string name="share_prompt_friends_message">Je gère mes gardes et mes sorties avec Turnia. Télécharge-la et on trouve un jour pour se voir :</string>
+    <string name="share_prompt_share">Partager Turnia</string>
+    <string name="share_prompt_not_now">Pas maintenant</string>
 </resources>
