@@ -235,11 +235,11 @@ class DayDetailSheetViewModel(
         viewModelScope.launch {
             val previous = form.editing?.toDomain()
             val outcome = if (previous == null) {
+                // Counted as it is issued, like a typed event: the write only returns once the
+                // server confirms it, which the prompt has no reason to wait for.
+                launch { sharePromptRepository.eventAdded(EventKind.OneOff) }
                 personalRepository.addOneOffEvent(form.toDomain(EventId(Uuid.random().toString())))
-                    .also {
-                        adRepository.actionPerformed()
-                        sharePromptRepository.eventAdded(EventKind.OneOff)
-                    }
+                    .also { adRepository.actionPerformed() }
             } else {
                 personalRepository.updateOneOffEvent(previous, form.toDomain(previous.id))
             }

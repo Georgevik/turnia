@@ -29,7 +29,7 @@ Their behaviour is proven by group 5.
 - [x] 1.4 Log `sign_up` with the sign-in method once `UserProvisioner.create` succeeds, and never for a
   returning sign-in. Verify that core compiles, then check it in GA4 DebugView on a first sign-in (8.2).
 - [x] 1.5 Build the share link next to `InvitationLinkConfig`:
-  `https://turnia.club/?utm_source=turnia_share&utm_medium=share_prompt&utm_campaign=<audience>`.
+  `https://turnia.club/?utm_source=turnia_share&utm_medium=share_prompt` (no `utm_campaign`, per review).
   Verify it is used by 3.2.
 
 ## 2. Counting (app)

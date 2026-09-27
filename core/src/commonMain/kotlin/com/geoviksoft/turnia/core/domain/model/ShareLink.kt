@@ -11,9 +11,8 @@ package com.geoviksoft.turnia.core.domain.model
  */
 object ShareLink {
 
-    fun of(audience: SharePromptAudience): String =
-        "https://${InvitationLinkConfig.HOST}/?utm_source=$SOURCE&utm_medium=$MEDIUM&utm_campaign=${audience.value}"
-
     private const val SOURCE = "turnia_share"
     private const val MEDIUM = "share_prompt"
+
+    const val URL = "https://${InvitationLinkConfig.HOST}/?utm_source=$SOURCE&utm_medium=$MEDIUM"
 }

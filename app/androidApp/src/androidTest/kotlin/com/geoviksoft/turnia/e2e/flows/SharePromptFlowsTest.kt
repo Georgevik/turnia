@@ -81,7 +81,7 @@ class SharePromptFlowsTest {
         assertEquals(
             listOf(
                 "${SharePromptRobot.COWORKERS_MESSAGE} https://turnia.club/" +
-                    "?utm_source=turnia_share&utm_medium=share_prompt&utm_campaign=coworkers"
+                    "?utm_source=turnia_share&utm_medium=share_prompt"
             ),
             RecordingTextSharer.shared,
         )

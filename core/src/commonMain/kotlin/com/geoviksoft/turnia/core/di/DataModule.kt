@@ -5,6 +5,7 @@ import com.geoviksoft.turnia.core.data.analytics.AnalyticsImpl
 import com.geoviksoft.turnia.core.data.config.AppConfigRepositoryImpl
 import com.geoviksoft.turnia.core.data.config.RemoteConfigService
 import com.geoviksoft.turnia.core.data.config.SharePromptRepositoryImpl
+import com.geoviksoft.turnia.core.data.config.mappers.SharePromptMilestonesMapper
 import com.geoviksoft.turnia.core.data.datasource.firestore.GroupEventFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.GroupFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.GroupJoinRequestFirestore
@@ -143,6 +144,7 @@ val dataModule: Module = module {
     factory { PersonalEventMapper() }
     factory { PersonalEventTypeDocMapper() }
     factory { SharedCalendarMapper() }
+    factory { SharePromptMilestonesMapper() }
     factory { SharedCalendarErrorMapper() }
 
     // Repositories.
@@ -162,7 +164,7 @@ val dataModule: Module = module {
             get()
         )
     }
-    single { RemoteConfigService(get(), get()) }
+    single { RemoteConfigService(get(), get(), get()) }
     single<AppConfigRepository> { AppConfigRepositoryImpl(get(), get()) }
     single<SharePromptRepository> { SharePromptRepositoryImpl(get(), get(), get()) }
     single<NotificationRepository> { NotificationRepositoryImpl() }

@@ -1,9 +1,9 @@
 package com.geoviksoft.turnia.e2e.infra
 
+import com.geoviksoft.turnia.core.data.config.mappers.SharePromptMilestonesMapper
 import com.geoviksoft.turnia.core.domain.analytics.Analytics
 import com.geoviksoft.turnia.core.domain.analytics.AnalyticsEvent
 import com.geoviksoft.turnia.core.domain.model.FeatureFlags
-import com.geoviksoft.turnia.core.domain.model.SharePromptMilestones
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.domain.repository.AppConfigRepository
 import com.geoviksoft.turnia.core.domain.repository.FcmDelegate
@@ -55,7 +55,7 @@ internal object FixedAppConfigRepository : AppConfigRepository {
     fun sharePrompt(enabled: Boolean, milestones: String) = flags.update {
         it.copy(
             sharePromptEnabled = enabled,
-            sharePromptMilestones = SharePromptMilestones.parse(milestones),
+            sharePromptMilestones = SharePromptMilestonesMapper().map(milestones),
         )
     }
     override suspend fun isOnboardingSeen(): Boolean = onboardingSeen

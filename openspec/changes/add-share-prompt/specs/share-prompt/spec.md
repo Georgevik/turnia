@@ -82,14 +82,15 @@ SHALL NOT affect the choice.
 ### Requirement: Sharing opens the platform's share sheet with a tagged link
 The prompt SHALL offer one action to share and one to dismiss. Sharing SHALL open the platform's
 share sheet with a short message in the app's language and the link
-`https://turnia.club/?utm_source=turnia_share&utm_medium=share_prompt&utm_campaign=<audience>`, where
-the audience is `coworkers` or `friends`. The landing page SHALL send the visitor to their platform's
+`https://turnia.club/?utm_source=turnia_share&utm_medium=share_prompt`. The link SHALL carry no
+`utm_campaign`: which message was shared is reported by the prompt's own analytics events, not by the
+link. The landing page SHALL send the visitor to their platform's
 store and SHALL pass the `utm_*` parameters to Google Play's install referrer.
 
 #### Scenario: Sharing with coworkers
 - **WHEN** the prompt addresses coworkers and the user taps the share action
-- **THEN** the share sheet opens with the coworkers message and a link whose `utm_campaign` is
-  `coworkers`
+- **THEN** the share sheet opens with the coworkers message and the tagged link, which carries no
+  `utm_campaign`
 
 #### Scenario: A recipient on Android
 - **WHEN** someone opens the shared link on an Android phone and taps the Google Play badge

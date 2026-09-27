@@ -54,8 +54,8 @@ This is how things stand today:
 | `sharePromptMilestones` | String (JSON) | `"[]"` | `FeatureFlags.sharePromptMilestones: List<Int>` |
 
 Remote Config has no array type, so the milestones travel as a JSON string.
-`SharePromptMilestones.parse` (domain, so the E2E feeds its console strings through the same code)
-parses them with `kotlinx.serialization` inside `outcomeCatching`, then keeps positive values,
+`SharePromptMilestonesMapper` (data, next to `RemoteConfigService`, per review: how Remote Config
+encodes a value is no business of the domain) parses them with `kotlinx.serialization` inside `outcomeCatching`, then keeps positive values,
 removes duplicates and sorts them. Anything unparseable becomes an empty list: no milestones, no
 prompt, no crash.
 
@@ -144,17 +144,18 @@ the exact text and link without driving the system's share sheet.
 
 ### 6. The link and the landing page
 
-The shared text is `"<message> https://turnia.club/?utm_source=turnia_share&utm_medium=share_prompt&utm_campaign=<audience>"`:
+The shared text is `"<message> https://turnia.club/?utm_source=turnia_share&utm_medium=share_prompt"`.
+It carries no `utm_campaign` (per review). Which audience was shared is in the prompt's own events,
+so the link does not split installs by message:
 
 - the message comes from `composeResources`, in all five languages;
-- `<audience>` is `coworkers` or `friends`;
 - the URL is built in core, next to `InvitationLinkConfig`, so the host stays in one place.
 
 In `index.html`, `playUrl` also forwards any `utm_*` parameters of `location.search` into
 `referrer`, next to the existing `code=`:
 
 ```
-referrer=utm_source%3Dturnia_share%26utm_medium%3Dshare_prompt%26utm_campaign%3Dcoworkers
+referrer=utm_source%3Dturnia_share%26utm_medium%3Dshare_prompt
 ```
 
 Firebase Analytics on Android reads the install referrer by itself and attributes the install's
@@ -189,7 +190,7 @@ The flows go in a new `SharePromptFlowsTest`, reusing `CalendarRobot` for adding
 | 1 | milestones `[2]` | add 2 typed events | coworkers sheet; `share_prompt_shown{coworkers, 2}` |
 | 2 | milestones `[2]` | add 2 one-offs | friends sheet |
 | 3 | milestones `[2]` | 1 typed, then 1 one-off | friends sheet (the last event decides) |
-| 4 | milestones `[2]` | reach 2, tap "Share Turnia" | the sharer received the coworkers text with `utm_campaign=coworkers`; `share_prompt_shared` |
+| 4 | milestones `[2]` | reach 2, tap "Share Turnia" | the sharer received the coworkers text and the tagged link; `share_prompt_shared` |
 | 5 | milestones `[2, 4]` | "Not now" at 2, then 2 more | nothing at 3, sheet at 4; `share_prompt_dismissed` then `shown{…, 4}` |
 | 6 | milestones `[2]` | add 1 one-off, edit it twice | no sheet |
 | 7 | flag off, milestones `[2]` | add 3 | no sheet, no `shown` |

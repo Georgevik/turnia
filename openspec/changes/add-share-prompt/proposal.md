@@ -23,7 +23,7 @@ down to whether the recipient created an account.
 - **On-device state only**, in the existing Preferences DataStore: the number of events added and
   the value of the last milestone shown. No Firestore reads or writes.
 - **The link** is the landing page `https://turnia.club`, which already sends each visitor to their
-  store, tagged with `utm_source`, `utm_medium` and `utm_campaign`. The landing page forwards those
+  store, tagged with `utm_source` and `utm_medium` (no `utm_campaign`, per review). The landing page forwards those
   tags to Google Play's install referrer.
 - **Analytics:**
   - three new events, `share_prompt_shown`, `share_prompt_shared` and `share_prompt_dismissed`,
