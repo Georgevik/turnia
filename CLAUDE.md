@@ -124,6 +124,11 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
 - **Nothing touches Firestore.** The count and the last milestone shown — its value, so the array
   can be edited safely — live in the device's DataStore (`SharePromptRepository`). A milestone is
   spent only once its sheet is on screen.
+- **The count is per device, not per account.** Another account signed in on the same phone
+  inherits it, and the demo mode counts in the same file.
+- **It shows on the user's own calendar and on group calendars**, where events are added — never
+  on a colleague's, which the user only reads. A prompt due elsewhere waits until one of those is
+  open.
 - **The event that reached the milestone picks the message**: a typed event speaks to coworkers, a
   one-off to friends.
 - **The link is the landing page with `utm_*` tags** (`ShareLink`), never `/join/`, which would open
@@ -249,7 +254,8 @@ Build one with `value.toSuccess()` / `error.toFailure()` — both work on any re
 - **Local NoSQL cache** — on-device document store (candidate: Realm Kotlin) holding events fetched from
   Firestore in a **normalized** shape, so past events stay viewable after Firebase purges them (see *Data retention & local cache*).
 - **DataStore (KMP, Preferences)** — on-device key/value settings that exist before any account, such as
-  whether onboarding was seen. Read and written only through `AppPreferencesRepository`.
+  whether onboarding was seen. Read and written only through a repository: `AppConfigRepositoryImpl`
+  (onboarding) and `SharePromptRepositoryImpl` (the share prompt's count), over one shared file.
 - **AdMob** — ads for free-tier users (banner / interstitial / rewarded). Hidden for premium users.
 - **In-app subscriptions** — **Google Play Billing** (Android) and **StoreKit / App Store** (iOS) for premium plans.
 - **Firebase** — backend, no custom server:
@@ -456,7 +462,7 @@ Use the run configurations provided by the run widget in your IDE's toolbar. You
 
 ### E2E tests
 
-The 37 critical happy paths run on an Android emulator against the Firebase emulators, seeded from
+The 39 critical happy paths run on an Android emulator against the Firebase emulators, seeded from
 [`firebase/test/fixtures`](firebase/test/README.md) — see that README to run them. They live in
 `app/androidApp/src/androidTest/.../e2e`: `flows/` holds the tests, `robots/` drives the screens,
 `infra/` seeds the emulators and points the app at them (`TurniaTestApplication`).

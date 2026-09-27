@@ -7,6 +7,7 @@ import com.geoviksoft.turnia.e2e.infra.FixedAppConfigRepository
 import com.geoviksoft.turnia.e2e.infra.RecordingAnalytics
 import com.geoviksoft.turnia.e2e.infra.RecordingTextSharer
 import com.geoviksoft.turnia.e2e.robots.CalendarRobot
+import com.geoviksoft.turnia.e2e.robots.GroupsRobot
 import com.geoviksoft.turnia.e2e.robots.SharePromptRobot
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -16,7 +17,7 @@ import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 
 /**
- * Paths 30–37: the prompt that asks alice to share Turnia at milestones of events added. Its
+ * Paths 30–39: the prompt that asks alice to share Turnia at milestones of events added. Its
  * milestones are set per test as the console would hold them, and read through the app's parser.
  */
 @RunWith(AndroidJUnit4::class)
@@ -40,7 +41,7 @@ class SharePromptFlowsTest {
         FixedAppConfigRepository.sharePrompt(enabled = true, milestones = "[2]")
 
         addShift()
-        prompt.assertNoPrompt()
+        prompt.assertNoPrompt(eventsAdded = 1)
         addShift()
 
         prompt.awaitCoworkersPrompt()
@@ -99,7 +100,7 @@ class SharePromptFlowsTest {
         prompt.notNow()
         awaitLogged("share_prompt_dismissed", audience = "coworkers", milestone = 2)
         addShift()
-        prompt.assertNoPrompt()
+        prompt.assertNoPrompt(eventsAdded = 3)
         addShift()
 
         prompt.awaitCoworkersPrompt()
@@ -116,7 +117,7 @@ class SharePromptFlowsTest {
         calendar.editOneOff(day, "Dinner", "Late dinner")
         calendar.editOneOff(day, "Late dinner", "Later dinner")
 
-        prompt.assertNoPrompt()
+        prompt.assertNoPrompt(eventsAdded = 1)
     }
 
     @Test
@@ -125,7 +126,7 @@ class SharePromptFlowsTest {
 
         repeat(3) { addShift() }
 
-        prompt.assertNoPrompt()
+        prompt.assertNoPrompt(eventsAdded = 3)
         assertTrue(RecordingAnalytics.named("share_prompt_shown").isEmpty())
     }
 
@@ -135,14 +136,47 @@ class SharePromptFlowsTest {
 
         repeat(3) { addShift() }
 
-        prompt.assertNoPrompt()
+        prompt.assertNoPrompt(eventsAdded = 3)
         assertTrue(RecordingAnalytics.named("share_prompt_shown").isEmpty())
     }
 
-    /** A group shift: an event with a type. Picking the type closes the day sheet by itself. */
-    private fun addShift() {
-        calendar.openDay(world.day(nextDay++))
-        calendar.addEventOfType("manana")
+    @Test
+    fun severalMilestonesPassedAtOnce_onePromptForTheHighest() {
+        FixedAppConfigRepository.sharePrompt(enabled = false, milestones = "[1, 2, 3]")
+        addShift()
+        addShift()
+        prompt.assertNoPrompt(eventsAdded = 2)
+
+        FixedAppConfigRepository.sharePrompt(enabled = true, milestones = "[1, 2, 3]")
+        addShift()
+
+        prompt.awaitCoworkersPrompt()
+        awaitLogged("share_prompt_shown", audience = "coworkers", milestone = 3)
+        prompt.notNow()
+        addShift()
+        prompt.assertNoPrompt(eventsAdded = 4)
+        assertEquals("The milestones passed below 3 never show", 1, RecordingAnalytics.named("share_prompt_shown").size)
+    }
+
+    @Test
+    fun aShiftAddedInAGroupCalendar_countsToo() {
+        FixedAppConfigRepository.sharePrompt(enabled = true, milestones = "[1]")
+
+        GroupsRobot(compose).openGroupCalendar("Urgencias")
+        addShift(CalendarRobot(compose, world.today))
+
+        prompt.awaitCoworkersPrompt()
+        awaitLogged("share_prompt_shown", audience = "coworkers", milestone = 1)
+    }
+
+    /**
+     * A group shift: an event with a type. Picking the type closes the day sheet by itself, and the
+     * next day is opened only once it has.
+     */
+    private fun addShift(on: CalendarRobot = calendar) {
+        on.openDay(world.day(nextDay++))
+        on.addEventOfType("manana")
+        on.awaitDayClosed()
     }
 
     private fun addOneOff(name: String) = calendar.addOneOff(world.day(nextDay++), name)

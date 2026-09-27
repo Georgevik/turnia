@@ -20,5 +20,9 @@ interface SharePromptRepository {
     /** The prompt is on screen: its milestone will not be offered again. */
     suspend fun shown(prompt: SharePrompt)
 
-    fun answered(prompt: SharePrompt, answer: SharePromptAnswer)
+    /**
+     * Clears [pending] and logs [answer], only if [prompt] is still the one waiting. Returns whether
+     * it was, so a second tap before the sheet closes neither shares nor logs again.
+     */
+    fun answered(prompt: SharePrompt, answer: SharePromptAnswer): Boolean
 }

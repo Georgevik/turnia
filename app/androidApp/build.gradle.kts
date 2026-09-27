@@ -43,6 +43,8 @@ dependencies {
     // Only to point them at the emulators: core keeps them off the app's own classpath.
     androidTestImplementation(libs.firebase.firestore)
     androidTestImplementation(libs.firebase.functions)
+    // To build the app's SharePromptRepositoryImpl over core's DataStore, wrapped for counting.
+    androidTestImplementation(libs.androidx.datastore.preferences)
     androidTestUtil(libs.androidx.test.orchestrator)
 }
 

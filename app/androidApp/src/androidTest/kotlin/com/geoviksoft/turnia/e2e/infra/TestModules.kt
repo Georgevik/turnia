@@ -1,12 +1,15 @@
 package com.geoviksoft.turnia.e2e.infra
 
+import com.geoviksoft.turnia.core.data.config.SharePromptRepositoryImpl
 import com.geoviksoft.turnia.core.data.config.mappers.SharePromptMilestonesMapper
 import com.geoviksoft.turnia.core.domain.analytics.Analytics
 import com.geoviksoft.turnia.core.domain.analytics.AnalyticsEvent
+import com.geoviksoft.turnia.core.domain.model.EventKind
 import com.geoviksoft.turnia.core.domain.model.FeatureFlags
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.domain.repository.AppConfigRepository
 import com.geoviksoft.turnia.core.domain.repository.FcmDelegate
+import com.geoviksoft.turnia.core.domain.repository.SharePromptRepository
 import com.geoviksoft.turnia.core.system.Outcome
 import com.geoviksoft.turnia.core.system.toSuccess
 import com.geoviksoft.turnia.ui.system.TextSharer
@@ -18,6 +21,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import org.koin.dsl.module
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * What has no emulator: Remote Config, FCM, Analytics and Google's consent SDK — and onboarding,
@@ -28,6 +32,9 @@ internal val e2eModule = module {
     single<FcmDelegate> { NoFcmDelegate }
     single<Analytics> { RecordingAnalytics }
     single<TextSharer> { RecordingTextSharer }
+    single<SharePromptRepository> {
+        CountingSharePromptRepository(SharePromptRepositoryImpl(get(), get(), get()))
+    }
     single {
         AdConsent(
             granted = AdConsentStatus(
@@ -101,5 +108,26 @@ internal object RecordingTextSharer : TextSharer {
 
     override fun share(text: String) {
         sharedTexts += text
+    }
+}
+
+/**
+ * The app's own repository, counting each add once it has decided on a prompt. A test asserting
+ * that no prompt shows waits for that count first, so a late prompt fails it instead of arriving
+ * after the test has looked.
+ */
+internal class CountingSharePromptRepository(
+    private val delegate: SharePromptRepository,
+) : SharePromptRepository by delegate {
+
+    override suspend fun eventAdded(kind: EventKind) {
+        delegate.eventAdded(kind)
+        counted.incrementAndGet()
+    }
+
+    companion object {
+        private val counted = AtomicInteger()
+
+        val eventsCounted: Int get() = counted.get()
     }
 }

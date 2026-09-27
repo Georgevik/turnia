@@ -69,8 +69,9 @@ private fun SharePromptSheet(prompt: SharePrompt, viewModel: SharePromptViewMode
             )
             Button(
                 onClick = {
-                    sharer.share("$message ${ShareLink.URL}")
-                    viewModel.answered(prompt, SharePromptAnswer.Shared)
+                    if (viewModel.answered(prompt, SharePromptAnswer.Shared)) {
+                        sharer.share("$message ${ShareLink.URL}")
+                    }
                 },
                 modifier = Modifier.fillMaxWidth(),
             ) {

@@ -65,14 +65,15 @@ class SharePromptRepositoryImpl(
         if (first) analytics.log(AnalyticsEvent.SharePromptShown(prompt))
     }
 
-    override fun answered(prompt: SharePrompt, answer: SharePromptAnswer) {
-        _pending.value = null
+    override fun answered(prompt: SharePrompt, answer: SharePromptAnswer): Boolean {
+        if (!_pending.compareAndSet(prompt, null)) return false
         analytics.log(
             when (answer) {
                 SharePromptAnswer.Shared -> AnalyticsEvent.SharePromptShared(prompt)
                 SharePromptAnswer.Dismissed -> AnalyticsEvent.SharePromptDismissed(prompt)
             }
         )
+        return true
     }
 
     private companion object {

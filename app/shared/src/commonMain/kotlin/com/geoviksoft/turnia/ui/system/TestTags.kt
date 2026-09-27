@@ -21,4 +21,5 @@ object TestTags {
     const val GROUPS_FAB = "groups_fab"
     const val JOIN_CODE_FIELD = "join_code_field"
     const val USER_SEARCH_FIELD = "user_search_field"
+    const val DAY_SHEET = "day_sheet"
 }

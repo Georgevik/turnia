@@ -57,9 +57,12 @@ class UserProvisioner(
         )
     }
 
-    /** The provider the account was made with, in the words Google's `sign_up` report expects. */
+    /**
+     * The provider the account was made with, in the words Google's `sign_up` report expects.
+     * Android lists Firebase's own `firebase` entry first, so it is skipped.
+     */
     private fun signUpMethod(firebaseUser: FirebaseUser): String =
-        when (firebaseUser.providerData.firstOrNull()?.providerId) {
+        when (firebaseUser.providerData.firstOrNull { it.providerId != "firebase" }?.providerId) {
             "google.com" -> "google"
             "apple.com" -> "apple"
             "password" -> "email"

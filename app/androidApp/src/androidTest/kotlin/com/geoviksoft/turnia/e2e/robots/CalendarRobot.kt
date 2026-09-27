@@ -80,6 +80,14 @@ internal class CalendarRobot(compose: ComposeTestRule, today: LocalDate) : AppRo
 
     // The day sheet. ==============================
 
+    /**
+     * Until the sheet has finished closing its veil still covers the grid, and a tap meant for the
+     * next day lands on it instead.
+     */
+    fun awaitDayClosed() {
+        compose.awaitNoNode(hasTestTag(TestTags.DAY_SHEET))
+    }
+
     fun addEventOfType(typeId: String) {
         clickDescription("Add event")
         compose.awaitNode(hasTestTag(TestTags.eventTypeChip(EventTypeId(typeId)))).scrollAndClick()
@@ -101,6 +109,7 @@ internal class CalendarRobot(compose: ComposeTestRule, today: LocalDate) : AppRo
         click("Save")
         awaitText(name)
         back()
+        awaitDayClosed()
     }
 
     fun editOneOff(date: LocalDate, name: String, newName: String) {
@@ -114,6 +123,7 @@ internal class CalendarRobot(compose: ComposeTestRule, today: LocalDate) : AppRo
         click("Save")
         awaitText(newName)
         back()
+        awaitDayClosed()
     }
 
     fun awaitEvent(eventId: String) {

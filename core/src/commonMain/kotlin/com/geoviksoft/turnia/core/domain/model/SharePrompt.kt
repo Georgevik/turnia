@@ -1,6 +1,6 @@
 package com.geoviksoft.turnia.core.domain.model
 
-/** Who the share prompt speaks to. [value] is what analytics and the link's campaign carry. */
+/** Who the share prompt speaks to. [value] is what analytics carries. */
 enum class SharePromptAudience(val value: String) {
     /** The event that reached the milestone had a type: a shift, which is a team's business. */
     Coworkers("coworkers"),

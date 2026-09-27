@@ -34,6 +34,7 @@ import com.geoviksoft.turnia.ui.system.color.entityColor
 import com.geoviksoft.turnia.ui.system.color.toComposeColorOr
 import com.geoviksoft.turnia.ui.system.color.toHex
 import kotlin.uuid.Uuid
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
@@ -235,9 +236,7 @@ class DayDetailSheetViewModel(
         viewModelScope.launch {
             val previous = form.editing?.toDomain()
             val outcome = if (previous == null) {
-                // Counted as it is issued, like a typed event: the write only returns once the
-                // server confirms it, which the prompt has no reason to wait for.
-                launch { sharePromptRepository.eventAdded(EventKind.OneOff) }
+                countAdded(EventKind.OneOff)
                 personalRepository.addOneOffEvent(form.toDomain(EventId(Uuid.random().toString())))
                     .also { adRepository.actionPerformed() }
             } else {
@@ -270,12 +269,22 @@ class DayDetailSheetViewModel(
             is PersonalEventType -> addNewEvent(eventType)
         }
         adRepository.actionPerformed()
-        viewModelScope.launch { sharePromptRepository.eventAdded(EventKind.Typed) }
+    }
+
+    /**
+     * Counts an add as it is issued: the write only returns once the server confirms it, which the
+     * prompt has no reason to wait for. With nobody signed in the repositories drop the write, so
+     * nothing is counted either.
+     */
+    private fun CoroutineScope.countAdded(kind: EventKind) {
+        if (userRepository.loggedUser == null) return
+        launch { sharePromptRepository.eventAdded(kind) }
     }
 
     private fun addNewEvent(type: GroupEventType, eventTypeUi: EventTypeUi) {
         viewModelScope.launch {
             val userId = userRepository.loggedUser?.id ?: return@launch // TODO Emit error
+            countAdded(EventKind.Typed)
             groupRepository.addEvent(
                 GroupEvent(
                     id = EventId(Uuid.random().toString()),
@@ -296,6 +305,7 @@ class DayDetailSheetViewModel(
 
     private fun addNewEvent(type: PersonalEventType) {
         viewModelScope.launch {
+            countAdded(EventKind.Typed)
             personalRepository.addEvent(
                 PersonalTypedEvent(
                     id = EventId(Uuid.random().toString()),

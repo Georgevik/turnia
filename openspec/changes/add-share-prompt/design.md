@@ -75,20 +75,17 @@ They are read and written through a new `SharePromptRepository`, placed next to
 `AppConfigRepository` and backed by the same `DataStore<Preferences>`, so a single Koin binding
 serves both.
 
-The repository exposes one call, `eventAdded(kind: EventKind): SharePrompt?`. It works in three
+The repository counts with `eventAdded(kind: EventKind)`, which returns nothing. It works in two
 steps:
 
-1. Inside one `dataStore.edit`, it increments the counter.
-2. If the flags allow it, it takes the highest milestone `m` with `last < m <= count`, stores
-   `m` as the last milestone, and returns `SharePrompt(audience, milestone = m)`.
-3. Otherwise it returns `null`.
+1. Inside one `dataStore.edit`, it increments the counter and reads the last milestone shown.
+2. If the flags allow it, it takes the highest milestone `m` with `last < m <= count` and raises
+   `pending` to `SharePrompt(audience, milestone = m)` (see Decision 4). It stores nothing else.
 
-Doing it in one edit means two quick adds can neither both show the same milestone nor skip one.
-
-*Changed while implementing:* the milestone is stored when the sheet is **shown** (`shown(prompt)`),
-not when it is picked. An app closed while the prompt was still waiting behind the day sheet would
-otherwise lose that milestone; now the next event offers it again. `shown` also logs
-`share_prompt_shown` only the first time, so a rotation does not log twice.
+The milestone is stored when the sheet is **shown**, by `shown(prompt)`, not when it is picked. An
+app closed while the prompt was still waiting behind the day sheet would otherwise lose that
+milestone; now the next event offers it again. `shown` stores it in its own `dataStore.edit` and
+logs `share_prompt_shown` only the first time, so a rotation does not log twice.
 
 The milestone's value is stored, not its index, so a console edit can never make a passed milestone
 come back or skip one wrongly (see the spec's "Milestones edited remotely" scenario).
@@ -105,9 +102,11 @@ In `DayDetailSheetViewModel`:
 - `saveOneOff`, in its `previous == null` branch only, calls `eventAdded(EventKind.OneOff)`, which
   maps to the `friends` audience. Edits never count.
 
-The call happens after the add has been issued, whatever the outcome. The day sheet already treats
-an add as done once written, since Firestore queues it offline. An add that is later refused by the
-rules still counts, which is harmless for a prompt.
+An add is counted as it is issued: the count is launched just before the write, because the write
+only returns once the server confirms it, which the prompt has no reason to wait for. The outcome
+does not matter: the day sheet already treats an add as done once written, since Firestore queues
+it offline, and an add later refused by the rules still counts, which is harmless for a prompt. An
+add that is never issued, because nobody is signed in, is not counted.
 
 ### 4. The prompt is state, shown by `CalendarViewer` once the day sheet closes
 
@@ -119,8 +118,15 @@ A prompt must never be delivered as a one-off event. Following `CLAUDE.md`, the 
 - **Who shows it.** `CalendarViewer` observes it through a small `SharePromptViewModel`. It shows a
   second `ModalBottomSheet` only while no day sheet is open, so the prompt never stacks on the sheet
   that triggered it: it appears as the user closes the day, or immediately if the add closed it.
-- **When it clears.** Sharing or dismissing calls `promptShown(answer)`, which clears the state and
-  logs the answer. Dismissing includes swiping the sheet away or pressing back.
+  Once on screen it calls `shown(prompt)`, which spends the milestone.
+- **Where it shows.** Only on the user's own calendar and on group calendars, the ones events are
+  added from: `CalendarViewer` hosts it only when its caller passes `showSharePrompt`. A colleague's
+  calendar, which the user only reads, never shows it; a prompt still waiting there shows on the
+  next own or group calendar opened.
+- **When it clears.** Sharing or dismissing calls `answered(prompt, answer)`, which clears the state
+  and logs the answer. Dismissing includes swiping the sheet away or pressing back. It acts only if
+  `prompt` is still the one pending and returns whether it did, and the sheet shares only when it
+  did: a second tap on "Share Turnia" before the sheet closes neither shares nor logs again.
 
 The sheet holds three things:
 - a title and one line of text for the audience;
@@ -171,7 +177,7 @@ These are added to `AnalyticsEvent`, whose names are fixed once shipped:
 | `share_prompt_shown` | `audience`, `milestone` | The sheet appears. |
 | `share_prompt_shared` | `audience`, `milestone` | "Share Turnia" is tapped. This is a tap rate, not a send rate: Android's chooser does not say whether anything was sent. |
 | `share_prompt_dismissed` | `audience`, `milestone` | "Not now", a swipe or back. |
-| `sign_up` | `method` (`google`, `apple`, `email`) | `UserProvisioner.create` succeeds, meaning a first account and not a returning sign-in. This is Google's recommended event name, so GA4 reports it natively. |
+| `sign_up` | `method` (`google`, `apple`, `email`, `other`) | `UserProvisioner.create` succeeds, meaning a first account and not a returning sign-in. This is Google's recommended event name, so GA4 reports it natively. The method comes from the first provider that is not Firebase's own `firebase` entry, which Android lists first; any provider not named here is `other`. |
 
 In GA4, "shared links that became accounts" is the `sign_up` count filtered by *first user source
 = turnia_share*.
@@ -194,9 +200,18 @@ The flows go in a new `SharePromptFlowsTest`, reusing `CalendarRobot` for adding
 | 5 | milestones `[2, 4]` | "Not now" at 2, then 2 more | nothing at 3, sheet at 4; `share_prompt_dismissed` then `shown{…, 4}` |
 | 6 | milestones `[2]` | add 1 one-off, edit it twice | no sheet |
 | 7 | flag off, milestones `[2]` | add 3 | no sheet, no `shown` |
-| 8 | flag on, milestones `"oops"` | add 3 | no sheet, app keeps working |
+| 8 | flag on, milestones `"2, 4"` | add 3 | no sheet, app keeps working |
+| 9 | flag off, milestones `[1, 2, 3]` | add 2, turn the flag on, add 1 more, "Not now", add 1 more | one sheet, for 3; nothing after it; a single `shown` |
+| 10 | milestones `[1]` | add 1 shift in the group's calendar | coworkers sheet there; `shown{coworkers, 1}` |
 
 Each test runs in its own process with cleared data, so every counter starts at 0.
+
+A test that asserts no sheet cannot just wait a while and look: a prompt that arrived late would
+let it pass. The E2E module wraps the app's repository in a `CountingSharePromptRepository` that
+counts each `eventAdded` once it has returned, by which time the prompt is decided. The robot waits
+for the expected count, lets the UI go idle, checks the count was not exceeded, and only then checks
+that no sheet is on screen. Adds wait for the day sheet to finish closing before the next day is
+opened, since its veil would otherwise take the tap.
 
 ## Risks / Trade-offs
 

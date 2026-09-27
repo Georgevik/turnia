@@ -18,6 +18,6 @@ class SharePromptViewModel(
         viewModelScope.launch { sharePromptRepository.shown(prompt) }
     }
 
-    fun answered(prompt: SharePrompt, answer: SharePromptAnswer) =
+    fun answered(prompt: SharePrompt, answer: SharePromptAnswer): Boolean =
         sharePromptRepository.answered(prompt, answer)
 }

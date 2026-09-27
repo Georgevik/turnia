@@ -106,6 +106,9 @@ fun CalendarViewer(
     onEditGroup: (groupId: String, groupName: String) -> Unit = { _, _ -> },
     onAddPersonalType: () -> Unit = {},
     onAddGroupType: (groupId: String) -> Unit = {},
+    // Only where the user adds their own events: the prompt is about what they just added, so a
+    // colleague's calendar, which they only read, never shows it.
+    showSharePrompt: Boolean = false,
 ) {
     val anchorMonth = remember {
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
@@ -242,12 +245,13 @@ fun CalendarViewer(
                     openNewGroupTypeScreen = onAddGroupType,
                     onFormOpenChange = { sheetFormOpen = it },
                     onClose = { dismissSheet() },
+                    modifier = Modifier.testTag(TestTags.DAY_SHEET),
                 )
             }
         }
 
         // After the day, never on top of it: the prompt shows as the sheet it was earned in closes.
-        if (sheetDate == null) SharePromptHost()
+        if (showSharePrompt && sheetDate == null) SharePromptHost()
     }
 }
 

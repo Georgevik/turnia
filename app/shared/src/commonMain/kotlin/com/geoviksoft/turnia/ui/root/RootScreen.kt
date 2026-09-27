@@ -46,7 +46,8 @@ fun App(vm: RootViewModel = koinViewModel()) {
     val pendingJoinCode by vm.pendingJoinCode.collectAsStateWithLifecycle()
     val buildInfo: BuildInfo = koinInject()
     // Bound only by the E2E suite, to see what would have been shared.
-    val textSharer: TextSharer? = getKoin().getOrNull()
+    val koin = getKoin()
+    val textSharer: TextSharer? = remember(koin) { koin.getOrNull() }
 
     AppContent(userSession, pendingJoinCode, buildInfo, textSharer)
 }
@@ -66,13 +67,14 @@ fun AppContent(
     TurniaTheme {
         val snackbarHostState = remember { SnackbarHostState() }
         val navigator = remember(backStack) { RootNavigator(backStack) }
+        val platformSharer = rememberTextSharer()
 
         CompositionLocalProvider(
             LocalRootNavigator provides navigator,
             LocalNavigator provides navigator,
             LocalSnackbar provides snackbarHostState,
             LocalBuildInfo provides buildInfo,
-            LocalTextSharer provides (textSharer ?: rememberTextSharer()),
+            LocalTextSharer provides (textSharer ?: platformSharer),
         ) {
             AppLanguageHost {
                 Scaffold(

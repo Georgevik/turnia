@@ -79,6 +79,19 @@ SHALL NOT affect the choice.
 - **WHEN** the milestones are `[3]` and the user adds two typed events and then one one-off
 - **THEN** the prompt addresses friends
 
+### Requirement: The prompt shows where events are added
+The system SHALL show the prompt only on the user's own calendar and on group calendars. It SHALL
+NOT show it on a colleague's shared calendar, which the user only reads. A prompt that is due while
+no such calendar is open SHALL wait and show on the next one opened.
+
+#### Scenario: A group calendar
+- **WHEN** the milestones are `[1]` and the user adds a shift from a group's calendar
+- **THEN** the prompt shows on that group's calendar
+
+#### Scenario: A colleague's calendar
+- **WHEN** a prompt is due and the user is viewing a colleague's shared calendar
+- **THEN** the prompt is not shown there, and shows on the user's own or a group calendar next
+
 ### Requirement: Sharing opens the platform's share sheet with a tagged link
 The prompt SHALL offer one action to share and one to dismiss. Sharing SHALL open the platform's
 share sheet with a short message in the app's language and the link
