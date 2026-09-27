@@ -1,5 +1,7 @@
 package com.geoviksoft.turnia.core.domain.analytics
 
+import com.geoviksoft.turnia.core.domain.model.SharePrompt
+
 /**
  * Every event name and parameter key the app reports. They are declared here rather than written at
  * each call site because the console groups by the literal string: renaming one starts a fresh
@@ -17,6 +19,21 @@ sealed class AnalyticsEvent(
 
     data object GroupCreated : AnalyticsEvent("group_created")
 
+    /** Google's recommended name, so the console reports it as a sign-up out of the box. */
+    class SignUp(method: String) : AnalyticsEvent(
+        name = "sign_up",
+        parameters = mapOf("method" to method),
+    )
+
+    class SharePromptShown(prompt: SharePrompt) :
+        AnalyticsEvent("share_prompt_shown", prompt.parameters())
+
+    class SharePromptShared(prompt: SharePrompt) :
+        AnalyticsEvent("share_prompt_shared", prompt.parameters())
+
+    class SharePromptDismissed(prompt: SharePrompt) :
+        AnalyticsEvent("share_prompt_dismissed", prompt.parameters())
+
     data object GroupEventCreated : AnalyticsEvent("group_event_created")
 
     data object JoinRequested : AnalyticsEvent("join_group_requested")
@@ -24,3 +41,6 @@ sealed class AnalyticsEvent(
     /** Google's own `join_group`: the request was accepted and the user is now a member. */
     data object JoinAccepted : AnalyticsEvent("join_group")
 }
+
+private fun SharePrompt.parameters(): Map<String, Any> =
+    mapOf("audience" to audience.value, "milestone" to milestone.toLong())

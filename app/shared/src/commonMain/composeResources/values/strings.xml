@@ -479,4 +479,14 @@
 
     <!-- A build label, not a word: the same in every language. -->
     <string name="debug_chip" translatable="false">DEBUG</string>
+
+    <!-- The share prompt, shown at milestones of events added. The message is followed by a link. -->
+    <string name="share_prompt_coworkers_title">Does your team still swap shifts on WhatsApp?</string>
+    <string name="share_prompt_coworkers_text">Share Turnia with your coworkers: everyone's shifts in one place, and swaps nobody loses track of.</string>
+    <string name="share_prompt_coworkers_message">I organise my shifts with Turnia. Get it so we can swap them without the WhatsApp mess:</string>
+    <string name="share_prompt_friends_title">Let your friends know when you're off</string>
+    <string name="share_prompt_friends_text">Share Turnia with your friends and plan around your shifts together.</string>
+    <string name="share_prompt_friends_message">I keep my shifts and plans in Turnia. Get it so we can find a day to meet up:</string>
+    <string name="share_prompt_share">Share Turnia</string>
+    <string name="share_prompt_not_now">Not now</string>
 </resources>

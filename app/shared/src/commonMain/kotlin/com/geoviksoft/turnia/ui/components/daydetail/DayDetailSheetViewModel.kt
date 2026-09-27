@@ -3,6 +3,7 @@ package com.geoviksoft.turnia.ui.components.daydetail
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.geoviksoft.turnia.core.domain.model.EventId
+import com.geoviksoft.turnia.core.domain.model.EventKind
 import com.geoviksoft.turnia.core.domain.model.EventType
 import com.geoviksoft.turnia.core.domain.model.Group
 import com.geoviksoft.turnia.core.domain.model.GroupEvent
@@ -14,6 +15,7 @@ import com.geoviksoft.turnia.core.domain.model.SwapError
 import com.geoviksoft.turnia.core.domain.repository.AdRepository
 import com.geoviksoft.turnia.core.domain.repository.GroupRepository
 import com.geoviksoft.turnia.core.domain.repository.PersonalEventRepository
+import com.geoviksoft.turnia.core.domain.repository.SharePromptRepository
 import com.geoviksoft.turnia.core.domain.repository.UserRepository
 import com.geoviksoft.turnia.core.system.onFailure
 import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
@@ -31,6 +33,8 @@ import com.geoviksoft.turnia.ui.system.color.EntityPalette
 import com.geoviksoft.turnia.ui.system.color.entityColor
 import com.geoviksoft.turnia.ui.system.color.toComposeColorOr
 import com.geoviksoft.turnia.ui.system.color.toHex
+import kotlin.uuid.Uuid
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
@@ -41,7 +45,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.plus
-import kotlin.uuid.Uuid
 
 class DayDetailSheetViewModel(
     private val date: LocalDate,
@@ -50,6 +53,7 @@ class DayDetailSheetViewModel(
     private val personalRepository: PersonalEventRepository,
     private val userRepository: UserRepository,
     private val adRepository: AdRepository,
+    private val sharePromptRepository: SharePromptRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<AddEventTypesUi>(AddEventTypesUi.Loading)
@@ -232,6 +236,7 @@ class DayDetailSheetViewModel(
         viewModelScope.launch {
             val previous = form.editing?.toDomain()
             val outcome = if (previous == null) {
+                countAdded(EventKind.OneOff)
                 personalRepository.addOneOffEvent(form.toDomain(EventId(Uuid.random().toString())))
                     .also { adRepository.actionPerformed() }
             } else {
@@ -266,9 +271,20 @@ class DayDetailSheetViewModel(
         adRepository.actionPerformed()
     }
 
+    /**
+     * Counts an add as it is issued: the write only returns once the server confirms it, which the
+     * prompt has no reason to wait for. With nobody signed in the repositories drop the write, so
+     * nothing is counted either.
+     */
+    private fun CoroutineScope.countAdded(kind: EventKind) {
+        if (userRepository.loggedUser == null) return
+        launch { sharePromptRepository.eventAdded(kind) }
+    }
+
     private fun addNewEvent(type: GroupEventType, eventTypeUi: EventTypeUi) {
         viewModelScope.launch {
             val userId = userRepository.loggedUser?.id ?: return@launch // TODO Emit error
+            countAdded(EventKind.Typed)
             groupRepository.addEvent(
                 GroupEvent(
                     id = EventId(Uuid.random().toString()),
@@ -289,6 +305,7 @@ class DayDetailSheetViewModel(
 
     private fun addNewEvent(type: PersonalEventType) {
         viewModelScope.launch {
+            countAdded(EventKind.Typed)
             personalRepository.addEvent(
                 PersonalTypedEvent(
                     id = EventId(Uuid.random().toString()),

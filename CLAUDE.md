@@ -112,6 +112,31 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
   with the app closed is in the same language.
 
 ## Monetization — pricing and ads/premium business rules redacted from this repository's history; see CLAUDE.local.md.
+## Growth: the share prompt
+
+- **A sheet asks the user to share Turnia at milestones of events added.** Every new event counts
+  — a shift of a type or a one-off, never an edit — and each milestone shows the sheet once, shared
+  or dismissed. Several milestones passed at once make one sheet, for the highest.
+- **Remote Config drives it, and it ships off:** `sharePromptEnabled` (Boolean, `false`) and
+  `sharePromptMilestones` (a JSON array in a string, e.g. `"[10, 100, 200]"`; anything that does
+  not parse means no milestones). The console keeps `sharePromptEnabled` off by default and turns
+  it on per app with a condition — iOS first, Android once the app is on Google Play.
+- **Nothing touches Firestore.** The count and the last milestone shown — its value, so the array
+  can be edited safely — live in the device's DataStore (`SharePromptRepository`). A milestone is
+  spent only once its sheet is on screen.
+- **The count is per device, not per account.** Another account signed in on the same phone
+  inherits it, and the demo mode counts in the same file.
+- **It shows on the user's own calendar and on group calendars**, where events are added — never
+  on a colleague's, which the user only reads. A prompt due elsewhere waits until one of those is
+  open.
+- **The event that reached the milestone picks the message**: a typed event speaks to coworkers, a
+  one-off to friends.
+- **The link is the landing page with `utm_*` tags** (`ShareLink`), never `/join/`, which would open
+  an installed app. The page forwards the tags into Google Play's `referrer`, so Analytics attributes
+  an Android install on its own; iOS only gives downloads per campaign.
+- **Analytics:** `share_prompt_shown`, `share_prompt_shared` and `share_prompt_dismissed` with
+  `audience` and `milestone`, and `sign_up` with its `method` when an account is created.
+
 ## Data retention & local cache
 
 Firebase must **not** accumulate every past event forever. The backend keeps only a **recent window**; anything older is purged from Firestore and preserved **on the device**.
@@ -229,7 +254,8 @@ Build one with `value.toSuccess()` / `error.toFailure()` — both work on any re
 - **Local NoSQL cache** — on-device document store (candidate: Realm Kotlin) holding events fetched from
   Firestore in a **normalized** shape, so past events stay viewable after Firebase purges them (see *Data retention & local cache*).
 - **DataStore (KMP, Preferences)** — on-device key/value settings that exist before any account, such as
-  whether onboarding was seen. Read and written only through `AppPreferencesRepository`.
+  whether onboarding was seen. Read and written only through a repository: `AppConfigRepositoryImpl`
+  (onboarding) and `SharePromptRepositoryImpl` (the share prompt's count), over one shared file.
 - **AdMob** — ads for free-tier users (banner / interstitial / rewarded). Hidden for premium users.
 - **In-app subscriptions** — **Google Play Billing** (Android) and **StoreKit / App Store** (iOS) for premium plans.
 - **Firebase** — backend, no custom server:
@@ -436,7 +462,7 @@ Use the run configurations provided by the run widget in your IDE's toolbar. You
 
 ### E2E tests
 
-The 29 critical happy paths run on an Android emulator against the Firebase emulators, seeded from
+The 39 critical happy paths run on an Android emulator against the Firebase emulators, seeded from
 [`firebase/test/fixtures`](firebase/test/README.md) — see that README to run them. They live in
 `app/androidApp/src/androidTest/.../e2e`: `flows/` holds the tests, `robots/` drives the screens,
 `infra/` seeds the emulators and points the app at them (`TurniaTestApplication`).

@@ -186,9 +186,16 @@ fun PreviewTurniaTheme(content: @Composable () -> Unit) {
         LocalRootNavigator provides FakeNavigator,
         LocalNavigator provides FakeNavigator,
         LocalSnackbar provides SnackbarHostState(),
+        LocalTextSharer provides NoTextSharer,
     ) {
         TurniaTheme(content = content)
     }
+}
+
+private object NoTextSharer : TextSharer {
+    override fun copy(text: String) = Unit
+
+    override fun share(text: String) = Unit
 }
 
 private val FakeNavigator = object : Navigator {

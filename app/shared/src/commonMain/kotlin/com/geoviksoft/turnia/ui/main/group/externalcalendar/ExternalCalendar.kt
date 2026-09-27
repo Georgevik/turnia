@@ -96,6 +96,7 @@ private fun ExternalCalendarContent(
         eventsByDate = uiState.events,
         oneOffsByDate = uiState.oneOffs,
         isLoading = uiState.loading,
+        showSharePrompt = isGroup,
     )
 }
 

@@ -1,5 +1,6 @@
 package com.geoviksoft.turnia.e2e.robots
 
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
@@ -11,6 +12,7 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeTestRule
+import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import com.geoviksoft.turnia.core.domain.model.EventId
 import com.geoviksoft.turnia.core.domain.model.EventTypeId
@@ -78,6 +80,14 @@ internal class CalendarRobot(compose: ComposeTestRule, today: LocalDate) : AppRo
 
     // The day sheet. ==============================
 
+    /**
+     * Until the sheet has finished closing its veil still covers the grid, and a tap meant for the
+     * next day lands on it instead.
+     */
+    fun awaitDayClosed() {
+        compose.awaitNoNode(hasTestTag(TestTags.DAY_SHEET))
+    }
+
     fun addEventOfType(typeId: String) {
         clickDescription("Add event")
         compose.awaitNode(hasTestTag(TestTags.eventTypeChip(EventTypeId(typeId)))).scrollAndClick()
@@ -88,6 +98,32 @@ internal class CalendarRobot(compose: ComposeTestRule, today: LocalDate) : AppRo
         clickDescription("Add event")
         compose.awaitNode(hasTestTagPrefix(EVENT_TYPE_CHIP_PREFIX) and hasText(acronym))
             .scrollAndClick()
+    }
+
+    /** A one-off from the day sheet, which stays open after saving; closed so the day is done. */
+    fun addOneOff(date: LocalDate, name: String) {
+        openDay(date)
+        clickDescription("Add event")
+        click(ONE_OFF_HINT)
+        type("Name", name)
+        click("Save")
+        awaitText(name)
+        back()
+        awaitDayClosed()
+    }
+
+    fun editOneOff(date: LocalDate, name: String, newName: String) {
+        openDay(date)
+        // The row in the sheet, not the grid's label behind it: only the row is labelled "Edit".
+        compose.awaitNode(hasText(name, substring = true) and hasClickLabel(EDIT)).scrollAndClick()
+        compose.awaitNode(hasSetTextAction() and hasText("Name")).apply {
+            performTextClearance()
+            performTextInput(newName)
+        }
+        click("Save")
+        awaitText(newName)
+        back()
+        awaitDayClosed()
     }
 
     fun awaitEvent(eventId: String) {
@@ -131,7 +167,13 @@ internal class CalendarRobot(compose: ComposeTestRule, today: LocalDate) : AppRo
             node.config.getOrNull(SemanticsProperties.TestTag)?.startsWith(prefix) == true
         }
 
+    private fun hasClickLabel(label: String) = SemanticsMatcher("click label $label") { node ->
+        node.config.getOrNull(SemanticsActions.OnClick)?.label == label
+    }
+
     private companion object {
         val EVENT_TYPE_CHIP_PREFIX = TestTags.eventTypeChip(EventTypeId(""))
+        const val ONE_OFF_HINT = "New event…"
+        const val EDIT = "Edit"
     }
 }

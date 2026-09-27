@@ -52,13 +52,17 @@ import androidx.compose.ui.unit.dp
 import com.geoviksoft.turnia.core.data.logger.Logger
 import com.geoviksoft.turnia.ui.components.calendar.model.CalendarCellEventUi
 import com.geoviksoft.turnia.ui.components.calendar.model.CalendarCellOneOffUi
-import com.geoviksoft.turnia.ui.components.calendar.model.cellsFor
-import com.geoviksoft.turnia.ui.components.daydetail.model.OneOffEventUi
 import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
 import com.geoviksoft.turnia.ui.components.calendar.model.ThreeDotsOption
+import com.geoviksoft.turnia.ui.components.calendar.model.cellsFor
 import com.geoviksoft.turnia.ui.components.daydetail.DayAddMode
 import com.geoviksoft.turnia.ui.components.daydetail.DayDetailSheet
+import com.geoviksoft.turnia.ui.components.daydetail.model.OneOffEventUi
+import com.geoviksoft.turnia.ui.components.shareprompt.SharePromptHost
 import com.geoviksoft.turnia.ui.system.TestTags
+import kotlin.math.abs
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
@@ -76,9 +80,6 @@ import turnia.app.shared.generated.resources.calendar_months
 import turnia.app.shared.generated.resources.calendar_next_month
 import turnia.app.shared.generated.resources.calendar_previous_month
 import turnia.app.shared.generated.resources.calendar_weekday_initials
-import kotlin.math.abs
-import kotlin.time.Clock
-import kotlin.time.Duration.Companion.milliseconds
 
 private const val WEEKS = 6
 
@@ -105,6 +106,9 @@ fun CalendarViewer(
     onEditGroup: (groupId: String, groupName: String) -> Unit = { _, _ -> },
     onAddPersonalType: () -> Unit = {},
     onAddGroupType: (groupId: String) -> Unit = {},
+    // Only where the user adds their own events: the prompt is about what they just added, so a
+    // colleague's calendar, which they only read, never shows it.
+    showSharePrompt: Boolean = false,
 ) {
     val anchorMonth = remember {
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
@@ -241,9 +245,13 @@ fun CalendarViewer(
                     openNewGroupTypeScreen = onAddGroupType,
                     onFormOpenChange = { sheetFormOpen = it },
                     onClose = { dismissSheet() },
+                    modifier = Modifier.testTag(TestTags.DAY_SHEET),
                 )
             }
         }
+
+        // After the day, never on top of it: the prompt shows as the sheet it was earned in closes.
+        if (showSharePrompt && sheetDate == null) SharePromptHost()
     }
 }
 

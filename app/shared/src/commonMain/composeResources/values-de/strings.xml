@@ -477,4 +477,14 @@
     <string name="swap_empty_colleagues_title">Niemand braucht einen Tausch</string>
     <string name="swap_empty_colleagues_body">Niemand aus dem Team hat einen Tausch angefragt. Wenn jemand eine Vertretung braucht, siehst du es hier.</string>
 
+
+    <!-- The share prompt, shown at milestones of events added. The message is followed by a link. -->
+    <string name="share_prompt_coworkers_title">Tauscht dein Team Dienste noch über WhatsApp?</string>
+    <string name="share_prompt_coworkers_text">Teile Turnia mit deinen Kolleginnen und Kollegen: alle Dienste an einem Ort und Tausche, bei denen niemand den Überblick verliert.</string>
+    <string name="share_prompt_coworkers_message">Ich plane meine Dienste mit Turnia. Hol sie dir, dann tauschen wir Dienste ohne WhatsApp-Chaos:</string>
+    <string name="share_prompt_friends_title">Lass deine Freunde wissen, wann du frei hast</string>
+    <string name="share_prompt_friends_text">Teile Turnia mit deinen Freunden und plant eure Treffen um eure Dienste herum.</string>
+    <string name="share_prompt_friends_message">Ich habe meine Dienste und Pläne in Turnia. Hol sie dir, dann finden wir einen Tag zum Treffen:</string>
+    <string name="share_prompt_share">Turnia teilen</string>
+    <string name="share_prompt_not_now">Jetzt nicht</string>
 </resources>

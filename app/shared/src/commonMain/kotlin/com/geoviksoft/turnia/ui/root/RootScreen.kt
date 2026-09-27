@@ -25,8 +25,12 @@ import com.geoviksoft.turnia.ui.root.name.CompleteNameDialog
 import com.geoviksoft.turnia.ui.system.AppLanguageHost
 import com.geoviksoft.turnia.ui.system.LocalBuildInfo
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
+import com.geoviksoft.turnia.ui.system.LocalTextSharer
+import com.geoviksoft.turnia.ui.system.TextSharer
 import com.geoviksoft.turnia.ui.system.TurniaSnackbarHost
 import com.geoviksoft.turnia.ui.system.TurniaTheme
+import com.geoviksoft.turnia.ui.system.rememberTextSharer
+import org.koin.compose.getKoin
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -41,12 +45,20 @@ fun App(vm: RootViewModel = koinViewModel()) {
     val userSession by vm.userSession.collectAsStateWithLifecycle(UserSession.Loading)
     val pendingJoinCode by vm.pendingJoinCode.collectAsStateWithLifecycle()
     val buildInfo: BuildInfo = koinInject()
+    // Bound only by the E2E suite, to see what would have been shared.
+    val koin = getKoin()
+    val textSharer: TextSharer? = remember(koin) { koin.getOrNull() }
 
-    AppContent(userSession, pendingJoinCode, buildInfo)
+    AppContent(userSession, pendingJoinCode, buildInfo, textSharer)
 }
 
 @Composable
-fun AppContent(userSession: UserSession, pendingJoinCode: String?, buildInfo: BuildInfo) {
+fun AppContent(
+    userSession: UserSession,
+    pendingJoinCode: String?,
+    buildInfo: BuildInfo,
+    textSharer: TextSharer? = null,
+) {
     val backStack = rememberNavBackStack(rootRouteSavedStateConfiguration, RootRoute.SplashKey)
 
     HandleLogoutSignal(userSession, backStack)
@@ -55,12 +67,14 @@ fun AppContent(userSession: UserSession, pendingJoinCode: String?, buildInfo: Bu
     TurniaTheme {
         val snackbarHostState = remember { SnackbarHostState() }
         val navigator = remember(backStack) { RootNavigator(backStack) }
+        val platformSharer = rememberTextSharer()
 
         CompositionLocalProvider(
             LocalRootNavigator provides navigator,
             LocalNavigator provides navigator,
             LocalSnackbar provides snackbarHostState,
             LocalBuildInfo provides buildInfo,
+            LocalTextSharer provides (textSharer ?: platformSharer),
         ) {
             AppLanguageHost {
                 Scaffold(
