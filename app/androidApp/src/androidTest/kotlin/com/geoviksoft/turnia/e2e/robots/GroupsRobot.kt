@@ -39,16 +39,34 @@ internal class GroupsRobot(compose: ComposeTestRule) : AppRobot(compose) {
         compose.awaitNode(hasText(name) and hasClickAction()).scrollAndClick()
     }
 
-    fun createGroup(name: String, typeName: String, typeAcronym: String) {
+    /** The new-group form, with its proposed types listed. */
+    fun openNewGroupForm() {
         openTab(TAB_GROUPS)
         openFabMenu()
         // The empty state offers the same button; both open the same form.
         click("Create group")
+        PROPOSED_TYPES.forEach { awaitText(it) }
+    }
+
+    fun removeProposedType(name: String) = clickDescription("Remove $name")
+
+    /** A group whose only type is one of its creator's own: every proposed type is removed first. */
+    fun createGroup(name: String, typeName: String, typeAcronym: String) {
+        openNewGroupForm()
         type("Group name", name)
+        PROPOSED_TYPES.forEach(::removeProposedType)
         click("Add event type")
         fillEventType(typeName, typeAcronym)
         awaitText(typeName)
         click("Create group")
+        finishInviteStep()
+    }
+
+    fun awaitInviteStep() = awaitText(INVITE_STEP_TITLE)
+
+    fun finishInviteStep() {
+        awaitInviteStep()
+        click("Done")
     }
 
     fun fillEventType(name: String, acronym: String) {
@@ -60,5 +78,13 @@ internal class GroupsRobot(compose: ComposeTestRule) : AppRobot(compose) {
     fun leaveGroup() {
         clickDescription("Leave group")
         click("Leave")
+    }
+
+    companion object {
+        /** What a new group is proposed, in the order the form lists them. */
+        val PROPOSED_TYPES = listOf("Morning", "Afternoon", "Night", "Morning & afternoon")
+        const val INVITE_STEP_TITLE = "Your group is ready"
+        const val ALONE_CARD_TITLE = "Only you here"
+        const val INVITE_COLLEAGUES = "Invite colleagues"
     }
 }

@@ -38,7 +38,7 @@ class JoinGroupFlowsTest {
     private val groups = GroupsRobot(compose)
 
     @Test
-    fun createGroup_withItsFirstEventType() {
+    fun createGroup_withATypeOfItsOwn() {
         groups.createGroup(name = "Quirófano", typeName = "Guardia", typeAcronym = "GQ")
 
         groups.awaitText("Quirófano")

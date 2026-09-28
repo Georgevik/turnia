@@ -1,0 +1,55 @@
+{
+  "_comment": "Layered over base: dana runs Consultas alone, and nuevo is waiting at its door.",
+  "firestore": {
+    "groups/consultas": {
+      "name": "Consultas",
+      "color": "#64B5F6",
+      "memberUids": [
+        "dana"
+      ],
+      "revokedUids": [],
+      "members": {
+        "dana": {
+          "name": "Dana Doe",
+          "username": "dana"
+        }
+      },
+      "adminUids": [
+        "dana"
+      ],
+      "groupEventTypes": [
+        {
+          "id": "consulta",
+          "name": "Consulta",
+          "acronym": "CO",
+          "description": null,
+          "startTime": "09:00",
+          "endTime": "14:00",
+          "swappable": true,
+          "color": "#64B5F6"
+        }
+      ],
+      "invitation": {
+        "code": "CON001",
+        "active": true,
+        "autoApprove": false,
+        "expiresAt": null
+      },
+      "updateAt": "$now"
+    },
+    "groups/consultas/joinRequests/nuevo": {
+      "name": "Nico Nuevo",
+      "username": "nuevo",
+      "groupName": "Consultas",
+      "status": "pending",
+      "requestedAt": "$now",
+      "respondedAt": null
+    },
+    "users/nuevo/private/joinRequests": {
+      "groupIds": [
+        "consultas"
+      ],
+      "updateAt": "$now"
+    }
+  }
+}

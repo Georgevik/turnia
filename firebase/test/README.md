@@ -53,6 +53,12 @@ dana under `hiddenSharedCalendars`, as if she had hidden it on another device. `
 a `private/preferences`, so this fixture is the only one that creates it — and with it the
 `preferences` marker.
 
+## `solo-group.json`
+
+Layered over `base` by `AloneGroupFlowsTest`: dana is the only member, and admin, of **Consultas**
+(code `CON001`, no auto-approve), and nuevo has a pending request to join it. Accepting that request
+is how a group of one becomes a group of two.
+
 ## Placeholders
 
 Dates are relative to the day the test runs, so the data never leaves the month on screen or the
