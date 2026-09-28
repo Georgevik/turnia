@@ -12,7 +12,7 @@
 
 - [x] 2.1 Add `isShiftSetupSettled` / `setShiftSetupSettled` to `AppConfigRepository` and `AppConfigRepositoryImpl`, over the existing DataStore file, and to the test fake `FixedAppConfigRepository`. Verify with a unit test that the flag round-trips.
 - [x] 2.2 Add the `hasAnyType(SERVER)` and `hasAnyGroup(SERVER)` `limit(1)` server reads in the owning datasources, tracked with `.trackData(TAG, …)`. Verify with the FirestoreAudit log line in a debug run of T1.
-- [ ] 2.3 Implement `ShiftSetupRepositoryImpl` (`due`, `hintPending`, `shown`, `skipped`, `complete`, `hintShown`) following design D1/D2, and register it in Koin. Verify with unit tests covering these cases:
+- [x] 2.3 Implement `ShiftSetupRepositoryImpl` (`due`, `hintPending`, `shown`, `skipped`, `complete`, `hintShown`) following design D1/D2, and register it in Koin. Verify with unit tests covering these cases:
   - settled flag set: false, no reads;
   - pending invitation: false;
   - cached types: false, and the flag is set;

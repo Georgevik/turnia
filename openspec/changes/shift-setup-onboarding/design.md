@@ -81,8 +81,10 @@ The `due` flow is evaluated once per signed-in session:
    result is `true`. If either throws, for example offline, the result is `false` and the flag is not
    set, so the next launch decides again.
 
-The flag is set by skipping, by completing, and by the server showing the account already has
-something. So the reads happen at most once per device for an account that settles.
+The flag is set by skipping, by completing, by the server showing the account already has
+something, and by an invitation code arriving while the setup is owed: whoever comes through an
+invitation joins a group that brings its own types, and without it the setup would reappear the
+moment the join sheet takes the code. So the reads happen at most once per device for an account that settles.
 
 The flag lives in **`AppConfigRepository`** (`isShiftSetupSettled` / `setShiftSetupSettled`), next to
 the onboarding flag in the same DataStore file.
