@@ -4,7 +4,7 @@
 
 - [x] 1.1 Add `RemoteKey.TEAM_PROMPT_ENABLED` (`teamPromptEnabled`, default `false`) and `TEAM_PROMPT_THRESHOLD` (`teamPromptThreshold`, `Long`, default `5`) to `RemoteConfigService` (defaults and `getFlags`). Add `teamPromptEnabled`, `teamPromptThreshold` and `teamPromptActive` (`enabled && threshold >= 1`) to `FeatureFlags`. Verify with a unit test on `FeatureFlags.teamPromptActive` covering off, on and threshold 0.
 - [x] 1.2 Add `TeamPromptChoice` (`Create`/`Join`/`Dismissed` → `create`/`join`/`dismissed`), `AnalyticsEvent.OnboardTeamShown` (`onboard_team_shown`) and `AnalyticsEvent.OnboardTeamAnswered(choice)` (`onboard_team_answered`, param `choice`). Verify it compiles and an `AnalyticsEvent` test asserts the names and the param value.
-- [ ] 1.3 Update CLAUDE.md: add `choice` to the event-scoped parameters to register, document `onboard_team_*` under *Analytics*, and add a *Growth: the team prompt* note (Remote Config keys, once per device, precedence over the share prompt). Verify the text reads consistently with the specs.
+- [x] 1.3 Update CLAUDE.md: add `choice` to the event-scoped parameters to register, document `onboard_team_*` under *Analytics*, and add a *Growth: the team prompt* note (Remote Config keys, once per device, precedence over the share prompt). Verify the text reads consistently with the specs.
 
 ## 2. Team prompt state in core
 
