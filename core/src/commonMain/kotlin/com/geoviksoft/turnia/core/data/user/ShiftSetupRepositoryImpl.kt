@@ -43,8 +43,8 @@ class ShiftSetupRepositoryImpl(
     scope: CoroutineScope,
 ) : ShiftSetupRepository {
 
-    private val _due = MutableStateFlow(false)
-    override val due: StateFlow<Boolean> = _due.asStateFlow()
+    private val _shouldShow = MutableStateFlow(false)
+    override val shouldShow: StateFlow<Boolean> = _shouldShow.asStateFlow()
 
     private val _hintPending = MutableStateFlow(false)
     override val hintPending: StateFlow<Boolean> = _hintPending.asStateFlow()
@@ -54,14 +54,14 @@ class ShiftSetupRepositoryImpl(
             session.map { (it as? UserSession.Authenticated)?.user?.id }
                 .distinctUntilChanged()
                 .collectLatest { uid ->
-                    _due.value = false
-                    if (uid != null) _due.value = decide(uid)
+                    _shouldShow.value = false
+                    if (uid != null) _shouldShow.value = decide(uid)
                 }
         }
         // Someone who arrives through an invitation joins a group that brings its own types.
         scope.launch {
             invitations.pendingCode.filterNotNull().collect {
-                if (_due.value) settle()
+                if (_shouldShow.value) settle()
             }
         }
     }
@@ -81,7 +81,7 @@ class ShiftSetupRepositoryImpl(
     }
 
     private suspend fun settle() {
-        _due.value = false
+        _shouldShow.value = false
         appConfigRepository.setShiftSetupSettled(true)
     }
 

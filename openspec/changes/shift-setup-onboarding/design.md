@@ -44,7 +44,7 @@ A new repository owns the decision and the reports:
 
 ```
 interface ShiftSetupRepository {
-    val due: StateFlow<Boolean>          // show the setup after sign-in
+    val shouldShow: StateFlow<Boolean>          // show the setup after sign-in
     val hintPending: StateFlow<Boolean>  // "tap a day to add a shift", held until shown
     suspend fun shown(via: ShiftSetupVia)
     suspend fun skipped(via: ShiftSetupVia, interacted: Boolean)
@@ -55,7 +55,7 @@ interface ShiftSetupRepository {
 
 Why a repository:
 - Analytics are logged in the repository, after success, per CLAUDE.md.
-- `due` and `hintPending` are state, never a `Channel`, so a cold start or rotation cannot lose them.
+- `shouldShow` and `hintPending` are state, never a `Channel`, so a cold start or rotation cannot lose them.
 
 `complete` delegates the write to a new `PersonalEventRepository.createEventTypes(types)`. That
 method logs `personal_event_type_created` per type once the commit succeeds. Only then does `complete`
@@ -67,7 +67,7 @@ must be unit-testable without Compose.
 
 ### D2. The decision: cache first, then one bounded server check, remembered once settled
 
-The `due` flow is evaluated once per signed-in session:
+The `shouldShow` flow is evaluated once per signed-in session:
 
 1. If the device flag `shift_setup_settled` is set, or `InvitationLinkRepository.pendingCode` is
    non-null, the result is `false`, with no read.
@@ -100,8 +100,8 @@ the onboarding flag in the same DataStore file.
 ### D3. Routing: a root route pushed above Main, after the name
 
 - New `RootRoute.ShiftSetupKey(via: ShiftSetupVia)`.
-- `MainScreen` collects `due` and pushes `ShiftSetupKey(Onboarding)` when all of these hold:
-  - `due` is true;
+- `MainScreen` collects `shouldShow` and pushes `ShiftSetupKey(Onboarding)` when all of these hold:
+  - `shouldShow` is true;
   - the user no longer `needsName`;
   - the key is not already on the stack.
 - The add pane's empty state pushes `ShiftSetupKey(AddPane)`.

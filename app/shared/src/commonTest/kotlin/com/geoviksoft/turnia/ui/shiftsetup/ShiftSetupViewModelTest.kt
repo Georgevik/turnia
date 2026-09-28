@@ -187,7 +187,7 @@ private class FakeShiftSetupRepository : ShiftSetupRepository {
     val completed = mutableListOf<Completed>()
     var fails = false
 
-    override val due: StateFlow<Boolean> = MutableStateFlow(true)
+    override val shouldShow: StateFlow<Boolean> = MutableStateFlow(true)
     override val hintPending: StateFlow<Boolean> = MutableStateFlow(false)
 
     override suspend fun shown(via: ShiftSetupVia) {

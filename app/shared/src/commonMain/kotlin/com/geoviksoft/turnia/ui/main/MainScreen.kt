@@ -96,9 +96,9 @@ fun MainScreen(viewModel: MainViewModel = koinViewModel()) {
 
     // Over Main, bottom bar included: it is a first step, not a tab's page.
     val rootNavigator = LocalRootNavigator.current
-    val shiftSetupDue by viewModel.shiftSetupDue.collectAsStateWithLifecycle()
-    LaunchedEffect(shiftSetupDue) {
-        if (shiftSetupDue) rootNavigator.goTo(RootRoute.ShiftSetupKey(ShiftSetupVia.Onboarding))
+    val showShiftSetup by viewModel.showShiftSetup.collectAsStateWithLifecycle()
+    LaunchedEffect(showShiftSetup) {
+        if (showShiftSetup) rootNavigator.goTo(RootRoute.ShiftSetupKey(ShiftSetupVia.Onboarding))
     }
 
     TrackScreen(state.backStacks[state.topLevelRoute]?.lastOrNull())

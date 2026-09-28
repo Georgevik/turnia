@@ -29,9 +29,9 @@ class MainViewModel(
     val pendingJoinCode: StateFlow<String?> = invitationLinkRepository.pendingCode
 
     /** The shift setup is owed, and waits for the name when the account still has none. */
-    val shiftSetupDue: StateFlow<Boolean> =
-        combine(shiftSetupRepository.due, userRepository.userSession) { due, session ->
-            due && session is UserSession.Authenticated && !session.user.needsName
+    val showShiftSetup: StateFlow<Boolean> =
+        combine(shiftSetupRepository.shouldShow, userRepository.userSession) { shouldShow, session ->
+            shouldShow && session is UserSession.Authenticated && !session.user.needsName
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), initialValue = false)
 
     fun destinationHandled() = notificationRepository.destinationHandled()

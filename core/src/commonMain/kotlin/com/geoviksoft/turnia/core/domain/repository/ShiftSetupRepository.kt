@@ -15,7 +15,7 @@ interface ShiftSetupRepository {
      * The signed-in account has nothing to reuse — no personal type, no group, no invitation on the
      * way — and this device has not settled the setup yet. State, so a cold start cannot lose it.
      */
-    val due: StateFlow<Boolean>
+    val shouldShow: StateFlow<Boolean>
 
     /** The "tap a day" hint the calendar owes after the setup created the shifts, wherever it was opened. */
     val hintPending: StateFlow<Boolean>

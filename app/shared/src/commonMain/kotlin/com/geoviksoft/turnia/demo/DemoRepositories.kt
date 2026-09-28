@@ -436,7 +436,7 @@ internal class DemoAppConfigRepository : AppConfigRepository {
 internal class DemoShiftSetupRepository(
     private val personalEventRepository: PersonalEventRepository,
 ) : ShiftSetupRepository {
-    override val due: StateFlow<Boolean> = MutableStateFlow(false)
+    override val shouldShow: StateFlow<Boolean> = MutableStateFlow(false)
     override val hintPending: StateFlow<Boolean> = MutableStateFlow(false)
     override suspend fun shown(via: ShiftSetupVia) = Unit
     override suspend fun skipped(via: ShiftSetupVia, interacted: Boolean) = Unit

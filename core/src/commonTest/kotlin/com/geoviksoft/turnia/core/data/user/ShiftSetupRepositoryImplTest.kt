@@ -52,7 +52,7 @@ class ShiftSetupRepositoryImplTest {
     fun aSettledDeviceIsNeverAskedAndReadsNothing() = runTest {
         config.shiftSetupSettled = true
 
-        assertFalse(repository().due.value)
+        assertFalse(repository().shouldShow.value)
         assertEquals(0, contents.cacheReads + contents.serverReads)
     }
 
@@ -60,7 +60,7 @@ class ShiftSetupRepositoryImplTest {
     fun aPendingInvitationIsNotAsked() = runTest {
         invitations.pendingCode.value = "ABC123"
 
-        assertFalse(repository().due.value)
+        assertFalse(repository().shouldShow.value)
         assertEquals(0, contents.serverReads)
     }
 
@@ -68,7 +68,7 @@ class ShiftSetupRepositoryImplTest {
     fun aCachedTypeOrGroupSettlesWithoutAServerRead() = runTest {
         contents.cached = true
 
-        assertFalse(repository().due.value)
+        assertFalse(repository().shouldShow.value)
         assertTrue(config.shiftSetupSettled)
         assertEquals(0, contents.serverReads)
     }
@@ -77,7 +77,7 @@ class ShiftSetupRepositoryImplTest {
     fun anEmptyAccountOnTheServerIsAsked() = runTest {
         contents.server = false.toSuccess()
 
-        assertTrue(repository().due.value)
+        assertTrue(repository().shouldShow.value)
         assertFalse(config.shiftSetupSettled, "Only an answer from the user settles it")
     }
 
@@ -85,7 +85,7 @@ class ShiftSetupRepositoryImplTest {
     fun anAccountWithSomethingOnTheServerSettles() = runTest {
         contents.server = true.toSuccess()
 
-        assertFalse(repository().due.value)
+        assertFalse(repository().shouldShow.value)
         assertTrue(config.shiftSetupSettled)
     }
 
@@ -93,7 +93,7 @@ class ShiftSetupRepositoryImplTest {
     fun noServerAnswerIsNotAnEmptyAccount() = runTest {
         contents.server = Unit.toFailure()
 
-        assertFalse(repository().due.value)
+        assertFalse(repository().shouldShow.value)
         assertFalse(config.shiftSetupSettled, "The next launch has to ask again")
     }
 
@@ -101,19 +101,19 @@ class ShiftSetupRepositoryImplTest {
     fun signedOutIsNeverAsked() = runTest {
         session.value = UserSession.Unauthenticated
 
-        assertFalse(repository().due.value)
+        assertFalse(repository().shouldShow.value)
         assertEquals(0, contents.cacheReads)
     }
 
     @Test
     fun anInvitationArrivingWhileAskedSettlesIt() = runTest {
         val repository = repository()
-        assertTrue(repository.due.value)
+        assertTrue(repository.shouldShow.value)
 
         invitations.pendingCode.value = "ABC123"
         runCurrent()
 
-        assertFalse(repository.due.value)
+        assertFalse(repository.shouldShow.value)
         assertTrue(config.shiftSetupSettled)
     }
 
@@ -123,7 +123,7 @@ class ShiftSetupRepositoryImplTest {
 
         repository.skipped(ShiftSetupVia.Onboarding, interacted = true)
 
-        assertFalse(repository.due.value)
+        assertFalse(repository.shouldShow.value)
         assertTrue(config.shiftSetupSettled)
         val skipped = analytics.named("onboard_shift_skipped").single()
         assertEquals("true", skipped.parameters["interacted"])
@@ -150,7 +150,7 @@ class ShiftSetupRepositoryImplTest {
 
         assertEquals(Unit.toSuccess(), outcome)
         assertEquals(3, personal.created.size)
-        assertFalse(repository.due.value)
+        assertFalse(repository.shouldShow.value)
         assertTrue(config.shiftSetupSettled)
         assertTrue(repository.hintPending.value)
         val completed = analytics.named("onboard_shift_completed").single()
@@ -169,7 +169,7 @@ class ShiftSetupRepositoryImplTest {
         val outcome = repository.complete(types(3), ShiftSetupVia.Onboarding, interacted = true, customCount = 1)
 
         assertTrue(outcome is Outcome.Failure)
-        assertTrue(repository.due.value, "The setup stays owed")
+        assertTrue(repository.shouldShow.value, "The setup stays owed")
         assertFalse(config.shiftSetupSettled)
         assertFalse(repository.hintPending.value)
         assertTrue(analytics.named("onboard_shift_completed").isEmpty())

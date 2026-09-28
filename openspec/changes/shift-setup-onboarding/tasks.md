@@ -12,7 +12,7 @@
 
 - [x] 2.1 Add `isShiftSetupSettled` / `setShiftSetupSettled` to `AppConfigRepository` and `AppConfigRepositoryImpl`, over the existing DataStore file, and to the test fake `FixedAppConfigRepository`. Verify with a unit test that the flag round-trips.
 - [x] 2.2 Add the `hasAnyType(SERVER)` and `hasAnyGroup(SERVER)` `limit(1)` server reads in the owning datasources, tracked with `.trackData(TAG, …)`. Verify with the FirestoreAudit log line in a debug run of T1.
-- [x] 2.3 Implement `ShiftSetupRepositoryImpl` (`due`, `hintPending`, `shown`, `skipped`, `complete`, `hintShown`) following design D1/D2, and register it in Koin. Verify with unit tests covering these cases:
+- [x] 2.3 Implement `ShiftSetupRepositoryImpl` (`shouldShow`, `hintPending`, `shown`, `skipped`, `complete`, `hintShown`) following design D1/D2, and register it in Koin. Verify with unit tests covering these cases:
   - settled flag set: false, no reads;
   - pending invitation: false;
   - cached types: false, and the flag is set;
@@ -26,7 +26,7 @@
 - [x] 3.1 Add the `ShiftPreset` enum (names and acronyms as `StringResource`, default times, `selectedByDefault`, fixed palette color) and every string, including the preset names and acronyms from design D4, in `values`, `values-es`, `values-fr`, `values-de` and `values-it`. Verify that the build compiles and the five `strings.xml` files contain every new key.
 - [x] 3.2 Build `ShiftSetupViewModel` and its UiState: rows, selection, editable times, the inline custom form with required name and acronym, `interacted`, `userMessage` on a failed write, and confirm disabled with nothing selected. Log `shown` from `init`. Verify with unit tests for toggle, time edit, custom add validation and the `interacted` transitions.
 - [x] 3.3 Build `ShiftSetupScreen` with Skip, the preset rows, "Add another shift" and Confirm, adding the `TestTags` from design D8. Resolve names in the current language on confirm. Verify with a Compose preview, and later with T1 and T2.
-- [x] 3.4 Add `RootRoute.ShiftSetupKey(via)` and its serializer. Push it from `MainScreen` when `due` is true and `needsName` is false; pop it on skip, confirm or back, with back from `Onboarding` counting as a skip. Show the calendar hint from `hintPending` in `MyCalendarScreen` and call `hintShown()`. Verify with T1, T3 and T4.
+- [x] 3.4 Add `RootRoute.ShiftSetupKey(via)` and its serializer. Push it from `MainScreen` when `shouldShow` is true and `needsName` is false; pop it on skip, confirm or back, with back from `Onboarding` counting as a skip. Show the calendar hint from `hintPending` in `MyCalendarScreen` and call `hintShown()`. Verify with T1, T3 and T4.
 
 ## 4. UI: add pane, wording and "Save as shift"
 
