@@ -172,6 +172,7 @@
     <string name="group_detail_section_color">Farbe</string>
     <string name="group_detail_section_types">Terminarten</string>
     <string name="group_detail_types_add">Terminart hinzufügen</string>
+    <string name="group_detail_type_remove">%1$s entfernen</string>
     <string name="group_detail_types_empty">Noch keine Terminarten</string>
     <string name="group_detail_types_empty_body">Ohne mindestens eine kann niemand Dienste zu dieser Gruppe hinzufügen.</string>
     <string name="group_detail_save">Speichern</string>
@@ -186,6 +187,13 @@
     <string name="group_detail_code_copied">Code kopiert</string>
     <string name="group_detail_share_invitation">In die Gruppe einladen</string>
     <string name="group_detail_share_invitation_text">Tritt der Gruppe „%1$s“ auf Turnia bei: %2$s</string>
+    <string name="group_created_title">Deine Gruppe ist bereit</string>
+    <string name="group_created_text">Lade deine Kolleginnen und Kollegen ein, damit alle den Dienstplan sehen und Dienste mit dir tauschen können.</string>
+    <string name="group_created_invite">Kollegium einladen</string>
+    <string name="group_created_done">Fertig</string>
+    <string name="group_alone_title">Nur du bist hier</string>
+    <string name="group_alone_text">Eine Gruppe ist zum Tauschen von Diensten mit deinem Team da. Lade es ein, dann füllt sich der Dienstplan.</string>
+    <string name="group_alone_invite">Kollegium einladen</string>
     <string name="group_detail_code_changed">Speichere, damit der neue Code gültig wird.</string>
     <string name="group_detail_section_members">Mitglieder</string>
     <string name="group_detail_members_sheet_title">Gruppenmitglieder</string>
@@ -486,6 +494,11 @@
     <string name="share_prompt_friends_message">Ich habe meine Dienste und Pläne in Turnia. Hol sie dir, dann finden wir einen Tag zum Treffen:</string>
     <string name="share_prompt_share">Turnia teilen</string>
     <string name="share_prompt_not_now">Jetzt nicht</string>
+    <string name="team_prompt_title">Arbeitest du im Team?</string>
+    <string name="team_prompt_text">Erstelle eine Gruppe mit deinen Kolleginnen und Kollegen: Alle sehen den Dienstplan, und wenn du einen Dienst tauschst, bleibt die ganze Kette nachvollziehbar.</string>
+    <string name="team_prompt_create">Gruppe erstellen</string>
+    <string name="team_prompt_join">Ich habe einen Code</string>
+    <string name="team_prompt_not_now">Nicht jetzt</string>
     <string name="shift_setup_title">Welche Schichten arbeitest du?</string>
     <string name="shift_setup_subtitle">Leg sie einmal an und trag sie mit einem Tippen in deinen Kalender ein.</string>
     <string name="shift_setup_skip">Überspringen</string>

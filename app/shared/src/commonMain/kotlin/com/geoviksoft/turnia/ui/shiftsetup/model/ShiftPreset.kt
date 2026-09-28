@@ -48,4 +48,10 @@ enum class ShiftPreset(
         Res.string.shift_preset_duty24, Res.string.shift_preset_duty24_acronym,
         LocalTime(8, 0), LocalTime(8, 0), selectedByDefault = false, color = EntityPalette[0],
     ),
+    ;
+
+    companion object {
+        /** What a new group is proposed: a rota's usual shifts, without the 24h duty. */
+        val groupDefaults: List<ShiftPreset> = listOf(Morning, Afternoon, Night, MorningAfternoon)
+    }
 }

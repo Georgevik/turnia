@@ -147,6 +147,33 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
 - **Analytics:** `share_prompt_shown`, `share_prompt_shared` and `share_prompt_dismissed` with
   `audience` and `milestone`, and `sign_up` with its `method` when an account is created.
 
+## Growth: the team prompt and group invites
+
+- **A sheet asks "Do you work with a team?" once the user has been using the app**: never on first
+  launch, but once the share prompt's count of events added reaches `teamPromptThreshold` (a whole
+  number, `5` by default). It ships off behind `teamPromptEnabled` (Boolean, `false`); a threshold
+  below 1 also turns it off. It offers *Create a group*, *I have a code* (the Groups tab with the
+  join sheet open and empty) and *Not now*.
+- **Only for someone in no group, decided by the server.** A revoked group does not count. The
+  check is one `limit(1)` read per event added past the threshold. It stops for good once the
+  prompt has been shown, or once the server says the user has a group: someone who has been in
+  a group already knows what it is for.
+- **Once per device, remembered in DataStore** (`team_prompt_settled`), never in Firestore. It is
+  spent only once the sheet is on screen, like a share prompt milestone.
+- **Only on the user's own calendar, and it wins over the share prompt.** When both are due, the
+  share prompt keeps its milestone and waits until a calendar is opened again, never straight after
+  the team prompt closes. A prompt already on screen is never replaced: a team prompt that becomes
+  due while a share prompt is up (its server read came back late) waits for the next visit.
+- **A new group starts with Morning, Afternoon, Night and Morning & afternoon proposed**, in the
+  language on screen when the form opens, so naming it is enough to create it. The proposed types
+  can be edited or removed, and at least one type is still required.
+- **Creating a group leads to "Your group is ready"**, with the invitation link's share button, and
+  **a group with a single member shows a card asking for the team**. The card derives from the
+  members the screen has already loaded, so it costs no read. Every share button sends the same
+  link and text, and logs `group_invite_shared`.
+- **Analytics:** `onboard_team_shown`, and `onboard_team_answered` with `choice` (`create` | `join` |
+  `dismissed`).
+
 ## Analytics
 
 - **Every name lives in `AnalyticsEvent` and `AnalyticsUserProperty`**, never written at a call
@@ -167,7 +194,7 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
 - **Parameters and properties must be registered by hand** in the GA console (*Admin → Custom
   definitions*), or they show only in DebugView and BigQuery. Event-scoped: `screen_name`,
   `method`, `audience`, `milestone`, `auto_approve`, `type_count`, `all_day`, `multi_month`, `via`,
-  `type`, `interacted`, `custom_type_count`, `kind`. User-scoped: `group_count`, `is_admin`, `app_language`. A new one is added there too.
+  `type`, `interacted`, `custom_type_count`, `kind`, `choice`. User-scoped: `group_count`, `is_admin`, `app_language`. A new one is added there too.
 - **The shift setup** logs `onboard_shift_shown`, `onboard_shift_skipped` and
   `onboard_shift_completed`, all with `via` (`onboarding` | `add_pane`); the last two carry
   `interacted` — whether the user touched the panel at all before leaving it — and completion adds

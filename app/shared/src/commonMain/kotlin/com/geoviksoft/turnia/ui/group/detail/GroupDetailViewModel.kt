@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.geoviksoft.turnia.core.domain.analytics.Analytics
 import com.geoviksoft.turnia.core.domain.analytics.AnalyticsEvent
 import com.geoviksoft.turnia.core.domain.model.Group
+import com.geoviksoft.turnia.core.domain.model.EventTypeId
 import com.geoviksoft.turnia.core.domain.model.GroupError
 import com.geoviksoft.turnia.core.domain.model.GroupEventType
 import com.geoviksoft.turnia.core.domain.model.GroupId
@@ -33,6 +34,8 @@ import com.geoviksoft.turnia.ui.system.color.entityColor
 import com.geoviksoft.turnia.ui.system.color.toComposeColorOr
 import com.geoviksoft.turnia.ui.system.color.toComposeColorOrNull
 import com.geoviksoft.turnia.ui.system.color.toHex
+import com.geoviksoft.turnia.ui.shiftsetup.model.ShiftPreset
+import com.geoviksoft.turnia.ui.system.components.time.toTimeOrNull
 import com.geoviksoft.turnia.ui.system.createUuid
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -68,6 +71,9 @@ class GroupDetailViewModel(
 
     private var observation: Job? = null
 
+    /** A new group is proposed its types once, not again on every return from a type's screen. */
+    private var typesProposed = false
+
     init {
         // Whatever a creation abandoned halfway left behind is not this group's.
         if (groupId == null) groupRepository.consumePendingEventTypes()
@@ -90,6 +96,41 @@ class GroupDetailViewModel(
     }
 
     fun retry() = load()
+
+    /**
+     * Seeds a new group with the usual shifts, so naming it is enough to create it. [texts] holds
+     * each preset's name and acronym as the screen resolved them, in the language on screen: from
+     * here on they are ordinary pending types, edited and saved like any other.
+     */
+    fun proposeTypes(texts: Map<ShiftPreset, Pair<String, String>>) {
+        if (groupId != null || typesProposed) return
+        typesProposed = true
+
+        ShiftPreset.groupDefaults.forEach { preset ->
+            val (name, acronym) = texts[preset] ?: return@forEach
+            groupRepository.setPendingEventType(
+                GroupEventType(
+                    id = EventTypeId(createUuid()),
+                    groupId = GroupId(""),
+                    groupName = "",
+                    name = name,
+                    acronym = acronym,
+                    description = null,
+                    startTime = preset.start.toString().toTimeOrNull(),
+                    endTime = preset.end.toString().toTimeOrNull(),
+                    swappable = true,
+                    defaultColor = preset.color.toHex(),
+                    userColor = null,
+                )
+            )
+        }
+    }
+
+    /** Only a group still being created: an existing group's types are not removed from here. */
+    fun onRemoveType(typeId: EventTypeId) {
+        if (groupId != null) return
+        groupRepository.removePendingEventType(typeId)
+    }
 
     /**
      * Follows the group rather than reading it once: a type saved on its own screen, a request
@@ -139,6 +180,7 @@ class GroupDetailViewModel(
                 eventTypes = loaded.eventTypes,
                 members = loaded.members,
                 joinRequests = loaded.joinRequests,
+                isAlone = loaded.isAlone,
             )
         }
     }
@@ -197,7 +239,19 @@ class GroupDetailViewModel(
                     loadedGroup = saved
                     // Written now, and only now: a failed save has to leave them on screen.
                     groupRepository.consumePendingEventTypes()
-                    updateSuccess { it.copy(saving = false, isSaved = true) }
+                    updateSuccess { state ->
+                        if (loaded != null) return@updateSuccess state.copy(saving = false, isSaved = true)
+                        // The code is the group's now, so the invite step can pass it on.
+                        state.copy(
+                            saving = false,
+                            created = true,
+                            form = state.form.copy(
+                                groupId = saved.id,
+                                invitationCode = saved.invitationCode,
+                                codeChanged = false,
+                            ),
+                        )
+                    }
                 },
                 onFailure = {
                     updateSuccess {
@@ -207,6 +261,9 @@ class GroupDetailViewModel(
             )
         }
     }
+
+    /** The invite step after creating a group is over, shared or not: the screen closes. */
+    fun onCreatedDone() = updateSuccess { it.copy(isSaved = true) }
 
     fun onAcceptRequest(userId: UserId) {
         val groupId = groupId ?: return
@@ -361,6 +418,8 @@ class GroupDetailViewModel(
             JoinRequestUi(it.userId, it.name, it.username, avatars.avatarOf(it.userId))
         },
         isNew = false,
+        // Derived from the members the listener already brings: the card costs no read.
+        isAlone = members.size == 1,
     )
 
     private fun GroupMember.toUiRow(avatars: Map<UserId, UserProfile.AnimalAvatar>) = GroupMemberUi(

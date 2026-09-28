@@ -83,6 +83,14 @@ fun GroupsScreen(viewModel: GroupsViewModel = koinViewModel()) {
         joinSheetOpen = true
     }
 
+    val joinSheetRequested by viewModel.joinSheetRequested.collectAsStateWithLifecycle()
+    LaunchedEffect(joinSheetRequested, loaded) {
+        if (!joinSheetRequested || !loaded) return@LaunchedEffect
+
+        viewModel.joinSheetOpened()
+        joinSheetOpen = true
+    }
+
     success?.userMessage?.let { message ->
         val visual = TurniaSnackbarVisual(message.text(), isError = message.isError)
         LaunchedEffect(message) {

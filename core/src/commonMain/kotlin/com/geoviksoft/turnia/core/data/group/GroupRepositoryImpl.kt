@@ -49,7 +49,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNot
@@ -60,7 +59,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.withIndex
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
@@ -85,9 +83,8 @@ class GroupRepositoryImpl(
     private val analytics: Analytics,
 ) : GroupRepository {
 
-    private val _pendingEventTypes = MutableStateFlow<List<GroupEventType>>(emptyList())
-    override val pendingEventTypes: StateFlow<List<GroupEventType>> =
-        _pendingEventTypes.asStateFlow()
+    private val pending = PendingEventTypes()
+    override val pendingEventTypes: StateFlow<List<GroupEventType>> = pending.types
 
     private val reportedMembership = MutableStateFlow<Pair<Int, Boolean>?>(null)
 
@@ -279,13 +276,11 @@ class GroupRepositoryImpl(
             }
         }
 
-    override fun setPendingEventType(type: GroupEventType) = _pendingEventTypes.update { held ->
-        if (held.none { it.id == type.id }) held + type
-        else held.map { if (it.id == type.id) type else it }
-    }
+    override fun setPendingEventType(type: GroupEventType) = pending.set(type)
 
-    override fun consumePendingEventTypes(): List<GroupEventType> =
-        _pendingEventTypes.getAndUpdate { emptyList() }
+    override fun removePendingEventType(id: EventTypeId) = pending.remove(id)
+
+    override fun consumePendingEventTypes(): List<GroupEventType> = pending.consume()
 
     override suspend fun saveEventType(
         groupId: GroupId,

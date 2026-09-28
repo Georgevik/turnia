@@ -1,6 +1,10 @@
 package com.geoviksoft.turnia.e2e.infra
 
 import com.geoviksoft.turnia.core.data.config.SharePromptRepositoryImpl
+import com.geoviksoft.turnia.core.data.config.TeamPromptRepositoryImpl
+import com.geoviksoft.turnia.core.data.user.FirestoreGroupMembership
+import com.geoviksoft.turnia.core.data.user.GroupMembership
+import kotlinx.coroutines.CompletableDeferred
 import com.geoviksoft.turnia.core.data.config.mappers.SharePromptMilestonesMapper
 import com.geoviksoft.turnia.core.domain.analytics.Analytics
 import com.geoviksoft.turnia.core.domain.analytics.AnalyticsEvent
@@ -11,6 +15,8 @@ import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.domain.repository.AppConfigRepository
 import com.geoviksoft.turnia.core.domain.repository.FcmDelegate
 import com.geoviksoft.turnia.core.domain.repository.SharePromptRepository
+import com.geoviksoft.turnia.core.domain.repository.TeamPromptRepository
+import com.geoviksoft.turnia.core.domain.repository.UserRepository
 import com.geoviksoft.turnia.core.system.Outcome
 import com.geoviksoft.turnia.core.system.toSuccess
 import com.geoviksoft.turnia.ui.system.TextSharer
@@ -36,6 +42,12 @@ internal val e2eModule = module {
     single<TextSharer> { RecordingTextSharer }
     single<SharePromptRepository> {
         CountingSharePromptRepository(SharePromptRepositoryImpl(get(), get(), get()))
+    }
+    single<GroupMembership> { GatedGroupMembership(FirestoreGroupMembership(get())) }
+    single<TeamPromptRepository> {
+        CountingTeamPromptRepository(
+            TeamPromptRepositoryImpl(get<UserRepository>().userSession, get(), get(), get(), get())
+        )
     }
     single {
         AdConsent(
@@ -67,6 +79,10 @@ internal object FixedAppConfigRepository : AppConfigRepository {
             sharePromptEnabled = enabled,
             sharePromptMilestones = SharePromptMilestonesMapper().map(milestones),
         )
+    }
+
+    fun teamPrompt(enabled: Boolean, threshold: Int) = flags.update {
+        it.copy(teamPromptEnabled = enabled, teamPromptThreshold = threshold)
     }
     override suspend fun isOnboardingSeen(): Boolean = onboardingSeen
 
@@ -138,14 +154,49 @@ internal class CountingSharePromptRepository(
     private val delegate: SharePromptRepository,
 ) : SharePromptRepository by delegate {
 
-    override suspend fun eventAdded(kind: EventKind) {
-        delegate.eventAdded(kind)
-        counted.incrementAndGet()
-    }
+    override suspend fun eventAdded(kind: EventKind): Int =
+        delegate.eventAdded(kind).also { counted.incrementAndGet() }
 
     companion object {
         private val counted = AtomicInteger()
 
         val eventsCounted: Int get() = counted.get()
+    }
+}
+
+/**
+ * The app's own team prompt repository, counting each add once it has decided — the server's
+ * answer included. A test asserting that no prompt shows waits for that count first.
+ */
+internal class CountingTeamPromptRepository(
+    private val delegate: TeamPromptRepository,
+) : TeamPromptRepository by delegate {
+
+    override suspend fun eventsAdded(count: Int) {
+        delegate.eventsAdded(count)
+        decided.incrementAndGet()
+    }
+
+    companion object {
+        private val decided = AtomicInteger()
+
+        val eventsDecided: Int get() = decided.get()
+    }
+}
+
+/**
+ * The server's membership answer, held back while a test keeps [gate] closed: the only way to have
+ * the team prompt become due after a share prompt is already on screen, as a slow network would.
+ */
+internal class GatedGroupMembership(private val delegate: GroupMembership) : GroupMembership {
+
+    override suspend fun serverHasAnyGroup(uid: UserId): Outcome<Boolean, Unit> {
+        gate.await()
+        return delegate.serverHasAnyGroup(uid)
+    }
+
+    companion object {
+        @Volatile
+        var gate = CompletableDeferred(Unit)
     }
 }

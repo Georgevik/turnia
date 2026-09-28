@@ -90,8 +90,9 @@ fun MainScreen(viewModel: MainViewModel = koinViewModel()) {
     // An opened invitation link only needs the Groups tab on screen: the tab puts the code in its
     // join sheet and marks it handled, so it stays pending until the sheet actually has it.
     val pendingJoinCode by viewModel.pendingJoinCode.collectAsStateWithLifecycle()
-    LaunchedEffect(pendingJoinCode) {
-        if (pendingJoinCode != null) navigator.goToRoot(MainRoute.GroupsTab)
+    val joinSheetRequested by viewModel.joinSheetRequested.collectAsStateWithLifecycle()
+    LaunchedEffect(pendingJoinCode, joinSheetRequested) {
+        if (pendingJoinCode != null || joinSheetRequested) navigator.goToRoot(MainRoute.GroupsTab)
     }
 
     // Over Main, bottom bar included: it is a first step, not a tab's page.

@@ -3,6 +3,7 @@ package com.geoviksoft.turnia.core.domain.analytics
 import com.geoviksoft.turnia.core.domain.model.EventKind
 import com.geoviksoft.turnia.core.domain.model.SharePrompt
 import com.geoviksoft.turnia.core.domain.model.ShiftSetupVia
+import com.geoviksoft.turnia.core.domain.model.TeamPromptChoice
 
 /**
  * Every event name and parameter key the app reports. They are declared here rather than written at
@@ -134,6 +135,13 @@ sealed class AnalyticsEvent(
             "type_count" to typeCount.toLong(),
             "custom_type_count" to customTypeCount.toLong(),
         ),
+    )
+
+    data object OnboardTeamShown : AnalyticsEvent("onboard_team_shown")
+
+    class OnboardTeamAnswered(choice: TeamPromptChoice) : AnalyticsEvent(
+        name = "onboard_team_answered",
+        parameters = mapOf("choice" to choice.value),
     )
 
     /** Activation: whether the first event added on the device came from a shift or was a one-off. */

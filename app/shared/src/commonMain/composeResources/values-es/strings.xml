@@ -172,6 +172,7 @@
     <string name="group_detail_section_color">Color</string>
     <string name="group_detail_section_types">Tipos de evento</string>
     <string name="group_detail_types_add">Añadir tipo de evento</string>
+    <string name="group_detail_type_remove">Quitar %1$s</string>
     <string name="group_detail_types_empty">Aún no hay tipos de evento</string>
     <string name="group_detail_types_empty_body">Sin al menos uno, nadie puede añadir turnos a este grupo.</string>
     <string name="group_detail_save">Guardar</string>
@@ -186,6 +187,13 @@
     <string name="group_detail_code_copied">Código copiado</string>
     <string name="group_detail_share_invitation">Invitar al grupo</string>
     <string name="group_detail_share_invitation_text">Únete al grupo «%1$s» en Turnia: %2$s</string>
+    <string name="group_created_title">Tu grupo está listo</string>
+    <string name="group_created_text">Invita a tus compañeros para que todos vean el cuadrante y puedan cambiarte turnos.</string>
+    <string name="group_created_invite">Invitar a compañeros</string>
+    <string name="group_created_done">Hecho</string>
+    <string name="group_alone_title">Solo estás tú</string>
+    <string name="group_alone_text">Un grupo sirve para cambiar turnos con tu equipo. Invítalos y el cuadrante se llenará.</string>
+    <string name="group_alone_invite">Invitar a compañeros</string>
     <string name="group_detail_code_changed">Guarda para que el código nuevo empiece a funcionar.</string>
     <string name="group_detail_section_members">Miembros</string>
     <string name="group_detail_members_sheet_title">Miembros del grupo</string>
@@ -486,6 +494,11 @@
     <string name="share_prompt_friends_message">Llevo mis turnos y planes en Turnia. Descárgala y encontramos un día para quedar:</string>
     <string name="share_prompt_share">Compartir Turnia</string>
     <string name="share_prompt_not_now">Ahora no</string>
+    <string name="team_prompt_title">¿Trabajas en equipo?</string>
+    <string name="team_prompt_text">Crea un grupo con tus compañeros: todos ven el cuadrante y, cuando cambias un turno, toda la cadena de cambios queda registrada.</string>
+    <string name="team_prompt_create">Crear un grupo</string>
+    <string name="team_prompt_join">Tengo un código</string>
+    <string name="team_prompt_not_now">Ahora no</string>
     <string name="shift_setup_title">¿Qué turnos haces?</string>
     <string name="shift_setup_subtitle">Créalos una vez y añádelos a tu calendario con un toque.</string>
     <string name="shift_setup_skip">Saltar</string>
