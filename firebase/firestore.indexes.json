@@ -15,6 +15,20 @@
       ]
     },
     {
+      "collectionGroup": "personalEvents",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "typeId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "yearMonth",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "personalOneOffEvents",
       "queryScope": "COLLECTION",
       "fields": [
@@ -63,7 +77,8 @@
           "order": "ASCENDING"
         }
       ]
-    },{
+    },
+    {
       "collectionGroup": "personalOneOffEvents",
       "queryScope": "COLLECTION",
       "fields": [
@@ -119,6 +134,20 @@
         },
         {
           "fieldPath": "date",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "groupEventExtras",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "yearMonth",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "updateAt",
           "order": "ASCENDING"
         }
       ]

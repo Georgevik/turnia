@@ -14,7 +14,7 @@
 ## 2. Firestore schema, rules and indexes
 
 - [x] 2.1 Add the `groupEventExtras` match to `firebase/firestore.rules`: read and write only when `request.auth.uid == uid`. Verify with the emulator that the owner can read and write, and that a `calendarSharedWith` viewer and another member are denied.
-- [ ] 2.2 Add the `groupEventExtras (yearMonth ASC, updateAt ASC)` and `personalEvents (typeId ASC, yearMonth ASC)` indexes to `firebase/firestore.indexes.json`. Verify the file parses and the emulator accepts both queries.
+- [x] 2.2 Add the `groupEventExtras (yearMonth ASC, updateAt ASC)` and `personalEvents (typeId ASC, yearMonth ASC)` indexes to `firebase/firestore.indexes.json`. Verify the file parses and the emulator accepts both queries.
 - [ ] 2.3 Update `firebase/firestore-schema.md`:
   - add a `users/{uid}/groupEventExtras/{eventId}` section: fields, why clearing keeps the document, access;
   - add the `groupEventExtras` per-month marker to `sync/updates`;
