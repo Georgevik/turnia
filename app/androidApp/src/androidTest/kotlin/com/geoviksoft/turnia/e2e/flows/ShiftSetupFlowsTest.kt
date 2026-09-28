@@ -238,7 +238,7 @@ class ShiftAddPaneFlowsTest {
 
         calendar.openOneOff(date, "Guardia")
         compose.awaitNode(hasTestTag(TestTags.ONE_OFF_SAVE_AS_SHIFT)).scrollAndClick()
-        calendar.type("Calendar abbreviation", "G")
+        calendar.type("Abbr.", "G")
         calendar.click("Save")
 
         val (_, type) = Documents.awaitIn("users/alice/personalEventTypes") { it.string("name") == "Guardia" }

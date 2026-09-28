@@ -69,7 +69,7 @@ class CalendarFlowsTest {
         calendar.click("My shifts")
         calendar.click("New shift")
         calendar.type("Name", "Guardia extra")
-        calendar.type("Calendar abbreviation", "GX")
+        calendar.type("Abbr.", "GX")
         calendar.click("Save")
         calendar.awaitText("Guardia extra")
         val (typeId, _) = Documents.awaitIn("users/alice/personalEventTypes") {

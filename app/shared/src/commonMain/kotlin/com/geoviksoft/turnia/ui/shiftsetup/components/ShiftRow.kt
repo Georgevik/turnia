@@ -1,4 +1,4 @@
-package com.geoviksoft.turnia.ui.shiftsetup
+package com.geoviksoft.turnia.ui.shiftsetup.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -14,8 +13,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.geoviksoft.turnia.ui.shiftsetup.model.ShiftPreset
+import com.geoviksoft.turnia.ui.shiftsetup.model.ShiftRowUi
+import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
 import com.geoviksoft.turnia.ui.system.TestTags
+import com.geoviksoft.turnia.ui.system.color.EntityPalette
 import com.geoviksoft.turnia.ui.system.components.AcronymBadge
 import com.geoviksoft.turnia.ui.system.components.time.TTimeField
 import org.jetbrains.compose.resources.stringResource
@@ -24,7 +28,7 @@ import turnia.app.shared.generated.resources.event_type_field_end
 import turnia.app.shared.generated.resources.event_type_field_start
 
 @Composable
-internal fun ShiftRow(
+fun ShiftRow(
     index: Int,
     row: ShiftRowUi,
     name: String,
@@ -41,7 +45,11 @@ internal fun ShiftRow(
         ) {
             Checkbox(checked = row.selected, onCheckedChange = { onToggle() })
             AcronymBadge(color = row.color, acronym = acronym, size = 36.dp)
-            Text(text = name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+            Text(
+                text = name,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f)
+            )
         }
         if (row.selected) {
             Row(
@@ -62,5 +70,32 @@ internal fun ShiftRow(
                 )
             }
         }
+    }
+}
+
+@Preview
+@Composable
+fun ShiftRowPreview() {
+    val row = ShiftRowUi(
+        id = "id",
+        preset = ShiftPreset.Afternoon,
+        name = "name",
+        acronym = "acronym",
+        start = "start",
+        end = "end",
+        color = EntityPalette[0],
+        selected = true
+    )
+
+    PreviewTurniaTheme {
+        ShiftRow(
+            index = 1,
+            row = row,
+            name = "Name",
+            acronym = "N",
+            onToggle = {},
+            onStartChange = {},
+            onEndChange = {},
+        )
     }
 }

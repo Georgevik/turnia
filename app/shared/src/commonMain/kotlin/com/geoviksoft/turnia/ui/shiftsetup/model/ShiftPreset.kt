@@ -1,7 +1,7 @@
-package com.geoviksoft.turnia.ui.shiftsetup
+package com.geoviksoft.turnia.ui.shiftsetup.model
 
-import com.geoviksoft.turnia.ui.system.color.EntityPalette
 import androidx.compose.ui.graphics.Color
+import com.geoviksoft.turnia.ui.system.color.EntityPalette
 import kotlinx.datetime.LocalTime
 import org.jetbrains.compose.resources.StringResource
 import turnia.app.shared.generated.resources.Res

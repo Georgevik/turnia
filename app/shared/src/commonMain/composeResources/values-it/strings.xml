@@ -222,7 +222,7 @@
     <string name="event_type_detail_new_personal">Nuovo evento personale</string>
     <string name="event_type_field_name">Nome</string>
     <string name="event_type_name_hint_group">Mattina, Pomeriggio, Notte, Reperibilità…</string>
-    <string name="event_type_field_acronym">Sigla nel calendario</string>
+    <string name="event_type_field_acronym">Sigla</string>
     <string name="event_type_acronym_hint">Fino a %1$d lettere. È ciò che appare in ogni giorno del calendario.</string>
     <string name="event_type_field_optional">Facoltativo</string>
     <string name="event_type_field_description">Descrizione</string>

@@ -1,4 +1,4 @@
-package com.geoviksoft.turnia.ui.shiftsetup
+package com.geoviksoft.turnia.ui.shiftsetup.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,8 +13,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.geoviksoft.turnia.ui.shiftsetup.model.CustomShiftForm
+import com.geoviksoft.turnia.ui.shiftsetup.model.ShiftPreset
+import com.geoviksoft.turnia.ui.shiftsetup.model.ShiftRowUi
+import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
 import com.geoviksoft.turnia.ui.system.TestTags
+import com.geoviksoft.turnia.ui.system.color.EntityPalette
 import com.geoviksoft.turnia.ui.system.components.time.TTimeField
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
@@ -27,7 +33,7 @@ import turnia.app.shared.generated.resources.shift_setup_custom_cancel
 import turnia.app.shared.generated.resources.shift_setup_required
 
 @Composable
-internal fun CreateInlineShiftRow(
+fun CreateInlineShiftRow(
     form: CustomShiftForm,
     onChange: (CustomShiftForm) -> Unit,
     onAdd: () -> Unit,
@@ -53,6 +59,7 @@ internal fun CreateInlineShiftRow(
                 isError = form.acronymMissing,
                 supportingText = if (form.acronymMissing) ({ Text(required) }) else null,
                 singleLine = true,
+                maxLines = 1,
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
                 modifier = Modifier.weight(1f).testTag(TestTags.SHIFT_SETUP_CUSTOM_ACRONYM),
             )
@@ -71,9 +78,44 @@ internal fun CreateInlineShiftRow(
                 modifier = Modifier.weight(1f).testTag(TestTags.SHIFT_SETUP_CUSTOM_END),
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.align(Alignment.End)) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.align(Alignment.End)
+        ) {
             TextButton(onClick = onCancel) { Text(stringResource(Res.string.shift_setup_custom_cancel)) }
             Button(onClick = onAdd) { Text(stringResource(Res.string.shift_setup_custom_add)) }
         }
+    }
+}
+
+
+@Preview
+@Composable
+fun CreateInlineShiftRowPreview() {
+    val row = ShiftRowUi(
+        id = "id",
+        preset = ShiftPreset.Afternoon,
+        name = "name",
+        acronym = "acronym",
+        start = "start",
+        end = "end",
+        color = EntityPalette[0],
+        selected = true
+    )
+
+    PreviewTurniaTheme {
+        CreateInlineShiftRow(
+            form = CustomShiftForm(
+                name = "",
+                acronym = "",
+                start = "",
+                end = "",
+                nameMissing = false,
+                acronymMissing = false,
+            ),
+            onChange = {},
+            onAdd = {},
+            onCancel = {},
+        )
     }
 }

@@ -222,7 +222,7 @@
     <string name="event_type_detail_new_personal">Neuer persönlicher Termin</string>
     <string name="event_type_field_name">Name</string>
     <string name="event_type_name_hint_group">Frühdienst, Spätdienst, Nachtdienst, Bereitschaft…</string>
-    <string name="event_type_field_acronym">Kürzel im Kalender</string>
+    <string name="event_type_field_acronym">Kurz.</string>
     <string name="event_type_acronym_hint">Bis zu %1$d Buchstaben. Das steht an jedem Tag im Kalender.</string>
     <string name="event_type_field_optional">Optional</string>
     <string name="event_type_field_description">Beschreibung</string>

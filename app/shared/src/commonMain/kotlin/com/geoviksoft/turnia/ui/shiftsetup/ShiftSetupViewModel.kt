@@ -1,6 +1,5 @@
 package com.geoviksoft.turnia.ui.shiftsetup
 
-import com.geoviksoft.turnia.ui.system.color.toHex
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.geoviksoft.turnia.core.domain.model.EventTypeId
@@ -9,6 +8,10 @@ import com.geoviksoft.turnia.core.domain.model.ShiftSetupVia
 import com.geoviksoft.turnia.core.domain.repository.ShiftSetupRepository
 import com.geoviksoft.turnia.core.system.fold
 import com.geoviksoft.turnia.ui.main.eventtypes.detail.EventTypeDetailViewModel
+import com.geoviksoft.turnia.ui.shiftsetup.model.CustomShiftForm
+import com.geoviksoft.turnia.ui.shiftsetup.model.ShiftPreset
+import com.geoviksoft.turnia.ui.shiftsetup.model.ShiftSetupUi
+import com.geoviksoft.turnia.ui.system.color.toHex
 import com.geoviksoft.turnia.ui.system.components.time.toTimeInput
 import com.geoviksoft.turnia.ui.system.components.time.toTimeOrNull
 import com.geoviksoft.turnia.ui.system.createUuid

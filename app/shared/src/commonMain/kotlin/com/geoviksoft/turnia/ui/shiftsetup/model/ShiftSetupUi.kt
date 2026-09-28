@@ -1,4 +1,4 @@
-package com.geoviksoft.turnia.ui.shiftsetup
+package com.geoviksoft.turnia.ui.shiftsetup.model
 
 import androidx.compose.ui.graphics.Color
 import org.jetbrains.compose.resources.StringResource
