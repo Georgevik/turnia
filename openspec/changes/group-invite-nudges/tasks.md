@@ -32,7 +32,7 @@
 ## 4. Team prompt UI and precedence
 
 - [x] 4.1 Add strings in `values/`, `values-es/`, `values-fr/`, `values-de/` and `values-it/`: the team prompt's title, body, "Create a group", "I have a code" and "Not now". Verify every key exists in all five files.
-- [ ] 4.2 Create `TeamPromptViewModel` and `TeamPromptSheet`, modelled on `SharePromptSheet`:
+- [x] 4.2 Create `TeamPromptViewModel` and `TeamPromptSheet`, modelled on `SharePromptSheet`:
   - `LaunchedEffect` → `shown()`;
   - dismissing the sheet → `answered(Dismissed)`;
   - the buttons → `answered(Create/Join)`, followed by `navigator.goTo(MainRoute.GroupDetail(null))` or `invitationLinkRepository.requestJoinSheet()` only when `answered` returned true.

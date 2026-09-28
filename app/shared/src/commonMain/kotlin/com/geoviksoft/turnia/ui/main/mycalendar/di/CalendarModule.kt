@@ -5,6 +5,7 @@ import com.geoviksoft.turnia.ui.components.daydetail.DayAddMode
 import com.geoviksoft.turnia.ui.components.daydetail.DayDetailSheetViewModel
 import com.geoviksoft.turnia.ui.components.daydetail.EventAddedPrompts
 import com.geoviksoft.turnia.ui.components.shareprompt.SharePromptViewModel
+import com.geoviksoft.turnia.ui.components.teamprompt.TeamPromptViewModel
 import com.geoviksoft.turnia.ui.main.group.externalcalendar.ExternalCalendarViewModel
 import com.geoviksoft.turnia.ui.main.mycalendar.MyCalendarViewModel
 import kotlinx.datetime.LocalDate
@@ -23,6 +24,7 @@ val calendarModule: Module = module {
         ExternalCalendarViewModel(data, get(), get(), get(), get(), get())
     }
     viewModelOf(::SharePromptViewModel)
+    viewModelOf(::TeamPromptViewModel)
     factoryOf(::EventAddedPrompts)
     viewModel { (date: LocalDate, addMode: DayAddMode) ->
         DayDetailSheetViewModel(date, addMode, get(), get(), get(), get(), get())
