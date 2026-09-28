@@ -78,6 +78,15 @@ interface GroupRepository {
     ): Flow<List<GroupEvent>>
 
     /**
+     * The user's own notes on group events in the months around [date], by event id. Nobody else can
+     * read them: not the group, not whoever the user's calendar is shared with.
+     */
+    fun getMyEventNotes(date: LocalDate, monthDelta: Int = 1): Flow<Map<EventId, String>>
+
+    /** Saves the user's own note on [event]. A blank note clears it. */
+    suspend fun saveEventNote(event: GroupEvent, notes: String?): Outcome<Unit, Unit>
+
+    /**
      * Every swap-related shift across the user's groups, from [date] forward.
      */
     fun getSwapEvents(date: LocalDate, monthsAhead: Int = 3): Flow<List<GroupEvent>>

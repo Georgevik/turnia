@@ -157,6 +157,7 @@ internal class DemoGroupRepository(private val world: DemoWorld) : GroupReposito
     private val me = DemoPeople.me
     private val groups = MutableStateFlow(world.groups)
     private val events = MutableStateFlow(world.groupEvents)
+    private val notes = MutableStateFlow<Map<EventId, String>>(emptyMap())
     private val pending = PendingEventTypes()
 
     override fun getGroups(): Flow<List<Group>> = groups
@@ -249,6 +250,14 @@ internal class DemoGroupRepository(private val world: DemoWorld) : GroupReposito
         all.filter {
             (it.assigneeId == userId || it.ownerId == userId) && it.date in window(date, monthDelta)
         }
+    }
+
+    override fun getMyEventNotes(date: LocalDate, monthDelta: Int): Flow<Map<EventId, String>> = notes
+
+    override suspend fun saveEventNote(event: GroupEvent, notes: String?): Outcome<Unit, Unit> {
+        val note = notes?.trim()?.ifBlank { null }
+        this.notes.update { if (note == null) it - event.id else it + (event.id to note) }
+        return Unit.toSuccess()
     }
 
     override fun getSwapEvents(date: LocalDate, monthsAhead: Int): Flow<List<GroupEvent>> =

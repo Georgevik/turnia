@@ -192,7 +192,7 @@ val dataModule: Module = module {
     single<GroupRepository> {
         GroupRepositoryImpl(
             get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(),
-            get(), get()
+            get(), get(), get()
         )
     }
     single<PersonalEventRepository> { PersonalEventRepositoryImpl(get(), get(), get(), get(), get(), get()) }
