@@ -38,9 +38,9 @@
   - the buttons → `answered(Create/Join)`, followed by `navigator.goTo(MainRoute.GroupDetail(null))` or `invitationLinkRepository.requestJoinSheet()` only when `answered` returned true.
 
   Add a Compose preview.
-- [ ] 4.3 Replace `SharePromptHost` in `CalendarViewer` with a `CalendarPromptHost(allowTeamPrompt)` that follows design Decision 3:
+- [x] 4.3 Replace `SharePromptHost` in `CalendarViewer` with a `CalendarPromptHost(allowTeamPrompt)` that follows design Decision 3:
   - the team prompt wins when it is pending and allowed;
-  - a `rememberSaveable` "team prompt shown this visit" flag suppresses the share prompt until the calendar leaves composition.
+  - a `remember` "team prompt shown this visit" flag, hoisted into `CalendarViewer`, suppresses the share prompt until the calendar leaves composition.
 
   `MyCalendarScreen` passes `allowTeamPrompt = true`, and group calendars pass `false`. Verify manually in the demo or debug build with both flags forced due: only the team sheet shows; after answering, no share sheet shows until a tab switch and return.
 - [ ] 4.4 Add E2E `TeamPromptFlowsTest` with a `TeamPromptRobot`, with the Remote Config flag forced on and a low threshold through the test modules. Cover:

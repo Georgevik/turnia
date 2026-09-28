@@ -58,6 +58,7 @@ fun MyCalendarScreen(viewModel: MyCalendarViewModel = koinViewModel()) {
             onMonthChanged = viewModel::onMonthChanged,
             addMode = DayAddMode.Full,
             showSharePrompt = true,
+            showTeamPrompt = true,
             onEditGroup = { groupId, _ ->
                 navigator.goTo(MainRoute.GroupDetail(groupId))
             },

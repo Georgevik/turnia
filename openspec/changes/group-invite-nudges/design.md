@@ -84,11 +84,14 @@ where `allowTeamPrompt` is `true` only from `MyCalendarScreen`. The host:
 - shows the team prompt when team `pending` is true and team prompts are allowed there;
 - otherwise shows the share prompt, unless a team prompt was already shown during this visit.
 
-The "this visit" flag is a `remember { mutableStateOf(false) }` in the host. It is set once the team
-sheet is on screen. It survives recomposition and dies when the calendar leaves composition, such as
-a tab switch or a navigation away, which gives "the next time a calendar opens" with no stored state.
-A rotation keeps it only if it is `rememberSaveable`, so it is `rememberSaveable`. Otherwise
-rotating right after answering would pop the share prompt at once.
+The "this visit" flag is a plain `remember { mutableStateOf(false) }`, hoisted into `CalendarViewer`
+because the host itself leaves the composition whenever a day sheet opens. The host sets it once the
+team sheet is on screen. It dies when the calendar leaves the composition, on a tab switch or a
+navigation away, which gives "the next time a calendar opens" with no stored state.
+
+It is deliberately not `rememberSaveable`: Nav3's saveable state holder keeps saved state for an entry
+across tab switches, so the share prompt would stay held back after the user came back. The cost is
+that a rotation, which recreates the activity, also counts as a new visit.
 
 The share prompt's milestone is not spent while it is suppressed, because `shown()` is only called by
 its sheet. Its existing semantics carry the waiting for free.

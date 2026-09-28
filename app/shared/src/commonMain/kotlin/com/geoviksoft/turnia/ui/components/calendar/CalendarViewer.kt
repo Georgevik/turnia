@@ -59,7 +59,6 @@ import com.geoviksoft.turnia.ui.components.calendar.model.cellsFor
 import com.geoviksoft.turnia.ui.components.daydetail.DayAddMode
 import com.geoviksoft.turnia.ui.components.daydetail.DayDetailSheet
 import com.geoviksoft.turnia.ui.components.daydetail.model.OneOffEventUi
-import com.geoviksoft.turnia.ui.components.shareprompt.SharePromptHost
 import com.geoviksoft.turnia.ui.system.TestTags
 import kotlin.math.abs
 import kotlin.time.Clock
@@ -112,7 +111,14 @@ fun CalendarViewer(
     // Only where the user adds their own events: the prompt is about what they just added, so a
     // colleague's calendar, which they only read, never shows it.
     showSharePrompt: Boolean = false,
+    // Only on the user's own calendar: it asks whether they work with a team, which a group's
+    // calendar already answers.
+    showTeamPrompt: Boolean = false,
 ) {
+    // Not saveable on purpose: saved state would outlive a tab switch, and a share prompt held back
+    // by the team prompt is owed as soon as the calendar opens again.
+    var teamPromptShown by remember { mutableStateOf(false) }
+
     val anchorMonth = remember {
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
         LocalDate(today.year, today.month, 1)
@@ -264,7 +270,14 @@ fun CalendarViewer(
         }
 
         // After the day, never on top of it: the prompt shows as the sheet it was earned in closes.
-        if (showSharePrompt && sheetDate == null) SharePromptHost()
+        if ((showSharePrompt || showTeamPrompt) && sheetDate == null) {
+            CalendarPromptHost(
+                allowSharePrompt = showSharePrompt,
+                allowTeamPrompt = showTeamPrompt,
+                teamPromptShown = teamPromptShown,
+                onTeamPromptShown = { teamPromptShown = true },
+            )
+        }
     }
 }
 
