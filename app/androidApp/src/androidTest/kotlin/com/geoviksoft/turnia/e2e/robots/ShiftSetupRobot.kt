@@ -41,7 +41,9 @@ internal class ShiftSetupRobot(compose: ComposeTestRule) : AppRobot(compose) {
             .scrollAndClick()
     }
 
+    /** The time fields stay folded until the row is expanded. */
     fun times(row: Int, start: String, end: String) {
+        compose.awaitNode(hasTestTag(TestTags.shiftSetupExpand(row))).scrollAndClick()
         compose.awaitNode(hasTestTag(TestTags.shiftSetupStart(row))).apply {
             performTextClearance()
             performTextInput(start)

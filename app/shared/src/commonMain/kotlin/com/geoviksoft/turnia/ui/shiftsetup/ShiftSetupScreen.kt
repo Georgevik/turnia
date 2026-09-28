@@ -133,6 +133,7 @@ fun ShiftSetupScreen(via: ShiftSetupVia, viewModel: ShiftSetupViewModel) {
                     row = row,
                     name = name,
                     acronym = acronym,
+                    onExpand = { viewModel.expand(row.id) },
                     onToggle = { viewModel.toggle(row.id) },
                     onStartChange = { viewModel.startChanged(row.id, it) },
                     onEndChange = { viewModel.endChanged(row.id, it) },

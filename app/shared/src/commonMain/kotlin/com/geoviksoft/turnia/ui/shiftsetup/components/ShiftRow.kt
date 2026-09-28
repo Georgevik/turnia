@@ -1,5 +1,14 @@
 package com.geoviksoft.turnia.ui.shiftsetup.components
 
+import com.geoviksoft.turnia.ui.system.components.time.nextDayMark
+import turnia.app.shared.generated.resources.shift_setup_edit_hours
+import turnia.app.shared.generated.resources.shift_setup_no_times
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.ExpandLess
+import androidx.compose.material.icons.Icons
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -33,6 +42,7 @@ fun ShiftRow(
     row: ShiftRowUi,
     name: String,
     acronym: String,
+    onExpand: () -> Unit,
     onToggle: () -> Unit,
     onStartChange: (String) -> Unit,
     onEndChange: (String) -> Unit,
@@ -45,13 +55,25 @@ fun ShiftRow(
         ) {
             Checkbox(checked = row.selected, onCheckedChange = { onToggle() })
             AcronymBadge(color = row.color, acronym = acronym, size = 36.dp)
-            Text(
-                text = name,
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.weight(1f)
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = name, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = row.schedule() ?: stringResource(Res.string.shift_setup_no_times),
+                    style = MaterialTheme.typography.bodySmall,
+                    fontStyle = FontStyle.Italic,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            if (row.selected) {
+                IconButton(onClick = onExpand, modifier = Modifier.testTag(TestTags.shiftSetupExpand(index))) {
+                    Icon(
+                        imageVector = if (row.expanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
+                        contentDescription = stringResource(Res.string.shift_setup_edit_hours),
+                    )
+                }
+            }
         }
-        if (row.selected) {
+        if (row.selected && row.expanded) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(start = 48.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -73,6 +95,12 @@ fun ShiftRow(
     }
 }
 
+/** "08:00 – 15:00", with "+1" when it ends the next day; null when the shift has no set hours. */
+private fun ShiftRowUi.schedule(): String? {
+    if (start.isBlank() || end.isBlank()) return start.ifBlank { null }
+    return "$start – $end${nextDayMark(start, end)}"
+}
+
 @Preview
 @Composable
 fun ShiftRowPreview() {
@@ -81,8 +109,8 @@ fun ShiftRowPreview() {
         preset = ShiftPreset.Afternoon,
         name = "name",
         acronym = "acronym",
-        start = "start",
-        end = "end",
+        start = "15:00",
+        end = "22:00",
         color = EntityPalette[0],
         selected = true
     )
@@ -93,6 +121,7 @@ fun ShiftRowPreview() {
             row = row,
             name = "Name",
             acronym = "N",
+            onExpand = {},
             onToggle = {},
             onStartChange = {},
             onEndChange = {},

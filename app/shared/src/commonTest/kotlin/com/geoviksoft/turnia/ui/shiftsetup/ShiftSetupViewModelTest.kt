@@ -63,6 +63,16 @@ class ShiftSetupViewModelTest {
     }
 
     @Test
+    fun expandingShowsTheHoursWithoutCountingAsAnInteraction() {
+        val viewModel = viewModel()
+
+        viewModel.expand(ShiftPreset.Morning.name)
+
+        assertTrue(viewModel.uiState.value.rows.first().expanded)
+        assertFalse(viewModel.uiState.value.interacted)
+    }
+
+    @Test
     fun editingATimeIsAnInteraction() {
         val viewModel = viewModel()
 

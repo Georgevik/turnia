@@ -41,6 +41,10 @@ class ShiftSetupViewModel(
         copy(rows = rows.map { if (it.id == id) it.copy(selected = !it.selected) else it })
     }
 
+    fun expand(id: String) = _uiState.update { state ->
+        state.copy(rows = state.rows.map { if (it.id == id) it.copy(expanded = !it.expanded) else it })
+    }
+
     fun startChanged(id: String, value: String) = touch {
         copy(rows = rows.map { if (it.id == id) it.copy(start = value.toTimeInput()) else it })
     }

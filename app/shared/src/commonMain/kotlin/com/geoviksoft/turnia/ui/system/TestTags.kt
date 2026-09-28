@@ -17,6 +17,7 @@ object TestTags {
     fun eventTypeChip(id: EventTypeId) = "event_type_${id.value}"
     fun personRow(id: UserId) = "person_row_${id.value}"
     fun shiftSetupRow(index: Int) = "shift_setup_row_$index"
+    fun shiftSetupExpand(index: Int) = "shift_setup_expand_$index"
     fun shiftSetupStart(index: Int) = "shift_setup_start_$index"
     fun shiftSetupEnd(index: Int) = "shift_setup_end_$index"
 

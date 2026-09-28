@@ -515,4 +515,5 @@
     <string name="add_pane_create_shifts">Crear mis turnos</string>
     <string name="add_pane_other_event">Otro evento…</string>
     <string name="one_off_event_save_as_shift">Guardar como turno</string>
+    <string name="shift_setup_edit_hours">Editar horario</string>
 </resources>

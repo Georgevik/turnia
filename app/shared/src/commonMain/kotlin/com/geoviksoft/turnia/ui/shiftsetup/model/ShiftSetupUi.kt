@@ -13,6 +13,8 @@ data class ShiftRowUi(
     val end: String,
     val color: Color,
     val selected: Boolean,
+    /** Its time fields are open. Only looking: it changes nothing, so it is no interaction. */
+    val expanded: Boolean = false,
 ) {
     val isCustom: Boolean get() = preset == null
 }
