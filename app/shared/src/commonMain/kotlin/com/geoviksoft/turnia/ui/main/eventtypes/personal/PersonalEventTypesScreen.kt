@@ -1,5 +1,6 @@
 package com.geoviksoft.turnia.ui.main.eventtypes.personal
 
+import com.geoviksoft.turnia.ui.system.components.time.nextDayMark
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -190,7 +191,7 @@ private fun PersonalEventTypeRow(
 
 @Composable
 private fun PersonalEventTypeRowUi.schedule(): String? = when {
-    startTime != null && endTime != null -> "$startTime – $endTime"
+    startTime != null && endTime != null -> "$startTime – $endTime${nextDayMark(startTime, endTime)}"
     startTime != null -> "${stringResource(Res.string.event_type_field_start)} $startTime"
     endTime != null -> "${stringResource(Res.string.event_type_field_end)} $endTime"
     else -> null

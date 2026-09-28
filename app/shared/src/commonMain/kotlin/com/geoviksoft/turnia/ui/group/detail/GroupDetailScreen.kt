@@ -1,5 +1,6 @@
 package com.geoviksoft.turnia.ui.group.detail
 
+import com.geoviksoft.turnia.ui.system.components.time.nextDayMark
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -914,7 +915,7 @@ private fun EventTypeRow(row: GroupTypeRowUi, onClick: () -> Unit) {
 /** "08:00 · Inicio" style summary, or `null` when the type carries no times. */
 @Composable
 private fun GroupTypeRowUi.schedule(): String? = when {
-    startTime != null && endTime != null -> "$startTime – $endTime"
+    startTime != null && endTime != null -> "$startTime – $endTime${nextDayMark(startTime, endTime)}"
     startTime != null -> "${stringResource(Res.string.event_type_field_start)} $startTime"
     endTime != null -> "${stringResource(Res.string.event_type_field_end)} $endTime"
     else -> null
