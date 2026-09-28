@@ -100,7 +100,18 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.text.style.TextAlign
 import turnia.app.shared.generated.resources.Res
+import androidx.navigationevent.NavigationEventInfo
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
+import androidx.compose.ui.tooling.preview.Preview
+import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
+import turnia.app.shared.generated.resources.group_created_done
+import turnia.app.shared.generated.resources.group_created_invite
+import turnia.app.shared.generated.resources.group_created_text
+import turnia.app.shared.generated.resources.group_created_title
 import turnia.app.shared.generated.resources.calendar_back
 import turnia.app.shared.generated.resources.dialog_cancel
 import turnia.app.shared.generated.resources.event_type_field_end
@@ -191,7 +202,8 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = navigator::goBack) {
+                    val created = (uiState as? GroupDetailUi.Success)?.created == true
+                    IconButton(onClick = if (created) viewModel::onCreatedDone else navigator::goBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                             contentDescription = stringResource(Res.string.calendar_back),
@@ -200,7 +212,8 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
                 },
                 actions = {
                     val state = uiState
-                    if (state is GroupDetailUi.Success && state.form.canPassOnCode) {
+                    // The invite step has its own share button, front and centre.
+                    if (state is GroupDetailUi.Success && state.form.canPassOnCode && !state.created) {
                         ShareInvitationAction(state.form, onShared = viewModel::onInvitationShared)
                     }
                     if (state is GroupDetailUi.Success && !state.isNew) {
@@ -255,6 +268,19 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
                         state.hasLeft -> navigator.popToRoot()
                         state.isSaved -> navigator.goBack()
                     }
+                }
+
+                if (state.created) {
+                    NavigationBackHandler(
+                        state = rememberNavigationEventState(NavigationEventInfo.None),
+                        onBackCompleted = viewModel::onCreatedDone,
+                    )
+                    GroupCreatedContent(
+                        share = rememberInvitationShare(state.form, viewModel::onInvitationShared),
+                        onDone = viewModel::onCreatedDone,
+                        modifier = contentModifier,
+                    )
+                    return@Scaffold
                 }
 
                 GroupDetailContent(
@@ -1001,3 +1027,65 @@ private fun GroupDetailMessage.message(): String = stringResource(
 @Composable
 private fun GroupMemberUi.displayName(): String =
     name.ifBlank { username }.ifBlank { stringResource(Res.string.group_member_former) }
+
+/** Right after a group is created: it is empty, and nothing fills it but an invitation. */
+@Composable
+private fun GroupCreatedContent(
+    share: (() -> Unit)?,
+    onDone: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
+    ) {
+        Icon(
+            imageVector = Icons.Default.Groups,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(64.dp),
+        )
+        Text(
+            text = stringResource(Res.string.group_created_title),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            text = stringResource(Res.string.group_created_text),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+        Button(
+            onClick = { share?.invoke() },
+            enabled = share != null,
+            shape = RoundedCornerShape(percent = 50),
+            contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
+            modifier = Modifier.fillMaxWidth().height(52.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Default.Share,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+            )
+            Text(
+                text = stringResource(Res.string.group_created_invite),
+                modifier = Modifier.padding(start = 8.dp),
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+        TextButton(onClick = onDone, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(Res.string.group_created_done))
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun GroupCreatedContentPreview() {
+    PreviewTurniaTheme {
+        GroupCreatedContent(share = {}, onDone = {})
+    }
+}

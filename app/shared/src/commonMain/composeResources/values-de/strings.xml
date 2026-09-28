@@ -187,6 +187,10 @@
     <string name="group_detail_code_copied">Code kopiert</string>
     <string name="group_detail_share_invitation">In die Gruppe einladen</string>
     <string name="group_detail_share_invitation_text">Tritt der Gruppe „%1$s“ auf Turnia bei: %2$s</string>
+    <string name="group_created_title">Deine Gruppe ist bereit</string>
+    <string name="group_created_text">Lade deine Kolleginnen und Kollegen ein, damit alle den Dienstplan sehen und Dienste mit dir tauschen können.</string>
+    <string name="group_created_invite">Kollegium einladen</string>
+    <string name="group_created_done">Fertig</string>
     <string name="group_detail_code_changed">Speichere, damit der neue Code gültig wird.</string>
     <string name="group_detail_section_members">Mitglieder</string>
     <string name="group_detail_members_sheet_title">Gruppenmitglieder</string>

@@ -187,6 +187,10 @@
     <string name="group_detail_code_copied">Code copié</string>
     <string name="group_detail_share_invitation">Inviter dans le groupe</string>
     <string name="group_detail_share_invitation_text">Rejoins le groupe « %1$s » sur Turnia : %2$s</string>
+    <string name="group_created_title">Votre groupe est prêt</string>
+    <string name="group_created_text">Invitez vos collègues pour que tout le monde voie le planning et puisse échanger des gardes avec vous.</string>
+    <string name="group_created_invite">Inviter des collègues</string>
+    <string name="group_created_done">Terminé</string>
     <string name="group_detail_code_changed">Enregistre pour que le nouveau code fonctionne.</string>
     <string name="group_detail_section_members">Membres</string>
     <string name="group_detail_members_sheet_title">Membres du groupe</string>

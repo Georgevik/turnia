@@ -70,7 +70,7 @@
   - a create success sets `created` and not `isSaved`;
   - a create failure sets neither;
   - an update of an existing group sets `isSaved` directly.
-- [ ] 6.3 Add `GroupCreatedContent`: title "Your group is ready", body inviting colleagues, a primary share button and a "Done" button. System back does the same as Done. Add strings in all five languages and a preview. Verify manually that sharing opens the share sheet with the link, and that Done returns to the Groups tab.
+- [x] 6.3 Add `GroupCreatedContent`: title "Your group is ready", body inviting colleagues, a primary share button and a "Done" button. System back does the same as Done. Add strings in all five languages and a preview. Verify manually that sharing opens the share sheet with the link, and that Done returns to the Groups tab.
 
 ## 7. Single-member card
 
