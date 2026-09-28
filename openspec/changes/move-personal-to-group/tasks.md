@@ -26,7 +26,7 @@
 
 ## 3. Group event notes in core
 
-- [ ] 3.1 Add `GroupEventExtrasDocument` and `GroupEventExtrasFirestore`:
+- [x] 3.1 Add `GroupEventExtrasDocument` and `GroupEventExtrasFirestore`:
   - `get(uid, months)` uses the cache-first, marker-gated delta pattern of `PersonalEventFirestore.get`, reporting `extras(CACHE)` / `extras(SERVER)` through `trackData`;
   - `set(uid, groupId, eventId, yearMonth, notes)` writes the note and `UserSyncFirestore.writeGroupEventExtras(batch, uid, months)` in one batch, then `trackWrite(TAG, "setNote")`.
 
