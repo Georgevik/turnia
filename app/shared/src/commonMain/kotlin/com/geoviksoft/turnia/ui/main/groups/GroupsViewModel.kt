@@ -32,6 +32,9 @@ class GroupsViewModel(
     /** The code of an invitation link the user opened, until this tab puts it in the join sheet. */
     val pendingJoinCode: StateFlow<String?> = invitationLinkRepository.pendingCode
 
+    /** "I have a code" on the team prompt, until this tab opens an empty join sheet. */
+    val joinSheetRequested: StateFlow<Boolean> = invitationLinkRepository.joinSheetRequested
+
     private val filter = MutableStateFlow(GroupsFilter.ALL)
 
     init {
@@ -91,6 +94,11 @@ class GroupsViewModel(
     fun joinCodeReceived(code: String) {
         joinCodeChanged(code)
         invitationLinkRepository.codeHandled()
+    }
+
+    fun joinSheetOpened() {
+        joinCodeChanged("")
+        invitationLinkRepository.joinSheetOpened()
     }
 
     fun requestToJoin() {

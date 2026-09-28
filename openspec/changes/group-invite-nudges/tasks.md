@@ -27,7 +27,7 @@
 ## 3. "I have a code" hand-off
 
 - [x] 3.1 Add `joinSheetRequested: StateFlow<Boolean>`, `requestJoinSheet()` and `joinSheetOpened()` to `InvitationLinkRepository` and its implementation, and to the test/demo fakes. Verify with a unit test of the flag's set and clear.
-- [ ] 3.2 Make `MainViewModel`/`MainScreen` bring up the Groups tab when `joinSheetRequested` is true. Make `GroupsViewModel`/`GroupsScreen` open the join sheet with an empty field once loaded, then call `joinSheetOpened()`. Verify manually: calling `requestJoinSheet()` from the Calendar tab lands on Groups with the sheet open, and rotating does not reopen it after it is closed.
+- [x] 3.2 Make `MainViewModel`/`MainScreen` bring up the Groups tab when `joinSheetRequested` is true. Make `GroupsViewModel`/`GroupsScreen` open the join sheet with an empty field once loaded, then call `joinSheetOpened()`. Verify manually: calling `requestJoinSheet()` from the Calendar tab lands on Groups with the sheet open, and rotating does not reopen it after it is closed.
 
 ## 4. Team prompt UI and precedence
 

@@ -28,6 +28,9 @@ class MainViewModel(
     /** Only watched to bring the Groups tab up: the tab itself takes the code. */
     val pendingJoinCode: StateFlow<String?> = invitationLinkRepository.pendingCode
 
+    /** Only watched to bring the Groups tab up: the tab opens the sheet and clears it. */
+    val joinSheetRequested: StateFlow<Boolean> = invitationLinkRepository.joinSheetRequested
+
     /** The shift setup is owed, and waits for the name when the account still has none. */
     val showShiftSetup: StateFlow<Boolean> =
         combine(shiftSetupRepository.shouldShow, userRepository.userSession) { shouldShow, session ->
