@@ -34,6 +34,9 @@ interface PersonalEventRepository {
     /** [isNew] tells a created type from an edited one, which only the caller knows. */
     suspend fun saveEventType(type: PersonalEventType, isNew: Boolean): Outcome<Unit, Unit>
 
+    /** Creates every type in one write, or none of them. */
+    suspend fun createEventTypes(types: List<PersonalEventType>): Outcome<Unit, Unit>
+
     suspend fun deleteEventType(typeId: EventTypeId): Outcome<Unit, Unit>
 
     /** Cached events first, still loading, then the server's if it had anything newer. */

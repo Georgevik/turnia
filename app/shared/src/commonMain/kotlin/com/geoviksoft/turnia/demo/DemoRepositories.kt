@@ -339,6 +339,11 @@ internal class DemoPersonalEventRepository(world: DemoWorld) : PersonalEventRepo
         return Unit.toSuccess()
     }
 
+    override suspend fun createEventTypes(types: List<PersonalEventType>): Outcome<Unit, Unit> {
+        this.types.update { it + types }
+        return Unit.toSuccess()
+    }
+
     override suspend fun deleteEventType(typeId: EventTypeId): Outcome<Unit, Unit> {
         types.update { all -> all.map { if (it.id == typeId) it.copy(isDeleted = true) else it } }
         return Unit.toSuccess()
