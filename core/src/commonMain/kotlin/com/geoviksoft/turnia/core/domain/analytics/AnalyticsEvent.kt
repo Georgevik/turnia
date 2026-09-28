@@ -1,6 +1,8 @@
 package com.geoviksoft.turnia.core.domain.analytics
 
+import com.geoviksoft.turnia.core.domain.model.EventKind
 import com.geoviksoft.turnia.core.domain.model.SharePrompt
+import com.geoviksoft.turnia.core.domain.model.ShiftSetupVia
 
 /**
  * Every event name and parameter key the app reports. They are declared here rather than written at
@@ -108,6 +110,38 @@ sealed class AnalyticsEvent(
 
     data object AccountDeleted : AnalyticsEvent("account_deleted")
 
+    class OnboardShiftShown(via: ShiftSetupVia) : AnalyticsEvent(
+        name = "onboard_shift_shown",
+        parameters = mapOf("via" to via.value),
+    )
+
+    /** [interacted]: the user touched the panel before leaving it, rather than skipping it blind. */
+    class OnboardShiftSkipped(via: ShiftSetupVia, interacted: Boolean) : AnalyticsEvent(
+        name = "onboard_shift_skipped",
+        parameters = mapOf("via" to via.value, "interacted" to interacted.value()),
+    )
+
+    class OnboardShiftCompleted(
+        via: ShiftSetupVia,
+        interacted: Boolean,
+        typeCount: Int,
+        customTypeCount: Int,
+    ) : AnalyticsEvent(
+        name = "onboard_shift_completed",
+        parameters = mapOf(
+            "via" to via.value,
+            "interacted" to interacted.value(),
+            "type_count" to typeCount.toLong(),
+            "custom_type_count" to customTypeCount.toLong(),
+        ),
+    )
+
+    /** Activation: whether the first event added on the device came from a shift or was a one-off. */
+    class FirstEventAdded(kind: EventKind) : AnalyticsEvent(
+        name = "first_event_added",
+        parameters = mapOf("kind" to kind.value()),
+    )
+
     /** [type] is the push's own routing `type`, only ever one the app recognises. */
     class NotificationOpened(type: String) : AnalyticsEvent(
         name = "notification_opened",
@@ -121,6 +155,11 @@ enum class InvitationSource(val value: String) {
 
     /** Android only: Play hands the code over on the first launch after an install. */
     InstallReferrer("install_referrer"),
+}
+
+private fun EventKind.value(): String = when (this) {
+    EventKind.Typed -> "typed"
+    EventKind.OneOff -> "one_off"
 }
 
 /** Analytics takes strings and numbers only; a boolean is reported as its name. */

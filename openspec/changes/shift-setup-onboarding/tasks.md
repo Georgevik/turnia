@@ -4,7 +4,7 @@
 
 - [x] 1.1 Add `PersonalEventTypesFirestore.setAll(uid, types)`: one batch with every type document, one `writePersonalEventTypes` marker, `trackWrite(TAG, "setEventTypes")` per document after the commit. Verify with a unit test in `core/src/commonTest` against the existing Firestore fakes, or by the T1 document assertions if no fake covers batches.
 - [x] 1.2 Add `PersonalEventRepository.createEventTypes(types): Outcome<Unit, Unit>`, which logs `personal_event_type_created` once per type only after the commit succeeds. Verify with a unit test: success logs N events, failure logs none.
-- [ ] 1.3 Add `AnalyticsEvent.OnboardShiftShown`, `OnboardShiftSkipped`, `OnboardShiftCompleted` and `FirstEventAdded`, with the parameters `via`, `interacted`, `type_count`, `custom_type_count` and `kind`, as the `analytics-events` delta specifies. Verify that the build compiles and a unit test checks the parameter maps.
+- [x] 1.3 Add `AnalyticsEvent.OnboardShiftShown`, `OnboardShiftSkipped`, `OnboardShiftCompleted` and `FirstEventAdded`, with the parameters `via`, `interacted`, `type_count`, `custom_type_count` and `kind`, as the `analytics-events` delta specifies. Verify that the build compiles and a unit test checks the parameter maps.
 - [ ] 1.4 Log `FirstEventAdded(kind)` in `SharePromptRepositoryImpl.eventAdded` when the new count is exactly 1. Verify with a unit test: count 0→1 logs `typed` or `one_off`; 1→2 logs nothing.
 - [ ] 1.5 Update `firebase/firestore-usage.md` with the setup's N + 1 writes and the two bounded `limit(1)` server reads. Verify that the doc lists both under the shift setup.
 
