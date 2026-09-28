@@ -45,5 +45,5 @@
 
 ## 6. Documentation and release checks
 
-- [ ] 6.1 Document the shift setup rule in `CLAUDE.md` *Business rules*, covering when it shows, device-only skip and personal types only, and the new analytics names and parameters in *Analytics*, including the GA registration list. Verify by review.
+- [x] 6.1 Document the shift setup rule in `CLAUDE.md` *Business rules*, covering when it shows, device-only skip and personal types only, and the new analytics names and parameters in *Analytics*, including the GA registration list. Verify by review.
 - [ ] 6.2 Run the full E2E suite and the core unit tests together. Verify with a green `connectedDebugAndroidTest` and `:core:allTests`.
