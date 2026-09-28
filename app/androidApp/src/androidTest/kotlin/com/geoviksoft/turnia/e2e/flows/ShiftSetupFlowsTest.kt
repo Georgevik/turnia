@@ -2,6 +2,9 @@ package com.geoviksoft.turnia.e2e.flows
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.geoviksoft.turnia.e2e.infra.Documents
@@ -10,11 +13,15 @@ import com.geoviksoft.turnia.e2e.infra.FirestoreRest
 import com.geoviksoft.turnia.e2e.infra.RecordingAnalytics
 import com.geoviksoft.turnia.e2e.infra.SignedInAs
 import com.geoviksoft.turnia.e2e.infra.awaitLogged
+import com.geoviksoft.turnia.e2e.infra.awaitNode
+import com.geoviksoft.turnia.e2e.infra.scrollAndClick
 import com.geoviksoft.turnia.e2e.infra.string
 import com.geoviksoft.turnia.e2e.robots.AppRobot
+import com.geoviksoft.turnia.e2e.robots.CalendarRobot
 import com.geoviksoft.turnia.e2e.robots.GroupsRobot
 import com.geoviksoft.turnia.e2e.robots.ShiftSetupRobot
 import com.geoviksoft.turnia.e2e.robots.SignInRobot
+import com.geoviksoft.turnia.ui.system.TestTags
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
 import org.junit.Assert.assertEquals
@@ -170,3 +177,88 @@ class ShiftSetupInvitationFlowTest {
     }
 }
 
+/** Paths 47–50: adding to a day starts from the user's shifts, and a one-off is the exception. */
+@RunWith(AndroidJUnit4::class)
+class ShiftAddPaneFlowsTest {
+
+    private val compose = createEmptyComposeRule()
+
+    private val world = E2eRule(compose)
+
+    @get:Rule
+    val rules: RuleChain = RuleChain.outerRule(compose).around(world)
+
+    private val calendar by lazy { CalendarRobot(compose, world.today) }
+    private val setup = ShiftSetupRobot(compose)
+
+    @Test
+    @SignedInAs("nuevo")
+    fun noShiftsYet_theEmptyStateOpensTheSetupAndBringsTheShiftsBack() {
+        val date = world.day(9)
+        calendar.openDay(date)
+        calendar.clickDescription("Add event")
+        calendar.await(hasTestTag(TestTags.ADD_PANE_EMPTY_SHIFTS))
+
+        calendar.click(ShiftSetupRobot.CREATE_MY_SHIFTS)
+        setup.awaitSetup()
+        setup.confirm()
+
+        setup.awaitNoSetup()
+        assertEquals("add_pane", compose.awaitLogged("onboard_shift_shown").single().parameters["via"])
+        assertEquals("add_pane", compose.awaitLogged("onboard_shift_completed").single().parameters["via"])
+        setup.awaitText(ShiftSetupRobot.HINT)
+        calendar.openDay(date)
+        calendar.clickDescription("Add event")
+        calendar.pickShiftLabelled("M")
+        calendar.awaitDayShows(date, "M")
+        Documents.awaitIn("users/nuevo/personalEvents") { it.string("date") == date.toString() }
+        assertEquals("typed", compose.awaitLogged("first_event_added").single().parameters["kind"])
+    }
+
+    @Test
+    @SignedInAs("alice")
+    fun shiftsComeFirst_andOneOffsLast() {
+        calendar.openDay(world.day(9))
+        calendar.clickDescription("Add event")
+
+        val shifts = compose.awaitNode(hasTestTag(TestTags.ADD_PANE_SHIFTS)).fetchSemanticsNode().boundsInRoot
+        val other = compose.awaitNode(hasTestTag(TestTags.ADD_PANE_OTHER_EVENT)).fetchSemanticsNode().boundsInRoot
+        assertTrue("The shifts sit above the one-off entry", shifts.top < other.top)
+
+        calendar.openOtherEvent()
+        calendar.await(hasSetTextAction() and hasText("Name"))
+    }
+
+    @Test
+    @SignedInAs("alice")
+    fun aOneOff_isSavedAsAShiftAndStaysAsItWas() {
+        val date = world.day(9)
+        calendar.addOneOff(date, "Guardia")
+        val (oneOffId, oneOff) = Documents.awaitIn("users/alice/personalOneOffEvents") { it.string("name") == "Guardia" }
+
+        calendar.openOneOff(date, "Guardia")
+        compose.awaitNode(hasTestTag(TestTags.ONE_OFF_SAVE_AS_SHIFT)).scrollAndClick()
+        calendar.type("Calendar abbreviation", "G")
+        calendar.click("Save")
+
+        val (_, type) = Documents.awaitIn("users/alice/personalEventTypes") { it.string("name") == "Guardia" }
+        assertEquals("G", type.string("acronym"))
+        assertEquals("09:00", type.string("startTime"))
+        assertEquals("10:00", type.string("endTime"))
+        assertEquals(oneOff.string("color"), type.string("color"))
+        compose.awaitLogged("personal_event_type_created")
+        assertEquals("Guardia", Documents.get("users/alice/personalOneOffEvents/$oneOffId").string("name"))
+    }
+
+    @Test
+    @SignedInAs("nuevo")
+    fun theFirstEventAdded_reportsItWasAOneOff() {
+        calendar.addOneOff(world.day(9), "Cena")
+        assertEquals("one_off", compose.awaitLogged("first_event_added").single().parameters["kind"])
+
+        calendar.addOneOff(world.day(10), "Cine")
+        compose.awaitLogged("one_off_event_created", count = 2)
+
+        assertEquals(1, RecordingAnalytics.named("first_event_added").size)
+    }
+}

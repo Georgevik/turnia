@@ -40,7 +40,7 @@
 - [x] 5.1 Add user `nuevo` to `firebase/test/fixtures/base.json`, with a profile, an account and a username, and no types or groups. Add `shiftSetupSettled` (default `true`) and `relaunch()` to `E2eRule`. Verify that the existing suite still passes unchanged apart from the renamed strings.
 - [x] 5.2 Update the robots and tests affected by the rename and the moved one-off field: `CalendarRobot.addOneOff` / `editOneOff` go through "Other event…", and `CalendarFlowsTest` uses "My shifts" / "New shift". Verify that `CalendarFlowsTest` and `SharePromptFlowsTest` pass.
 - [x] 5.3 Add `ShiftSetupRobot` and `ShiftSetupFlowsTest` with paths T1–T5 and T10 from design D10: setup show, skip and bypass. Verify that they pass on the emulator via `connectedDebugAndroidTest`.
-- [ ] 5.4 Add paths T6–T9 to `ShiftSetupFlowsTest`: add pane empty state, order, "Save as shift" and `first_event_added`. Verify that they pass on the emulator.
+- [x] 5.4 Add paths T6–T9 to `ShiftSetupFlowsTest`: add pane empty state, order, "Save as shift" and `first_event_added`. Verify that they pass on the emulator.
 - [ ] 5.5 Update the E2E path count and list in `CLAUDE.md` and `firebase/test/README.md`. Verify that the documented number matches the `@Test` count.
 
 ## 6. Documentation and release checks
