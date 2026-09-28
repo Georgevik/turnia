@@ -1,6 +1,7 @@
 package com.geoviksoft.turnia.core.domain.analytics
 
 import com.geoviksoft.turnia.core.domain.model.EventKind
+import com.geoviksoft.turnia.core.domain.model.MoveScope
 import com.geoviksoft.turnia.core.domain.model.SharePrompt
 import com.geoviksoft.turnia.core.domain.model.ShiftSetupVia
 import com.geoviksoft.turnia.core.domain.model.TeamPromptChoice
@@ -58,6 +59,22 @@ sealed class AnalyticsEvent(
     data object PersonalEventDeleted : AnalyticsEvent("personal_event_deleted")
 
     data object EventNotesSaved : AnalyticsEvent("event_notes_saved")
+
+    /** A note on a group event, which only its author can read; [EventNotesSaved] stays personal. */
+    data object GroupEventNotesSaved : AnalyticsEvent("group_event_notes_saved")
+
+    /**
+     * One report per move, however many events it carried: the events it creates and deletes log
+     * neither [GroupEventCreated] nor [PersonalEventDeleted], or a move would read as a burst of both.
+     */
+    class PersonalEventsMoved(scope: MoveScope, eventCount: Int, skippedCount: Int) : AnalyticsEvent(
+        name = "personal_events_moved",
+        parameters = mapOf(
+            "scope" to scope.value,
+            "event_count" to eventCount.toLong(),
+            "skipped_count" to skippedCount.toLong(),
+        ),
+    )
 
     class OneOffEventCreated(allDay: Boolean, multiMonth: Boolean) : AnalyticsEvent(
         name = "one_off_event_created",
