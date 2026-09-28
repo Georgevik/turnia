@@ -15,7 +15,7 @@
 
 - [x] 2.1 Add the `groupEventExtras` match to `firebase/firestore.rules`: read and write only when `request.auth.uid == uid`. Verify with the emulator that the owner can read and write, and that a `calendarSharedWith` viewer and another member are denied.
 - [x] 2.2 Add the `groupEventExtras (yearMonth ASC, updateAt ASC)` and `personalEvents (typeId ASC, yearMonth ASC)` indexes to `firebase/firestore.indexes.json`. Verify the file parses and the emulator accepts both queries.
-- [ ] 2.3 Update `firebase/firestore-schema.md`:
+- [x] 2.3 Update `firebase/firestore-schema.md`:
   - add a `users/{uid}/groupEventExtras/{eventId}` section: fields, why clearing keeps the document, access;
   - add the `groupEventExtras` per-month marker to `sync/updates`;
   - fix the `personalEventTypes` table: add `acronym`, `isDeleted` (deleted after a move of all its events; its events keep rendering) and `updateAt`, and remove the duplicated `color` row and the pasted group-colour note;

@@ -287,14 +287,17 @@ Reusable personal event templates the user defines.
 |-------|------|-------------|
 | `name` | string | Type name. |
 | `color` | string | Hex `#RRGGBB`. |
+| `acronym` | string | The short label a calendar cell shows. |
 | `description` | string \| null | Optional details. |
 | `startTime` | string \| null | `HH:mm` or `null`. |
 | `endTime` | string \| null | `HH:mm` or `null`. |
-| `color` | string \| null | The type's **default** colour, fixed when the type is created and never written again; what every member sees until they pick their own. `null` in types created before it existed, which fall back to a colour derived from the `id`. |
+| `isDeleted` | bool | Soft delete: set when the user deletes the type, or when they move all its events to a group. |
+| `updateAt` | timestamp | Server timestamp of the last write, in the same commit as `personalEventTypesUpdatedAt`. |
 
-> A member may override it with their own in `users/{uid}/private/preferences.groupEventTypeColors`, keyed
-> `"{groupId}_{typeId}"`, and theirs wins. The member's colour never goes on this document:
-> `groups/{groupId}` is read by the whole group, and a personal preference has no business there.
+**A deleted type still renders its events.** It leaves the add pane and *My shifts* and takes no new
+event, but the events that stayed personal — older than the retention window, or skipped by a move
+because the day already held a shift of the group — keep showing with its name and colour. That is
+why it is a flag and never a delete.
 
 **Access**: written by the owner; read by the owner and by UIDs in `calendarSharedWith`.
 
@@ -338,6 +341,34 @@ from October. Indexed by (`yearMonthStart`, `yearMonthEnd`) and (`yearMonthStart
 
 **Access**: written by the owner; read by the owner and by UIDs in `calendarSharedWith`.
 
+### `users/{uid}/groupEventExtras/{eventId}`
+
+**The user's own note on a group event**, keyed by the event's id. The group event document is read by
+every member, so a note can only be private here.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `groupId` | string | The group the event belongs to. |
+| `yearMonth` | string | `YYYY-MM` of the event's `date`: what the calendar queries by. |
+| `notes` | string \| null | The note. Blank is stored as `null`. |
+| `updateAt` | timestamp | Server timestamp of the last write, in the same commit as the month's `groupEventExtras` marker. |
+
+**Clearing a note keeps the document**, with `notes = null`, for the same reason deletes are soft
+everywhere else: a removed document never shows up in an `updateAt >` query, so the user's other
+devices would keep the note forever.
+
+**A note belongs to the event, not to whoever holds it.** A shift that is taken or given back keeps
+its id, so the note keeps showing to its author wherever the event is still shown to them. A move to
+a group writes the moved event's notes here, under the id the group event takes over from the
+personal one.
+
+**Queries**: like `personalEvents` — cache first per `yearMonth`, then `updateAt >` the newest
+cached document, only for the months whose `groupEventExtras` marker is newer. A month without notes
+has no documents and no marker, so it costs nothing. Indexed by (`yearMonth`, `updateAt`).
+
+**Access**: read and written by the owner **only** — not by the UIDs in `calendarSharedWith`. No
+group lookup: the document says nothing about the group but its id.
+
 ### `users/{uid}/sync/updates`
 
 A single document (`updates`) holding **when each part of the user's calendar last changed**. A reader —
@@ -350,6 +381,7 @@ what it already cached to decide whether it has to query the server at all.
 | `groupEvents` | map&lt;`YYYY-MM`, { `updatedAt`: timestamp }&gt; | Last change, **per month**, to a group event this user holds or has just stopped holding. **Server-only**: stamped by the `onGroupEventWrittenMarkHolders` trigger, and the rules refuse any client write that touches it. It is what a colleague the calendar is shared with listens to (see below). |
 | `personalOneOffEvents` | map&lt;`YYYY-MM`, { `updatedAt`: timestamp }&gt; | Last write to `personalOneOffEvents`, **per month**. A write stamps every month the event spans, and an edit that moves it also stamps the months it leaves — a device showing only those would otherwise keep it on its old date. |
 | `personalEventTypesUpdatedAt` | timestamp \| null | Last write to `personalEventTypes` (server timestamp). |
+| `groupEventExtras` | map&lt;`YYYY-MM`, { `updatedAt`: timestamp }&gt; | Last write to `groupEventExtras`, **per month** of the note's `yearMonth`. Read by the owner only, like the notes themselves. |
 | `revokedGroups` | timestamp \| null | Last write to `revokedGroups` — a revocation or a rejoin. Moved **only** by `leaveGroup` / `removeMember` / the rejoin path, never by a client. |
 | `account` | timestamp \| null | Last write to `private/account`. |
 | `profile` | timestamp \| null | Last write to the user's own `users/{uid}` — name, username, avatar or `calendarSharedWith` — by any of their devices or by `updateProfile`. Every such write stamps the profile's `updateAt` in the same commit. What the owner's session start and People tab read the cached profile against; other users keep using the reservation's `updateAt`. |
@@ -578,6 +610,11 @@ A revoked user may still soft-delete an event they created *and* still hold; bec
 carry a newer timestamp for the other members to notice the event is gone. The scheduled retention
 cleanup is what removes them for real.
 
+**A shift moved from a personal event keeps that event's id.** The move writes the group event,
+soft-deletes `users/{uid}/personalEvents/{id}` and stamps both calendars' markers in one commit, so
+no reader ever sees the day twice; and because the id is the same, a move run again after a failure
+picks up only what is still personal and cannot duplicate a shift.
+
 **Queries**: a group's calendar is one query over this collection — `yearMonth` in the visible months,
 each month optionally bounded by `updateAt >` its own cursor. No collection-group query and no `groupId`
 denormalisation.
@@ -674,7 +711,8 @@ while `now < subscription.expiresAt`. Free-tier users are shown AdMob ads; premi
 Firestore keeps only a **recent window** of events; older events are purged and preserved in each user's on-device cache.
 
 - **Purge threshold**: any event with `date` older than **1 month** (relative to the cleanup run) is eligible for deletion.
-- **What is deleted**: matching group events and personal events **and their `history` subcollection**.
+- **What is deleted**: matching group events and personal events (their `history` is an array on the
+  event, so it goes with it), and the `groupEventExtras` notes whose `yearMonth` is past the window.
 - **Who deletes**: a **Cloud Scheduler**-triggered Cloud Function (admin privileges). Clients never bulk-delete past events.
 - **Where old data survives**: the client's **local NoSQL cache** (normalized), populated as events are synced from Firestore.
   Once purged from Firestore, old events (and their A→B→C chain) exist only in that local cache.
@@ -696,6 +734,7 @@ Firestore keeps only a **recent window** of events; older events are purged and 
 - **History is append-only** and lives alongside the event; on transfer `takeEvent` copies it forward to the new assignee.
 - **A deleted event is deleted** — there is no cancelled/deleted state.
 - **Group event docs are readable by every group member** — never put private data (e.g. notes) on them.
+  A member's note on one lives in their own `users/{uid}/groupEventExtras/{eventId}`, owner-only.
   Personal events are private to the owner and their shared users, so their `notes` live on the event doc.
 - **Joining a group is two steps**: `requestToJoinGroup` then `acceptJoinRequest` / `rejectJoinRequest` (admin). The client never writes `memberUids`, and never answers a request either — `status` is server-only.
 - **A requester finds their own requests through `users/{uid}/private/joinRequests`**, never a query: the rules authorize `groups/{g}/joinRequests/{uid}` by document id, which no collection-group list can filter on.
@@ -736,7 +775,7 @@ Firestore keeps only a **recent window** of events; older events are purged and 
   `usernames/{username}.updateAt` in the **same commit**, or no reader's cache ever settles.
 - **The name has a keeper, the avatar does not**: `name` and `username` are copied into every group,
   so only `updateProfile` may change them; the avatar is copied nowhere and the client writes it.
-- **Sync timestamps are bumped on every personal write**: a write to `personalEvents` / `personalOneOffEvents` / `personalEventTypes` must also
+- **Sync timestamps are bumped on every personal write**: a write to `personalEvents` / `personalOneOffEvents` / `personalEventTypes` / `groupEventExtras` must also
   merge the matching field of `users/{uid}/sync/updates`, or readers keep serving a stale cache.
 - **`subscription` is server-only**: only the subscription-verification Cloud Function writes `users/{uid}/private/subscription`; the client can never set itself premium.
 - **Firestore holds only recent events**: events with `date` older than 1 month are purged by the scheduled cleanup function; older events live only in the client's local NoSQL cache. History is append-only *within the retention window*, not forever in Firebase.
