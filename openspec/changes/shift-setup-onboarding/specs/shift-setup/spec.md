@@ -115,9 +115,10 @@ NOT affect another.
 
 ### Requirement: The setup can be opened again from the add pane
 When opened from the add pane's empty state (see `event-add-pane`), the setup SHALL behave the same,
-except that it SHALL NOT be subject to the sign-in conditions and SHALL close back to the day sheet
-it was opened from.
+except that it SHALL NOT be subject to the sign-in conditions. Opening it SHALL close the day sheet,
+and confirming SHALL return to the calendar with the same hint to tap a day.
 
 #### Scenario: Opened after skipping
 - **WHEN** a user who skipped the setup opens it from the add pane's empty state and confirms
-- **THEN** the selected types are created and the day sheet shows them as options
+- **THEN** the selected types are created, the calendar shows the hint, and the day's add pane lists
+  them as options when the day is opened again

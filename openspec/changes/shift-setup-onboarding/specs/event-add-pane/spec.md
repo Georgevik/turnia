@@ -40,7 +40,7 @@ it.
 - **THEN** the empty state and its action to create shifts are shown above "Other event…"
 
 #### Scenario: Creating shifts from the empty state
-- **WHEN** the user opens the setup from the empty state and confirms the defaults
+- **WHEN** the user opens the setup from the empty state, confirms the defaults and opens the day again
 - **THEN** the add pane lists Morning, Afternoon and Night as shift options
 
 ### Requirement: Personal event types are called shifts in the interface

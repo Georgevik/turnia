@@ -17,7 +17,7 @@ interface ShiftSetupRepository {
      */
     val due: StateFlow<Boolean>
 
-    /** The "tap a day" hint the calendar owes after the setup created the shifts. */
+    /** The "tap a day" hint the calendar owes after the setup created the shifts, wherever it was opened. */
     val hintPending: StateFlow<Boolean>
 
     suspend fun shown(via: ShiftSetupVia)

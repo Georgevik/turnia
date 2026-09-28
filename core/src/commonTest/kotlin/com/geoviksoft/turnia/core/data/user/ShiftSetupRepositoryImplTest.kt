@@ -176,12 +176,12 @@ class ShiftSetupRepositoryImplTest {
     }
 
     @Test
-    fun completingFromTheAddPaneOwesNoHint() = runTest {
+    fun completingFromTheAddPaneOwesTheHintToo() = runTest {
         val repository = repository()
 
         repository.complete(types(1), ShiftSetupVia.AddPane, interacted = true, customCount = 0)
 
-        assertFalse(repository.hintPending.value)
+        assertTrue(repository.hintPending.value)
         assertEquals("add_pane", analytics.named("onboard_shift_completed").single().parameters["via"])
     }
 

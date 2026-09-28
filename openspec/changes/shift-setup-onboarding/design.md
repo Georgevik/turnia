@@ -110,8 +110,9 @@ the onboarding flag in the same DataStore file.
   - Back from `AddPane` is just a close, with no skip report and no flag.
 - `HandleJoinGroupDeeplink` already pops anything above Main, so an invitation arriving mid-setup wins.
 
-The day sheet must still be open on return from the add pane. `CalendarViewer`'s `sheetDate` becomes
-`rememberSaveable` if it is not already, and an E2E path asserts it (T6).
+Opening the setup from the add pane closes the day sheet first, as every other way out of the sheet
+does: a modal sheet left open under another screen comes back hidden while still holding its day.
+Confirming there raises the same "tap a day" hint as after sign-in, and T6 reopens the day.
 
 ### D4. Presets live in the UI layer; core receives plain types
 
@@ -218,7 +219,7 @@ Fixtures:
 | T3 | Skip is remembered | `nuevo`, settled = false | No type docs; `onboard_shift_skipped(interacted=false)`; after `world.relaunch()` the calendar shows without the setup |
 | T4 | Account with types never sees it | `alice`, settled = false | Calendar shown; no `onboard_shift_shown` |
 | T5 | Group member never sees it | `bruno`, settled = false | Same as T4 |
-| T6 | Empty add pane opens setup | `nuevo`, settled = true | The empty state is shown; "Create my shifts" opens setup; `shown(via=add_pane)`; confirm returns to the open day sheet with M/A/N chips; tapping M adds the event; `first_event_added(kind=typed)` |
+| T6 | Empty add pane opens setup | `nuevo`, settled = true | The empty state is shown; "Create my shifts" opens setup; `shown(via=add_pane)`; confirm returns to the calendar with the hint; reopening the day lists M/A/N; tapping M adds the event; `first_event_added(kind=typed)` |
 | T7 | Shifts first, one-off last | `alice` | The shift chips' top is above "Other event…"; "Other event…" opens the one-off form |
 | T8 | Save a one-off as a shift | `alice` | Add a timed one-off, edit it, "Save as shift", acronym "G", save; the type doc has the one-off's name, color and times; the one-off doc is unchanged |
 | T9 | First event is a one-off | `nuevo`, settled = true | `first_event_added(kind=one_off)` once; a second add logs nothing |

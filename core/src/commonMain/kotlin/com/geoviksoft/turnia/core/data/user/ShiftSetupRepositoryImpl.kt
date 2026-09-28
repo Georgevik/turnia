@@ -112,8 +112,7 @@ class ShiftSetupRepositoryImpl(
                 customTypeCount = customCount,
             )
         )
-        // From the add pane the user goes straight back to the day they were adding to.
-        if (via == ShiftSetupVia.Onboarding) _hintPending.value = true
+        _hintPending.value = true
         return Unit.toSuccess()
     }
 

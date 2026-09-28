@@ -245,7 +245,12 @@ fun CalendarViewer(
                         dismissSheet()
                     },
                     openNewPersonalTypeScreen = { onAddPersonalType() },
-                    openShiftSetup = onCreateShifts,
+                    // Closed before leaving, like every other way out of the sheet: a modal sheet left
+                    // open under another screen comes back hidden but still holding the day.
+                    openShiftSetup = {
+                        onCreateShifts()
+                        dismissSheet()
+                    },
                     openSaveAsShift = { data ->
                         onSaveAsShift(data)
                         dismissSheet()
