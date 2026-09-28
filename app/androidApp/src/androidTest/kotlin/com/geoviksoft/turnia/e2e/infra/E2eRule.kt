@@ -43,6 +43,8 @@ class E2eRule(
     private val signedInAs: String? = null,
     private val fixtures: List<String> = listOf("base"),
     private val onboardingSeen: Boolean = true,
+    /** Off only for the tests about the shift setup: every other one expects to land on the calendar. */
+    private val shiftSetupSettled: Boolean = true,
     private val intent: () -> Intent = { launchIntent() },
 ) : ExternalResource() {
 
@@ -99,12 +101,19 @@ class E2eRule(
         }
 
         FixedAppConfigRepository.onboardingSeen = onboardingSeen
+        FixedAppConfigRepository.shiftSetupSettled = shiftSetupSettled
         grantNotifications()
         scenario = ActivityScenario.launch(intent())
     }
 
     override fun after() {
         scenario.close()
+    }
+
+    /** Closes the app and opens it again in the same process: what the device kept is still there. */
+    fun relaunch() {
+        scenario.close()
+        scenario = ActivityScenario.launch(intent())
     }
 
     // The system's permission dialog would cover the app, and the orchestrator's data clear

@@ -222,7 +222,7 @@
     <string name="event_type_detail_new_personal">Nuovo evento personale</string>
     <string name="event_type_field_name">Nome</string>
     <string name="event_type_name_hint_group">Mattina, Pomeriggio, Notte, Reperibilità…</string>
-    <string name="event_type_field_acronym">Sigla nel calendario</string>
+    <string name="event_type_field_acronym">Sigla</string>
     <string name="event_type_acronym_hint">Fino a %1$d lettere. È ciò che appare in ogni giorno del calendario.</string>
     <string name="event_type_field_optional">Facoltativo</string>
     <string name="event_type_field_description">Descrizione</string>
@@ -244,13 +244,13 @@
     <string name="event_type_error_not_implemented">Questa funzione non è ancora disponibile.</string>
 
     <!-- Personal event types: "My events" -->
-    <string name="personal_event_types_title">I miei eventi</string>
-    <string name="personal_event_types_add">Nuovo evento</string>
-    <string name="personal_event_types_empty">Non hai ancora creato eventi personali.</string>
+    <string name="personal_event_types_title">I miei turni</string>
+    <string name="personal_event_types_add">Nuovo turno</string>
+    <string name="personal_event_types_empty">Non hai ancora creato turni.</string>
     <string name="personal_event_types_delete">Elimina</string>
-    <string name="personal_event_types_delete_dialog_title">Eliminare l'evento?</string>
-    <string name="personal_event_types_delete_dialog_message">“%1$s” verrà rimosso dai tuoi eventi personali.</string>
-    <string name="personal_event_types_error_delete">Impossibile eliminare l'evento. Riprova.</string>
+    <string name="personal_event_types_delete_dialog_title">Eliminare il turno?</string>
+    <string name="personal_event_types_delete_dialog_message">“%1$s” verrà rimosso dai tuoi turni.</string>
+    <string name="personal_event_types_error_delete">Impossibile eliminare il turno. Riprova.</string>
 
     <!-- Components -->
     <string name="time_field_hint">HH:mm</string>
@@ -263,7 +263,7 @@
     <string name="dialog_error_retry">Riprova</string>
 
     <!-- Profile -->
-    <string name="profile_my_events">I miei eventi</string>
+    <string name="profile_my_events">I miei turni</string>
     <string name="profile_logout">Esci</string>
     <string name="profile_logout_dialog_title">Uscire?</string>
     <string name="profile_logout_dialog_message">Dovrai accedere di nuovo per vedere i tuoi turni.</string>
@@ -419,9 +419,8 @@
     <string name="calendar_more_options">Altre opzioni</string>
 
     <!-- Day detail sheet -->
-    <string name="day_detail_personal_events">EVENTI PERSONALI</string>
+    <string name="day_detail_personal_events">I MIEI TURNI</string>
     <string name="day_detail_personal_one_off_events">EVENTO SINGOLO</string>
-    <string name="one_off_event_hint">Nuovo evento…</string>
     <string name="one_off_event_name">Nome</string>
     <string name="one_off_event_start">Inizio</string>
     <string name="one_off_event_end">Fine</string>
@@ -487,4 +486,34 @@
     <string name="share_prompt_friends_message">Tengo turni e impegni su Turnia. Scaricala e troviamo un giorno per vederci:</string>
     <string name="share_prompt_share">Condividi Turnia</string>
     <string name="share_prompt_not_now">Non ora</string>
+    <string name="shift_setup_title">Che turni fai?</string>
+    <string name="shift_setup_subtitle">Creali una volta e aggiungili al tuo calendario con un tocco.</string>
+    <string name="shift_setup_skip">Salta</string>
+    <string name="shift_setup_footer">Potrai modificarli o crearne altri quando vuoi.</string>
+    <string name="shift_setup_add_custom">Aggiungi un altro turno</string>
+    <string name="shift_setup_custom_add">Aggiungi</string>
+    <string name="shift_setup_custom_cancel">Annulla</string>
+    <string name="shift_setup_required">Obbligatorio</string>
+    <string name="shift_setup_no_times">Senza orario</string>
+    <string name="shift_setup_save_error">Impossibile creare i tuoi turni. Riprova.</string>
+    <string name="shift_setup_hint">Tocca un giorno per aggiungere uno dei tuoi turni</string>
+    <plurals name="shift_setup_confirm">
+        <item quantity="one">Crea %1$d turno</item>
+        <item quantity="other">Crea %1$d turni</item>
+    </plurals>
+    <string name="shift_preset_morning">Mattina</string>
+    <string name="shift_preset_morning_acronym">M</string>
+    <string name="shift_preset_afternoon">Pomeriggio</string>
+    <string name="shift_preset_afternoon_acronym">P</string>
+    <string name="shift_preset_night">Notte</string>
+    <string name="shift_preset_night_acronym">N</string>
+    <string name="shift_preset_morning_afternoon">Mattina e pomeriggio</string>
+    <string name="shift_preset_morning_afternoon_acronym">MP</string>
+    <string name="shift_preset_duty24">Turno 24h</string>
+    <string name="shift_preset_duty24_acronym">24H</string>
+    <string name="add_pane_no_shifts">Crea i tuoi turni una volta e aggiungili a qualsiasi giorno con un tocco.</string>
+    <string name="add_pane_create_shifts">Crea i miei turni</string>
+    <string name="add_pane_other_event">Altro evento…</string>
+    <string name="one_off_event_save_as_shift">Salva come turno</string>
+    <string name="shift_setup_edit_hours">Modifica orario</string>
 </resources>

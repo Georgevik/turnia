@@ -100,11 +100,16 @@ internal class CalendarRobot(compose: ComposeTestRule, today: LocalDate) : AppRo
             .scrollAndClick()
     }
 
+    /** A shift chip on an add pane that is already open, found by the acronym it shows. */
+    fun pickShiftLabelled(acronym: String) {
+        compose.awaitNode(hasTestTagPrefix(EVENT_TYPE_CHIP_PREFIX) and hasText(acronym)).scrollAndClick()
+    }
+
     /** A one-off from the day sheet, which stays open after saving; closed so the day is done. */
     fun addOneOff(date: LocalDate, name: String) {
         openDay(date)
         clickDescription("Add event")
-        click(ONE_OFF_HINT)
+        openOtherEvent()
         type("Name", name)
         click("Save")
         awaitText(name)
@@ -112,10 +117,20 @@ internal class CalendarRobot(compose: ComposeTestRule, today: LocalDate) : AppRo
         awaitDayClosed()
     }
 
-    fun editOneOff(date: LocalDate, name: String, newName: String) {
+    /** Below the shifts and the groups, so it may be off the pane until scrolled to. */
+    fun openOtherEvent() {
+        compose.awaitNode(hasTestTag(TestTags.ADD_PANE_OTHER_EVENT)).scrollAndClick()
+    }
+
+    /** The one-off's form, in edit mode, from its row in the day's sheet. */
+    fun openOneOff(date: LocalDate, name: String) {
         openDay(date)
         // The row in the sheet, not the grid's label behind it: only the row is labelled "Edit".
         compose.awaitNode(hasText(name, substring = true) and hasClickLabel(EDIT)).scrollAndClick()
+    }
+
+    fun editOneOff(date: LocalDate, name: String, newName: String) {
+        openOneOff(date, name)
         compose.awaitNode(hasSetTextAction() and hasText("Name")).apply {
             performTextClearance()
             performTextInput(newName)
@@ -173,7 +188,6 @@ internal class CalendarRobot(compose: ComposeTestRule, today: LocalDate) : AppRo
 
     private companion object {
         val EVENT_TYPE_CHIP_PREFIX = TestTags.eventTypeChip(EventTypeId(""))
-        const val ONE_OFF_HINT = "New event…"
         const val EDIT = "Edit"
     }
 }

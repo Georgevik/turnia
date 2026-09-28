@@ -1,6 +1,7 @@
 package com.geoviksoft.turnia.navigation.root.routes
 
 import androidx.navigation3.runtime.NavKey
+import com.geoviksoft.turnia.core.domain.model.ShiftSetupVia
 import com.geoviksoft.turnia.navigation.routes.EventTypeDetailData
 import kotlinx.serialization.Serializable
 
@@ -35,5 +36,8 @@ sealed interface RootRoute : NavKey {
 
     @Serializable
     data object AboutKey : RootRoute
+
+    @Serializable
+    data class ShiftSetupKey(val via: ShiftSetupVia) : RootRoute
 
 }

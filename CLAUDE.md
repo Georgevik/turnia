@@ -60,6 +60,16 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
   holder has left the group cannot be given back.
 - **Personal events** can carry notes (on the event); group event docs are shared with all members, so they hold no private notes.
 - A user can define their own **personal event types** and add **personal events** (no group), each colored by its type.
+  The interface calls them **shifts** ("My shifts", "turnos"); the code keeps `PersonalEventType`.
+- **A new user sets up their shifts before anything else.** After sign-in, an account with no
+  personal type, no group and no invitation on the way lands on *What shifts do you work?*: Morning,
+  Afternoon and Night selected, Morning & afternoon and 24h duty offered, times editable, and a
+  shift of their own added inline. Confirming creates **personal types only**, never a group, in
+  one write and in the language on screen. It can be skipped, and the skip is kept **on the
+  device** (`shift_setup_settled` in DataStore), never on the account. An empty cache proves
+  nothing, so the decision takes the server's word — at most two `limit(1)` reads, once per device
+  — and without an answer the setup waits for the next launch. The add pane lists the user's
+  shifts first and a one-off event last; with no shifts it offers the same setup.
 - A **personal one-off event** (`users/{uid}/personalOneOffEvents`) is filed under every month it
   spans, not only the one it starts in: it stores `yearMonthStart` and `yearMonthEnd`, a month's query
   matches `yearMonthStart <= month <= yearMonthEnd`, and every write marks **all** those months in
@@ -157,7 +167,12 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
 - **Parameters and properties must be registered by hand** in the GA console (*Admin → Custom
   definitions*), or they show only in DebugView and BigQuery. Event-scoped: `screen_name`,
   `method`, `audience`, `milestone`, `auto_approve`, `type_count`, `all_day`, `multi_month`, `via`,
-  `type`. User-scoped: `group_count`, `is_admin`, `app_language`. A new one is added there too.
+  `type`, `interacted`, `custom_type_count`, `kind`. User-scoped: `group_count`, `is_admin`, `app_language`. A new one is added there too.
+- **The shift setup** logs `onboard_shift_shown`, `onboard_shift_skipped` and
+  `onboard_shift_completed`, all with `via` (`onboarding` | `add_pane`); the last two carry
+  `interacted` — whether the user touched the panel at all before leaving it — and completion adds
+  `type_count` and `custom_type_count`. `first_event_added` with `kind` (`typed` | `one_off`) is
+  the activation signal, once per device, on the share prompt's counter.
 - The E2E suite swaps `Analytics` for `RecordingAnalytics`; assert through `awaitLogged` and
   `awaitUserProperty`, since a report follows the backend's answer, not the screen.
 
@@ -494,7 +509,7 @@ Use the run configurations provided by the run widget in your IDE's toolbar. You
 
 ### E2E tests
 
-The 40 critical happy paths run on an Android emulator against the Firebase emulators, seeded from
+The 50 critical happy paths run on an Android emulator against the Firebase emulators, seeded from
 [`firebase/test/fixtures`](firebase/test/README.md) — see that README to run them. They live in
 `app/androidApp/src/androidTest/.../e2e`: `flows/` holds the tests, `robots/` drives the screens,
 `infra/` seeds the emulators and points the app at them (`TurniaTestApplication`).

@@ -1,5 +1,8 @@
 package com.geoviksoft.turnia.ui.main
 
+import com.geoviksoft.turnia.core.domain.model.ShiftSetupVia
+import com.geoviksoft.turnia.navigation.root.routes.RootRoute
+import com.geoviksoft.turnia.navigation.LocalRootNavigator
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -89,6 +92,13 @@ fun MainScreen(viewModel: MainViewModel = koinViewModel()) {
     val pendingJoinCode by viewModel.pendingJoinCode.collectAsStateWithLifecycle()
     LaunchedEffect(pendingJoinCode) {
         if (pendingJoinCode != null) navigator.goToRoot(MainRoute.GroupsTab)
+    }
+
+    // Over Main, bottom bar included: it is a first step, not a tab's page.
+    val rootNavigator = LocalRootNavigator.current
+    val showShiftSetup by viewModel.showShiftSetup.collectAsStateWithLifecycle()
+    LaunchedEffect(showShiftSetup) {
+        if (showShiftSetup) rootNavigator.goTo(RootRoute.ShiftSetupKey(ShiftSetupVia.Onboarding))
     }
 
     TrackScreen(state.backStacks[state.topLevelRoute]?.lastOrNull())

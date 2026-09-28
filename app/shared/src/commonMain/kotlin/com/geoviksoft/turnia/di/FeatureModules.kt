@@ -2,6 +2,7 @@ package com.geoviksoft.turnia.di
 
 import com.geoviksoft.turnia.ui.group.detail.di.groupDetailModule
 import com.geoviksoft.turnia.ui.main.eventtypes.di.eventTypesModule
+import com.geoviksoft.turnia.ui.shiftsetup.di.shiftSetupModule
 import com.geoviksoft.turnia.ui.main.groups.di.groupsModule
 import com.geoviksoft.turnia.ui.main.mycalendar.di.calendarModule
 import com.geoviksoft.turnia.ui.main.people.di.peopleModule
@@ -27,4 +28,5 @@ val featureModules: List<Module> = listOf(
     swapModule,
     preferencesModule,
     adsModule,
+    shiftSetupModule,
 )

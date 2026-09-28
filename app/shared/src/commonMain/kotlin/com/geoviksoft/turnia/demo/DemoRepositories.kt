@@ -1,5 +1,7 @@
 package com.geoviksoft.turnia.demo
 
+import com.geoviksoft.turnia.core.domain.model.ShiftSetupVia
+import com.geoviksoft.turnia.core.domain.repository.ShiftSetupRepository
 import com.geoviksoft.turnia.core.domain.analytics.Analytics
 import com.geoviksoft.turnia.core.domain.analytics.AnalyticsEvent
 import com.geoviksoft.turnia.core.domain.analytics.AnalyticsUserProperty
@@ -339,6 +341,11 @@ internal class DemoPersonalEventRepository(world: DemoWorld) : PersonalEventRepo
         return Unit.toSuccess()
     }
 
+    override suspend fun createEventTypes(types: List<PersonalEventType>): Outcome<Unit, Unit> {
+        this.types.update { it + types }
+        return Unit.toSuccess()
+    }
+
     override suspend fun deleteEventType(typeId: EventTypeId): Outcome<Unit, Unit> {
         types.update { all -> all.map { if (it.id == typeId) it.copy(isDeleted = true) else it } }
         return Unit.toSuccess()
@@ -419,4 +426,26 @@ internal class DemoAppConfigRepository : AppConfigRepository {
     override suspend fun refreshFeatureFlags(): FeatureFlags = flags.value
     override suspend fun isOnboardingSeen(): Boolean = false
     override suspend fun setOnboardingSeen(seen: Boolean) = Unit
+
+    // The demo world comes with its shifts already made.
+    override suspend fun isShiftSetupSettled(): Boolean = true
+    override suspend fun setShiftSetupSettled(settled: Boolean) = Unit
+}
+
+/** The demo world comes with its shifts made: the setup is never owed, but still works from the add pane. */
+internal class DemoShiftSetupRepository(
+    private val personalEventRepository: PersonalEventRepository,
+) : ShiftSetupRepository {
+    override val shouldShow: StateFlow<Boolean> = MutableStateFlow(false)
+    override val hintPending: StateFlow<Boolean> = MutableStateFlow(false)
+    override suspend fun shown(via: ShiftSetupVia) = Unit
+    override suspend fun skipped(via: ShiftSetupVia, interacted: Boolean) = Unit
+    override suspend fun complete(
+        types: List<PersonalEventType>,
+        via: ShiftSetupVia,
+        interacted: Boolean,
+        customCount: Int,
+    ): Outcome<Unit, Unit> = personalEventRepository.createEventTypes(types)
+
+    override fun hintShown() = Unit
 }

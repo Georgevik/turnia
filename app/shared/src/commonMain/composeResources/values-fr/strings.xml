@@ -222,7 +222,7 @@
     <string name="event_type_detail_new_personal">Nouvel événement personnel</string>
     <string name="event_type_field_name">Nom</string>
     <string name="event_type_name_hint_group">Matin, Après-midi, Nuit, Astreinte…</string>
-    <string name="event_type_field_acronym">Abréviation dans le calendrier</string>
+    <string name="event_type_field_acronym">Sigle</string>
     <string name="event_type_acronym_hint">Jusqu'à %1$d lettres. C'est ce qui s'affiche sur chaque jour du calendrier.</string>
     <string name="event_type_field_optional">Facultatif</string>
     <string name="event_type_field_description">Description</string>
@@ -244,13 +244,13 @@
     <string name="event_type_error_not_implemented">Cette fonctionnalité n'est pas encore disponible.</string>
 
     <!-- Personal event types: "My events" -->
-    <string name="personal_event_types_title">Mes événements</string>
-    <string name="personal_event_types_add">Nouvel événement</string>
-    <string name="personal_event_types_empty">Tu n'as encore créé aucun événement personnel.</string>
+    <string name="personal_event_types_title">Mes postes</string>
+    <string name="personal_event_types_add">Nouveau poste</string>
+    <string name="personal_event_types_empty">Tu n'as encore créé aucun poste.</string>
     <string name="personal_event_types_delete">Supprimer</string>
-    <string name="personal_event_types_delete_dialog_title">Supprimer l'événement ?</string>
-    <string name="personal_event_types_delete_dialog_message">« %1$s » sera retiré de tes événements personnels.</string>
-    <string name="personal_event_types_error_delete">Impossible de supprimer l'événement. Réessaie.</string>
+    <string name="personal_event_types_delete_dialog_title">Supprimer le poste ?</string>
+    <string name="personal_event_types_delete_dialog_message">« %1$s » sera retiré de tes postes.</string>
+    <string name="personal_event_types_error_delete">Impossible de supprimer le poste. Réessaie.</string>
 
     <!-- Components -->
     <string name="time_field_hint">HH:mm</string>
@@ -263,7 +263,7 @@
     <string name="dialog_error_retry">Réessayer</string>
 
     <!-- Profile -->
-    <string name="profile_my_events">Mes événements</string>
+    <string name="profile_my_events">Mes postes</string>
     <string name="profile_logout">Se déconnecter</string>
     <string name="profile_logout_dialog_title">Se déconnecter ?</string>
     <string name="profile_logout_dialog_message">Tu devras te reconnecter pour voir tes gardes.</string>
@@ -419,9 +419,8 @@
     <string name="calendar_more_options">Plus d'options</string>
 
     <!-- Day detail sheet -->
-    <string name="day_detail_personal_events">ÉVÉNEMENTS PERSONNELS</string>
+    <string name="day_detail_personal_events">MES POSTES</string>
     <string name="day_detail_personal_one_off_events">ÉVÉNEMENT PONCTUEL</string>
-    <string name="one_off_event_hint">Nouvel événement…</string>
     <string name="one_off_event_name">Nom</string>
     <string name="one_off_event_start">Début</string>
     <string name="one_off_event_end">Fin</string>
@@ -487,4 +486,34 @@
     <string name="share_prompt_friends_message">Je gère mes gardes et mes sorties avec Turnia. Télécharge-la et on trouve un jour pour se voir :</string>
     <string name="share_prompt_share">Partager Turnia</string>
     <string name="share_prompt_not_now">Pas maintenant</string>
+    <string name="shift_setup_title">Quels postes fais-tu ?</string>
+    <string name="shift_setup_subtitle">Crée-les une fois et ajoute-les à ton calendrier d'un simple geste.</string>
+    <string name="shift_setup_skip">Passer</string>
+    <string name="shift_setup_footer">Tu pourras les modifier ou en créer d'autres quand tu voudras.</string>
+    <string name="shift_setup_add_custom">Ajouter un autre poste</string>
+    <string name="shift_setup_custom_add">Ajouter</string>
+    <string name="shift_setup_custom_cancel">Annuler</string>
+    <string name="shift_setup_required">Obligatoire</string>
+    <string name="shift_setup_no_times">Sans horaire</string>
+    <string name="shift_setup_save_error">Impossible de créer tes postes. Réessaie.</string>
+    <string name="shift_setup_hint">Touche un jour pour ajouter l'un de tes postes</string>
+    <plurals name="shift_setup_confirm">
+        <item quantity="one">Créer %1$d poste</item>
+        <item quantity="other">Créer %1$d postes</item>
+    </plurals>
+    <string name="shift_preset_morning">Matin</string>
+    <string name="shift_preset_morning_acronym">M</string>
+    <string name="shift_preset_afternoon">Après-midi</string>
+    <string name="shift_preset_afternoon_acronym">A</string>
+    <string name="shift_preset_night">Nuit</string>
+    <string name="shift_preset_night_acronym">N</string>
+    <string name="shift_preset_morning_afternoon">Matin et après-midi</string>
+    <string name="shift_preset_morning_afternoon_acronym">MA</string>
+    <string name="shift_preset_duty24">Garde 24h</string>
+    <string name="shift_preset_duty24_acronym">24H</string>
+    <string name="add_pane_no_shifts">Crée tes postes une fois et ajoute-les à n'importe quel jour d'un simple geste.</string>
+    <string name="add_pane_create_shifts">Créer mes postes</string>
+    <string name="add_pane_other_event">Autre événement…</string>
+    <string name="one_off_event_save_as_shift">Enregistrer comme poste</string>
+    <string name="shift_setup_edit_hours">Modifier l'horaire</string>
 </resources>

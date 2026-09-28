@@ -222,7 +222,7 @@
     <string name="event_type_detail_new_personal">Neuer persönlicher Termin</string>
     <string name="event_type_field_name">Name</string>
     <string name="event_type_name_hint_group">Frühdienst, Spätdienst, Nachtdienst, Bereitschaft…</string>
-    <string name="event_type_field_acronym">Kürzel im Kalender</string>
+    <string name="event_type_field_acronym">Kurz.</string>
     <string name="event_type_acronym_hint">Bis zu %1$d Buchstaben. Das steht an jedem Tag im Kalender.</string>
     <string name="event_type_field_optional">Optional</string>
     <string name="event_type_field_description">Beschreibung</string>
@@ -244,13 +244,13 @@
     <string name="event_type_error_not_implemented">Diese Funktion ist noch nicht verfügbar.</string>
 
     <!-- Personal event types: "My events" -->
-    <string name="personal_event_types_title">Meine Termine</string>
-    <string name="personal_event_types_add">Neuer Termin</string>
-    <string name="personal_event_types_empty">Du hast noch keine persönlichen Termine erstellt.</string>
+    <string name="personal_event_types_title">Meine Schichten</string>
+    <string name="personal_event_types_add">Neue Schicht</string>
+    <string name="personal_event_types_empty">Du hast noch keine Schichten angelegt.</string>
     <string name="personal_event_types_delete">Löschen</string>
-    <string name="personal_event_types_delete_dialog_title">Termin löschen?</string>
-    <string name="personal_event_types_delete_dialog_message">„%1$s“ wird aus deinen persönlichen Terminen entfernt.</string>
-    <string name="personal_event_types_error_delete">Der Termin konnte nicht gelöscht werden. Bitte versuch es erneut.</string>
+    <string name="personal_event_types_delete_dialog_title">Schicht löschen?</string>
+    <string name="personal_event_types_delete_dialog_message">„%1$s“ wird aus deinen Schichten entfernt.</string>
+    <string name="personal_event_types_error_delete">Die Schicht konnte nicht gelöscht werden. Bitte versuch es erneut.</string>
 
     <!-- Components -->
     <string name="time_field_hint">HH:mm</string>
@@ -263,7 +263,7 @@
     <string name="dialog_error_retry">Erneut versuchen</string>
 
     <!-- Profile -->
-    <string name="profile_my_events">Meine Termine</string>
+    <string name="profile_my_events">Meine Schichten</string>
     <string name="profile_logout">Abmelden</string>
     <string name="profile_logout_dialog_title">Abmelden?</string>
     <string name="profile_logout_dialog_message">Du musst dich erneut anmelden, um deine Dienste zu sehen.</string>
@@ -419,9 +419,8 @@
     <string name="calendar_more_options">Weitere Optionen</string>
 
     <!-- Day detail sheet -->
-    <string name="day_detail_personal_events">PERSÖNLICHE TERMINE</string>
+    <string name="day_detail_personal_events">MEINE SCHICHTEN</string>
     <string name="day_detail_personal_one_off_events">EINZELTERMIN</string>
-    <string name="one_off_event_hint">Neuer Termin…</string>
     <string name="one_off_event_name">Name</string>
     <string name="one_off_event_start">Beginn</string>
     <string name="one_off_event_end">Ende</string>
@@ -487,4 +486,34 @@
     <string name="share_prompt_friends_message">Ich habe meine Dienste und Pläne in Turnia. Hol sie dir, dann finden wir einen Tag zum Treffen:</string>
     <string name="share_prompt_share">Turnia teilen</string>
     <string name="share_prompt_not_now">Jetzt nicht</string>
+    <string name="shift_setup_title">Welche Schichten arbeitest du?</string>
+    <string name="shift_setup_subtitle">Leg sie einmal an und trag sie mit einem Tippen in deinen Kalender ein.</string>
+    <string name="shift_setup_skip">Überspringen</string>
+    <string name="shift_setup_footer">Du kannst sie jederzeit ändern oder weitere anlegen.</string>
+    <string name="shift_setup_add_custom">Weitere Schicht hinzufügen</string>
+    <string name="shift_setup_custom_add">Hinzufügen</string>
+    <string name="shift_setup_custom_cancel">Abbrechen</string>
+    <string name="shift_setup_required">Pflichtfeld</string>
+    <string name="shift_setup_no_times">Ohne feste Zeiten</string>
+    <string name="shift_setup_save_error">Deine Schichten konnten nicht angelegt werden. Bitte versuch es noch einmal.</string>
+    <string name="shift_setup_hint">Tippe auf einen Tag, um eine deiner Schichten einzutragen</string>
+    <plurals name="shift_setup_confirm">
+        <item quantity="one">%1$d Schicht anlegen</item>
+        <item quantity="other">%1$d Schichten anlegen</item>
+    </plurals>
+    <string name="shift_preset_morning">Früh</string>
+    <string name="shift_preset_morning_acronym">F</string>
+    <string name="shift_preset_afternoon">Spät</string>
+    <string name="shift_preset_afternoon_acronym">S</string>
+    <string name="shift_preset_night">Nacht</string>
+    <string name="shift_preset_night_acronym">N</string>
+    <string name="shift_preset_morning_afternoon">Früh und Spät</string>
+    <string name="shift_preset_morning_afternoon_acronym">FS</string>
+    <string name="shift_preset_duty24">24-h-Dienst</string>
+    <string name="shift_preset_duty24_acronym">24H</string>
+    <string name="add_pane_no_shifts">Leg deine Schichten einmal an und trag sie mit einem Tippen an jedem Tag ein.</string>
+    <string name="add_pane_create_shifts">Meine Schichten anlegen</string>
+    <string name="add_pane_other_event">Anderer Termin…</string>
+    <string name="one_off_event_save_as_shift">Als Schicht speichern</string>
+    <string name="shift_setup_edit_hours">Zeiten bearbeiten</string>
 </resources>

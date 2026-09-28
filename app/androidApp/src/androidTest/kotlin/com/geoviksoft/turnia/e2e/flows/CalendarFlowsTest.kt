@@ -66,10 +66,10 @@ class CalendarFlowsTest {
         val date = world.day(9)
 
         calendar.openTab(AppRobot.TAB_SETTINGS)
-        calendar.click("My events")
-        calendar.click("New event")
+        calendar.click("My shifts")
+        calendar.click("New shift")
         calendar.type("Name", "Guardia extra")
-        calendar.type("Calendar abbreviation", "GX")
+        calendar.type("Abbr.", "GX")
         calendar.click("Save")
         calendar.awaitText("Guardia extra")
         val (typeId, _) = Documents.awaitIn("users/alice/personalEventTypes") {
@@ -77,7 +77,7 @@ class CalendarFlowsTest {
         }
         compose.awaitLogged("personal_event_type_created")
 
-        // My events sits above the tabs.
+        // My shifts sits above the tabs.
         calendar.back()
         calendar.openTab(AppRobot.TAB_CALENDAR)
         calendar.openDay(date)

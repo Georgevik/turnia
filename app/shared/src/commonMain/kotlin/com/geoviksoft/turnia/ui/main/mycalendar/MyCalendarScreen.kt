@@ -1,5 +1,13 @@
 package com.geoviksoft.turnia.ui.main.mycalendar
 
+import com.geoviksoft.turnia.core.domain.model.ShiftSetupVia
+import turnia.app.shared.generated.resources.shift_setup_hint
+import turnia.app.shared.generated.resources.Res
+import org.jetbrains.compose.resources.stringResource
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.material3.SnackbarDuration
+import com.geoviksoft.turnia.ui.system.TurniaSnackbarVisual
+import com.geoviksoft.turnia.ui.system.LocalSnackbar
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -31,6 +39,16 @@ fun MyCalendarScreen(viewModel: MyCalendarViewModel = koinViewModel()) {
     // two system dialogs on top of each other is a bad first impression.
     RequestNotificationPermission()
 
+    val shiftHintPending by viewModel.shiftHintPending.collectAsStateWithLifecycle()
+    if (shiftHintPending) {
+        val snackbar = LocalSnackbar.current
+        val hint = stringResource(Res.string.shift_setup_hint)
+        LaunchedEffect(Unit) {
+            snackbar.showSnackbar(TurniaSnackbarVisual(hint, duration = SnackbarDuration.Long))
+            viewModel.shiftHintShown()
+        }
+    }
+
     Column(modifier = Modifier.fillMaxSize()) {
         CalendarViewer(
             modifier = Modifier.weight(1f),
@@ -45,6 +63,10 @@ fun MyCalendarScreen(viewModel: MyCalendarViewModel = koinViewModel()) {
             },
             onAddPersonalType = {
                 rootNavigator.goTo(RootRoute.EventTypeDetailKey(EventTypeDetailData.NewPersonal))
+            },
+            onSaveAsShift = { data -> rootNavigator.goTo(RootRoute.EventTypeDetailKey(data)) },
+            onCreateShifts = {
+                rootNavigator.goTo(RootRoute.ShiftSetupKey(ShiftSetupVia.AddPane))
             },
             onAddGroupType = { groupId ->
                 rootNavigator.goTo(RootRoute.EventTypeDetailKey(EventTypeDetailData.NewGroup(groupId)))

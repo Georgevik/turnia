@@ -222,7 +222,7 @@
     <string name="event_type_detail_new_personal">New personal event</string>
     <string name="event_type_field_name">Name</string>
     <string name="event_type_name_hint_group">Morning, Afternoon, Night, On call…</string>
-    <string name="event_type_field_acronym">Calendar abbreviation</string>
+    <string name="event_type_field_acronym">Abbr.</string>
     <string name="event_type_acronym_hint">Up to %1$d letters. It's what shows on each day of the calendar.</string>
     <string name="event_type_field_optional">Optional</string>
     <string name="event_type_field_description">Description</string>
@@ -244,13 +244,13 @@
     <string name="event_type_error_not_implemented">This feature isn't available yet.</string>
 
     <!-- Personal event types: "My events" -->
-    <string name="personal_event_types_title">My events</string>
-    <string name="personal_event_types_add">New event</string>
-    <string name="personal_event_types_empty">You haven't created any personal events yet.</string>
+    <string name="personal_event_types_title">My shifts</string>
+    <string name="personal_event_types_add">New shift</string>
+    <string name="personal_event_types_empty">You haven't created any shifts yet.</string>
     <string name="personal_event_types_delete">Delete</string>
-    <string name="personal_event_types_delete_dialog_title">Delete the event?</string>
-    <string name="personal_event_types_delete_dialog_message">“%1$s” will be removed from your personal events.</string>
-    <string name="personal_event_types_error_delete">Couldn't delete the event. Please try again.</string>
+    <string name="personal_event_types_delete_dialog_title">Delete the shift?</string>
+    <string name="personal_event_types_delete_dialog_message">“%1$s” will be removed from your shifts.</string>
+    <string name="personal_event_types_error_delete">Couldn't delete the shift. Please try again.</string>
 
     <!-- Components -->
     <string name="time_field_hint">HH:mm</string>
@@ -263,7 +263,7 @@
     <string name="dialog_error_retry">Retry</string>
 
     <!-- Profile -->
-    <string name="profile_my_events">My events</string>
+    <string name="profile_my_events">My shifts</string>
     <string name="profile_logout">Sign out</string>
     <string name="profile_logout_dialog_title">Sign out?</string>
     <string name="profile_logout_dialog_message">You'll have to sign in again to see your shifts.</string>
@@ -419,9 +419,8 @@
     <string name="calendar_more_options">More options</string>
 
     <!-- Day detail sheet -->
-    <string name="day_detail_personal_events">PERSONAL EVENTS</string>
+    <string name="day_detail_personal_events">MY SHIFTS</string>
     <string name="day_detail_personal_one_off_events">ONE-OFF EVENT</string>
-    <string name="one_off_event_hint">New event…</string>
     <string name="one_off_event_name">Name</string>
     <string name="one_off_event_start">Starts</string>
     <string name="one_off_event_end">Ends</string>
@@ -489,4 +488,34 @@
     <string name="share_prompt_friends_message">I keep my shifts and plans in Turnia. Get it so we can find a day to meet up:</string>
     <string name="share_prompt_share">Share Turnia</string>
     <string name="share_prompt_not_now">Not now</string>
+    <string name="shift_setup_title">What shifts do you work?</string>
+    <string name="shift_setup_subtitle">Create them once and add them to your calendar with a tap.</string>
+    <string name="shift_setup_skip">Skip</string>
+    <string name="shift_setup_footer">You can change them or create more whenever you like.</string>
+    <string name="shift_setup_add_custom">Add another shift</string>
+    <string name="shift_setup_custom_add">Add</string>
+    <string name="shift_setup_custom_cancel">Cancel</string>
+    <string name="shift_setup_required">Required</string>
+    <string name="shift_setup_no_times">No set hours</string>
+    <string name="shift_setup_save_error">Couldn\'t create your shifts. Please try again.</string>
+    <string name="shift_setup_hint">Tap a day to add one of your shifts</string>
+    <plurals name="shift_setup_confirm">
+        <item quantity="one">Create %1$d shift</item>
+        <item quantity="other">Create %1$d shifts</item>
+    </plurals>
+    <string name="shift_preset_morning">Morning</string>
+    <string name="shift_preset_morning_acronym">M</string>
+    <string name="shift_preset_afternoon">Afternoon</string>
+    <string name="shift_preset_afternoon_acronym">A</string>
+    <string name="shift_preset_night">Night</string>
+    <string name="shift_preset_night_acronym">N</string>
+    <string name="shift_preset_morning_afternoon">Morning &amp; afternoon</string>
+    <string name="shift_preset_morning_afternoon_acronym">MA</string>
+    <string name="shift_preset_duty24">24h duty</string>
+    <string name="shift_preset_duty24_acronym">24H</string>
+    <string name="add_pane_no_shifts">Create your shifts once and add them to any day with a tap.</string>
+    <string name="add_pane_create_shifts">Create my shifts</string>
+    <string name="add_pane_other_event">Other event…</string>
+    <string name="one_off_event_save_as_shift">Save as shift</string>
+    <string name="shift_setup_edit_hours">Edit hours</string>
 </resources>

@@ -44,6 +44,9 @@ class SharePromptRepositoryImpl(
             }
         }
 
+        // A device that counted events before this report existed is past its first: it never logs.
+        if (added == 1) analytics.log(AnalyticsEvent.FirstEventAdded(kind))
+
         val flags = appConfigRepository.featureFlags.value
         if (!flags.sharePromptActive) return
 

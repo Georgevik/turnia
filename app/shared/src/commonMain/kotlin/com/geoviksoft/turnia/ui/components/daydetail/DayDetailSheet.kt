@@ -1,5 +1,7 @@
 package com.geoviksoft.turnia.ui.components.daydetail
 
+import com.geoviksoft.turnia.ui.system.color.toHex
+import com.geoviksoft.turnia.navigation.routes.EventTypeDetailData
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -107,6 +109,8 @@ fun DayDetailSheet(
     openEditTypeScreen: (groupId: String, groupName: String) -> Unit,
     openNewPersonalTypeScreen: () -> Unit,
     openNewGroupTypeScreen: (groupId: String) -> Unit,
+    openShiftSetup: () -> Unit = {},
+    openSaveAsShift: (EventTypeDetailData) -> Unit = {},
     /** A form wants the sheet open all the way, so it has the whole height to scroll in. */
     onFormOpenChange: (Boolean) -> Unit,
     onClose: (shouldRefresh: Boolean) -> Unit,
@@ -277,6 +281,10 @@ fun DayDetailSheet(
                 confirmOneOffDelete = true
                 return@DayDetailContent
             }
+            if (action == OneOffFormAction.SaveAsShift) {
+                oneOffForm?.editing?.let { openSaveAsShift(it.toShiftData()) }
+                return@DayDetailContent
+            }
             val saving = action == OneOffFormAction.Save && oneOffForm?.canSave == true
             viewModel.onOneOffAction(action)
             // Back to the day's list, where the event just saved is now shown.
@@ -289,6 +297,7 @@ fun DayDetailSheet(
         },
         onEditGroup = openEditTypeScreen,
         onAddPersonalEventType = openNewPersonalTypeScreen,
+        onCreateShifts = openShiftSetup,
         onAddGroupEventType = openNewGroupTypeScreen,
         onRemove = { pendingDelete = it },
         onReturn = { pendingReturn = it },
@@ -321,6 +330,7 @@ private fun DayDetailContent(
     onAddPersonalEventType: () -> Unit,
     onAddGroupEventType: (groupId: String) -> Unit,
     onRemove: (DayEventUi) -> Unit,
+    onCreateShifts: () -> Unit = {},
     onReturn: (DayEventUi) -> Unit,
     onEditNotes: (DayEventUi) -> Unit,
     onSwapChange: (DayEventUi, Boolean) -> Unit,
@@ -371,6 +381,7 @@ private fun DayDetailContent(
                             onEditGroup = onEditGroup,
                             onAddPersonalEventType = onAddPersonalEventType,
                             onAddGroupEventType = onAddGroupEventType,
+                            onCreateShifts = onCreateShifts,
                         )
                     }
                 } else if (events.isEmpty() && oneOffEvents.isEmpty()) {
@@ -655,3 +666,13 @@ fun DayDetailSheetAddErrorPreview() {
         addTypes = AddEventTypesUi.Error(AddEventTypesError.LoadFailed),
     )
 }
+
+/** Times only for an event that has them: an all-day one-off makes a type with no hours. */
+private fun OneOffEventUi.toShiftData() = EventTypeDetailData.NewPersonalFrom(
+    name = name,
+    color = color.toHex(),
+    startTime = if (allDay) null else start.time.hhmm(),
+    endTime = if (allDay) null else end.time.hhmm(),
+)
+
+private fun LocalTime.hhmm(): String = "${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}"

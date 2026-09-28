@@ -1,5 +1,6 @@
 package com.geoviksoft.turnia.ui.components.calendar.model
 
+import com.geoviksoft.turnia.ui.system.components.time.nextDayMark
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import com.geoviksoft.turnia.core.domain.model.EventId
@@ -140,9 +141,10 @@ fun GroupEvent.toUi(
 const val HOURS_SEPARATOR = " – "
 
 /** Only clock times, which need no translating — so a lone start is shown bare, with no "from". */
-private fun EventType.hours(): String? = when {
-    startTime != null && endTime != null -> "$startTime$HOURS_SEPARATOR$endTime"
-    else -> startTime
+private fun EventType.hours(): String? {
+    val start = startTime ?: return null
+    val end = endTime ?: return start
+    return "$start$HOURS_SEPARATOR$end${nextDayMark(start, end)}"
 }
 
 private fun GroupEvent.buildTransferChain(currentUserId: UserId?): List<TransferHolderUi> {

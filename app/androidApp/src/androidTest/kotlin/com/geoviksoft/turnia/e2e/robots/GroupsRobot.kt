@@ -53,7 +53,7 @@ internal class GroupsRobot(compose: ComposeTestRule) : AppRobot(compose) {
 
     fun fillEventType(name: String, acronym: String) {
         type("Name", name)
-        type("Calendar abbreviation", acronym)
+        type("Abbr.", acronym)
         click("Save")
     }
 

@@ -16,4 +16,11 @@ interface AppConfigRepository {
     suspend fun refreshFeatureFlags(): FeatureFlags
     suspend fun isOnboardingSeen(): Boolean
     suspend fun setOnboardingSeen(seen: Boolean)
+
+    /**
+     * Whether this device is done with the shift setup: skipped, completed, or the account turned out
+     * to have something already. Kept on the device only, never on the account.
+     */
+    suspend fun isShiftSetupSettled(): Boolean
+    suspend fun setShiftSetupSettled(settled: Boolean)
 }

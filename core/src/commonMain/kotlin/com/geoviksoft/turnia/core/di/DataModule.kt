@@ -3,8 +3,13 @@ package com.geoviksoft.turnia.core.di
 import com.geoviksoft.turnia.core.data.ads.AdRepositoryImpl
 import com.geoviksoft.turnia.core.data.analytics.AnalyticsImpl
 import com.geoviksoft.turnia.core.data.config.AppConfigRepositoryImpl
+import com.geoviksoft.turnia.core.data.config.DeviceSettings
 import com.geoviksoft.turnia.core.data.config.RemoteConfigService
 import com.geoviksoft.turnia.core.data.config.SharePromptRepositoryImpl
+import com.geoviksoft.turnia.core.domain.repository.ShiftSetupRepository
+import com.geoviksoft.turnia.core.data.user.ShiftSetupRepositoryImpl
+import com.geoviksoft.turnia.core.data.user.FirestoreAccountContents
+import com.geoviksoft.turnia.core.data.user.AccountContents
 import com.geoviksoft.turnia.core.data.config.mappers.SharePromptMilestonesMapper
 import com.geoviksoft.turnia.core.data.datasource.firestore.GroupEventFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.GroupFirestore
@@ -165,8 +170,13 @@ val dataModule: Module = module {
         )
     }
     single { RemoteConfigService(get(), get(), get()) }
+    single { DeviceSettings(get()) }
     single<AppConfigRepository> { AppConfigRepositoryImpl(get(), get()) }
     single<SharePromptRepository> { SharePromptRepositoryImpl(get(), get(), get()) }
+    single<AccountContents> { FirestoreAccountContents(get(), get()) }
+    single<ShiftSetupRepository> {
+        ShiftSetupRepositoryImpl(get<UserRepository>().userSession, get(), get(), get(), get(), get(), get())
+    }
     single<NotificationRepository> { NotificationRepositoryImpl(get()) }
     single<InvitationLinkRepository> { InvitationLinkRepositoryImpl(get()) }
     single<GroupRepository> {

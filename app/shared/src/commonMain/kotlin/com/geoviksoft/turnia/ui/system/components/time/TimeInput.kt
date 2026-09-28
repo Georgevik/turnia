@@ -40,3 +40,9 @@ fun String.toTimeOrNull(): String? {
     val digits = filter { it.isDigit() }.ifEmpty { return null }.padEnd(TIME_DIGITS, '0')
     return "${digits.take(2)}:${digits.drop(2)}"
 }
+
+/**
+ * `+1` when a shift's [end] is not after its [start], so it is read as ending the next day: a night
+ * from 22:00 to 08:00, or 24 hours from 08:00 to 08:00. Both are `HH:mm`, which compare as text.
+ */
+fun nextDayMark(start: String, end: String): String = if (end <= start) " +1" else ""

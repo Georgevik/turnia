@@ -15,6 +15,15 @@ sealed interface EventTypeDetailData {
     @Serializable
     data object NewPersonal : EventTypeDetailData
 
+    /** A new personal type seeded from a one-off event: "Save as shift". Times are `HH:mm`. */
+    @Serializable
+    data class NewPersonalFrom(
+        val name: String,
+        val color: String,
+        val startTime: String?,
+        val endTime: String?,
+    ) : EventTypeDetailData
+
     /** A null [groupId] means the type is a draft of a group that is still being created. */
     @Serializable
     data class EditGroup(val typeId: String, val groupId: String?) : EventTypeDetailData

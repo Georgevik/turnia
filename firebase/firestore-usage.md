@@ -40,6 +40,8 @@ of its last listen pays nothing.
 | Save a group, a type or a colour | 0 reads | 0 reads | 2 writes: the document and its marker. |
 | Open a day in my calendar | — | **0** | The day's one-off events arrive with the month, like its shifts: the sheet reads nothing of its own. |
 | Add, edit or delete a one-off event | — | 0 reads | 2 writes: the event and the marker of every month it spans (an edit also marks the months it leaves). |
+| Shift setup: decide whether to show it | — | **0–2**, once per device | 0 once the device has settled it (skipped, completed, or the account had something), or when the cache already holds a type or a group. Otherwise `hasAnyType(SERVER)` and `hasAnyGroup(SERVER)`, each a `limit(1)` server read (an empty result still costs 1). A failed read settles nothing, so an offline launch tries again next time. |
+| Shift setup: create the shifts | — | 0 reads | **N + 1 writes** in one commit: one per type (3 with the defaults) and the types marker. |
 | Rename yourself (`updateProfile`) | — | 1 call | Server: profile + marker + reservation + 2 per group. Your other devices pay 1 profile read; every member pays 1 group read per shared group. |
 
 **Remote changes** are the part that scales with team activity and is the same before and after: when

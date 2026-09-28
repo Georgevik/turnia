@@ -1,5 +1,7 @@
 package com.geoviksoft.turnia.ui.main.mycalendar
 
+import kotlinx.coroutines.flow.StateFlow
+import com.geoviksoft.turnia.core.domain.repository.ShiftSetupRepository
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -44,7 +46,13 @@ class MyCalendarViewModel(
     userRepository: UserRepository,
     private val groupRepository: GroupRepository,
     private val personalRepository: PersonalEventRepository,
+    private val shiftSetupRepository: ShiftSetupRepository,
 ) : ViewModel() {
+
+    /** "Tap a day": owed once the setup has created the user's shifts, until it has been shown. */
+    val shiftHintPending: StateFlow<Boolean> = shiftSetupRepository.hintPending
+
+    fun shiftHintShown() = shiftSetupRepository.hintShown()
 
     private val targetDay = MutableStateFlow(Clock.System.todayIn(TimeZone.currentSystemDefault()))
     private val _uiState = MutableStateFlow<MyCalendarUiState>(MyCalendarUiState.Loading)

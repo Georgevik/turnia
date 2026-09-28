@@ -78,6 +78,18 @@ class PersonalEventRepositoryImpl(
         return Unit.toSuccess()
     }
 
+    override suspend fun createEventTypes(types: List<PersonalEventType>): Outcome<Unit, Unit> {
+        val userId = userRepository.loggedUser?.id ?: return Unit.toFailure()
+
+        personalEventTypesFirestore.setAll(userId, types).errorOrNull()?.let { error ->
+            Logger.e(TAG, "Error creating personal event types", error.error)
+            return Unit.toFailure()
+        }
+
+        repeat(types.size) { analytics.log(AnalyticsEvent.PersonalEventTypeCreated) }
+        return Unit.toSuccess()
+    }
+
     override suspend fun deleteEventType(typeId: EventTypeId): Outcome<Unit, Unit> {
         val userId = userRepository.loggedUser?.id ?: return Unit.toFailure()
 
