@@ -50,6 +50,10 @@ class RemoteConfigService(
             sharePromptMilestones = sharePromptMilestonesMapper.map(
                 remoteConfig.getSafe<String>(RemoteKey.SHARE_PROMPT_MILESTONES, NO_MILESTONES)
             ),
+            teamPromptEnabled = remoteConfig.getSafe<Boolean>(RemoteKey.TEAM_PROMPT_ENABLED, false),
+            teamPromptThreshold = remoteConfig.getSafe<Long>(
+                RemoteKey.TEAM_PROMPT_THRESHOLD, FeatureFlags.DEFAULT_TEAM_PROMPT_THRESHOLD.toLong()
+            ).toInt(),
         )
     }
 
@@ -69,6 +73,8 @@ class RemoteConfigService(
             RemoteKey.SUPPORT_EMAIL.value to DEFAULT_SUPPORT_EMAIL,
             RemoteKey.SHARE_PROMPT_ENABLED.value to false,
             RemoteKey.SHARE_PROMPT_MILESTONES.value to NO_MILESTONES,
+            RemoteKey.TEAM_PROMPT_ENABLED.value to false,
+            RemoteKey.TEAM_PROMPT_THRESHOLD.value to FeatureFlags.DEFAULT_TEAM_PROMPT_THRESHOLD,
         )
     }
 
@@ -86,4 +92,6 @@ enum class RemoteKey(val value: String) {
     SUPPORT_EMAIL("supportEmail"),
     SHARE_PROMPT_ENABLED("sharePromptEnabled"),
     SHARE_PROMPT_MILESTONES("sharePromptMilestones"),
+    TEAM_PROMPT_ENABLED("teamPromptEnabled"),
+    TEAM_PROMPT_THRESHOLD("teamPromptThreshold"),
 }
