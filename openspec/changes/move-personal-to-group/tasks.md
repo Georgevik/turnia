@@ -79,7 +79,7 @@
   - one `curso` event dated before the window, with a note.
 
   Update any E2E assertion that counts Alice's personal events. Verify the existing suite still passes.
-- [ ] 6.5 Add E2E flows in a new `MoveToGroupFlowsTest`, with a `MoveToGroupRobot`:
+- [x] 6.5 Add E2E flows in a new `MoveToGroupFlowsTest`, with a `MoveToGroupRobot`:
   - move one event: the group event exists at the same id, the personal event is `isDeleted`, and `personal_events_moved` is logged with `scope = one`;
   - move all: the counts on screen, the skipped day still personal, the old event still personal, `curso` `isDeleted` and gone from "My shifts", and a moved note in `groupEventExtras`.
 
