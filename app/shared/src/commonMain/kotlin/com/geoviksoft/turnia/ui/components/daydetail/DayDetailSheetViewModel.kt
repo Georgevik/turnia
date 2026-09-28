@@ -15,7 +15,6 @@ import com.geoviksoft.turnia.core.domain.model.SwapError
 import com.geoviksoft.turnia.core.domain.repository.AdRepository
 import com.geoviksoft.turnia.core.domain.repository.GroupRepository
 import com.geoviksoft.turnia.core.domain.repository.PersonalEventRepository
-import com.geoviksoft.turnia.core.domain.repository.SharePromptRepository
 import com.geoviksoft.turnia.core.domain.repository.UserRepository
 import com.geoviksoft.turnia.core.system.onFailure
 import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
@@ -53,7 +52,7 @@ class DayDetailSheetViewModel(
     private val personalRepository: PersonalEventRepository,
     private val userRepository: UserRepository,
     private val adRepository: AdRepository,
-    private val sharePromptRepository: SharePromptRepository,
+    private val eventAddedPrompts: EventAddedPrompts,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<AddEventTypesUi>(AddEventTypesUi.Loading)
@@ -280,7 +279,7 @@ class DayDetailSheetViewModel(
      */
     private fun CoroutineScope.countAdded(kind: EventKind) {
         if (userRepository.loggedUser == null) return
-        launch { sharePromptRepository.eventAdded(kind) }
+        launch { eventAddedPrompts.added(kind) }
     }
 
     private fun addNewEvent(type: GroupEventType, eventTypeUi: EventTypeUi) {
