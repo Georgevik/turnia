@@ -80,4 +80,4 @@
 ## 8. E2E and integration
 
 - [x] 8.1 Update `GroupsRobot.createGroup` and `GroupFlowsTest` for the four proposed types and the invite step. Add assertions that a group created by name alone has the four types, and that sharing from the invite step logs `group_invite_shared`. Update the fixtures only if a seeded flow depends on the old form. Verify that the whole E2E suite passes on the emulator.
-- [ ] 8.2 Run `openspec validate group-invite-nudges --strict` and the full unit test suites (`core` and `app/shared`), and build the Android debug app. Verify all three are green.
+- [x] 8.2 Run `openspec validate group-invite-nudges --strict` and the full unit test suites (`core` and `app/shared`), and build the Android debug app. Verify all three are green.
