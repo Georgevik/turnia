@@ -21,6 +21,7 @@ import com.geoviksoft.turnia.core.data.datasource.firestore.GroupFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.GroupJoinRequestFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.GroupSyncFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.PersonalEventFirestore
+import com.geoviksoft.turnia.core.data.datasource.firestore.PersonalEventMoveFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.PersonalEventTypesFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.PersonalOneOffEventFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.RevokedGroupFirestore
@@ -139,6 +140,7 @@ val dataModule: Module = module {
     single { SharedCalendarFunction(get(), get()) }
     single { PersonalEventFirestore(get(), get(), get()) }
     single { GroupEventExtrasFirestore(get(), get()) }
+    single { PersonalEventMoveFirestore(get(), get(), get(), get(), get()) }
     single { PersonalOneOffEventFirestore(get(), get(), get()) }
     single { PersonalEventTypesFirestore(get(), get(), get(), get()) }
 
@@ -195,7 +197,7 @@ val dataModule: Module = module {
             get(), get(), get()
         )
     }
-    single<PersonalEventRepository> { PersonalEventRepositoryImpl(get(), get(), get(), get(), get(), get()) }
+    single<PersonalEventRepository> { PersonalEventRepositoryImpl(get(), get(), get(), get(), get(), get(), get()) }
     single { SharedCalendarCache(get(named(SHARED_CALENDARS_STORE))) }
     single<SharedCalendarRepository> { SharedCalendarRepositoryImpl(get(), get(), get(), get(), get()) }
     single<AdRepository> { AdRepositoryImpl(get(), get(), get()) }

@@ -42,14 +42,14 @@
 
 ## 5. The move in core
 
-- [ ] 5.1 Add `MoveResult(moved, skipped)` and `MoveError` (`DayTaken`, `Failed`) to the domain. Add `PersonalEventRepository.moveCandidates(event)` and `moveToGroup(events, target, deleteType)`. Verify it compiles across the repository, the demo and the fakes.
-- [ ] 5.2 Implement `PersonalEventMoveFirestore`:
+- [x] 5.1 Add `MoveResult(moved, skipped)` and `MoveError` (`DayTaken`, `Failed`) to the domain. Add `PersonalEventRepository.moveCandidates(event)` and `moveToGroup(events, target, deleteType)`. Verify it compiles across the repository, the demo and the fakes.
+- [x] 5.2 Implement `PersonalEventMoveFirestore`:
   - read the candidates from the server (`typeId ==`, `yearMonth >=` the window month; drop deleted events and those before the window);
   - read the held dates from the server (`assigneeId == uid`, `yearMonth in` slices of 30; ignore deleted events);
   - commit chunks of 150 events. Each chunk: a group event at the personal event's id with owner and assignee set to the user, not on swap and with an empty history; the personal event soft-deleted; a notes document when the event has notes; one user sync marker set (`personalEvents` and `groupEventExtras` months); one group sync marker set (`events` months). In the last chunk, when `deleteType` is set, also the personal type soft-deleted plus `personalEventTypesUpdatedAt`.
 
   Add the multi-month `GroupSyncFirestore.writeEvents` and `UserSyncFirestore.writePersonalEvents` variants. Report everything with `trackData` / `trackWrite` as named in design.md. Verify with an emulator test that a 150-event chunk commits under the security rules.
-- [ ] 5.3 Implement `moveToGroup` in `PersonalEventRepositoryImpl`:
+- [x] 5.3 Implement `moveToGroup` in `PersonalEventRepositoryImpl`:
   - a single event on a taken day → `DayTaken`, with nothing written;
   - any commit failure → `Failed`, with the type kept;
   - log `PersonalEventsMoved` only after every chunk succeeds, and nothing else per event;

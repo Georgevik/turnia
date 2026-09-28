@@ -2,6 +2,10 @@ package com.geoviksoft.turnia.core.data.user
 
 import com.geoviksoft.turnia.core.domain.model.EventId
 import com.geoviksoft.turnia.core.domain.model.EventTypeId
+import com.geoviksoft.turnia.core.domain.model.GroupEventType
+import com.geoviksoft.turnia.core.domain.model.MoveError
+import com.geoviksoft.turnia.core.domain.model.MoveResult
+import com.geoviksoft.turnia.core.domain.model.MoveScope
 import com.geoviksoft.turnia.core.domain.model.Membership
 import com.geoviksoft.turnia.core.domain.model.PersonalEventType
 import com.geoviksoft.turnia.core.domain.model.PersonalOneOffEvent
@@ -263,4 +267,11 @@ private class FakePersonalEventRepository : PersonalEventRepository {
     override suspend fun updateOneOffEvent(previous: PersonalOneOffEvent, event: PersonalOneOffEvent): Outcome<Unit, Unit> =
         Unit.toSuccess()
     override suspend fun deleteOneOffEvent(event: PersonalOneOffEvent): Outcome<Unit, Unit> = Unit.toSuccess()
+    override suspend fun moveCandidates(event: PersonalTypedEvent): Outcome<List<PersonalTypedEvent>, MoveError> =
+        emptyList<PersonalTypedEvent>().toSuccess()
+    override suspend fun moveToGroup(
+        events: List<PersonalTypedEvent>,
+        target: GroupEventType,
+        scope: MoveScope,
+    ): Outcome<MoveResult, MoveError> = MoveError.Failed.toFailure()
 }

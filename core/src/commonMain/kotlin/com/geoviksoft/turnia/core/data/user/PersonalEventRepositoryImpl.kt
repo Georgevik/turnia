@@ -1,6 +1,7 @@
 package com.geoviksoft.turnia.core.data.user
 
 import com.geoviksoft.turnia.core.data.datasource.firestore.PersonalEventFirestore
+import com.geoviksoft.turnia.core.data.datasource.firestore.PersonalEventMoveFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.PersonalEventTypesFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.PersonalOneOffEventFirestore
 import com.geoviksoft.turnia.core.data.logger.Logger
@@ -9,14 +10,21 @@ import com.geoviksoft.turnia.core.domain.analytics.Analytics
 import com.geoviksoft.turnia.core.domain.analytics.AnalyticsEvent
 import com.geoviksoft.turnia.core.domain.model.EventId
 import com.geoviksoft.turnia.core.domain.model.EventTypeId
+import com.geoviksoft.turnia.core.domain.model.GroupEventType
+import com.geoviksoft.turnia.core.domain.model.MoveError
+import com.geoviksoft.turnia.core.domain.model.MoveResult
+import com.geoviksoft.turnia.core.domain.model.MoveScope
 import com.geoviksoft.turnia.core.domain.model.PersonalEventType
 import com.geoviksoft.turnia.core.domain.model.PersonalOneOffEvent
 import com.geoviksoft.turnia.core.domain.model.PersonalTypedEvent
+import com.geoviksoft.turnia.core.domain.model.RetentionWindow
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.domain.repository.PersonalEventRepository
 import com.geoviksoft.turnia.core.domain.repository.UserRepository
 import com.geoviksoft.turnia.core.system.Outcome
 import com.geoviksoft.turnia.core.system.errorOrNull
+import com.geoviksoft.turnia.core.system.map
+import com.geoviksoft.turnia.core.system.mapError
 import com.geoviksoft.turnia.core.system.onSuccess
 import com.geoviksoft.turnia.core.system.toFailure
 import com.geoviksoft.turnia.core.system.toInstant
@@ -27,8 +35,11 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
+import kotlinx.datetime.todayIn
+import kotlin.time.Clock
 
 class PersonalEventRepositoryImpl(
     private val userRepository: UserRepository,
@@ -36,8 +47,11 @@ class PersonalEventRepositoryImpl(
     private val personalEventFirestore: PersonalEventFirestore,
     private val personalEventTypesFirestore: PersonalEventTypesFirestore,
     private val personalOneOffEventFirestore: PersonalOneOffEventFirestore,
+    private val personalEventMoveFirestore: PersonalEventMoveFirestore,
     private val analytics: Analytics,
 ) : PersonalEventRepository {
+
+    private val move = PersonalEventMove(personalEventMoveFirestore, analytics)
 
     override fun getMyEventTypes(includeDeleted: Boolean): Flow<List<PersonalEventType>> {
         return userRepository.loggedUserFlow.flatMapLatest { user -> getAllEventTypes(user.id) }
@@ -158,6 +172,32 @@ class PersonalEventRepositoryImpl(
         }
         analytics.log(AnalyticsEvent.OneOffEventDeleted)
         return Unit.toSuccess()
+    }
+
+    override suspend fun moveCandidates(
+        event: PersonalTypedEvent,
+    ): Outcome<List<PersonalTypedEvent>, MoveError> {
+        val uid = userRepository.loggedUser?.id ?: return MoveError.Failed.toFailure()
+        val from = RetentionWindow.start(Clock.System.todayIn(TimeZone.currentSystemDefault()))
+
+        return personalEventMoveFirestore.candidates(uid, event.type.id, from)
+            .map { docs ->
+                val types = mapOf(event.type.id to event.type)
+                docs.mapNotNull { personalEventMapper.map(it, types) }
+            }
+            .mapError { error ->
+                Logger.e(TAG, "Error reading the events to move", error.error)
+                MoveError.Failed
+            }
+    }
+
+    override suspend fun moveToGroup(
+        events: List<PersonalTypedEvent>,
+        target: GroupEventType,
+        scope: MoveScope,
+    ): Outcome<MoveResult, MoveError> {
+        val uid = userRepository.loggedUser?.id ?: return MoveError.Failed.toFailure()
+        return move.move(uid, events, target, scope)
     }
 
     private fun getAllEventTypes(uid: UserId): Flow<List<PersonalEventType>> =

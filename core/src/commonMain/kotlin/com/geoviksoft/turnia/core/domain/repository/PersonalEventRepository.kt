@@ -2,6 +2,10 @@ package com.geoviksoft.turnia.core.domain.repository
 
 import com.geoviksoft.turnia.core.domain.model.EventId
 import com.geoviksoft.turnia.core.domain.model.EventTypeId
+import com.geoviksoft.turnia.core.domain.model.GroupEventType
+import com.geoviksoft.turnia.core.domain.model.MoveError
+import com.geoviksoft.turnia.core.domain.model.MoveResult
+import com.geoviksoft.turnia.core.domain.model.MoveScope
 import com.geoviksoft.turnia.core.domain.model.PersonalEventType
 import com.geoviksoft.turnia.core.domain.model.PersonalOneOffEvent
 import com.geoviksoft.turnia.core.domain.model.PersonalTypedEvent
@@ -62,4 +66,23 @@ interface PersonalEventRepository {
     ): Outcome<Unit, Unit>
 
     suspend fun deleteOneOffEvent(event: PersonalOneOffEvent): Outcome<Unit, Unit>
+
+    /**
+     * The events of [event]'s type a "move all" would carry: every one still personal and dated from
+     * the start of the retention window onward, [event] included. Read from the server, since a
+     * cached answer could miss events made on another device.
+     */
+    suspend fun moveCandidates(event: PersonalTypedEvent): Outcome<List<PersonalTypedEvent>, MoveError>
+
+    /**
+     * Turns [events] into shifts of [target] the user holds, skipping every day where they already
+     * hold one in that group. With [MoveScope.All] the personal type is deleted once they are all
+     * moved or skipped. A move that fails part-way keeps what it moved and the type, so running it
+     * again finishes it.
+     */
+    suspend fun moveToGroup(
+        events: List<PersonalTypedEvent>,
+        target: GroupEventType,
+        scope: MoveScope,
+    ): Outcome<MoveResult, MoveError>
 }

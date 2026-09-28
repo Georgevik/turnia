@@ -87,6 +87,15 @@ class GroupSyncFirestore(
         ),
     )
 
+    fun writeEvents(batch: WriteBatch, groupId: GroupId, months: Set<YearMonth>) = write(
+        "writeEvents",
+        batch,
+        groupId,
+        GroupSyncDocument(
+            eventsUpdatedAt = months.associateWith { EventSyncUpdateAt(Timestamp.ServerTimestamp) }
+        ),
+    )
+
     fun writeGroup(batch: WriteBatch, groupId: GroupId) =
         write("writeGroup", batch, groupId, GroupSyncDocument(groupUpdatedAt = Timestamp.ServerTimestamp))
 
