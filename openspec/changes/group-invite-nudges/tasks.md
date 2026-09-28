@@ -21,7 +21,7 @@
   - a double `answered` logs once.
 
   Verify with `./gradlew :core:allTests` (or the project's core test task) passing.
-- [ ] 2.5 Confirm the `hasAnyGroup` server read is reported through `trackData` under an operation name that can be told apart. Add the team prompt's cost (at most one `limit(1)` read per event past the threshold, until shown or settled) to `firebase/firestore-usage.md`. Verify by reading the audit line in a debug run, or by reviewing the diff.
+- [x] 2.5 Confirm the `hasAnyGroup` server read is reported through `trackData` under an operation name that can be told apart. Add the team prompt's cost (at most one `limit(1)` read per event past the threshold, until shown or settled) to `firebase/firestore-usage.md`. Verify by reading the audit line in a debug run, or by reviewing the diff.
 - [ ] 2.6 In `DayDetailSheetViewModel`, pass the count returned by `sharePromptRepository.eventAdded(kind)` to `teamPromptRepository.eventsAdded(count)`, in the same launched block. Verify with a ViewModel test that adding an event calls both in order.
 
 ## 3. "I have a code" hand-off

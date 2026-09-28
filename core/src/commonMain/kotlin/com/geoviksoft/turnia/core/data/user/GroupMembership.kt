@@ -19,5 +19,5 @@ interface GroupMembership {
 class FirestoreGroupMembership(private val groupFirestore: GroupFirestore) : GroupMembership {
 
     override suspend fun serverHasAnyGroup(uid: UserId): Outcome<Boolean, Unit> =
-        groupFirestore.hasAnyGroup(uid, Source.SERVER).mapError { }
+        groupFirestore.hasAnyGroup(uid, Source.SERVER, operation = "teamPrompt(SERVER)").mapError { }
 }

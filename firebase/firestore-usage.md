@@ -42,6 +42,8 @@ of its last listen pays nothing.
 | Add, edit or delete a one-off event | — | 0 reads | 2 writes: the event and the marker of every month it spans (an edit also marks the months it leaves). |
 | Shift setup: decide whether to show it | — | **0–2**, once per device | 0 once the device has settled it (skipped, completed, or the account had something), or when the cache already holds a type or a group. Otherwise `hasAnyType(SERVER)` and `hasAnyGroup(SERVER)`, each a `limit(1)` server read (an empty result still costs 1). A failed read settles nothing, so an offline launch tries again next time. |
 | Shift setup: create the shifts | — | 0 reads | **N + 1 writes** in one commit: one per type (3 with the defaults) and the types marker. |
+| Team prompt: decide whether it is due | — | **0–1** per event added | 0 while switched off, below the threshold, or once the device has settled it (shown, or the account had a group). Otherwise one `hasAnyGroup` read, audited as `teamPrompt(SERVER)`, a `limit(1)` read, per event added past the threshold. It settles for good at the first answer, since shown and in-a-group both settle it, so in practice it costs 1 read per device. A failed read settles nothing and the next event tries again. |
+| Group screen: the "only you here" card | — | **0** | Derived from the members the group listener already brings. |
 | Rename yourself (`updateProfile`) | — | 1 call | Server: profile + marker + reservation + 2 per group. Your other devices pay 1 profile read; every member pays 1 group read per shared group. |
 
 **Remote changes** are the part that scales with team activity and is the same before and after: when
