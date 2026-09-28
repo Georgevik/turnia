@@ -172,6 +172,7 @@
     <string name="group_detail_section_color">Couleur</string>
     <string name="group_detail_section_types">Types d'événement</string>
     <string name="group_detail_types_add">Ajouter un type d'événement</string>
+    <string name="group_detail_type_remove">Retirer %1$s</string>
     <string name="group_detail_types_empty">Aucun type d'événement pour l'instant</string>
     <string name="group_detail_types_empty_body">Sans au moins un type, personne ne peut ajouter de gardes à ce groupe.</string>
     <string name="group_detail_save">Enregistrer</string>

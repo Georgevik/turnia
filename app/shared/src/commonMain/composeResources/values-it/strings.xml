@@ -172,6 +172,7 @@
     <string name="group_detail_section_color">Colore</string>
     <string name="group_detail_section_types">Tipi di evento</string>
     <string name="group_detail_types_add">Aggiungi tipo di evento</string>
+    <string name="group_detail_type_remove">Rimuovi %1$s</string>
     <string name="group_detail_types_empty">Ancora nessun tipo di evento</string>
     <string name="group_detail_types_empty_body">Senza almeno uno, nessuno può aggiungere turni a questo gruppo.</string>
     <string name="group_detail_save">Salva</string>

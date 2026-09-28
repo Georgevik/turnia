@@ -172,6 +172,7 @@
     <string name="group_detail_section_color">Farbe</string>
     <string name="group_detail_section_types">Terminarten</string>
     <string name="group_detail_types_add">Terminart hinzufügen</string>
+    <string name="group_detail_type_remove">%1$s entfernen</string>
     <string name="group_detail_types_empty">Noch keine Terminarten</string>
     <string name="group_detail_types_empty_body">Ohne mindestens eine kann niemand Dienste zu dieser Gruppe hinzufügen.</string>
     <string name="group_detail_save">Speichern</string>

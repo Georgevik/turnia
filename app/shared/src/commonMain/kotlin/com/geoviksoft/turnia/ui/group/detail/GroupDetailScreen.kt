@@ -62,6 +62,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.geoviksoft.turnia.core.domain.model.InvitationLink
+import com.geoviksoft.turnia.core.domain.model.EventTypeId
+import com.geoviksoft.turnia.ui.shiftsetup.model.ShiftPreset
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.navigation.LocalNavigator
 import com.geoviksoft.turnia.navigation.LocalRootNavigator
@@ -140,6 +142,7 @@ import turnia.app.shared.generated.resources.group_detail_section_types
 import turnia.app.shared.generated.resources.group_detail_share_invitation
 import turnia.app.shared.generated.resources.group_detail_share_invitation_text
 import turnia.app.shared.generated.resources.group_detail_title_new
+import turnia.app.shared.generated.resources.group_detail_type_remove
 import turnia.app.shared.generated.resources.group_detail_types_add
 import turnia.app.shared.generated.resources.group_detail_types_empty
 import turnia.app.shared.generated.resources.group_detail_types_empty_body
@@ -240,6 +243,13 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
                         viewModel.userMessageShown()
                     }
                 }
+                // Resolved here, in the language on screen: the ViewModel builds no display text.
+                if (state.isNew) {
+                    val proposed = ShiftPreset.groupDefaults.associateWith { preset ->
+                        stringResource(preset.title) to stringResource(preset.acronym)
+                    }
+                    LaunchedEffect(Unit) { viewModel.proposeTypes(proposed) }
+                }
                 LaunchedEffect(state.isSaved, state.hasLeft) {
                     when {
                         state.hasLeft -> navigator.popToRoot()
@@ -261,6 +271,7 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
                     onRejectRequest = viewModel::onRejectRequest,
                     onMembersClick = { membersSheetOpen = true },
                     onSave = viewModel::onSave,
+                    onRemoveType = viewModel::onRemoveType,
                     onTypeClick = { row ->
                         rootNavigator.goTo(
                             RootRoute.EventTypeDetailKey(
@@ -412,6 +423,7 @@ private fun GroupDetailContent(
     onRejectRequest: (UserId) -> Unit,
     onMembersClick: () -> Unit,
     onSave: () -> Unit,
+    onRemoveType: (EventTypeId) -> Unit,
     onTypeClick: (GroupTypeRowUi) -> Unit,
     onAddType: () -> Unit,
 ) {
@@ -481,6 +493,7 @@ private fun GroupDetailContent(
         EventTypesSection(
             state = state,
             onTypeClick = onTypeClick,
+            onRemoveType = onRemoveType,
             onAddType = onAddType,
         )
 
@@ -834,6 +847,7 @@ private fun MemberActionsSheet(
 private fun EventTypesSection(
     state: GroupDetailUi.Success,
     onTypeClick: (GroupTypeRowUi) -> Unit,
+    onRemoveType: (EventTypeId) -> Unit,
     onAddType: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -844,7 +858,12 @@ private fun EventTypesSection(
             TypesEmptyCallout()
         } else {
             state.eventTypes.forEach { row ->
-                EventTypeRow(row = row, onClick = { onTypeClick(row) })
+                EventTypeRow(
+                    row = row,
+                    onClick = { onTypeClick(row) },
+                    // Only while the group is being created: its types are still a proposal.
+                    onRemove = if (state.isNew) ({ onRemoveType(row.typeId) }) else null,
+                )
             }
         }
 
@@ -902,13 +921,24 @@ private fun TypesEmptyCallout() {
 }
 
 @Composable
-private fun EventTypeRow(row: GroupTypeRowUi, onClick: () -> Unit) {
+private fun EventTypeRow(row: GroupTypeRowUi, onClick: () -> Unit, onRemove: (() -> Unit)?) {
     TListItem(
         title = row.name,
         subtitle = row.schedule(),
         onClick = onClick,
         leading = { AcronymBadge(color = row.color, acronym = row.acronym) },
-        trailing = { Chevron() },
+        trailing = {
+            if (onRemove == null) {
+                Chevron()
+            } else {
+                IconButton(onClick = onRemove) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = stringResource(Res.string.group_detail_type_remove, row.name),
+                    )
+                }
+            }
+        },
     )
 }
 

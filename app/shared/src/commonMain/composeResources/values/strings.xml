@@ -172,6 +172,7 @@
     <string name="group_detail_section_color">Colour</string>
     <string name="group_detail_section_types">Event types</string>
     <string name="group_detail_types_add">Add event type</string>
+    <string name="group_detail_type_remove">Remove %1$s</string>
     <string name="group_detail_types_empty">No event types yet</string>
     <string name="group_detail_types_empty_body">Without at least one, nobody can add shifts to this group.</string>
     <string name="group_detail_save">Save</string>

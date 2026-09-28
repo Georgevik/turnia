@@ -61,7 +61,7 @@
   - removing one leaves three;
   - removing all makes `onSave` a no-op;
   - saving passes exactly the listed types to `createGroup`.
-- [ ] 5.4 In `GroupDetailScreen`, for a new group, resolve the preset texts and call `proposeTypes` from a `LaunchedEffect`. Add a remove affordance on type rows while `isNew`. Verify manually in Spanish that the form shows Mañana (M), Tarde (T), Noche (N) and Mañana y tarde (MT), that a row can be edited through `EventTypeDetail` and removed, and that Save is disabled with none left.
+- [x] 5.4 In `GroupDetailScreen`, for a new group, resolve the preset texts and call `proposeTypes` from a `LaunchedEffect`. Add a remove affordance on type rows while `isNew`. Verify manually in Spanish that the form shows Mañana (M), Tarde (T), Noche (N) and Mañana y tarde (MT), that a row can be edited through `EventTypeDetail` and removed, and that Save is disabled with none left.
 
 ## 6. Invite step after creating
 
