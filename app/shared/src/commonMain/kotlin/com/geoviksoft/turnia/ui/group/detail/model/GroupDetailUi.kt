@@ -21,6 +21,8 @@ sealed interface GroupDetailUi {
         val isNew: Boolean,
         val saving: Boolean = false,
         val isSaved: Boolean = false,
+        /** A new group was just written: the screen asks the user to invite before it closes. */
+        val created: Boolean = false,
         val hasLeft: Boolean = false,
         val close: GroupCloseUi? = null,
         val userMessage: GroupDetailMessage? = null,

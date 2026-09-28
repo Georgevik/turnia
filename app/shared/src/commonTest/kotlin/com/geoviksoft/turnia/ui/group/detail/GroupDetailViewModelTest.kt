@@ -6,6 +6,8 @@ import com.geoviksoft.turnia.core.domain.model.NewGroup
 import com.geoviksoft.turnia.core.domain.repository.GroupRepository
 import com.geoviksoft.turnia.core.system.Outcome
 import com.geoviksoft.turnia.core.system.toFailure
+import com.geoviksoft.turnia.core.system.toSuccess
+import com.geoviksoft.turnia.core.domain.model.GroupId
 import com.geoviksoft.turnia.demo.DemoAnalytics
 import com.geoviksoft.turnia.demo.DemoGroupRepository
 import com.geoviksoft.turnia.demo.DemoUserRepository
@@ -23,6 +25,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -102,14 +105,67 @@ class GroupDetailViewModelTest {
         assertEquals(ShiftPreset.Morning.color.toHex(), created.types.first().defaultColor)
     }
 
+    @Test
+    fun aCreatedGroupAsksToInviteBeforeClosing() {
+        groups.createSucceeds = true
+        val viewModel = newGroup()
+        viewModel.proposeTypes(texts)
+        viewModel.onNameChanged("Quirófano")
+
+        viewModel.onSave()
+
+        val state = viewModel.success
+        assertTrue(state.created)
+        assertFalse(state.isSaved)
+        assertTrue(state.form.canPassOnCode)
+
+        viewModel.onCreatedDone()
+        assertTrue(viewModel.success.isSaved)
+    }
+
+    @Test
+    fun aFailedCreateShowsNoInviteStep() {
+        val viewModel = newGroup()
+        viewModel.proposeTypes(texts)
+        viewModel.onNameChanged("Quirófano")
+
+        viewModel.onSave()
+
+        assertFalse(viewModel.success.created)
+        assertFalse(viewModel.success.isSaved)
+    }
+
+    @Test
+    fun savingAnExistingGroupClosesStraightAway() {
+        val demo = DemoGroupRepository(DemoWorld(LocalDate(2026, 9, 28)))
+        val viewModel = GroupDetailViewModel(GroupId("demo-urgencias"), demo, DemoUserRepository(), DemoAnalytics)
+        viewModel.onNameChanged(" renamed")
+
+        viewModel.onSave()
+
+        assertTrue(viewModel.success.isSaved)
+        assertFalse(viewModel.success.created)
+    }
+
     private class RecordingGroupRepository(
         private val delegate: GroupRepository,
     ) : GroupRepository by delegate {
         var created: NewGroup? = null
+        var createSucceeds = false
 
         override suspend fun createGroup(group: NewGroup): Outcome<Group, GroupError> {
             created = group
-            return GroupError.SaveFailed.toFailure()
+            if (!createSucceeds) return GroupError.SaveFailed.toFailure()
+            return Group(
+                id = GroupId("quirofano"),
+                name = group.name,
+                types = group.types,
+                members = emptyList(),
+                memberCount = 1,
+                invitationCode = group.invitationCode,
+                autoApprove = group.autoApprove,
+                isAdmin = true,
+            ).toSuccess()
         }
     }
 

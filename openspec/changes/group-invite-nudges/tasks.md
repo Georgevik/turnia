@@ -66,7 +66,7 @@
 ## 6. Invite step after creating
 
 - [x] 6.1 Extract the invitation share text and action from `ShareInvitationAction` into one shared helper that the top bar, the invite step and the card all use. Verify that the top-bar share still logs `group_invite_shared` (existing E2E in `GroupFlowsTest`).
-- [ ] 6.2 On a successful create, set `created = true` on `GroupDetailUi.Success`, not `isSaved`, with the form's `groupId` set to the saved group so that `canPassOnCode` holds. Add `onCreatedDone()`, which sets `isSaved`. Verify with ViewModel tests:
+- [x] 6.2 On a successful create, set `created = true` on `GroupDetailUi.Success`, not `isSaved`, with the form's `groupId` set to the saved group so that `canPassOnCode` holds. Add `onCreatedDone()`, which sets `isSaved`. Verify with ViewModel tests:
   - a create success sets `created` and not `isSaved`;
   - a create failure sets neither;
   - an update of an existing group sets `isSaved` directly.

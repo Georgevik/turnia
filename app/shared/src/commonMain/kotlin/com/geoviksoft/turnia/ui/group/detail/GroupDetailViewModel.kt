@@ -238,7 +238,19 @@ class GroupDetailViewModel(
                     loadedGroup = saved
                     // Written now, and only now: a failed save has to leave them on screen.
                     groupRepository.consumePendingEventTypes()
-                    updateSuccess { it.copy(saving = false, isSaved = true) }
+                    updateSuccess { state ->
+                        if (loaded != null) return@updateSuccess state.copy(saving = false, isSaved = true)
+                        // The code is the group's now, so the invite step can pass it on.
+                        state.copy(
+                            saving = false,
+                            created = true,
+                            form = state.form.copy(
+                                groupId = saved.id,
+                                invitationCode = saved.invitationCode,
+                                codeChanged = false,
+                            ),
+                        )
+                    }
                 },
                 onFailure = {
                     updateSuccess {
@@ -248,6 +260,9 @@ class GroupDetailViewModel(
             )
         }
     }
+
+    /** The invite step after creating a group is over, shared or not: the screen closes. */
+    fun onCreatedDone() = updateSuccess { it.copy(isSaved = true) }
 
     fun onAcceptRequest(userId: UserId) {
         val groupId = groupId ?: return
