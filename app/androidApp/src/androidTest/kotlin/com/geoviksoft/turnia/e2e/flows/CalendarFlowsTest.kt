@@ -129,7 +129,7 @@ class CalendarFlowsTest {
     @Test
     fun deleteOwnEvent() {
         calendar.openDay(world.day(6))
-        calendar.clickDescriptionInEvent("e4", "Delete event")
+        calendar.eventAction("e4", "Delete event")
         calendar.click("Delete")
 
         calendar.awaitNoEvent("e4")

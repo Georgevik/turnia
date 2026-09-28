@@ -90,7 +90,7 @@ class SwapFlowsTest {
     @SignedInAs("bruno")
     fun giveATakenShiftBack() {
         calendar.openDay(world.day(4))
-        calendar.clickDescriptionInEvent("e2", "Give shift back")
+        calendar.eventAction("e2", "Give shift back")
         calendar.click("Give back")
 
         val event = Documents.await("groups/urgencias/events/e2") { it.string("assigneeId") == "alice" }

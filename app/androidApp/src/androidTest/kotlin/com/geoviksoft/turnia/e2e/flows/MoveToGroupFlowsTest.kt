@@ -38,7 +38,7 @@ class MoveToGroupFlowsTest {
     @Test
     fun moveOnlyThisOne() {
         calendar.openDay(world.day(2))
-        move.startMove("p1")
+        move.startMove(calendar, "p1")
         move.pickType("manana")
         move.onlyThisOne()
 
@@ -64,7 +64,7 @@ class MoveToGroupFlowsTest {
     @Test
     fun moveAllOfThem_skipsTheTakenDayAndDeletesTheType() {
         calendar.openDay(world.day(4))
-        move.startMove("p3")
+        move.startMove(calendar, "p3")
         move.pickType("manana")
         move.allOfThem()
 
