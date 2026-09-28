@@ -1,9 +1,7 @@
 package com.geoviksoft.turnia.ui.shiftsetup
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,18 +11,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -32,11 +27,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigationevent.NavigationEventInfo
@@ -46,24 +39,15 @@ import com.geoviksoft.turnia.core.domain.model.ShiftSetupVia
 import com.geoviksoft.turnia.navigation.LocalNavigator
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
 import com.geoviksoft.turnia.ui.system.TestTags
-import com.geoviksoft.turnia.ui.system.components.AcronymBadge
-import com.geoviksoft.turnia.ui.system.components.time.TTimeField
 import com.geoviksoft.turnia.ui.system.keyboardAware
 import com.geoviksoft.turnia.ui.system.toErrorSnackbar
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.calendar_back
-import turnia.app.shared.generated.resources.event_type_field_acronym
-import turnia.app.shared.generated.resources.event_type_field_end
-import turnia.app.shared.generated.resources.event_type_field_name
-import turnia.app.shared.generated.resources.event_type_field_start
 import turnia.app.shared.generated.resources.shift_setup_add_custom
 import turnia.app.shared.generated.resources.shift_setup_confirm
-import turnia.app.shared.generated.resources.shift_setup_custom_add
-import turnia.app.shared.generated.resources.shift_setup_custom_cancel
 import turnia.app.shared.generated.resources.shift_setup_footer
-import turnia.app.shared.generated.resources.shift_setup_required
 import turnia.app.shared.generated.resources.shift_setup_skip
 import turnia.app.shared.generated.resources.shift_setup_subtitle
 import turnia.app.shared.generated.resources.shift_setup_title
@@ -160,7 +144,7 @@ fun ShiftSetupScreen(via: ShiftSetupVia, viewModel: ShiftSetupViewModel) {
                     Text(stringResource(Res.string.shift_setup_add_custom))
                 }
             } else {
-                CustomShift(
+                CreateInlineShiftRow(
                     form = custom,
                     onChange = viewModel::customChanged,
                     onAdd = viewModel::addCustom,
@@ -189,100 +173,6 @@ fun ShiftSetupScreen(via: ShiftSetupVia, viewModel: ShiftSetupViewModel) {
                     )
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun ShiftRow(
-    index: Int,
-    row: ShiftRowUi,
-    name: String,
-    acronym: String,
-    onToggle: () -> Unit,
-    onStartChange: (String) -> Unit,
-    onEndChange: (String) -> Unit,
-) {
-    Column(modifier = Modifier.fillMaxWidth().testTag(TestTags.shiftSetupRow(index))) {
-        Row(
-            modifier = Modifier.fillMaxWidth().clickable(onClick = onToggle),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Checkbox(checked = row.selected, onCheckedChange = { onToggle() })
-            AcronymBadge(color = row.color, acronym = acronym, size = 36.dp)
-            Text(text = name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-        }
-        if (row.selected) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(start = 48.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                TTimeField(
-                    value = row.start,
-                    onValueChange = onStartChange,
-                    label = stringResource(Res.string.event_type_field_start),
-                    modifier = Modifier.weight(1f).testTag(TestTags.shiftSetupStart(index)),
-                )
-                TTimeField(
-                    value = row.end,
-                    onValueChange = onEndChange,
-                    label = stringResource(Res.string.event_type_field_end),
-                    modifier = Modifier.weight(1f).testTag(TestTags.shiftSetupEnd(index)),
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun CustomShift(
-    form: CustomShiftForm,
-    onChange: (CustomShiftForm) -> Unit,
-    onAdd: () -> Unit,
-    onCancel: () -> Unit,
-) {
-    val required = stringResource(Res.string.shift_setup_required)
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            OutlinedTextField(
-                value = form.name,
-                onValueChange = { onChange(form.copy(name = it)) },
-                label = { Text(stringResource(Res.string.event_type_field_name)) },
-                isError = form.nameMissing,
-                supportingText = if (form.nameMissing) ({ Text(required) }) else null,
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                modifier = Modifier.weight(2f).testTag(TestTags.SHIFT_SETUP_CUSTOM_NAME),
-            )
-            OutlinedTextField(
-                value = form.acronym,
-                onValueChange = { onChange(form.copy(acronym = it)) },
-                label = { Text(stringResource(Res.string.event_type_field_acronym)) },
-                isError = form.acronymMissing,
-                supportingText = if (form.acronymMissing) ({ Text(required) }) else null,
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
-                modifier = Modifier.weight(1f).testTag(TestTags.SHIFT_SETUP_CUSTOM_ACRONYM),
-            )
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            TTimeField(
-                value = form.start,
-                onValueChange = { onChange(form.copy(start = it)) },
-                label = stringResource(Res.string.event_type_field_start),
-                modifier = Modifier.weight(1f).testTag(TestTags.SHIFT_SETUP_CUSTOM_START),
-            )
-            TTimeField(
-                value = form.end,
-                onValueChange = { onChange(form.copy(end = it)) },
-                label = stringResource(Res.string.event_type_field_end),
-                modifier = Modifier.weight(1f).testTag(TestTags.SHIFT_SETUP_CUSTOM_END),
-            )
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.align(Alignment.End)) {
-            TextButton(onClick = onCancel) { Text(stringResource(Res.string.shift_setup_custom_cancel)) }
-            Button(onClick = onAdd) { Text(stringResource(Res.string.shift_setup_custom_add)) }
         }
     }
 }
