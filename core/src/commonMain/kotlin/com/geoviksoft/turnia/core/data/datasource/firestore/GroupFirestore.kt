@@ -155,6 +155,20 @@ class GroupFirestore(
         emit(emptyList())
     }
 
+    /**
+     * Whether [userId] is a member of any group, from [source] alone. One document at most, so a
+     * server answer costs a single read even when there is nothing to find.
+     */
+    suspend fun hasAnyGroup(userId: UserId, source: Source): Outcome<Boolean, GenericFirestoreError> =
+        outcomeCatching(TAG, { GenericFirestoreError(it) }) {
+            firestore.collection(PATH_GROUPS)
+                .where { GroupDocument.FIELD_MEMBER_UIDS contains userId.value }
+                .limit(1)
+                .get(source)
+                .trackData(TAG, "hasAnyGroup($source)")
+                .documents.isNotEmpty()
+        }
+
     suspend fun create(
         groupId: GroupId,
         creator: UserId,

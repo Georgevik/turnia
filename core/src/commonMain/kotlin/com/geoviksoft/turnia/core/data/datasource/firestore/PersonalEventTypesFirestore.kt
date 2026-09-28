@@ -87,6 +87,16 @@ class PersonalEventTypesFirestore(
         syncWrite.committed()
     }
 
+    /** Whether [uid] has any personal type, deleted or not, from [source] alone: one read at most. */
+    suspend fun hasAnyType(uid: UserId, source: Source): Outcome<Boolean, GenericFirestoreError> =
+        outcomeCatching(TAG, { GenericFirestoreError(it) }) {
+            firestore.collection(PATH_PERSONAL_TYPES(uid.value))
+                .limit(1)
+                .get(source)
+                .trackData(TAG, "hasAnyType($source)")
+                .documents.isNotEmpty()
+        }
+
     /** Every type in one commit: the shift setup never leaves an account with half its shifts. */
     suspend fun setAll(
         uid: UserId, types: List<PersonalEventType>
