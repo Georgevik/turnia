@@ -1,5 +1,9 @@
 package com.geoviksoft.turnia.ui.components.daydetail.components
 
+import turnia.app.shared.generated.resources.add_pane_other_event
+import turnia.app.shared.generated.resources.add_pane_create_shifts
+import turnia.app.shared.generated.resources.add_pane_no_shifts
+import androidx.compose.foundation.layout.Box
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -82,7 +86,8 @@ fun DayDetailAddEvent(
     onEditGroup: (groupId: String, groupName: String) -> Unit,
     onAddPersonalEventType: () -> Unit,
     onAddGroupEventType: (groupId: String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onCreateShifts: () -> Unit = {},
 ) {
     SharedTransitionLayout(modifier = modifier) {
         AnimatedContent(
@@ -132,18 +137,16 @@ fun DayDetailAddEvent(
                     addMode = addMode,
                     sections = sections,
                     oneOffEntry = {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            label()
-                            OneOffEventField(
-                                onClick = { onOneOffAction(OneOffFormAction.Open) },
-                                modifier = bounds,
-                            )
-                        }
+                        OtherEventRow(
+                            onClick = { onOneOffAction(OneOffFormAction.Open) },
+                            modifier = bounds.testTag(TestTags.ADD_PANE_OTHER_EVENT),
+                        )
                     },
                     onPickEventType = onPickEventType,
                     onEditGroup = onEditGroup,
                     onAddPersonalEventType = onAddPersonalEventType,
                     onAddGroupEventType = onAddGroupEventType,
+                    onCreateShifts = onCreateShifts,
                 )
             }
         }
@@ -159,6 +162,7 @@ private fun EventTypePane(
     onEditGroup: (groupId: String, groupName: String) -> Unit,
     onAddPersonalEventType: () -> Unit,
     onAddGroupEventType: (groupId: String) -> Unit,
+    onCreateShifts: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val personalSection = sections.firstOrNull { it.source is EventTypeSectionUi.Source.Personal }
@@ -173,14 +177,19 @@ private fun EventTypePane(
     ) {
         when (addMode) {
             DayAddMode.Disabled -> Unit
-            DayAddMode.Full -> {
-                oneOffEntry()
+            // The user's shifts first: they are what the app is for, and a one-off is the exception.
+            DayAddMode.Full -> Box(Modifier.testTag(TestTags.ADD_PANE_SHIFTS)) {
                 CategoryArea(label = stringResource(Res.string.day_detail_personal_events)) {
-                    EventTypeChipRow(
-                        events = personalSection?.events.orEmpty(),
-                        onPick = onPickEventType,
-                        trailing = { AddEventChip(onClick = onAddPersonalEventType) },
-                    )
+                    val shifts = personalSection?.events.orEmpty()
+                    if (shifts.isEmpty()) {
+                        NoShiftsPrompt(onCreate = onCreateShifts)
+                    } else {
+                        EventTypeChipRow(
+                            events = shifts,
+                            onPick = onPickEventType,
+                            trailing = { AddEventChip(onClick = onAddPersonalEventType) },
+                        )
+                    }
                 }
             }
             is DayAddMode.GroupOnly -> if (groupSections.isEmpty()) {
@@ -208,6 +217,43 @@ private fun EventTypePane(
                 }
             }
         }
+
+        if (addMode == DayAddMode.Full) oneOffEntry()
+    }
+}
+
+/** Nothing to reuse yet: shifts are made once, and from then on each one is a tap away. */
+@Composable
+private fun NoShiftsPrompt(onCreate: () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth().testTag(TestTags.ADD_PANE_EMPTY_SHIFTS),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = stringResource(Res.string.add_pane_no_shifts),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            TextButton(onClick = onCreate, contentPadding = PaddingValues(0.dp)) {
+                Text(stringResource(Res.string.add_pane_create_shifts))
+            }
+        }
+    }
+}
+
+/** The way to a one-off: there when it is needed, but never the first thing on the pane. */
+@Composable
+private fun OtherEventRow(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    TextButton(onClick = onClick, modifier = modifier, contentPadding = PaddingValues(0.dp)) {
+        Text(
+            text = stringResource(Res.string.add_pane_other_event),
+            style = MaterialTheme.typography.bodyLarge,
+        )
     }
 }
 

@@ -105,6 +105,7 @@ fun CalendarViewer(
     onMonthChanged: (LocalDate) -> Unit,
     onEditGroup: (groupId: String, groupName: String) -> Unit = { _, _ -> },
     onAddPersonalType: () -> Unit = {},
+    onCreateShifts: () -> Unit = {},
     onAddGroupType: (groupId: String) -> Unit = {},
     // Only where the user adds their own events: the prompt is about what they just added, so a
     // colleague's calendar, which they only read, never shows it.
@@ -242,6 +243,7 @@ fun CalendarViewer(
                         dismissSheet()
                     },
                     openNewPersonalTypeScreen = { onAddPersonalType() },
+                    openShiftSetup = onCreateShifts,
                     openNewGroupTypeScreen = onAddGroupType,
                     onFormOpenChange = { sheetFormOpen = it },
                     onClose = { dismissSheet() },

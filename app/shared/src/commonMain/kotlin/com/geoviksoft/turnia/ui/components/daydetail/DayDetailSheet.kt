@@ -107,6 +107,7 @@ fun DayDetailSheet(
     openEditTypeScreen: (groupId: String, groupName: String) -> Unit,
     openNewPersonalTypeScreen: () -> Unit,
     openNewGroupTypeScreen: (groupId: String) -> Unit,
+    openShiftSetup: () -> Unit = {},
     /** A form wants the sheet open all the way, so it has the whole height to scroll in. */
     onFormOpenChange: (Boolean) -> Unit,
     onClose: (shouldRefresh: Boolean) -> Unit,
@@ -289,6 +290,7 @@ fun DayDetailSheet(
         },
         onEditGroup = openEditTypeScreen,
         onAddPersonalEventType = openNewPersonalTypeScreen,
+        onCreateShifts = openShiftSetup,
         onAddGroupEventType = openNewGroupTypeScreen,
         onRemove = { pendingDelete = it },
         onReturn = { pendingReturn = it },
@@ -321,6 +323,7 @@ private fun DayDetailContent(
     onAddPersonalEventType: () -> Unit,
     onAddGroupEventType: (groupId: String) -> Unit,
     onRemove: (DayEventUi) -> Unit,
+    onCreateShifts: () -> Unit = {},
     onReturn: (DayEventUi) -> Unit,
     onEditNotes: (DayEventUi) -> Unit,
     onSwapChange: (DayEventUi, Boolean) -> Unit,
@@ -371,6 +374,7 @@ private fun DayDetailContent(
                             onEditGroup = onEditGroup,
                             onAddPersonalEventType = onAddPersonalEventType,
                             onAddGroupEventType = onAddGroupEventType,
+                            onCreateShifts = onCreateShifts,
                         )
                     }
                 } else if (events.isEmpty() && oneOffEvents.isEmpty()) {

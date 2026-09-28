@@ -421,7 +421,6 @@
     <!-- Day detail sheet -->
     <string name="day_detail_personal_events">PERSONAL EVENTS</string>
     <string name="day_detail_personal_one_off_events">ONE-OFF EVENT</string>
-    <string name="one_off_event_hint">New event…</string>
     <string name="one_off_event_name">Name</string>
     <string name="one_off_event_start">Starts</string>
     <string name="one_off_event_end">Ends</string>
@@ -514,4 +513,7 @@
     <string name="shift_preset_morning_afternoon_acronym">MA</string>
     <string name="shift_preset_duty24">24h duty</string>
     <string name="shift_preset_duty24_acronym">24H</string>
+    <string name="add_pane_no_shifts">Create your shifts once and add them to any day with a tap.</string>
+    <string name="add_pane_create_shifts">Create my shifts</string>
+    <string name="add_pane_other_event">Other event…</string>
 </resources>

@@ -421,7 +421,6 @@
     <!-- Day detail sheet -->
     <string name="day_detail_personal_one_off_events">EVENTO LIBRE</string>
     <string name="day_detail_personal_events">EVENTOS PERSONALES</string>
-    <string name="one_off_event_hint">Nuevo evento…</string>
     <string name="one_off_event_name">Nombre</string>
     <string name="one_off_event_start">Empieza</string>
     <string name="one_off_event_end">Termina</string>
@@ -512,4 +511,7 @@
     <string name="shift_preset_morning_afternoon_acronym">MT</string>
     <string name="shift_preset_duty24">Guardia 24h</string>
     <string name="shift_preset_duty24_acronym">24H</string>
+    <string name="add_pane_no_shifts">Crea tus turnos una vez y añádelos a cualquier día con un toque.</string>
+    <string name="add_pane_create_shifts">Crear mis turnos</string>
+    <string name="add_pane_other_event">Otro evento…</string>
 </resources>

@@ -421,7 +421,6 @@
     <!-- Day detail sheet -->
     <string name="day_detail_personal_events">ÉVÉNEMENTS PERSONNELS</string>
     <string name="day_detail_personal_one_off_events">ÉVÉNEMENT PONCTUEL</string>
-    <string name="one_off_event_hint">Nouvel événement…</string>
     <string name="one_off_event_name">Nom</string>
     <string name="one_off_event_start">Début</string>
     <string name="one_off_event_end">Fin</string>
@@ -512,4 +511,7 @@
     <string name="shift_preset_morning_afternoon_acronym">MA</string>
     <string name="shift_preset_duty24">Garde 24h</string>
     <string name="shift_preset_duty24_acronym">24H</string>
+    <string name="add_pane_no_shifts">Créez vos postes une fois et ajoutez-les à n'importe quel jour d'un simple geste.</string>
+    <string name="add_pane_create_shifts">Créer mes postes</string>
+    <string name="add_pane_other_event">Autre événement…</string>
 </resources>

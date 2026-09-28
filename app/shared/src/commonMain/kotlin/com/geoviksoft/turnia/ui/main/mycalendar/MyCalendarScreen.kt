@@ -1,5 +1,6 @@
 package com.geoviksoft.turnia.ui.main.mycalendar
 
+import com.geoviksoft.turnia.core.domain.model.ShiftSetupVia
 import turnia.app.shared.generated.resources.shift_setup_hint
 import turnia.app.shared.generated.resources.Res
 import org.jetbrains.compose.resources.stringResource
@@ -62,6 +63,9 @@ fun MyCalendarScreen(viewModel: MyCalendarViewModel = koinViewModel()) {
             },
             onAddPersonalType = {
                 rootNavigator.goTo(RootRoute.EventTypeDetailKey(EventTypeDetailData.NewPersonal))
+            },
+            onCreateShifts = {
+                rootNavigator.goTo(RootRoute.ShiftSetupKey(ShiftSetupVia.AddPane))
             },
             onAddGroupType = { groupId ->
                 rootNavigator.goTo(RootRoute.EventTypeDetailKey(EventTypeDetailData.NewGroup(groupId)))

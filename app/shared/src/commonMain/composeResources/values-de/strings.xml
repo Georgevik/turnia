@@ -421,7 +421,6 @@
     <!-- Day detail sheet -->
     <string name="day_detail_personal_events">PERSÖNLICHE TERMINE</string>
     <string name="day_detail_personal_one_off_events">EINZELTERMIN</string>
-    <string name="one_off_event_hint">Neuer Termin…</string>
     <string name="one_off_event_name">Name</string>
     <string name="one_off_event_start">Beginn</string>
     <string name="one_off_event_end">Ende</string>
@@ -512,4 +511,7 @@
     <string name="shift_preset_morning_afternoon_acronym">FS</string>
     <string name="shift_preset_duty24">24-h-Dienst</string>
     <string name="shift_preset_duty24_acronym">24H</string>
+    <string name="add_pane_no_shifts">Leg deine Schichten einmal an und trag sie mit einem Tippen an jedem Tag ein.</string>
+    <string name="add_pane_create_shifts">Meine Schichten anlegen</string>
+    <string name="add_pane_other_event">Anderer Termin…</string>
 </resources>

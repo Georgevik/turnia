@@ -421,7 +421,6 @@
     <!-- Day detail sheet -->
     <string name="day_detail_personal_events">EVENTI PERSONALI</string>
     <string name="day_detail_personal_one_off_events">EVENTO SINGOLO</string>
-    <string name="one_off_event_hint">Nuovo evento…</string>
     <string name="one_off_event_name">Nome</string>
     <string name="one_off_event_start">Inizio</string>
     <string name="one_off_event_end">Fine</string>
@@ -512,4 +511,7 @@
     <string name="shift_preset_morning_afternoon_acronym">MP</string>
     <string name="shift_preset_duty24">Turno 24h</string>
     <string name="shift_preset_duty24_acronym">24H</string>
+    <string name="add_pane_no_shifts">Crea i tuoi turni una volta e aggiungili a qualsiasi giorno con un tocco.</string>
+    <string name="add_pane_create_shifts">Crea i miei turni</string>
+    <string name="add_pane_other_event">Altro evento…</string>
 </resources>
