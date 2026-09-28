@@ -10,7 +10,12 @@ import com.geoviksoft.turnia.core.system.toSuccess
 import com.geoviksoft.turnia.core.system.valueOrNull
 import dev.gitlive.firebase.firestore.Source
 
-/** Whether an account already has something to reuse: a personal type or a group. */
+/**
+ * Whether an account already has something to reuse: a personal type or a group.
+ *
+ * An interface with one implementation on purpose: it is the seam that lets the shift setup's
+ * decision — the offline case above all — be tested without Firestore.
+ */
 interface AccountContents {
 
     /** From the device's cache only: free, and `false` when the cache simply knows nothing yet. */
