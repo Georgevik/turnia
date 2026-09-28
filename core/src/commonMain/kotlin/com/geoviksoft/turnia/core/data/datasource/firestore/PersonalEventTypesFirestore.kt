@@ -87,6 +87,25 @@ class PersonalEventTypesFirestore(
         syncWrite.committed()
     }
 
+    /** Every type in one commit: the shift setup never leaves an account with half its shifts. */
+    suspend fun setAll(
+        uid: UserId, types: List<PersonalEventType>
+    ): Outcome<Unit, GenericFirestoreError> = outcomeCatching(TAG, { GenericFirestoreError(it) }) {
+        Logger.i(TAG, "Set ${types.size} personal type documents")
+
+        val batch = firestore.batch()
+        types.forEach { type ->
+            batch.set(
+                firestore.collection(PATH_PERSONAL_TYPES(uid.value)).document(type.id.value),
+                personalEventTypeDocMapper.map(type),
+            )
+        }
+        val syncWrite = userSyncFirestore.writePersonalEventTypes(batch, uid)
+        batch.commit()
+        trackWrite(TAG, "setEventTypes", documents = types.size)
+        syncWrite.committed()
+    }
+
     suspend fun delete(uid: UserId, typeId: EventTypeId): Outcome<Unit, GenericFirestoreError> =
         outcomeCatching(TAG, { GenericFirestoreError(it) }) {
             Logger.i(TAG, "Delete personal type document")
