@@ -4,6 +4,8 @@ import com.geoviksoft.turnia.navigation.main.routes.ExternalCalendarData
 import com.geoviksoft.turnia.ui.components.daydetail.DayAddMode
 import com.geoviksoft.turnia.ui.components.daydetail.DayDetailSheetViewModel
 import com.geoviksoft.turnia.ui.components.daydetail.EventAddedPrompts
+import com.geoviksoft.turnia.ui.components.movetogroup.MoveRequest
+import com.geoviksoft.turnia.ui.components.movetogroup.MoveToGroupViewModel
 import com.geoviksoft.turnia.ui.components.shareprompt.SharePromptViewModel
 import com.geoviksoft.turnia.ui.components.teamprompt.TeamPromptViewModel
 import com.geoviksoft.turnia.ui.main.group.externalcalendar.ExternalCalendarViewModel
@@ -26,6 +28,7 @@ val calendarModule: Module = module {
     viewModelOf(::SharePromptViewModel)
     viewModelOf(::TeamPromptViewModel)
     factoryOf(::EventAddedPrompts)
+    viewModel { (request: MoveRequest) -> MoveToGroupViewModel(request, get(), get()) }
     viewModel { (date: LocalDate, addMode: DayAddMode) ->
         DayDetailSheetViewModel(date, addMode, get(), get(), get(), get(), get())
     }
