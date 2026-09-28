@@ -43,7 +43,7 @@
   - a `remember` "team prompt shown this visit" flag, hoisted into `CalendarViewer`, suppresses the share prompt until the calendar leaves composition.
 
   `MyCalendarScreen` passes `allowTeamPrompt = true`, and group calendars pass `false`. Verify manually in the demo or debug build with both flags forced due: only the team sheet shows; after answering, no share sheet shows until a tab switch and return.
-- [ ] 4.4 Add E2E `TeamPromptFlowsTest` with a `TeamPromptRobot`, with the Remote Config flag forced on and a low threshold through the test modules. Cover:
+- [x] 4.4 Add E2E `TeamPromptFlowsTest` with a `TeamPromptRobot`, with the Remote Config flag forced on and a low threshold through the test modules. Cover:
   - reaching the threshold shows the prompt and logs `onboard_team_shown`;
   - "I have a code" opens the join sheet and logs `onboard_team_answered` with `choice = join`;
   - "Create a group" opens the new-group form;
