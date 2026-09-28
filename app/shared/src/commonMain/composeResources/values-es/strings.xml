@@ -487,4 +487,29 @@
     <string name="share_prompt_friends_message">Llevo mis turnos y planes en Turnia. Descárgala y encontramos un día para quedar:</string>
     <string name="share_prompt_share">Compartir Turnia</string>
     <string name="share_prompt_not_now">Ahora no</string>
+    <string name="shift_setup_title">¿Qué turnos haces?</string>
+    <string name="shift_setup_subtitle">Créalos una vez y añádelos a tu calendario con un toque.</string>
+    <string name="shift_setup_skip">Saltar</string>
+    <string name="shift_setup_footer">Podrás cambiarlos o crear más cuando quieras.</string>
+    <string name="shift_setup_add_custom">Añadir otro turno</string>
+    <string name="shift_setup_custom_add">Añadir</string>
+    <string name="shift_setup_custom_cancel">Cancelar</string>
+    <string name="shift_setup_required">Obligatorio</string>
+    <string name="shift_setup_no_times">Sin horario</string>
+    <string name="shift_setup_save_error">No se han podido crear tus turnos. Inténtalo de nuevo.</string>
+    <string name="shift_setup_hint">Toca un día para añadir uno de tus turnos</string>
+    <plurals name="shift_setup_confirm">
+        <item quantity="one">Crear %1$d turno</item>
+        <item quantity="other">Crear %1$d turnos</item>
+    </plurals>
+    <string name="shift_preset_morning">Mañana</string>
+    <string name="shift_preset_morning_acronym">M</string>
+    <string name="shift_preset_afternoon">Tarde</string>
+    <string name="shift_preset_afternoon_acronym">T</string>
+    <string name="shift_preset_night">Noche</string>
+    <string name="shift_preset_night_acronym">N</string>
+    <string name="shift_preset_morning_afternoon">Mañana y tarde</string>
+    <string name="shift_preset_morning_afternoon_acronym">MT</string>
+    <string name="shift_preset_duty24">Guardia 24h</string>
+    <string name="shift_preset_duty24_acronym">24H</string>
 </resources>

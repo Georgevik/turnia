@@ -487,4 +487,29 @@
     <string name="share_prompt_friends_message">Ich habe meine Dienste und Pläne in Turnia. Hol sie dir, dann finden wir einen Tag zum Treffen:</string>
     <string name="share_prompt_share">Turnia teilen</string>
     <string name="share_prompt_not_now">Jetzt nicht</string>
+    <string name="shift_setup_title">Welche Schichten arbeitest du?</string>
+    <string name="shift_setup_subtitle">Leg sie einmal an und trag sie mit einem Tippen in deinen Kalender ein.</string>
+    <string name="shift_setup_skip">Überspringen</string>
+    <string name="shift_setup_footer">Du kannst sie jederzeit ändern oder weitere anlegen.</string>
+    <string name="shift_setup_add_custom">Weitere Schicht hinzufügen</string>
+    <string name="shift_setup_custom_add">Hinzufügen</string>
+    <string name="shift_setup_custom_cancel">Abbrechen</string>
+    <string name="shift_setup_required">Pflichtfeld</string>
+    <string name="shift_setup_no_times">Ohne feste Zeiten</string>
+    <string name="shift_setup_save_error">Deine Schichten konnten nicht angelegt werden. Bitte versuch es noch einmal.</string>
+    <string name="shift_setup_hint">Tippe auf einen Tag, um eine deiner Schichten einzutragen</string>
+    <plurals name="shift_setup_confirm">
+        <item quantity="one">%1$d Schicht anlegen</item>
+        <item quantity="other">%1$d Schichten anlegen</item>
+    </plurals>
+    <string name="shift_preset_morning">Früh</string>
+    <string name="shift_preset_morning_acronym">F</string>
+    <string name="shift_preset_afternoon">Spät</string>
+    <string name="shift_preset_afternoon_acronym">S</string>
+    <string name="shift_preset_night">Nacht</string>
+    <string name="shift_preset_night_acronym">N</string>
+    <string name="shift_preset_morning_afternoon">Früh und Spät</string>
+    <string name="shift_preset_morning_afternoon_acronym">FS</string>
+    <string name="shift_preset_duty24">24-h-Dienst</string>
+    <string name="shift_preset_duty24_acronym">24H</string>
 </resources>

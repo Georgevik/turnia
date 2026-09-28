@@ -489,4 +489,29 @@
     <string name="share_prompt_friends_message">I keep my shifts and plans in Turnia. Get it so we can find a day to meet up:</string>
     <string name="share_prompt_share">Share Turnia</string>
     <string name="share_prompt_not_now">Not now</string>
+    <string name="shift_setup_title">What shifts do you work?</string>
+    <string name="shift_setup_subtitle">Create them once and add them to your calendar with a tap.</string>
+    <string name="shift_setup_skip">Skip</string>
+    <string name="shift_setup_footer">You can change them or create more whenever you like.</string>
+    <string name="shift_setup_add_custom">Add another shift</string>
+    <string name="shift_setup_custom_add">Add</string>
+    <string name="shift_setup_custom_cancel">Cancel</string>
+    <string name="shift_setup_required">Required</string>
+    <string name="shift_setup_no_times">No set hours</string>
+    <string name="shift_setup_save_error">Couldn\'t create your shifts. Please try again.</string>
+    <string name="shift_setup_hint">Tap a day to add one of your shifts</string>
+    <plurals name="shift_setup_confirm">
+        <item quantity="one">Create %1$d shift</item>
+        <item quantity="other">Create %1$d shifts</item>
+    </plurals>
+    <string name="shift_preset_morning">Morning</string>
+    <string name="shift_preset_morning_acronym">M</string>
+    <string name="shift_preset_afternoon">Afternoon</string>
+    <string name="shift_preset_afternoon_acronym">A</string>
+    <string name="shift_preset_night">Night</string>
+    <string name="shift_preset_night_acronym">N</string>
+    <string name="shift_preset_morning_afternoon">Morning &amp; afternoon</string>
+    <string name="shift_preset_morning_afternoon_acronym">MA</string>
+    <string name="shift_preset_duty24">24h duty</string>
+    <string name="shift_preset_duty24_acronym">24H</string>
 </resources>
