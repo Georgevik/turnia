@@ -36,7 +36,7 @@
 
 ## 4. Group event notes in the UI
 
-- [ ] 4.1 Combine `getMyEventNotes` into `MyCalendarViewModel` and into the group-calendar mode of `ExternalCalendarViewModel`, filling `DayEventUi.notes` and `notesEditable = true` for group rows. Leave the shared-calendar mode untouched. Verify with ViewModel tests that group rows carry the note, and that shared-calendar rows carry none and are not editable.
+- [x] 4.1 Combine `getMyEventNotes` into `MyCalendarViewModel` and into the group-calendar mode of `ExternalCalendarViewModel`, filling `DayEventUi.notes` and `notesEditable = true` for group rows. Leave the shared-calendar mode untouched. Verify with ViewModel tests that group rows carry the note, and that shared-calendar rows carry none and are not editable.
 - [ ] 4.2 Route `GROUP` rows in `DayDetailSheetViewModel.saveNotes` to `saveEventNote`, reusing `noteError`. Verify with a ViewModel test that a failure sets `noteError` and a success clears it.
 - [ ] 4.3 Add the E2E flow `GroupFlowsTest.addPrivateNoteToAGroupShift`: Alice adds a note to a `urgencias` shift, the document appears at `users/alice/groupEventExtras/{id}`, the group event document has no `notes`, and `group_event_notes_saved` is logged. Verify it passes on the emulator.
 

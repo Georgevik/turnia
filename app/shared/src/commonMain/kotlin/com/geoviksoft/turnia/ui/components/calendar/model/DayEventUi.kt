@@ -107,10 +107,13 @@ data class DayEventUi(
     )
 }
 
+/** [notes] is the viewer's own private note on the shift; only their own calendars pass one. */
 fun GroupEvent.toUi(
     currentUserId: UserId?,
     removable: Boolean = false,
     activeMember: Boolean = false,
+    notes: String? = null,
+    notesEditable: Boolean = false,
 ) = DayEventUi(
     id = id,
     groupId = groupId,
@@ -135,6 +138,8 @@ fun GroupEvent.toUi(
     },
     timeRange = type.hours(),
     transferChain = buildTransferChain(currentUserId),
+    notes = notes,
+    notesEditable = notesEditable,
 )
 
 /** Between the start and the end of [DayEventUi.timeRange]; `EventHours` splits on it to stack them. */

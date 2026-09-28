@@ -105,18 +105,25 @@ class ExternalCalendarViewModel(
                 // Revocation is followed rather than read once: a member removed while the
                 // calendar is open must lose the swap controls, not keep them until a reload.
                 is ExternalCalendarData.Group -> isRevoked().flatMapLatest { revoked ->
-                    groupRepository.getEventsByGroup(GroupId(data.id), month.firstDay, monthDelta = 2)
-                        .map { list ->
-                            val events = list.map {
-                                it.toUi(
-                                    currentUserId = uid,
-                                    removable = it.ownerId == uid && it.assigneeId == uid,
-                                    activeMember = !revoked,
-                                )
-                            }
-                            // One-off events are personal: a group's calendar has none.
-                            MonthEvents(events.groupBy { it.date }.swapFirst(), emptyMap())
+                    combine(
+                        groupRepository.getEventsByGroup(GroupId(data.id), month.firstDay, monthDelta = 2),
+                        // The viewer's own notes, which only they can read: a colleague's calendar
+                        // below never asks for them.
+                        groupRepository.getMyEventNotes(month.firstDay, monthDelta = 2)
+                            .onStart { emit(emptyMap()) },
+                    ) { list, notes ->
+                        val events = list.map {
+                            it.toUi(
+                                currentUserId = uid,
+                                removable = it.ownerId == uid && it.assigneeId == uid,
+                                activeMember = !revoked,
+                                notes = notes[it.id],
+                                notesEditable = true,
+                            )
                         }
+                        // One-off events are personal: a group's calendar has none.
+                        MonthEvents(events.groupBy { it.date }.swapFirst(), emptyMap())
+                    }
                 }
 
                 is ExternalCalendarData.Personal ->

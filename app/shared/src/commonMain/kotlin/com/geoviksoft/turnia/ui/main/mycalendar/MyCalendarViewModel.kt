@@ -5,6 +5,7 @@ import com.geoviksoft.turnia.core.domain.repository.ShiftSetupRepository
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.geoviksoft.turnia.core.domain.model.EventId
 import com.geoviksoft.turnia.core.domain.model.GroupEvent
 import com.geoviksoft.turnia.core.domain.model.GroupId
 import com.geoviksoft.turnia.core.domain.model.PersonalTypedEvent
@@ -95,8 +96,10 @@ class MyCalendarViewModel(
         // controls have to know.
         groupRepository.getGroups()
             .map { groups -> groups.filter { it.isRevoked }.map { it.id }.toSet() },
-    ) { personal, group, revokedGroups ->
-        mapToUiState(userId, group, personal, revokedGroups)
+        // Most months have none, so the shifts paint without waiting on it.
+        groupRepository.getMyEventNotes(date, monthDelta = 2).onStart { emit(emptyMap()) },
+    ) { personal, group, revokedGroups, notes ->
+        mapToUiState(userId, group, personal, revokedGroups, notes)
     }
 
     private fun mapToUiState(
@@ -104,6 +107,7 @@ class MyCalendarViewModel(
         groupEvents: List<GroupEvent>,
         personalEvents: List<PersonalTypedEvent>,
         revokedGroups: Set<GroupId>,
+        notes: Map<EventId, String>,
     ): Map<LocalDate, List<DayEventUi>> {
         val eventsByDate: Map<LocalDate, MutableList<DayEventUi>> = buildMap {
             groupEvents.forEach { ev ->
@@ -113,6 +117,8 @@ class MyCalendarViewModel(
                         currentUserId = userId,
                         removable = removable,
                         activeMember = ev.groupId !in revokedGroups,
+                        notes = notes[ev.id],
+                        notesEditable = true,
                     )
                 )
             }
