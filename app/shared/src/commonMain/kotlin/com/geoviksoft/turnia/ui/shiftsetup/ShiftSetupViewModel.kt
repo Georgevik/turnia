@@ -1,12 +1,14 @@
 package com.geoviksoft.turnia.ui.shiftsetup
 
+import com.geoviksoft.turnia.ui.system.color.toHex
+import com.geoviksoft.turnia.ui.system.color.EntityPalette
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.geoviksoft.turnia.core.domain.model.EventTypeId
 import com.geoviksoft.turnia.core.domain.model.PersonalEventType
 import com.geoviksoft.turnia.core.domain.model.ShiftSetupVia
 import com.geoviksoft.turnia.core.domain.repository.ShiftSetupRepository
-import com.geoviksoft.turnia.core.system.ALL_COLORS
 import com.geoviksoft.turnia.core.system.fold
 import com.geoviksoft.turnia.ui.main.eventtypes.detail.EventTypeDetailViewModel
 import com.geoviksoft.turnia.ui.system.components.time.toTimeInput
@@ -96,7 +98,7 @@ class ShiftSetupViewModel(
             PersonalEventType(
                 id = EventTypeId(createUuid()),
                 name = name,
-                color = row.color,
+                color = row.color.toHex(),
                 acronym = acronym,
                 description = null,
                 startTime = row.start.toTimeOrNull(),
@@ -147,9 +149,9 @@ class ShiftSetupViewModel(
 
     private companion object {
         /** A shift of the user's own takes the first colour no other shift on the list wears. */
-        fun nextColor(rows: List<ShiftRowUi>): String {
+        fun nextColor(rows: List<ShiftRowUi>): Color {
             val used = rows.map { it.color }.toSet()
-            return ALL_COLORS.firstOrNull { it !in used } ?: ALL_COLORS.first()
+            return EntityPalette.firstOrNull { it !in used } ?: EntityPalette.first()
         }
     }
 }

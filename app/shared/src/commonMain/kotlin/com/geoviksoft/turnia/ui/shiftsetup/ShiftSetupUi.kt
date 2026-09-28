@@ -1,5 +1,6 @@
 package com.geoviksoft.turnia.ui.shiftsetup
 
+import androidx.compose.ui.graphics.Color
 import org.jetbrains.compose.resources.StringResource
 
 /** One shift on the list: a [preset], or one the user added, which carries its own [name]. */
@@ -10,7 +11,7 @@ data class ShiftRowUi(
     val acronym: String,
     val start: String,
     val end: String,
-    val color: String,
+    val color: Color,
     val selected: Boolean,
 ) {
     val isCustom: Boolean get() = preset == null

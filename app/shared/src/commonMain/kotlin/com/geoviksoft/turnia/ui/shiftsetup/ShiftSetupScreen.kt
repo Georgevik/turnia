@@ -34,7 +34,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -47,7 +46,6 @@ import com.geoviksoft.turnia.core.domain.model.ShiftSetupVia
 import com.geoviksoft.turnia.navigation.LocalNavigator
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
 import com.geoviksoft.turnia.ui.system.TestTags
-import com.geoviksoft.turnia.ui.system.color.toComposeColorOrNull
 import com.geoviksoft.turnia.ui.system.components.AcronymBadge
 import com.geoviksoft.turnia.ui.system.components.time.TTimeField
 import com.geoviksoft.turnia.ui.system.keyboardAware
@@ -212,7 +210,7 @@ private fun ShiftRow(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Checkbox(checked = row.selected, onCheckedChange = { onToggle() })
-            AcronymBadge(color = row.color.toComposeColorOrNull() ?: Color.Gray, acronym = acronym, size = 36.dp)
+            AcronymBadge(color = row.color, acronym = acronym, size = 36.dp)
             Text(text = name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
         }
         if (row.selected) {

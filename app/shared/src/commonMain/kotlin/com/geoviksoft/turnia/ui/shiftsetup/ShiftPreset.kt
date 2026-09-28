@@ -1,5 +1,7 @@
 package com.geoviksoft.turnia.ui.shiftsetup
 
+import com.geoviksoft.turnia.ui.system.color.EntityPalette
+import androidx.compose.ui.graphics.Color
 import kotlinx.datetime.LocalTime
 import org.jetbrains.compose.resources.StringResource
 import turnia.app.shared.generated.resources.Res
@@ -24,26 +26,26 @@ enum class ShiftPreset(
     val start: LocalTime,
     val end: LocalTime,
     val selectedByDefault: Boolean,
-    val color: String,
+    val color: Color,
 ) {
     Morning(
         Res.string.shift_preset_morning, Res.string.shift_preset_morning_acronym,
-        LocalTime(8, 0), LocalTime(15, 0), selectedByDefault = true, color = "#F9A825",
+        LocalTime(8, 0), LocalTime(15, 0), selectedByDefault = true, color = EntityPalette[3],
     ),
     Afternoon(
         Res.string.shift_preset_afternoon, Res.string.shift_preset_afternoon_acronym,
-        LocalTime(15, 0), LocalTime(22, 0), selectedByDefault = true, color = "#FB8C00",
+        LocalTime(15, 0), LocalTime(22, 0), selectedByDefault = true, color = EntityPalette[2],
     ),
     Night(
         Res.string.shift_preset_night, Res.string.shift_preset_night_acronym,
-        LocalTime(22, 0), LocalTime(8, 0), selectedByDefault = true, color = "#3949AB",
+        LocalTime(22, 0), LocalTime(8, 0), selectedByDefault = true, color = EntityPalette[10],
     ),
     MorningAfternoon(
         Res.string.shift_preset_morning_afternoon, Res.string.shift_preset_morning_afternoon_acronym,
-        LocalTime(8, 0), LocalTime(22, 0), selectedByDefault = false, color = "#00897B",
+        LocalTime(8, 0), LocalTime(22, 0), selectedByDefault = false, color = EntityPalette[6],
     ),
     Duty24(
         Res.string.shift_preset_duty24, Res.string.shift_preset_duty24_acronym,
-        LocalTime(8, 0), LocalTime(8, 0), selectedByDefault = false, color = "#E53935",
+        LocalTime(8, 0), LocalTime(8, 0), selectedByDefault = false, color = EntityPalette[0],
     ),
 }
