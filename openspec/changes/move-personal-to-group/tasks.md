@@ -4,7 +4,7 @@
 
 - [x] 1.1 Add `RetentionWindow.start(today)` (today minus one month) in core domain. Switch `SharedCalendarRepositoryImpl.purgedBefore()` to it. Verify with a unit test covering 31 March → 28/29 February and 15 October → 15 September, and that `SharedCalendarRepositoryImpl` tests still pass.
 - [x] 1.2 Add `AnalyticsEvent.PersonalEventsMoved(scope, eventCount, skippedCount)` (`personal_events_moved`, params `scope` = `one`|`all`, `event_count`, `skipped_count`) and `AnalyticsEvent.GroupEventNotesSaved` (`group_event_notes_saved`). Verify with an `AnalyticsEvent` test asserting the names and parameter values.
-- [ ] 1.3 Update CLAUDE.md:
+- [x] 1.3 Update CLAUDE.md:
   - add `scope`, `event_count` and `skipped_count` to the event-scoped parameters to register;
   - add business rules for moving personal events to a group (window, skipped days, deleted type) and for private group event notes;
   - reword the "group event docs … hold no private notes" rule to point at `groupEventExtras`.
