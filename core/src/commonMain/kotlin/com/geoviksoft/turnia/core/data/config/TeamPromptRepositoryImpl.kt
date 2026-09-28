@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import com.geoviksoft.turnia.core.data.user.GroupMembership
 import com.geoviksoft.turnia.core.domain.analytics.Analytics
+import com.geoviksoft.turnia.core.domain.analytics.AnalyticsEvent
 import com.geoviksoft.turnia.core.domain.model.TeamPromptChoice
 import com.geoviksoft.turnia.core.domain.model.UserSession
 import com.geoviksoft.turnia.core.domain.repository.AppConfigRepository
@@ -48,11 +49,14 @@ class TeamPromptRepositoryImpl(
     }
 
     override suspend fun shown() {
-        settle()
+        // A rotation shows the same prompt again: only the first time on this device is logged.
+        if (settle()) analytics.log(AnalyticsEvent.OnboardTeamShown)
     }
 
     override fun answered(choice: TeamPromptChoice): Boolean {
-        return _pending.compareAndSet(expect = true, update = false)
+        if (!_pending.compareAndSet(expect = true, update = false)) return false
+        analytics.log(AnalyticsEvent.OnboardTeamAnswered(choice))
+        return true
     }
 
     private suspend fun isSettled(): Boolean =
