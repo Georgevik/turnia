@@ -1,27 +1,24 @@
 package com.geoviksoft.turnia.ui.shiftsetup.components
 
-import com.geoviksoft.turnia.ui.system.components.time.nextDayMark
-import turnia.app.shared.generated.resources.shift_setup_edit_hours
-import turnia.app.shared.generated.resources.shift_setup_no_times
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Icon
-import androidx.compose.material.icons.rounded.ExpandMore
-import androidx.compose.material.icons.rounded.ExpandLess
-import androidx.compose.material.icons.Icons
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ExpandLess
+import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.geoviksoft.turnia.ui.shiftsetup.model.ShiftPreset
@@ -31,10 +28,13 @@ import com.geoviksoft.turnia.ui.system.TestTags
 import com.geoviksoft.turnia.ui.system.color.EntityPalette
 import com.geoviksoft.turnia.ui.system.components.AcronymBadge
 import com.geoviksoft.turnia.ui.system.components.time.TTimeField
+import com.geoviksoft.turnia.ui.system.components.time.nextDayMark
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.event_type_field_end
 import turnia.app.shared.generated.resources.event_type_field_start
+import turnia.app.shared.generated.resources.shift_setup_edit_hours
+import turnia.app.shared.generated.resources.shift_setup_no_times
 
 @Composable
 fun ShiftRow(
@@ -113,6 +113,35 @@ fun ShiftRowPreview() {
         end = "22:00",
         color = EntityPalette[0],
         selected = true
+    )
+
+    PreviewTurniaTheme {
+        ShiftRow(
+            index = 1,
+            row = row,
+            name = "Name",
+            acronym = "N",
+            onExpand = {},
+            onToggle = {},
+            onStartChange = {},
+            onEndChange = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+fun ShiftRowExpandedPreview() {
+    val row = ShiftRowUi(
+        id = "id",
+        preset = ShiftPreset.Afternoon,
+        name = "name",
+        acronym = "acronym",
+        start = "15:00",
+        end = "22:00",
+        color = EntityPalette[0],
+        selected = true,
+        expanded = true,
     )
 
     PreviewTurniaTheme {
