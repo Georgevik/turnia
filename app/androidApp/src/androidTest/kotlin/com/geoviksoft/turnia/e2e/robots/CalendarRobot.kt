@@ -175,6 +175,15 @@ internal class CalendarRobot(compose: ComposeTestRule, today: LocalDate) : AppRo
         click("Save")
     }
 
+    fun editNote(eventId: String, current: String, note: String) {
+        clickInEvent(eventId, current)
+        compose.awaitNode(hasSetTextAction()).apply {
+            performTextClearance()
+            if (note.isNotEmpty()) performTextInput(note)
+        }
+        click("Save")
+    }
+
     private fun row(eventId: String) = hasTestTag(TestTags.dayEvent(EventId(eventId)))
 
     private fun hasTestTagPrefix(prefix: String) =
