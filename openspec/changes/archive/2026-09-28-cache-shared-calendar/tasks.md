@@ -155,7 +155,7 @@ deploying to the emulators. Their behaviour is proven by task 7.2.
   - add the trigger's cost per group event write (1 invocation plus at most 2 marker writes).
 
   Verify the numbers match what 7.2 asserts.
-- [ ] 8.2 Check on a device:
+- [x] 8.2 Check on a device:
   1. Install the debug build.
   2. Walk People → a colleague → next month → the month after.
   3. `adb shell am force-stop com.geoviksoft.turnia.debug`.
