@@ -33,7 +33,7 @@ class SharePromptRepositoryImpl(
     private val _pending = MutableStateFlow<SharePrompt?>(null)
     override val pending: StateFlow<SharePrompt?> = _pending.asStateFlow()
 
-    override suspend fun eventAdded(kind: EventKind) {
+    override suspend fun eventAdded(kind: EventKind): Int {
         var added = 0
         var lastShown = 0
         outcomeCatching(TAG, mapError = {}) {
@@ -48,12 +48,13 @@ class SharePromptRepositoryImpl(
         if (added == 1) analytics.log(AnalyticsEvent.FirstEventAdded(kind))
 
         val flags = appConfigRepository.featureFlags.value
-        if (!flags.sharePromptActive) return
+        if (!flags.sharePromptActive) return added
 
         // Several milestones passed at once (the flag was off, or one was added below the count)
         // make one prompt, not a string of them.
-        val milestone = flags.sharePromptMilestones.lastOrNull { it in (lastShown + 1)..added } ?: return
-        _pending.value = SharePrompt(kind.audience, milestone)
+        val milestone = flags.sharePromptMilestones.lastOrNull { it in (lastShown + 1)..added }
+        if (milestone != null) _pending.value = SharePrompt(kind.audience, milestone)
+        return added
     }
 
     override suspend fun shown(prompt: SharePrompt) {

@@ -14,8 +14,12 @@ interface SharePromptRepository {
     /** The prompt waiting to be shown, held as state until it has been: never a one-off event. */
     val pending: StateFlow<SharePrompt?>
 
-    /** Counts a new event — never an edit — and raises [pending] when it reaches a milestone. */
-    suspend fun eventAdded(kind: EventKind)
+    /**
+     * Counts a new event — never an edit — and raises [pending] when it reaches a milestone.
+     * Returns the device's count of events added, or 0 when it could not be written: the team
+     * prompt counts on the same number rather than keeping a second one that would drift.
+     */
+    suspend fun eventAdded(kind: EventKind): Int
 
     /** The prompt is on screen: its milestone will not be offered again. */
     suspend fun shown(prompt: SharePrompt)

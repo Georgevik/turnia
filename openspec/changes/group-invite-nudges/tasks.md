@@ -8,7 +8,7 @@
 
 ## 2. Team prompt state in core
 
-- [ ] 2.1 Change `SharePromptRepository.eventAdded(kind)` to return the new count, or 0 when the write failed. Update `SharePromptRepositoryImpl`, the demo repository and the fakes. Verify that `SharePromptRepositoryImplTest` still passes, with an added assertion on the returned count.
+- [x] 2.1 Change `SharePromptRepository.eventAdded(kind)` to return the new count, or 0 when the write failed. Update `SharePromptRepositoryImpl`, the demo repository and the fakes. Verify that `SharePromptRepositoryImplTest` still passes, with an added assertion on the returned count.
 - [ ] 2.2 Create `TeamPromptRepository` (domain) and `TeamPromptRepositoryImpl` over the shared DataStore. It holds `pending: StateFlow<Boolean>`, `eventsAdded(count)`, `shown()` and `answered(choice): Boolean`, and a `team_prompt_settled` key. `eventsAdded` does nothing when the flag is inactive, the count is below the threshold or the prompt is settled. Otherwise it calls `GroupFirestore.hasAnyGroup(uid, Source.SERVER)`: a group → settle; none → `pending = true`; a failure → nothing. Register it in `DataModule`, and add a demo implementation that is never pending.
 - [ ] 2.3 Log `OnboardTeamShown` in `shown()` only when it flips `team_prompt_settled`. Log `OnboardTeamAnswered` in `answered()` only when it compare-and-clears `pending`.
 - [ ] 2.4 Unit-test `TeamPromptRepositoryImpl` with a fake DataStore and a fake group source. Cover:

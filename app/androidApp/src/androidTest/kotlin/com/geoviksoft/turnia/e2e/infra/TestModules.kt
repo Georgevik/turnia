@@ -138,10 +138,8 @@ internal class CountingSharePromptRepository(
     private val delegate: SharePromptRepository,
 ) : SharePromptRepository by delegate {
 
-    override suspend fun eventAdded(kind: EventKind) {
-        delegate.eventAdded(kind)
-        counted.incrementAndGet()
-    }
+    override suspend fun eventAdded(kind: EventKind): Int =
+        delegate.eventAdded(kind).also { counted.incrementAndGet() }
 
     companion object {
         private val counted = AtomicInteger()

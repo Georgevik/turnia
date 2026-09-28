@@ -35,4 +35,10 @@ class SharePromptRepositoryImplTest {
 
         assertEquals(1, analytics.named("first_event_added").size)
     }
+
+    @Test
+    fun eachAddReturnsTheDeviceCount() = runTest {
+        assertEquals(1, repository.eventAdded(EventKind.OneOff))
+        assertEquals(2, repository.eventAdded(EventKind.Typed))
+    }
 }
