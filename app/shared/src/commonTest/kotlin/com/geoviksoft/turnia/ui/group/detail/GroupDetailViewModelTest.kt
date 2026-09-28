@@ -8,6 +8,10 @@ import com.geoviksoft.turnia.core.system.Outcome
 import com.geoviksoft.turnia.core.system.toFailure
 import com.geoviksoft.turnia.core.system.toSuccess
 import com.geoviksoft.turnia.core.domain.model.GroupId
+import com.geoviksoft.turnia.core.domain.model.GroupMember
+import com.geoviksoft.turnia.core.domain.model.UserId
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import com.geoviksoft.turnia.demo.DemoAnalytics
 import com.geoviksoft.turnia.demo.DemoGroupRepository
 import com.geoviksoft.turnia.demo.DemoUserRepository
@@ -146,6 +150,36 @@ class GroupDetailViewModelTest {
         assertTrue(viewModel.success.isSaved)
         assertFalse(viewModel.success.created)
     }
+
+    @Test
+    fun aGroupOfOneAsksForItsTeamUntilASecondMemberJoins() {
+        val observed = MutableStateFlow<Outcome<Group, GroupError>>(group(members = 1).toSuccess())
+        val repository = object : GroupRepository by groups {
+            override fun observeGroup(groupId: GroupId): Flow<Outcome<Group, GroupError>> = observed
+        }
+        val viewModel = GroupDetailViewModel(GroupId("solo"), repository, DemoUserRepository(), DemoAnalytics)
+        assertTrue(viewModel.success.isAlone)
+
+        observed.value = group(members = 2).toSuccess()
+
+        assertFalse(viewModel.success.isAlone)
+    }
+
+    @Test
+    fun aNewGroupIsNotAlone() {
+        assertFalse(newGroup().success.isAlone)
+    }
+
+    private fun group(members: Int) = Group(
+        id = GroupId("solo"),
+        name = "Solo",
+        types = emptyList(),
+        members = List(members) { GroupMember(UserId("u$it"), "User $it", "user$it", isAdmin = it == 0) },
+        memberCount = members,
+        invitationCode = "SOLO01",
+        autoApprove = false,
+        isAdmin = true,
+    )
 
     private class RecordingGroupRepository(
         private val delegate: GroupRepository,

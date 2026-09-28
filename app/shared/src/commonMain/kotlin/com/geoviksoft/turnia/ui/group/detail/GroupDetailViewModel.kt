@@ -180,6 +180,7 @@ class GroupDetailViewModel(
                 eventTypes = loaded.eventTypes,
                 members = loaded.members,
                 joinRequests = loaded.joinRequests,
+                isAlone = loaded.isAlone,
             )
         }
     }
@@ -417,6 +418,8 @@ class GroupDetailViewModel(
             JoinRequestUi(it.userId, it.name, it.username, avatars.avatarOf(it.userId))
         },
         isNew = false,
+        // Derived from the members the listener already brings: the card costs no read.
+        isAlone = members.size == 1,
     )
 
     private fun GroupMember.toUiRow(avatars: Map<UserId, UserProfile.AnimalAvatar>) = GroupMemberUi(
