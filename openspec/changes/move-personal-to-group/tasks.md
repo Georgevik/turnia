@@ -32,7 +32,7 @@
 
   Add the `groupEventExtras` field to `UserSyncDocument`. Verify with a unit test over a fake Firestore, or with an emulator test that saving and clearing round-trips and moves the marker.
 - [x] 3.2 Add `GroupRepository.getMyEventNotes(date, monthDelta)` and `saveEventNote(event, notes): Outcome<Unit, Unit>`. The latter trims the note, stores a blank one as `null`, and logs `GroupEventNotesSaved` only on success. Implement them in `GroupRepositoryImpl`, the demo repository and the test fakes. Verify with unit tests: a blank note stored as `null`, a failure logs nothing, a success logs once.
-- [ ] 3.3 Add a row for group event notes to `firebase/firestore-usage.md`: 0 reads when unchanged, a read only per changed note, and 2 writes per save. Verify by reading the `FirestoreAudit` lines in a debug run.
+- [x] 3.3 Add a row for group event notes to `firebase/firestore-usage.md`: 0 reads when unchanged, a read only per changed note, and 2 writes per save. Verify by reading the `FirestoreAudit` lines in a debug run.
 
 ## 4. Group event notes in the UI
 
