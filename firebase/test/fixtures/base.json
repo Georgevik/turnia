@@ -362,6 +362,30 @@
       "isDeleted": false,
       "yearMonth": "$yearMonth(+2)",
       "updateAt": "$now"
+    },
+    "users/alice/personalEvents/p2": {
+      "typeId": "curso",
+      "date": "$date(+6)",
+      "notes": null,
+      "isDeleted": false,
+      "yearMonth": "$yearMonth(+6)",
+      "updateAt": "$now"
+    },
+    "users/alice/personalEvents/p3": {
+      "typeId": "curso",
+      "date": "$date(+4)",
+      "notes": "Traer apuntes",
+      "isDeleted": false,
+      "yearMonth": "$yearMonth(+4)",
+      "updateAt": "$now"
+    },
+    "users/alice/personalEvents/p0": {
+      "typeId": "curso",
+      "date": "$date(-40)",
+      "notes": "Curso antiguo",
+      "isDeleted": false,
+      "yearMonth": "$yearMonth(-40)",
+      "updateAt": "$now"
     }
   }
 }

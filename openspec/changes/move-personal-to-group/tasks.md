@@ -74,7 +74,7 @@
   - the outcome goes into UiState: `Done` or a `userMessage`, with `userMessageShown()`.
 
   Register it in Koin. Verify with ViewModel tests for each branch (single group, scope skipped, `DayTaken`, `Failed`, `Done` counts) and with a Compose preview of each step.
-- [ ] 6.4 Extend `firebase/test/fixtures/base.json`:
+- [x] 6.4 Extend `firebase/test/fixtures/base.json`:
   - two more `curso` events for Alice, one of them on a day she already holds a `urgencias` shift;
   - one `curso` event dated before the window, with a note.
 

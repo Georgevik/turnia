@@ -33,7 +33,7 @@ The Release workflow runs the same thing in the `android-e2e` job, and a red run
 
 | Who | What they have |
 |-----|----------------|
-| `alice` | Admin of **Urgencias** (manual approval, code `URG001`); personal type `Curso` and one event on it |
+| `alice` | Admin of **Urgencias** (manual approval, code `URG001`); personal type `Curso` with four events: `p1`, `p2` on the day she holds `e4`, `p3` (with a note) on the day of `e2`, which she created but bruno holds, and `p0` 40 days back, older than the move window |
 | `bruno` | Member of Urgencias, admin of **Planta** (auto-approve, code `PLA001`); shares his calendar with alice |
 | `carla` | Member of Urgencias, holds `e5` |
 | `dana` | In no group; shares her calendar with alice |
