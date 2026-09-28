@@ -33,7 +33,7 @@ class ShiftSetupViewModelTest {
     @AfterTest
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun viewModel(via: ShiftSetupVia = ShiftSetupVia.Onboarding) = ShiftSetupViewModel(via, repository)
+    private fun viewModel(via: ShiftSetupVia = ShiftSetupVia.Onboarding) = ShiftSetupViewModel(via, repository, ShiftRowFactory())
 
     @Test
     fun opensWithThreeOfTheFivePresetsSelected() {

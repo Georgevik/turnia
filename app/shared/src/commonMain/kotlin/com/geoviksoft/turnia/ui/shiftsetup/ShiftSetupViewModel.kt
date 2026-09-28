@@ -1,8 +1,6 @@
 package com.geoviksoft.turnia.ui.shiftsetup
 
 import com.geoviksoft.turnia.ui.system.color.toHex
-import com.geoviksoft.turnia.ui.system.color.EntityPalette
-import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.geoviksoft.turnia.core.domain.model.EventTypeId
@@ -25,9 +23,10 @@ import turnia.app.shared.generated.resources.shift_setup_save_error
 class ShiftSetupViewModel(
     private val via: ShiftSetupVia,
     private val repository: ShiftSetupRepository,
+    private val rowFactory: ShiftRowFactory,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(ShiftSetupUi(rows = ShiftPreset.entries.map { it.toRow() }))
+    private val _uiState = MutableStateFlow(ShiftSetupUi(rows = rowFactory.presets()))
     val uiState: StateFlow<ShiftSetupUi> = _uiState.asStateFlow()
 
     init {
@@ -70,17 +69,7 @@ class ShiftSetupViewModel(
                 custom = form.copy(nameMissing = form.name.isBlank(), acronymMissing = form.acronym.isBlank())
             )
         }
-        val row = ShiftRowUi(
-            id = "custom-${createUuid()}",
-            preset = null,
-            name = form.name.trim(),
-            acronym = form.acronym.trim(),
-            start = form.start,
-            end = form.end,
-            color = nextColor(rows),
-            selected = true,
-        )
-        copy(rows = rows + row, custom = null)
+        copy(rows = rows + rowFactory.custom(form, rows), custom = null)
     }
 
     /**
@@ -135,23 +124,4 @@ class ShiftSetupViewModel(
 
     private fun touch(transform: ShiftSetupUi.() -> ShiftSetupUi) =
         _uiState.update { it.transform().copy(interacted = true) }
-
-    private fun ShiftPreset.toRow() = ShiftRowUi(
-        id = name,
-        preset = this,
-        name = "",
-        acronym = "",
-        start = start.toString(),
-        end = end.toString(),
-        color = color,
-        selected = selectedByDefault,
-    )
-
-    private companion object {
-        /** A shift of the user's own takes the first colour no other shift on the list wears. */
-        fun nextColor(rows: List<ShiftRowUi>): Color {
-            val used = rows.map { it.color }.toSet()
-            return EntityPalette.firstOrNull { it !in used } ?: EntityPalette.first()
-        }
-    }
 }
