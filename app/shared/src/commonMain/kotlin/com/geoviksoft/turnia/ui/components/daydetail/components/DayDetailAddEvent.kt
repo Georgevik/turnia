@@ -1,8 +1,6 @@
 package com.geoviksoft.turnia.ui.components.daydetail.components
 
 import turnia.app.shared.generated.resources.add_pane_other_event
-import turnia.app.shared.generated.resources.add_pane_create_shifts
-import turnia.app.shared.generated.resources.add_pane_no_shifts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.BoundsTransform
@@ -219,30 +217,6 @@ private fun EventTypePane(
         }
 
         if (addMode == DayAddMode.Full) oneOffEntry()
-    }
-}
-
-/** Nothing to reuse yet: shifts are made once, and from then on each one is a tap away. */
-@Composable
-private fun NoShiftsPrompt(onCreate: () -> Unit) {
-    Surface(
-        modifier = Modifier.fillMaxWidth().testTag(TestTags.ADD_PANE_EMPTY_SHIFTS),
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.secondaryContainer,
-        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-    ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            Text(
-                text = stringResource(Res.string.add_pane_no_shifts),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            TextButton(onClick = onCreate, contentPadding = PaddingValues(0.dp)) {
-                Text(stringResource(Res.string.add_pane_create_shifts))
-            }
-        }
     }
 }
 
