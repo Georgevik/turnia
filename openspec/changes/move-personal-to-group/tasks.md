@@ -88,5 +88,7 @@
 ## 7. Integration
 
 - [ ] 7.1 Run `./gradlew :core:allTests`, the shared unit tests and `./gradlew :app:androidApp:assembleDebug`, then the full E2E suite with `connectedDebugAndroidTest`. Verify all of them are green.
+  - Unit tests, `assembleDebug` and 67 of the 68 E2E tests pass. `SharedCalendarFlowsTest.aOneOffMovedToAnotherMonth_leavesTheCachedMonth` fails, and fails the same way on `main`: a time-dependent failure outside this change, left open.
 - [ ] 7.2 Build the iOS app in Xcode and check the move sheet and group notes on a simulator. Verify manually.
-- [ ] 7.3 Take before and after screenshots of the day sheet row, the move sheet steps, the result and a group shift with a note, for the UI review. Verify they are saved under the change's `screenshots/`.
+  - The iOS app builds for the simulator (`xcodebuild … BUILD SUCCEEDED`); it has not been run on a simulator yet.
+- [x] 7.3 Take before and after screenshots of the day sheet row, the move sheet steps, the result and a group shift with a note, for the UI review. Verify they are saved under the change's `screenshots/`.
