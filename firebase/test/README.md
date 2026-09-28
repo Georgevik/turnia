@@ -39,6 +39,7 @@ The Release workflow runs the same thing in the `android-e2e` job, and a red run
 | `dana` | In no group; shares her calendar with alice |
 | `irene` | A pending join request to Urgencias |
 | `nameless` | A profile with a blank name |
+| `nuevo` | Nothing at all: no personal type, no group — the account the shift setup is for |
 
 Urgencias' shifts: `e1` alice's, offered; `e2` alice's, taken by bruno; `e3` alice's, taken by bruno
 and offered again; `e4` alice's, not offered; `e5` carla's, of the non-swappable type `NC`.

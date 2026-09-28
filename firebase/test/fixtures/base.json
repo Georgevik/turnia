@@ -30,6 +30,11 @@
       "uid": "nameless",
       "email": "nameless@e2e.turnia.club",
       "password": "Turnia-e2e-1"
+    },
+    {
+      "uid": "nuevo",
+      "email": "nuevo@e2e.turnia.club",
+      "password": "Turnia-e2e-1"
     }
   ],
   "firestore": {
@@ -141,6 +146,24 @@
     },
     "users/nameless/private/account": {
       "email": "nameless@e2e.turnia.club",
+      "fcmTokens": [],
+      "notificationsEnabled": true,
+      "updateAt": "$now"
+    },
+    "users/nuevo": {
+      "name": "Nico Nuevo",
+      "username": "nuevo",
+      "calendarSharedWith": [],
+      "showAds": false,
+      "updateAt": "$now"
+    },
+    "usernames/nuevo": {
+      "username": "nuevo",
+      "uid": "nuevo",
+      "updateAt": "$now"
+    },
+    "users/nuevo/private/account": {
+      "email": "nuevo@e2e.turnia.club",
       "fcmTokens": [],
       "notificationsEnabled": true,
       "updateAt": "$now"
