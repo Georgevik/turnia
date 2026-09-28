@@ -1,5 +1,12 @@
 package com.geoviksoft.turnia.ui.main.mycalendar
 
+import turnia.app.shared.generated.resources.shift_setup_hint
+import turnia.app.shared.generated.resources.Res
+import org.jetbrains.compose.resources.stringResource
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.material3.SnackbarDuration
+import com.geoviksoft.turnia.ui.system.TurniaSnackbarVisual
+import com.geoviksoft.turnia.ui.system.LocalSnackbar
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -30,6 +37,16 @@ fun MyCalendarScreen(viewModel: MyCalendarViewModel = koinViewModel()) {
     // Here rather than at the root: on first launch the splash is still asking for ads consent, and
     // two system dialogs on top of each other is a bad first impression.
     RequestNotificationPermission()
+
+    val shiftHintPending by viewModel.shiftHintPending.collectAsStateWithLifecycle()
+    if (shiftHintPending) {
+        val snackbar = LocalSnackbar.current
+        val hint = stringResource(Res.string.shift_setup_hint)
+        LaunchedEffect(Unit) {
+            snackbar.showSnackbar(TurniaSnackbarVisual(hint, duration = SnackbarDuration.Long))
+            viewModel.shiftHintShown()
+        }
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         CalendarViewer(

@@ -122,8 +122,11 @@ class ShiftSetupViewModel(
     fun skip() {
         if (_uiState.value.closed) return
         val interacted = _uiState.value.interacted
-        _uiState.update { it.copy(closed = true) }
-        viewModelScope.launch { repository.skipped(via, interacted) }
+        // Settled before the screen leaves, or Main would find the setup still owed and open it again.
+        viewModelScope.launch {
+            repository.skipped(via, interacted)
+            _uiState.update { it.copy(closed = true) }
+        }
     }
 
     fun userMessageShown() = _uiState.update { it.copy(userMessage = null) }

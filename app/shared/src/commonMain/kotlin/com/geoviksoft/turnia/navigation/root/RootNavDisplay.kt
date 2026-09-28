@@ -8,6 +8,8 @@ import androidx.navigation3.runtime.entryProvider
 import com.geoviksoft.turnia.navigation.TrackScreen
 import com.geoviksoft.turnia.navigation.TurniaNavDisplay
 import com.geoviksoft.turnia.navigation.root.routes.RootRoute
+import com.geoviksoft.turnia.ui.shiftsetup.ShiftSetupScreen
+import com.geoviksoft.turnia.ui.shiftsetup.ShiftSetupViewModel
 import com.geoviksoft.turnia.ui.main.MainScreen
 import com.geoviksoft.turnia.ui.main.about.AboutScreen
 import com.geoviksoft.turnia.ui.main.eventtypes.detail.EventTypeDetailScreen
@@ -60,6 +62,13 @@ fun RootNavDisplay(
             entry<RootRoute.PreferencesKey> { PreferencesScreen() }
 
             entry<RootRoute.AboutKey> { AboutScreen() }
+
+            entry<RootRoute.ShiftSetupKey> { key ->
+                ShiftSetupScreen(
+                    via = key.via,
+                    viewModel = koinViewModel<ShiftSetupViewModel> { parametersOf(key.via) },
+                )
+            }
         },
     )
 }

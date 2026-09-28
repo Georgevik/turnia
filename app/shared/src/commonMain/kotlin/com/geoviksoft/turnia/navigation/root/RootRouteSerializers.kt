@@ -25,6 +25,7 @@ internal val rootRouteSavedStateConfiguration: SavedStateConfiguration = SavedSt
             subclass(RootRoute.MyProfileKey::class, RootRoute.MyProfileKey.serializer())
             subclass(RootRoute.PreferencesKey::class, RootRoute.PreferencesKey.serializer())
             subclass(RootRoute.AboutKey::class, RootRoute.AboutKey.serializer())
+            subclass(RootRoute.ShiftSetupKey::class, RootRoute.ShiftSetupKey.serializer())
         }
     }
 }

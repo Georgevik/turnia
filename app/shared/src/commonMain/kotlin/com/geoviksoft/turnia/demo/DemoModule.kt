@@ -1,5 +1,6 @@
 package com.geoviksoft.turnia.demo
 
+import com.geoviksoft.turnia.core.domain.repository.ShiftSetupRepository
 import com.geoviksoft.turnia.core.domain.analytics.Analytics
 import com.geoviksoft.turnia.core.domain.repository.AppConfigRepository
 import com.geoviksoft.turnia.core.domain.repository.FcmDelegate
@@ -27,4 +28,5 @@ val demoModule: Module = module {
     single<SharedCalendarRepository> { DemoSharedCalendarRepository(get()) }
     single<Analytics> { DemoAnalytics }
     single<AppConfigRepository> { DemoAppConfigRepository() }
+    single<ShiftSetupRepository> { DemoShiftSetupRepository(get()) }
 }
