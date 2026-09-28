@@ -343,11 +343,16 @@ class GroupRepositoryImpl(
             }
         }
 
-    override suspend fun saveEventNote(event: GroupEvent, notes: String?): Outcome<Unit, Unit> {
+    override suspend fun saveEventNote(
+        groupId: GroupId,
+        eventId: EventId,
+        eventDate: LocalDate,
+        notes: String?,
+    ): Outcome<Unit, Unit> {
         val userId = userRepository.loggedUser?.id ?: return Unit.toFailure()
 
         return saveGroupEventNote(notes, analytics) { note ->
-            groupEventExtrasFirestore.set(userId, event.groupId, event.id, event.date.yearMonth, note)
+            groupEventExtrasFirestore.set(userId, groupId, eventId, eventDate.yearMonth, note)
                 .onFailure { error -> Logger.e(TAG, "Error saving group event notes", error.error) }
         }
     }

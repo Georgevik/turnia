@@ -107,12 +107,18 @@ class DayDetailSheetViewModel(
     val noteError = _noteError.asStateFlow()
 
     fun saveNotes(event: DayEventUi, notes: String) {
-        if (event.source != EventSource.PERSONAL) return
+        if (!event.notesEditable) return
 
         viewModelScope.launch {
-            personalRepository.saveNotes(event.id, event.date, notes).onFailure {
-                _noteError.value = true
+            val outcome = when (event.source) {
+                EventSource.PERSONAL -> personalRepository.saveNotes(event.id, event.date, notes)
+                // The user's own note, kept under them: the group event is read by every member.
+                EventSource.GROUP -> {
+                    val groupId = event.groupId ?: return@launch
+                    groupRepository.saveEventNote(groupId, event.id, event.date, notes)
+                }
             }
+            outcome.onFailure { _noteError.value = true }
         }
     }
 

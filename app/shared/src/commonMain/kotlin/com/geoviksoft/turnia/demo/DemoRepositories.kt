@@ -254,9 +254,14 @@ internal class DemoGroupRepository(private val world: DemoWorld) : GroupReposito
 
     override fun getMyEventNotes(date: LocalDate, monthDelta: Int): Flow<Map<EventId, String>> = notes
 
-    override suspend fun saveEventNote(event: GroupEvent, notes: String?): Outcome<Unit, Unit> {
+    override suspend fun saveEventNote(
+        groupId: GroupId,
+        eventId: EventId,
+        eventDate: LocalDate,
+        notes: String?,
+    ): Outcome<Unit, Unit> {
         val note = notes?.trim()?.ifBlank { null }
-        this.notes.update { if (note == null) it - event.id else it + (event.id to note) }
+        this.notes.update { if (note == null) it - eventId else it + (eventId to note) }
         return Unit.toSuccess()
     }
 

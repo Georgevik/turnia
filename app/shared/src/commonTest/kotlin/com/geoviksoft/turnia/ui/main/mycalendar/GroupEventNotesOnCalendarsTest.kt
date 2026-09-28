@@ -55,7 +55,7 @@ class GroupEventNotesOnCalendarsTest {
 
     @Test
     fun myCalendarShowsMyNoteOnAGroupShift() = runTest {
-        groups.saveEventNote(mine, "  Parking B ")
+        groups.saveEventNote(mine.groupId, mine.id, mine.date, "  Parking B ")
 
         val viewModel = MyCalendarViewModel(DemoUserRepository(), groups, personal, DemoShiftSetupRepository(personal))
         val row = (viewModel.uiState.value as MyCalendarUiState.Success).eventsByDate.row(mine.id.value)
@@ -66,7 +66,7 @@ class GroupEventNotesOnCalendarsTest {
 
     @Test
     fun aGroupCalendarShowsMyNoteAndLetsMeEditIt() = runTest {
-        groups.saveEventNote(mine, "Parking B")
+        groups.saveEventNote(mine.groupId, mine.id, mine.date, "Parking B")
 
         val viewModel = externalCalendar(ExternalCalendarData.Group(mine.groupId.value, mine.groupName))
         val rows = viewModel.uiState.first { !it.loading }.events.values.flatten()
@@ -78,7 +78,7 @@ class GroupEventNotesOnCalendarsTest {
     @Test
     fun aColleaguesCalendarShowsNoNoteAndOffersNone() = runTest {
         val colleague = world.groupEvents.first { it.assigneeId != DemoPeople.me.id }
-        groups.saveEventNote(colleague, "Parking B")
+        groups.saveEventNote(colleague.groupId, colleague.id, colleague.date, "Parking B")
 
         val viewModel = externalCalendar(ExternalCalendarData.Personal(colleague.assigneeId.value, "Colleague"))
         val rows = viewModel.uiState.first { !it.loading }.events.values.flatten()

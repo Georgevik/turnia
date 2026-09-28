@@ -83,8 +83,13 @@ interface GroupRepository {
      */
     fun getMyEventNotes(date: LocalDate, monthDelta: Int = 1): Flow<Map<EventId, String>>
 
-    /** Saves the user's own note on [event]. A blank note clears it. */
-    suspend fun saveEventNote(event: GroupEvent, notes: String?): Outcome<Unit, Unit>
+    /** Saves the user's own note on a group event. A blank note clears it. */
+    suspend fun saveEventNote(
+        groupId: GroupId,
+        eventId: EventId,
+        eventDate: LocalDate,
+        notes: String?,
+    ): Outcome<Unit, Unit>
 
     /**
      * Every swap-related shift across the user's groups, from [date] forward.
