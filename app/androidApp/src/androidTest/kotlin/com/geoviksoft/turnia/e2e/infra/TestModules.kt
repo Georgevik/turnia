@@ -49,6 +49,7 @@ internal val e2eModule = module {
 
 internal object FixedAppConfigRepository : AppConfigRepository {
     var onboardingSeen = true
+    var shiftSetupSettled = true
     private val flags = MutableStateFlow(
         FeatureFlags(
             minActionsToEnableAds = -1,
@@ -71,6 +72,12 @@ internal object FixedAppConfigRepository : AppConfigRepository {
 
     override suspend fun setOnboardingSeen(seen: Boolean) {
         onboardingSeen = seen
+    }
+
+    override suspend fun isShiftSetupSettled(): Boolean = shiftSetupSettled
+
+    override suspend fun setShiftSetupSettled(settled: Boolean) {
+        shiftSetupSettled = settled
     }
 }
 

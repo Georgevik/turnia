@@ -424,4 +424,8 @@ internal class DemoAppConfigRepository : AppConfigRepository {
     override suspend fun refreshFeatureFlags(): FeatureFlags = flags.value
     override suspend fun isOnboardingSeen(): Boolean = false
     override suspend fun setOnboardingSeen(seen: Boolean) = Unit
+
+    // The demo world comes with its shifts already made.
+    override suspend fun isShiftSetupSettled(): Boolean = true
+    override suspend fun setShiftSetupSettled(settled: Boolean) = Unit
 }

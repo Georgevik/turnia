@@ -47,6 +47,11 @@ class FakeAppConfigRepository(flags: FeatureFlags = defaultFlags) : AppConfigRep
         onboardingSeen = seen
     }
 
+    override suspend fun isShiftSetupSettled(): Boolean = shiftSetupSettled
+    override suspend fun setShiftSetupSettled(settled: Boolean) {
+        shiftSetupSettled = settled
+    }
+
     companion object {
         val defaultFlags = FeatureFlags(
             minActionsToEnableAds = -1,

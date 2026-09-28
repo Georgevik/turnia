@@ -3,6 +3,7 @@ package com.geoviksoft.turnia.core.di
 import com.geoviksoft.turnia.core.data.ads.AdRepositoryImpl
 import com.geoviksoft.turnia.core.data.analytics.AnalyticsImpl
 import com.geoviksoft.turnia.core.data.config.AppConfigRepositoryImpl
+import com.geoviksoft.turnia.core.data.config.DeviceSettings
 import com.geoviksoft.turnia.core.data.config.RemoteConfigService
 import com.geoviksoft.turnia.core.data.config.SharePromptRepositoryImpl
 import com.geoviksoft.turnia.core.data.config.mappers.SharePromptMilestonesMapper
@@ -165,6 +166,7 @@ val dataModule: Module = module {
         )
     }
     single { RemoteConfigService(get(), get(), get()) }
+    single { DeviceSettings(get()) }
     single<AppConfigRepository> { AppConfigRepositoryImpl(get(), get()) }
     single<SharePromptRepository> { SharePromptRepositoryImpl(get(), get(), get()) }
     single<NotificationRepository> { NotificationRepositoryImpl(get()) }
