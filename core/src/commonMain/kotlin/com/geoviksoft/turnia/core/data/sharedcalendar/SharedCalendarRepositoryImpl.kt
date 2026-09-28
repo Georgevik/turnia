@@ -5,6 +5,7 @@ import com.geoviksoft.turnia.core.data.datasource.firestore.doc.UserSyncDocument
 import com.geoviksoft.turnia.core.data.datasource.firestore.sync.CONFIRMATION_TIMEOUT
 import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.SharedCalendarFunction
 import com.geoviksoft.turnia.core.data.sharedcalendar.mappers.SharedCalendarMapper
+import com.geoviksoft.turnia.core.domain.model.RetentionWindow
 import com.geoviksoft.turnia.core.domain.model.SharedCalendar
 import com.geoviksoft.turnia.core.domain.model.SharedCalendarError
 import com.geoviksoft.turnia.core.domain.model.UserId
@@ -26,10 +27,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.YearMonth
-import kotlinx.datetime.minus
 import kotlinx.datetime.minusMonth
 import kotlinx.datetime.plusMonth
 import kotlinx.datetime.todayIn
@@ -163,7 +162,7 @@ class SharedCalendarRepositoryImpl(
 
     /** The server deletes events older than a month; only the device still has those days. */
     private fun purgedBefore() =
-        Clock.System.todayIn(TimeZone.currentSystemDefault()).minus(1, DateTimeUnit.MONTH)
+        RetentionWindow.start(Clock.System.todayIn(TimeZone.currentSystemDefault()))
 
     private companion object {
         const val TAG = "SharedCalendarRepository"
