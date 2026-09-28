@@ -85,6 +85,8 @@ sealed interface OneOffFormAction {
     data object Save : OneOffFormAction
     /** Deletes the event being edited. The sheet asks first, and only a confirmed one arrives. */
     data object Delete : OneOffFormAction
+    /** Makes a personal type out of the event being edited, which stays as it is. */
+    data object SaveAsShift : OneOffFormAction
     data class NameChanged(val name: String) : OneOffFormAction
     data class NotesChanged(val notes: String) : OneOffFormAction
     data class StartChanged(val start: LocalDateTime) : OneOffFormAction

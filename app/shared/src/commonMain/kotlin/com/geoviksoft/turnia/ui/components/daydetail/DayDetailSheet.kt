@@ -1,5 +1,7 @@
 package com.geoviksoft.turnia.ui.components.daydetail
 
+import com.geoviksoft.turnia.ui.system.color.toHex
+import com.geoviksoft.turnia.navigation.routes.EventTypeDetailData
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -108,6 +110,7 @@ fun DayDetailSheet(
     openNewPersonalTypeScreen: () -> Unit,
     openNewGroupTypeScreen: (groupId: String) -> Unit,
     openShiftSetup: () -> Unit = {},
+    openSaveAsShift: (EventTypeDetailData) -> Unit = {},
     /** A form wants the sheet open all the way, so it has the whole height to scroll in. */
     onFormOpenChange: (Boolean) -> Unit,
     onClose: (shouldRefresh: Boolean) -> Unit,
@@ -276,6 +279,10 @@ fun DayDetailSheet(
         onOneOffAction = { action ->
             if (action == OneOffFormAction.Delete) {
                 confirmOneOffDelete = true
+                return@DayDetailContent
+            }
+            if (action == OneOffFormAction.SaveAsShift) {
+                oneOffForm?.editing?.let { openSaveAsShift(it.toShiftData()) }
                 return@DayDetailContent
             }
             val saving = action == OneOffFormAction.Save && oneOffForm?.canSave == true
@@ -659,3 +666,13 @@ fun DayDetailSheetAddErrorPreview() {
         addTypes = AddEventTypesUi.Error(AddEventTypesError.LoadFailed),
     )
 }
+
+/** Times only for an event that has them: an all-day one-off makes a type with no hours. */
+private fun OneOffEventUi.toShiftData() = EventTypeDetailData.NewPersonalFrom(
+    name = name,
+    color = color.toHex(),
+    startTime = if (allDay) null else start.time.hhmm(),
+    endTime = if (allDay) null else end.time.hhmm(),
+)
+
+private fun LocalTime.hhmm(): String = "${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}"

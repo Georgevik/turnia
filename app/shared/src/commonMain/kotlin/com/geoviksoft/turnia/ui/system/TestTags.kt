@@ -28,6 +28,7 @@ object TestTags {
     const val ADD_PANE_SHIFTS = "add_pane_shifts"
     const val ADD_PANE_EMPTY_SHIFTS = "add_pane_empty_shifts"
     const val ADD_PANE_OTHER_EVENT = "add_pane_other_event"
+    const val ONE_OFF_SAVE_AS_SHIFT = "one_off_save_as_shift"
     const val SHIFT_SETUP = "shift_setup"
     const val SHIFT_SETUP_CONFIRM = "shift_setup_confirm"
     const val SHIFT_SETUP_CUSTOM_NAME = "shift_setup_custom_name"

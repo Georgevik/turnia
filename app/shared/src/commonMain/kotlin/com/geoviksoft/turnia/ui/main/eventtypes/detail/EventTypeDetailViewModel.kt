@@ -62,6 +62,12 @@ class EventTypeDetailViewModel(
 
                 is EventTypeDetailData.EditPersonal -> loadPersonalType(EventTypeId(key.typeId))
                 EventTypeDetailData.NewPersonal -> newForm().toSuccess()
+                is EventTypeDetailData.NewPersonalFrom -> newForm().copy(
+                    name = key.name,
+                    color = key.color.toComposeColorOr(entityColor(key.name)),
+                    startTime = key.startTime.orEmpty().toTimeInput(),
+                    endTime = key.endTime.orEmpty().toTimeInput(),
+                ).toSuccess()
                 is EventTypeDetailData.NewGroup -> newForm(isGroupType = true).toSuccess()
 
             }.fold(
@@ -126,6 +132,7 @@ class EventTypeDetailViewModel(
                 } ?: Result.success(Unit)
 
                 is EventTypeDetailData.EditPersonal,
+                is EventTypeDetailData.NewPersonalFrom,
                 EventTypeDetailData.NewPersonal,
                     // Nothing to colour yet: the pick is saved with the type it belongs to.
                 is EventTypeDetailData.NewGroup -> Result.success(Unit)
@@ -178,7 +185,8 @@ class EventTypeDetailViewModel(
 
         when (key) {
             is EventTypeDetailData.EditPersonal -> savePersonal(EventTypeId(key.typeId), form, isNew = false)
-            EventTypeDetailData.NewPersonal -> savePersonal(EventTypeId(createId()), form, isNew = true)
+            EventTypeDetailData.NewPersonal,
+            is EventTypeDetailData.NewPersonalFrom -> savePersonal(EventTypeId(createId()), form, isNew = true)
             is EventTypeDetailData.NewGroup ->
                 saveGroupType(key.groupId?.let(::GroupId), EventTypeId(createId()), form)
 

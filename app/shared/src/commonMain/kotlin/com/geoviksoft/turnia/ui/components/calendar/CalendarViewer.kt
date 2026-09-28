@@ -1,5 +1,6 @@
 package com.geoviksoft.turnia.ui.components.calendar
 
+import com.geoviksoft.turnia.navigation.routes.EventTypeDetailData
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -106,6 +107,7 @@ fun CalendarViewer(
     onEditGroup: (groupId: String, groupName: String) -> Unit = { _, _ -> },
     onAddPersonalType: () -> Unit = {},
     onCreateShifts: () -> Unit = {},
+    onSaveAsShift: (EventTypeDetailData) -> Unit = {},
     onAddGroupType: (groupId: String) -> Unit = {},
     // Only where the user adds their own events: the prompt is about what they just added, so a
     // colleague's calendar, which they only read, never shows it.
@@ -244,6 +246,10 @@ fun CalendarViewer(
                     },
                     openNewPersonalTypeScreen = { onAddPersonalType() },
                     openShiftSetup = onCreateShifts,
+                    openSaveAsShift = { data ->
+                        onSaveAsShift(data)
+                        dismissSheet()
+                    },
                     openNewGroupTypeScreen = onAddGroupType,
                     onFormOpenChange = { sheetFormOpen = it },
                     onClose = { dismissSheet() },

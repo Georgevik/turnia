@@ -514,4 +514,5 @@
     <string name="add_pane_no_shifts">Crée tes postes une fois et ajoute-les à n'importe quel jour d'un simple geste.</string>
     <string name="add_pane_create_shifts">Créer mes postes</string>
     <string name="add_pane_other_event">Autre événement…</string>
+    <string name="one_off_event_save_as_shift">Enregistrer comme poste</string>
 </resources>

@@ -196,6 +196,8 @@ class DayDetailSheetViewModel(
             }
 
             OneOffFormAction.Cancel -> _oneOffForm.value = null
+            // The sheet navigates: there is nothing for the form to do.
+            OneOffFormAction.SaveAsShift -> Unit
 
             OneOffFormAction.Delete -> {
                 val event = _oneOffForm.value?.editing ?: return

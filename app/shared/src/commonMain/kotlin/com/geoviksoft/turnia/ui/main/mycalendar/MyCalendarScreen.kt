@@ -64,6 +64,7 @@ fun MyCalendarScreen(viewModel: MyCalendarViewModel = koinViewModel()) {
             onAddPersonalType = {
                 rootNavigator.goTo(RootRoute.EventTypeDetailKey(EventTypeDetailData.NewPersonal))
             },
+            onSaveAsShift = { data -> rootNavigator.goTo(RootRoute.EventTypeDetailKey(data)) },
             onCreateShifts = {
                 rootNavigator.goTo(RootRoute.ShiftSetupKey(ShiftSetupVia.AddPane))
             },

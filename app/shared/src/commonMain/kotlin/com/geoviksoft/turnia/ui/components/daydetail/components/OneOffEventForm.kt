@@ -1,5 +1,8 @@
 package com.geoviksoft.turnia.ui.components.daydetail.components
 
+import turnia.app.shared.generated.resources.one_off_event_save_as_shift
+import androidx.compose.ui.platform.testTag
+import com.geoviksoft.turnia.ui.system.TestTags
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
@@ -181,6 +184,15 @@ fun OneOffEventForm(
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth(),
             )
+
+            if (form.editing != null) {
+                TextButton(
+                    onClick = { onAction(OneOffFormAction.SaveAsShift) },
+                    modifier = Modifier.testTag(TestTags.ONE_OFF_SAVE_AS_SHIFT),
+                ) {
+                    Text(stringResource(Res.string.one_off_event_save_as_shift))
+                }
+            }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),

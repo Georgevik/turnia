@@ -516,4 +516,5 @@
     <string name="add_pane_no_shifts">Create your shifts once and add them to any day with a tap.</string>
     <string name="add_pane_create_shifts">Create my shifts</string>
     <string name="add_pane_other_event">Other event…</string>
+    <string name="one_off_event_save_as_shift">Save as shift</string>
 </resources>

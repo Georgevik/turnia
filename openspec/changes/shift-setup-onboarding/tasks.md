@@ -32,7 +32,7 @@
 
 - [x] 4.1 Reorder `DayDetailAddEvent` in Full mode: "MY SHIFTS" first, groups next, and an "Other event…" row last that expands `OneOffEventForm`. Add `NoShiftsPrompt`, which pushes `ShiftSetupKey(AddPane)`, and make `CalendarViewer.sheetDate` survive the push. Verify with T6 and T7.
 - [x] 4.2 Rename the user-facing strings for personal event types to shifts in all five languages: the add pane title, settings entry, screen title, create action, empty state and delete dialog. Verify with a grep showing no remaining "My events" or "personal events" text in `values*/strings.xml` for these keys.
-- [ ] 4.3 Add `EventTypeDetailData.NewPersonalFrom(name, color, startTime?, endTime?)`, seed `EventTypeDetailViewModel` from it, and add the "Save as shift" action to the edit mode of an existing one-off, with times only when the one-off is not all day. Verify with T8.
+- [x] 4.3 Add `EventTypeDetailData.NewPersonalFrom(name, color, startTime?, endTime?)`, seed `EventTypeDetailViewModel` from it, and add the "Save as shift" action to the edit mode of an existing one-off, with times only when the one-off is not all day. Verify with T8.
 - [ ] 4.4 Confirm that Night (22:00–08:00) and 24h (08:00–08:00) render as overnight wherever a type's times are shown, and fix the rendering if not. Verify with T2's assertion.
 
 ## 5. E2E flow tests

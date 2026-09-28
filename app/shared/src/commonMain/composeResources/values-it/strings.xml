@@ -514,4 +514,5 @@
     <string name="add_pane_no_shifts">Crea i tuoi turni una volta e aggiungili a qualsiasi giorno con un tocco.</string>
     <string name="add_pane_create_shifts">Crea i miei turni</string>
     <string name="add_pane_other_event">Altro evento…</string>
+    <string name="one_off_event_save_as_shift">Salva come turno</string>
 </resources>
