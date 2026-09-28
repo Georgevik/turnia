@@ -17,11 +17,19 @@ import kotlinx.serialization.json.putJsonObject
 
 /**
  * The Firestore emulator's REST API, with documents as plain JSON. A Firestore timestamp is the one
- * type JSON has no word for, so it travels as `{"$timestamp": "<RFC 3339>"}` both ways.
+ * type JSON has no word for, so it travels as `{"$timestamp": "<RFC 3339>"}` both ways, and
+ * [SERVER_TIMESTAMP] stands for the commit's own time, as the app's `Timestamp.ServerTimestamp` does.
  */
 internal object FirestoreRest {
 
     const val TIMESTAMP = "\$timestamp"
+
+    /**
+     * A field stamped by the emulator at commit time. A stamp that is compared with a server time,
+     * such as a gap's cursor, must come from the same clock: the device's lags the host's by enough
+     * for a write made after a read to carry an earlier time than it.
+     */
+    val SERVER_TIMESTAMP: JsonObject = buildJsonObject { put("\$serverTimestamp", true) }
 
     private val base get() = "http://${Emulator.HOST}:${Emulator.FIRESTORE_PORT}"
     private val database get() = "projects/${Emulator.projectId}/databases/(default)"
@@ -45,6 +53,17 @@ internal object FirestoreRest {
                             putJsonObject("update") {
                                 put("name", "$database/documents/$path")
                                 put("fields", encodeFields(fields))
+                            }
+                            val stamped = serverTimestampPaths(fields)
+                            if (stamped.isNotEmpty()) {
+                                putJsonArray("updateTransforms") {
+                                    stamped.forEach { fieldPath ->
+                                        add(buildJsonObject {
+                                            put("fieldPath", fieldPath)
+                                            put("setToServerValue", "REQUEST_TIME")
+                                        })
+                                    }
+                                }
                             }
                         })
                     }
@@ -82,8 +101,19 @@ internal object FirestoreRest {
     }
 
     private fun encodeFields(fields: JsonObject): JsonObject = buildJsonObject {
-        fields.forEach { (name, value) -> put(name, encode(value)) }
+        fields.forEach { (name, value) -> if (value != SERVER_TIMESTAMP) put(name, encode(value)) }
     }
+
+    // Every segment is quoted: a month key such as `2026-09` is not a bare field name.
+    private fun serverTimestampPaths(fields: JsonObject, parent: String? = null): List<String> =
+        fields.flatMap { (name, value) ->
+            val path = listOfNotNull(parent, "`$name`").joinToString(".")
+            when {
+                value == SERVER_TIMESTAMP -> listOf(path)
+                value is JsonObject && TIMESTAMP !in value -> serverTimestampPaths(value, path)
+                else -> emptyList()
+            }
+        }
 
     private fun encode(value: JsonElement): JsonObject = when (value) {
         JsonNull -> buildJsonObject { put("nullValue", JsonNull) }

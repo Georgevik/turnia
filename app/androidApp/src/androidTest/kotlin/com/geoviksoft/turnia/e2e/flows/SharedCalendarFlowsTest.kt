@@ -13,7 +13,6 @@ import com.geoviksoft.turnia.core.data.datasource.firestore.analytics.FirestoreA
 import com.geoviksoft.turnia.core.data.sharedcalendar.CachedSharedCalendar
 import com.geoviksoft.turnia.core.data.sharedcalendar.SharedCalendarCache
 import com.geoviksoft.turnia.core.domain.model.UserId
-import com.geoviksoft.turnia.e2e.infra.Fixtures
 import com.geoviksoft.turnia.e2e.infra.FirestoreRest
 import com.geoviksoft.turnia.e2e.infra.string
 import com.geoviksoft.turnia.e2e.infra.awaitLogged
@@ -40,7 +39,6 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.koin.core.context.GlobalContext
-import kotlin.time.Clock
 import kotlin.time.Instant
 
 /**
@@ -398,16 +396,15 @@ private fun ComposeTestRule.awaitCached(
     return checkNotNull(cached(month))
 }
 
-/** An Urgencias shift, changed on the server as any other client's write would, `updateAt` included. */
+/** An Urgencias shift, changed on the server as any other client's write would, `updateAt` stamped by the server. */
 private fun changeEvent(eventId: String, change: (JsonObject) -> JsonObject) {
     val path = "groups/urgencias/events/$eventId"
-    val now = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds())
-    FirestoreRest.write(mapOf(path to JsonObject(change(Documents.get(path)) + ("updateAt" to Fixtures.timestamp(now)))))
+    FirestoreRest.write(mapOf(path to JsonObject(change(Documents.get(path)) + ("updateAt" to FirestoreRest.SERVER_TIMESTAMP))))
 }
 
 /** Bruno takes alice off his grant list, with his profile marker in the same commit, as his app does. */
 private fun revokeAlicesGrant() {
-    val now = Fixtures.timestamp(Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()))
+    val now = FirestoreRest.SERVER_TIMESTAMP
     val profile = Documents.get("users/bruno")
     val sync = Documents.get("users/bruno/sync/updates")
     val sharedWith = profile.strings("calendarSharedWith").filter { it != "alice" }.map(::JsonPrimitive)
@@ -421,7 +418,7 @@ private fun revokeAlicesGrant() {
 
 /** Bruno's one-off on [day], and the one-off markers of [markedMonths], in one commit, as his app writes them. */
 private fun writeBrunosOneOff(day: LocalDate, markedMonths: Set<YearMonth>) {
-    val now = Fixtures.timestamp(Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()))
+    val now = FirestoreRest.SERVER_TIMESTAMP
     val month = JsonPrimitive(day.yearMonth.toString())
     val oneOff = buildJsonObject {
         put("name", "Course")
