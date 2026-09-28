@@ -56,7 +56,7 @@
   - no share-prompt count.
 
   Implement the demo version. Verify with unit tests covering: a single move; "all" with skips; a taken single day; a failure part-way, then a retry that moves the rest with no duplicate and deletes the type; and one analytics event per move.
-- [ ] 5.4 Add the move's cost to `firebase/firestore-usage.md`: N + M server reads, and about 2N writes plus notes plus 2 per chunk plus 2 for the type. Verify against the `FirestoreAudit` output of the emulator test in 5.2.
+- [x] 5.4 Add the move's cost to `firebase/firestore-usage.md`: N + M server reads, and about 2N writes plus notes plus 2 per chunk plus 2 for the type. Verify against the `FirestoreAudit` output of the emulator test in 5.2.
 
 ## 6. The move in the UI
 
