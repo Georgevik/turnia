@@ -23,7 +23,8 @@ would lose its notes.
   - Events older than the window stay personal and keep rendering with it, so a user browsing two
     months back still sees those shifts.
   - This is the single path whether or not old events remain.
-  - It adds an `isDeleted` flag to `personalEventTypes`.
+  - It reuses the `isDeleted` flag `personalEventTypes` already carries, which the add pane and
+    "My shifts" already filter out.
 - **Client-only, atomic.** A move is one batched write:
   - group events created with `ownerId == assigneeId == auth.uid`;
   - the personal events deleted;
@@ -37,7 +38,8 @@ would lose its notes.
   - Group event details gain viewing and editing of the user's own note.
   - A moved event's notes go there.
   - Nothing private is written to the shared group event document.
-- **Retention.** The scheduled cleanup also purges `groupEventExtras` older than the window.
+- **Retention is out of scope.** Purging old data, `groupEventExtras` included, belongs to a
+  separate change; this one only records the collection among the data that purge must cover.
 - **Analytics.** An event for a completed move, with the count of events moved and whether it was
   "all".
 
@@ -49,23 +51,21 @@ would lose its notes.
 - `group-event-notes`: private per-user notes on group events, stored under the user.
 
 ### Modified Capabilities
-- `analytics-events`: adds the move event and adds `group_event_notes_saved` (or extends
-  `event_notes_saved`) for notes on group events.
+- `analytics-events`: adds the move event, and `group_event_notes_saved` for notes on group events.
+  `event_notes_saved` keeps meaning notes on a personal event.
 
 ## Impact
 
 - **Firestore**:
-  - `personalEventTypes.isDeleted`;
   - new collection `users/{uid}/groupEventExtras`, with rules, a `yearMonth` index and sync marker;
   - updates to `firestore-schema.md`, `firestore.rules`, `firestore.indexes.json`,
     `firestore-usage.md` (a move costs about 2N writes) and the test fixtures.
-- **Cloud Functions**:
-  - the retention cleanup purges `groupEventExtras`;
-  - `getSharedCalendar` is unaffected, since notes never sit on group events.
+- **Cloud Functions**: none. `getSharedCalendar` is unaffected, since notes never sit on group
+  events.
 - **Core**:
   - `PersonalEventRepository` and `GroupRepository`, for the batched move;
   - a new extras datasource with usage tracking;
-  - the local cache, which must hold deleted types and group notes.
+  - the Firestore persistent cache, which already holds deleted types and will hold group notes.
 - **UI**:
   - personal event detail (the Move action and its sheets);
   - group event detail (notes);

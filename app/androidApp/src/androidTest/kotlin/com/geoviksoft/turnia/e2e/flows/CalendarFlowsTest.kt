@@ -12,6 +12,7 @@ import com.geoviksoft.turnia.e2e.robots.AppRobot
 import com.geoviksoft.turnia.e2e.robots.CalendarRobot
 import kotlinx.datetime.yearMonth
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -104,9 +105,31 @@ class CalendarFlowsTest {
     }
 
     @Test
+    fun addPrivateNoteToAGroupShift_thenClearIt() {
+        calendar.openDay(world.day(6))
+        calendar.writeNote("e4", "Parking B")
+
+        calendar.awaitEventShows("e4", "Parking B")
+        Documents.await("users/alice/groupEventExtras/e4") {
+            it.string("notes") == "Parking B" && it.string("groupId") == "urgencias"
+        }
+        assertFalse(
+            "The group event, read by every member, carries no note",
+            "notes" in Documents.get("groups/urgencias/events/e4"),
+        )
+        compose.awaitLogged("group_event_notes_saved")
+        assertTrue(RecordingAnalytics.named("event_notes_saved").isEmpty())
+
+        calendar.editNote("e4", "Parking B", "")
+
+        calendar.awaitEventShows("e4", "Add note")
+        Documents.await("users/alice/groupEventExtras/e4") { it.string("notes") == null }
+    }
+
+    @Test
     fun deleteOwnEvent() {
         calendar.openDay(world.day(6))
-        calendar.clickDescriptionInEvent("e4", "Delete event")
+        calendar.eventAction("e4", "Delete event")
         calendar.click("Delete")
 
         calendar.awaitNoEvent("e4")

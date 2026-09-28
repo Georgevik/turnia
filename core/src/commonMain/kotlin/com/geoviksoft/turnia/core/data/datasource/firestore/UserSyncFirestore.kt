@@ -101,6 +101,28 @@ class UserSyncFirestore(
         ),
     )
 
+    fun writePersonalEvents(batch: WriteBatch, uid: UserId, months: Set<YearMonth>) = write(
+        "writePersonalEvents",
+        batch,
+        uid,
+        UserSyncDocument(
+            personalEventsUpdatedAt = months.associateWith {
+                EventSyncUpdateAt(Timestamp.ServerTimestamp)
+            },
+        ),
+    )
+
+    fun writeGroupEventExtras(batch: WriteBatch, uid: UserId, months: Set<YearMonth>) = write(
+        "writeGroupEventExtras",
+        batch,
+        uid,
+        UserSyncDocument(
+            groupEventExtrasUpdatedAt = months.associateWith {
+                EventSyncUpdateAt(Timestamp.ServerTimestamp)
+            },
+        ),
+    )
+
     fun writePersonalOneOffEvents(batch: WriteBatch, uid: UserId, months: Set<YearMonth>) = write(
         "writePersonalOneOffEvents",
         batch,

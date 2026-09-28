@@ -15,11 +15,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.automirrored.filled.DriveFileMove
+import androidx.compose.material.icons.automirrored.filled.Undo
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.filled.NoteAdd
 import androidx.compose.material.icons.filled.StickyNote2
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -27,6 +32,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -53,8 +62,10 @@ import com.geoviksoft.turnia.ui.system.TestTags
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
+import turnia.app.shared.generated.resources.calendar_more_options
 import turnia.app.shared.generated.resources.event_assigned_to
 import turnia.app.shared.generated.resources.event_assigned_to_me
+import turnia.app.shared.generated.resources.event_move_to_group
 import turnia.app.shared.generated.resources.event_note_add
 import turnia.app.shared.generated.resources.event_note_edit
 import turnia.app.shared.generated.resources.event_remove
@@ -71,6 +82,7 @@ fun DayEventRow(
     onEditNotes: (() -> Unit)? = null,
     onSwapChange: ((Boolean) -> Unit)? = null,
     onTake: (() -> Unit)? = null,
+    onMove: (() -> Unit)? = null,
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth().testTag(TestTags.dayEvent(event.id)),
@@ -120,21 +132,15 @@ fun DayEventRow(
                             overflow = TextOverflow.Ellipsis,
                         )
                         event.timeRange?.let { EventHours(timeRange = it) }
-                        if (onRemove != null) {
-                            // Kept clear of the hours, so a tap meant for neither lands on delete.
-                            IconButton(
-                                onClick = onRemove,
-                                modifier = Modifier.padding(start = 4.dp).size(28.dp),
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = stringResource(
-                                        if (event.removable) Res.string.event_remove else Res.string.event_return
-                                    ),
-                                    modifier = Modifier.size(18.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
+                        // One menu for whatever the row can do: a move to a group is rare enough
+                        // that an icon of its own would suggest every personal shift needs one,
+                        // and a people icon reads as "this is a group event".
+                        if (onMove != null || onRemove != null) {
+                            EventActionsMenu(
+                                removable = event.removable,
+                                onRemove = onRemove,
+                                onMove = onMove,
+                            )
                         }
                     }
 
@@ -260,6 +266,57 @@ private fun AddNoteButton(onClick: () -> Unit) {
 
 
 
+@Composable
+private fun EventActionsMenu(
+    /** Deleting the user's own shift, or else giving back one they took. */
+    removable: Boolean,
+    onRemove: (() -> Unit)?,
+    onMove: (() -> Unit)?,
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    // Kept clear of the hours, so a tap meant for neither opens the menu.
+    Box(modifier = Modifier.padding(start = 4.dp)) {
+        IconButton(onClick = { expanded = true }, modifier = Modifier.size(28.dp)) {
+            Icon(
+                imageVector = Icons.Default.MoreVert,
+                contentDescription = stringResource(Res.string.calendar_more_options),
+                modifier = Modifier.size(18.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            onMove?.let { move ->
+                DropdownMenuItem(
+                    text = { Text(stringResource(Res.string.event_move_to_group)) },
+                    leadingIcon = { Icon(Icons.AutoMirrored.Filled.DriveFileMove, contentDescription = null) },
+                    onClick = {
+                        expanded = false
+                        move()
+                    },
+                )
+            }
+            onRemove?.let { remove ->
+                DropdownMenuItem(
+                    text = {
+                        Text(stringResource(if (removable) Res.string.event_remove else Res.string.event_return))
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = if (removable) Icons.Outlined.Delete else Icons.AutoMirrored.Filled.Undo,
+                            contentDescription = null,
+                        )
+                    },
+                    onClick = {
+                        expanded = false
+                        remove()
+                    },
+                )
+            }
+        }
+    }
+}
+
 /** Offering the shift, or taking the offer back. Only ever shown to whoever covers it. */
 @Composable
 private fun SwapToggle(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
@@ -349,6 +406,12 @@ fun DayEventRowPreview() {
             }
             Labelled("personal, no note yet") {
                 DayEventRow(event = personalEvent(), onEditNotes = {}, onRemove = {})
+            }
+            Labelled("personal, and the user is in a group it could move to") {
+                DayEventRow(event = personalEvent(), onEditNotes = {}, onRemove = {}, onMove = {})
+            }
+            Labelled("group, with my private note") {
+                DayEventRow(event = groupEvent().copy(notes = "Parking B"), onEditNotes = {}, onRemove = {})
             }
             Labelled("group, I cover it") {
                 DayEventRow(event = groupEvent(), onRemove = {})

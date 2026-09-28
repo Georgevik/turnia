@@ -18,7 +18,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -58,6 +60,8 @@ import com.geoviksoft.turnia.ui.components.daydetail.model.OneOffEventFormUi
 import com.geoviksoft.turnia.ui.components.daydetail.model.OneOffEventMessage
 import com.geoviksoft.turnia.ui.components.daydetail.model.OneOffEventUi
 import com.geoviksoft.turnia.ui.components.daydetail.model.OneOffFormAction
+import com.geoviksoft.turnia.ui.components.movetogroup.MoveRequest
+import com.geoviksoft.turnia.ui.components.movetogroup.MoveToGroupSheet
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
 import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
 import com.geoviksoft.turnia.ui.system.color.EntityPalette
@@ -100,6 +104,7 @@ import turnia.app.shared.generated.resources.event_swap_take_confirm_title
 import turnia.app.shared.generated.resources.one_off_event_delete_error
 import turnia.app.shared.generated.resources.one_off_event_save_error
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DayDetailSheet(
     date: LocalDate,
@@ -136,6 +141,7 @@ fun DayDetailSheet(
     var pendingReturn by remember { mutableStateOf<DayEventUi?>(null) }
     var editingNotes by remember { mutableStateOf<DayEventUi?>(null) }
     var pendingTake by remember { mutableStateOf<DayEventUi?>(null) }
+    var moving by remember { mutableStateOf<DayEventUi?>(null) }
 
     val noteError by viewModel.noteError.collectAsStateWithLifecycle()
     val snackbar = LocalSnackbar.current
@@ -174,6 +180,12 @@ fun DayDetailSheet(
                 editingNotes = null
             },
         )
+    }
+
+    moving?.let(MoveRequest::of)?.let { request ->
+        ModalBottomSheet(onDismissRequest = { moving = null }) {
+            MoveToGroupSheet(request = request, onClose = { moving = null })
+        }
     }
 
     pendingTake?.let { event ->
@@ -304,6 +316,7 @@ fun DayDetailSheet(
         onEditNotes = { editingNotes = it },
         onSwapChange = viewModel::setOnSwap,
         onTake = { pendingTake = it },
+        onMove = { moving = it },
         onEditOneOff = { event ->
             viewModel.onOneOffAction(OneOffFormAction.Edit(event))
             adding = true
@@ -337,6 +350,7 @@ private fun DayDetailContent(
     onTake: (DayEventUi) -> Unit,
     onEditOneOff: (OneOffEventUi) -> Unit,
     modifier: Modifier = Modifier,
+    onMove: (DayEventUi) -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -420,6 +434,11 @@ private fun DayDetailContent(
                                 },
                                 onTake = if (event.canTake) {
                                     { onTake(event) }
+                                } else {
+                                    null
+                                },
+                                onMove = if (event.movable) {
+                                    { onMove(event) }
                                 } else {
                                     null
                                 },

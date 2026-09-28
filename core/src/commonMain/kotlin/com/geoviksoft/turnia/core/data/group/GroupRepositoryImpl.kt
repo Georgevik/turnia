@@ -1,5 +1,6 @@
 package com.geoviksoft.turnia.core.data.group
 
+import com.geoviksoft.turnia.core.data.datasource.firestore.GroupEventExtrasFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.GroupEventFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.GroupFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.GroupJoinRequestFirestore
@@ -62,8 +63,10 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.withIndex
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.YearMonthRange
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
+import kotlinx.datetime.yearMonth
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class GroupRepositoryImpl(
@@ -79,6 +82,7 @@ class GroupRepositoryImpl(
     private val groupMembershipFunction: GroupMembershipFunction,
     private val groupFunction: GroupFunction,
     private val groupEventFunction: GroupEventFunction,
+    private val groupEventExtrasFirestore: GroupEventExtrasFirestore,
     private val groupMapper: GroupMapper,
     private val analytics: Analytics,
 ) : GroupRepository {
@@ -326,6 +330,31 @@ class GroupRepositoryImpl(
 
         groupEventFirestore.set(event.groupId, event.id, groupMapper.map(event))
             .onSuccess { analytics.log(AnalyticsEvent.GroupEventCreated) }
+    }
+
+    override fun getMyEventNotes(date: LocalDate, monthDelta: Int): Flow<Map<EventId, String>> =
+        userRepository.loggedUserFlow.flatMapLatest { user ->
+            val months = YearMonthRange(
+                date.minus(monthDelta, DateTimeUnit.MONTH).yearMonth,
+                date.plus(monthDelta, DateTimeUnit.MONTH).yearMonth,
+            ).toList()
+            groupEventExtrasFirestore.get(user.id, months).map { docs ->
+                docs.mapNotNull { holder -> holder.doc.notes?.let { EventId(holder.id) to it } }.toMap()
+            }
+        }
+
+    override suspend fun saveEventNote(
+        groupId: GroupId,
+        eventId: EventId,
+        eventDate: LocalDate,
+        notes: String?,
+    ): Outcome<Unit, Unit> {
+        val userId = userRepository.loggedUser?.id ?: return Unit.toFailure()
+
+        return saveGroupEventNote(notes, analytics) { note ->
+            groupEventExtrasFirestore.set(userId, groupId, eventId, eventDate.yearMonth, note)
+                .onFailure { error -> Logger.e(TAG, "Error saving group event notes", error.error) }
+        }
     }
 
     private suspend fun isRevoked(userId: UserId, groupId: GroupId): Boolean =

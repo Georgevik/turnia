@@ -158,10 +158,11 @@ internal class CalendarRobot(compose: ComposeTestRule, today: LocalDate) : AppRo
             .scrollAndClick()
     }
 
-    fun clickDescriptionInEvent(eventId: String, description: String) {
-        compose.awaitNode(
-            hasContentDescription(description) and hasClickAction() and hasAnyAncestor(row(eventId))
-        ).scrollAndClick()
+    /** An action of the row's menu: "Delete event", "Give shift back", "Move to a group". */
+    fun eventAction(eventId: String, action: String) {
+        compose.awaitNode(hasContentDescription(MORE_OPTIONS) and hasAnyAncestor(row(eventId)))
+            .scrollAndClick()
+        click(action)
     }
 
     fun toggleSwap(eventId: String) {
@@ -172,6 +173,15 @@ internal class CalendarRobot(compose: ComposeTestRule, today: LocalDate) : AppRo
     fun writeNote(eventId: String, note: String) {
         clickInEvent(eventId, "Add note")
         compose.awaitNode(hasSetTextAction()).performTextInput(note)
+        click("Save")
+    }
+
+    fun editNote(eventId: String, current: String, note: String) {
+        clickInEvent(eventId, current)
+        compose.awaitNode(hasSetTextAction()).apply {
+            performTextClearance()
+            if (note.isNotEmpty()) performTextInput(note)
+        }
         click("Save")
     }
 
@@ -189,5 +199,6 @@ internal class CalendarRobot(compose: ComposeTestRule, today: LocalDate) : AppRo
     private companion object {
         val EVENT_TYPE_CHIP_PREFIX = TestTags.eventTypeChip(EventTypeId(""))
         const val EDIT = "Edit"
+        const val MORE_OPTIONS = "More options"
     }
 }

@@ -59,6 +59,18 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
   with a push. Holders form a stack (A → B → C: C gives it back to B, B to A), and a shift whose previous
   holder has left the group cannot be given back.
 - **Personal events** can carry notes (on the event); group event docs are shared with all members, so they hold no private notes.
+  A user's note on a group event lives under them instead, in `users/{uid}/groupEventExtras/{eventId}`,
+  readable by nobody else — not the group, not whoever their calendar is shared with. It stays with the
+  event whoever holds it, and clearing it writes `notes = null` so the delta sync sees it go.
+- **A personal shift can be moved to a group.** From its row on the user's own calendar, into one of
+  the event types of a group they are a member of (not revoked): **only this one**, or **all** of its
+  type dated from `RetentionWindow.start` (a month ago) onward. A day where they already hold a shift of
+  that group is skipped and reported. The group event keeps the personal event's id and becomes theirs
+  (`ownerId == assigneeId`, not on swap), the personal event is soft-deleted in the same commit, and its
+  notes become their private note on it. Moving all then **deletes the personal type**: it leaves the
+  add pane and *My shifts*, while the older and skipped events keep rendering with it. It is client-only,
+  in commits of 150 events with the type deleted in the last one, so a move that fails part-way is
+  finished by running it again.
 - A user can define their own **personal event types** and add **personal events** (no group), each colored by its type.
   The interface calls them **shifts** ("My shifts", "turnos"); the code keeps `PersonalEventType`.
 - **A new user sets up their shifts before anything else.** After sign-in, an account with no
@@ -194,12 +206,17 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
 - **Parameters and properties must be registered by hand** in the GA console (*Admin → Custom
   definitions*), or they show only in DebugView and BigQuery. Event-scoped: `screen_name`,
   `method`, `audience`, `milestone`, `auto_approve`, `type_count`, `all_day`, `multi_month`, `via`,
-  `type`, `interacted`, `custom_type_count`, `kind`, `choice`. User-scoped: `group_count`, `is_admin`, `app_language`. A new one is added there too.
+  `type`, `interacted`, `custom_type_count`, `kind`, `choice`, `scope`, `event_count`,
+  `skipped_count`. User-scoped: `group_count`, `is_admin`, `app_language`. A new one is added there too.
 - **The shift setup** logs `onboard_shift_shown`, `onboard_shift_skipped` and
   `onboard_shift_completed`, all with `via` (`onboarding` | `add_pane`); the last two carry
   `interacted` — whether the user touched the panel at all before leaving it — and completion adds
   `type_count` and `custom_type_count`. `first_event_added` with `kind` (`typed` | `one_off`) is
   the activation signal, once per device, on the share prompt's counter.
+- **A move to a group** logs `personal_events_moved` once, with `scope` (`one` | `all`), `event_count`
+  and `skipped_count` — never a `group_event_created` or `personal_event_deleted` per event, and it
+  counts toward no prompt. A note on a group event logs `group_event_notes_saved`; `event_notes_saved`
+  stays the personal one.
 - The E2E suite swaps `Analytics` for `RecordingAnalytics`; assert through `awaitLogged` and
   `awaitUserProperty`, since a report follows the backend's answer, not the screen.
 
@@ -487,7 +504,7 @@ Functions  Calls: 3
 
 ## Sensitive points (do not overlook)
 
-1. **No private fields on shared docs** — Firestore does not hide individual fields: if you can read the document, you read all of it. A group event doc is readable by every group member, so never put private data (notes, etc.) on it. `users/{uid}` is readable by **any signed-in user** — that is what lets a search result render a stranger's name and avatar — so it holds only the name, the username, the avatar, `calendarSharedWith` and `showAds`; email, FCM tokens, entitlement and the user's own colour picks live in `users/{uid}/private/**`. Personal events are readable only by the owner and their shared users, so their `notes` may live on the doc.
+1. **No private fields on shared docs** — Firestore does not hide individual fields: if you can read the document, you read all of it. A group event doc is readable by every group member, so never put private data (notes, etc.) on it — a member's note on one goes in their own `users/{uid}/groupEventExtras`. `users/{uid}` is readable by **any signed-in user** — that is what lets a search result render a stranger's name and avatar — so it holds only the name, the username, the avatar, `calendarSharedWith` and `showAds`; email, FCM tokens, entitlement and the user's own colour picks live in `users/{uid}/private/**`. Personal events are readable only by the owner and their shared users, so their `notes` may live on the doc.
 2. **Viewing another user's full calendar (crosses groups)** — group events live under group members, so a user **outside** the group cannot read them directly. The cross-group shared calendar is served **on demand** by the `getSharedCalendar` Cloud Function. A grant has a **single source of truth**: A may read B only if `A ∈ users/B.calendarSharedWith`, a list only B writes. The function checks it, then aggregates the owner's group + personal events for a bounded date range (admin privileges, no stored copy).
 3. **A username is a reservation, not a field** — `usernames/{username}` is a public collection keyed by the handle: the lock that makes a handle unique, and the index a prefix search runs over (a document id cannot be prefix-queried, so the handle is repeated as a field). Uniqueness is enforced by Firestore's create-vs-update distinction in the rules, so **always claim the reservation before writing `users/{uid}.username`**, and release the previous one after. Search there is prefix-only; Firestore has no full-text search.
 

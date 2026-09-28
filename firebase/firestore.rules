@@ -88,6 +88,12 @@ service cloud.firestore {
         allow read: if ownerOrShared(uid);
         allow write: if isSignedIn() && request.auth.uid == uid;
       }
+      // A user's own notes on group events. Owner-only, even for whoever the calendar is shared
+      // with: the group event itself is read by every member, so this is the one place a note on
+      // it can stay private. No group lookup — it holds nothing about the group but its id.
+      match /groupEventExtras/{eventId} {
+        allow read, write: if isSignedIn() && request.auth.uid == uid;
+      }
       // Sync timestamps the owner bumps on every write; readers use them to check their cache.
       // `subscription` is the exception: it gates the cached entitlement, which only the server may
       // declare stale — a client that could hold it back would keep a refunded premium cached.

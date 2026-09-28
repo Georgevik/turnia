@@ -5,6 +5,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import com.geoviksoft.turnia.core.domain.model.EventId
 import com.geoviksoft.turnia.core.domain.model.EventType
+import com.geoviksoft.turnia.core.domain.model.EventTypeId
 import com.geoviksoft.turnia.core.domain.model.GroupEvent
 import com.geoviksoft.turnia.core.domain.model.GroupId
 import com.geoviksoft.turnia.core.domain.model.PersonalTypedEvent
@@ -70,6 +71,10 @@ data class DayEventUi(
     val returnsTo: String? = null,
     val notes: String? = null,
     val notesEditable: Boolean = false,
+    /** A personal typed event's type: what a move to a group carries along. */
+    val typeId: EventTypeId? = null,
+    /** The user's own personal shift, and they are in a group it could move to. */
+    val movable: Boolean = false,
 ) {
     val textColor: Color = background.readableTextColor()
 
@@ -107,10 +112,13 @@ data class DayEventUi(
     )
 }
 
+/** [notes] is the viewer's own private note on the shift; only their own calendars pass one. */
 fun GroupEvent.toUi(
     currentUserId: UserId?,
     removable: Boolean = false,
     activeMember: Boolean = false,
+    notes: String? = null,
+    notesEditable: Boolean = false,
 ) = DayEventUi(
     id = id,
     groupId = groupId,
@@ -135,6 +143,8 @@ fun GroupEvent.toUi(
     },
     timeRange = type.hours(),
     transferChain = buildTransferChain(currentUserId),
+    notes = notes,
+    notesEditable = notesEditable,
 )
 
 /** Between the start and the end of [DayEventUi.timeRange]; `EventHours` splits on it to stack them. */
@@ -161,6 +171,7 @@ private fun GroupEvent.buildTransferChain(currentUserId: UserId?): List<Transfer
 fun PersonalTypedEvent.toUi(
     removable: Boolean = false,
     notesEditable: Boolean = false,
+    movable: Boolean = false,
 ) = DayEventUi(
     id = id,
     groupId = null,
@@ -175,4 +186,6 @@ fun PersonalTypedEvent.toUi(
     removable = removable,
     notes = notes,
     notesEditable = notesEditable,
+    typeId = type.id,
+    movable = movable,
 )

@@ -28,6 +28,10 @@ import com.geoviksoft.turnia.core.domain.model.PersonalEventType
 import com.geoviksoft.turnia.core.domain.model.PersonalOneOffEvent
 import com.geoviksoft.turnia.core.domain.model.PersonalTypedEvent
 import com.geoviksoft.turnia.core.domain.model.SharedCalendar
+import com.geoviksoft.turnia.core.domain.model.MoveError
+import com.geoviksoft.turnia.core.domain.model.MoveResult
+import com.geoviksoft.turnia.core.domain.model.MoveScope
+import com.geoviksoft.turnia.core.domain.model.RetentionWindow
 import com.geoviksoft.turnia.core.domain.model.SharedCalendarError
 import com.geoviksoft.turnia.core.domain.model.SwapError
 import com.geoviksoft.turnia.core.domain.model.User
@@ -48,6 +52,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
@@ -157,6 +162,7 @@ internal class DemoGroupRepository(private val world: DemoWorld) : GroupReposito
     private val me = DemoPeople.me
     private val groups = MutableStateFlow(world.groups)
     private val events = MutableStateFlow(world.groupEvents)
+    private val notes = MutableStateFlow<Map<EventId, String>>(emptyMap())
     private val pending = PendingEventTypes()
 
     override fun getGroups(): Flow<List<Group>> = groups
@@ -251,6 +257,19 @@ internal class DemoGroupRepository(private val world: DemoWorld) : GroupReposito
         }
     }
 
+    override fun getMyEventNotes(date: LocalDate, monthDelta: Int): Flow<Map<EventId, String>> = notes
+
+    override suspend fun saveEventNote(
+        groupId: GroupId,
+        eventId: EventId,
+        eventDate: LocalDate,
+        notes: String?,
+    ): Outcome<Unit, Unit> {
+        val note = notes?.trim()?.ifBlank { null }
+        this.notes.update { if (note == null) it - eventId else it + (eventId to note) }
+        return Unit.toSuccess()
+    }
+
     override fun getSwapEvents(date: LocalDate, monthsAhead: Int): Flow<List<GroupEvent>> =
         events.map { all ->
             all.filter { it.date >= date && it.date <= date.plus(monthsAhead, DateTimeUnit.MONTH) }
@@ -320,7 +339,11 @@ internal class DemoGroupRepository(private val world: DemoWorld) : GroupReposito
         date.minus(monthDelta, DateTimeUnit.MONTH)..date.plus(monthDelta, DateTimeUnit.MONTH)
 }
 
-internal class DemoPersonalEventRepository(world: DemoWorld) : PersonalEventRepository {
+/** [groups] is where a move to a group lands; without it the demo cannot move anything. */
+internal class DemoPersonalEventRepository(
+    private val world: DemoWorld,
+    private val groups: GroupRepository? = null,
+) : PersonalEventRepository {
 
     private val types = MutableStateFlow(world.personalTypes)
     private val events = MutableStateFlow(world.personalEvents)
@@ -383,6 +406,50 @@ internal class DemoPersonalEventRepository(world: DemoWorld) : PersonalEventRepo
     override suspend fun deleteOneOffEvent(event: PersonalOneOffEvent): Outcome<Unit, Unit> {
         oneOffEvents.update { all -> all.filterNot { it.id == event.id } }
         return Unit.toSuccess()
+    }
+
+    override suspend fun moveCandidates(event: PersonalTypedEvent): Outcome<List<PersonalTypedEvent>, MoveError> {
+        val from = RetentionWindow.start(world.today)
+        return events.value.filter { it.type.id == event.type.id && it.date >= from }.toSuccess()
+    }
+
+    override suspend fun moveToGroup(
+        events: List<PersonalTypedEvent>,
+        target: GroupEventType,
+        scope: MoveScope,
+    ): Outcome<MoveResult, MoveError> {
+        val groups = groups ?: return MoveError.Failed.toFailure()
+        val me = DemoPeople.me.id
+        val taken = groups.getEventsByUser(me, world.today, monthDelta = 24).first()
+            .filter { it.groupId == target.groupId && it.assigneeId == me }
+            .map { it.date }
+            .toMutableSet()
+        val moving = events.sortedBy { it.date }.filter { taken.add(it.date) }
+        if (scope == MoveScope.One && moving.isEmpty()) return MoveError.DayTaken.toFailure()
+
+        moving.forEach { event ->
+            groups.addEvent(
+                GroupEvent(
+                    id = event.id,
+                    groupId = target.groupId,
+                    groupName = target.groupName,
+                    ownerId = me,
+                    assigneeId = me,
+                    assigneeName = "",
+                    type = target,
+                    date = event.date,
+                    onSwap = false,
+                    colorHex = target.color,
+                    history = emptyList(),
+                )
+            )
+            event.notes?.let { groups.saveEventNote(target.groupId, event.id, event.date, it) }
+        }
+        val movedIds = moving.map { it.id }.toSet()
+        this.events.update { all -> all.filterNot { it.id in movedIds } }
+        if (scope == MoveScope.All) deleteEventType(events.first().type.id)
+
+        return MoveResult(moved = moving.size, skipped = events.size - moving.size).toSuccess()
     }
 }
 

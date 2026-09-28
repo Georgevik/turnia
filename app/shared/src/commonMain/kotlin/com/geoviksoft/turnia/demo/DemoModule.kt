@@ -25,7 +25,7 @@ val demoModule: Module = module {
     single<UserRepository> { DemoUserRepository() }
     single<FcmDelegate> { get<UserRepository>() }
     single<GroupRepository> { DemoGroupRepository(get()) }
-    single<PersonalEventRepository> { DemoPersonalEventRepository(get()) }
+    single<PersonalEventRepository> { DemoPersonalEventRepository(get(), get()) }
     single<SharedCalendarRepository> { DemoSharedCalendarRepository(get()) }
     single<Analytics> { DemoAnalytics }
     single<AppConfigRepository> { DemoAppConfigRepository() }
