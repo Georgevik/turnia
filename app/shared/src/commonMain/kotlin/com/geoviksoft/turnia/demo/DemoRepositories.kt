@@ -3,6 +3,7 @@ package com.geoviksoft.turnia.demo
 import com.geoviksoft.turnia.core.domain.model.ShiftSetupVia
 import com.geoviksoft.turnia.core.domain.repository.ShiftSetupRepository
 import com.geoviksoft.turnia.core.domain.repository.TeamPromptRepository
+import com.geoviksoft.turnia.core.data.group.PendingEventTypes
 import com.geoviksoft.turnia.core.domain.model.TeamPromptChoice
 import com.geoviksoft.turnia.core.domain.analytics.Analytics
 import com.geoviksoft.turnia.core.domain.analytics.AnalyticsEvent
@@ -156,7 +157,7 @@ internal class DemoGroupRepository(private val world: DemoWorld) : GroupReposito
     private val me = DemoPeople.me
     private val groups = MutableStateFlow(world.groups)
     private val events = MutableStateFlow(world.groupEvents)
-    private val pending = MutableStateFlow<List<GroupEventType>>(emptyList())
+    private val pending = PendingEventTypes()
 
     override fun getGroups(): Flow<List<Group>> = groups
 
@@ -307,13 +308,13 @@ internal class DemoGroupRepository(private val world: DemoWorld) : GroupReposito
     override suspend fun saveTypeColor(groupId: GroupId, typeId: EventTypeId, color: String): Result<Unit> =
         Result.success(Unit)
 
-    override val pendingEventTypes: StateFlow<List<GroupEventType>> = pending.asStateFlow()
+    override val pendingEventTypes: StateFlow<List<GroupEventType>> = pending.types
 
-    override fun setPendingEventType(type: GroupEventType) =
-        pending.update { types -> types.filterNot { it.id == type.id } + type }
+    override fun setPendingEventType(type: GroupEventType) = pending.set(type)
 
-    override fun consumePendingEventTypes(): List<GroupEventType> =
-        pending.value.also { pending.value = emptyList() }
+    override fun removePendingEventType(id: EventTypeId) = pending.remove(id)
+
+    override fun consumePendingEventTypes(): List<GroupEventType> = pending.consume()
 
     private fun window(date: LocalDate, monthDelta: Int) =
         date.minus(monthDelta, DateTimeUnit.MONTH)..date.plus(monthDelta, DateTimeUnit.MONTH)

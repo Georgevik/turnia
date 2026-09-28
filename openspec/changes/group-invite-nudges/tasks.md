@@ -54,7 +54,7 @@
 ## 5. Proposed types in the new-group form
 
 - [x] 5.1 Add `ShiftPreset.groupDefaults` (Morning, Afternoon, Night, MorningAfternoon). Verify with a unit test of its order and content.
-- [ ] 5.2 Add `GroupRepository.removePendingEventType(id)` to the implementation and the demo repository. Verify with a unit test.
+- [x] 5.2 Add `GroupRepository.removePendingEventType(id)` to the implementation and the demo repository. Verify with a unit test.
 - [ ] 5.3 Add `GroupDetailViewModel.proposeTypes(texts: Map<ShiftPreset, Pair<String, String>>)`. It seeds each preset once as a pending `GroupEventType`: preset times, preset color as `defaultColor`, `swappable = true`, a new id. A ViewModel flag keeps it from seeding twice, and it does nothing for an existing group. Add `onRemoveType(id)`. Verify with `GroupDetailViewModel` tests:
   - seeding yields four rows;
   - calling it twice still yields four;

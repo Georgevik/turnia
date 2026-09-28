@@ -138,6 +138,9 @@ interface GroupRepository {
     /** Holds a type for the group being created, or replaces the one it is an edit of. */
     fun setPendingEventType(type: GroupEventType)
 
+    /** Drops a type from the group being created, before it is ever written. */
+    fun removePendingEventType(id: EventTypeId)
+
     /** Hands over the types held for the group being created and forgets them. */
     fun consumePendingEventTypes(): List<GroupEventType>
 }
