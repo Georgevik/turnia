@@ -486,6 +486,11 @@
     <string name="share_prompt_friends_message">Je gère mes gardes et mes sorties avec Turnia. Télécharge-la et on trouve un jour pour se voir :</string>
     <string name="share_prompt_share">Partager Turnia</string>
     <string name="share_prompt_not_now">Pas maintenant</string>
+    <string name="team_prompt_title">Vous travaillez en équipe ?</string>
+    <string name="team_prompt_text">Créez un groupe avec vos collègues : tout le monde voit le planning et, quand vous échangez une garde, toute la chaîne reste tracée.</string>
+    <string name="team_prompt_create">Créer un groupe</string>
+    <string name="team_prompt_join">J'ai un code</string>
+    <string name="team_prompt_not_now">Pas maintenant</string>
     <string name="shift_setup_title">Quels postes fais-tu ?</string>
     <string name="shift_setup_subtitle">Crée-les une fois et ajoute-les à ton calendrier d'un simple geste.</string>
     <string name="shift_setup_skip">Passer</string>

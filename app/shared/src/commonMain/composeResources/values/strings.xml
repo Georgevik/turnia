@@ -488,6 +488,11 @@
     <string name="share_prompt_friends_message">I keep my shifts and plans in Turnia. Get it so we can find a day to meet up:</string>
     <string name="share_prompt_share">Share Turnia</string>
     <string name="share_prompt_not_now">Not now</string>
+    <string name="team_prompt_title">Do you work with a team?</string>
+    <string name="team_prompt_text">Create a group with your colleagues: everyone sees the rota, and when you swap a shift the whole chain stays on record.</string>
+    <string name="team_prompt_create">Create a group</string>
+    <string name="team_prompt_join">I have a code</string>
+    <string name="team_prompt_not_now">Not now</string>
     <string name="shift_setup_title">What shifts do you work?</string>
     <string name="shift_setup_subtitle">Create them once and add them to your calendar with a tap.</string>
     <string name="shift_setup_skip">Skip</string>

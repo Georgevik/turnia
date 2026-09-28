@@ -486,6 +486,11 @@
     <string name="share_prompt_friends_message">Llevo mis turnos y planes en Turnia. Descárgala y encontramos un día para quedar:</string>
     <string name="share_prompt_share">Compartir Turnia</string>
     <string name="share_prompt_not_now">Ahora no</string>
+    <string name="team_prompt_title">¿Trabajas en equipo?</string>
+    <string name="team_prompt_text">Crea un grupo con tus compañeros: todos ven el cuadrante y, cuando cambias un turno, toda la cadena de cambios queda registrada.</string>
+    <string name="team_prompt_create">Crear un grupo</string>
+    <string name="team_prompt_join">Tengo un código</string>
+    <string name="team_prompt_not_now">Ahora no</string>
     <string name="shift_setup_title">¿Qué turnos haces?</string>
     <string name="shift_setup_subtitle">Créalos una vez y añádelos a tu calendario con un toque.</string>
     <string name="shift_setup_skip">Saltar</string>
