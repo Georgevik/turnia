@@ -75,7 +75,7 @@
 ## 7. Single-member card
 
 - [x] 7.1 Add `isAlone` (`!isNew && members.size == 1`) to `GroupDetailUi.Success`, recomputed in `show()`. Verify with ViewModel tests: one member → true; an emission with two members → false; a new group → false.
-- [ ] 7.2 Add the "Only you here" card to `GroupDetailContent` with the shared invite helper, plus strings in all five languages and a preview. Verify manually that a one-member group shows it and that accepting a join request removes it without leaving the screen.
+- [x] 7.2 Add the "Only you here" card to `GroupDetailContent` with the shared invite helper, plus strings in all five languages and a preview. Verify manually that a one-member group shows it and that accepting a join request removes it without leaving the screen.
 
 ## 8. E2E and integration
 

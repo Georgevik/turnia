@@ -191,6 +191,9 @@
     <string name="group_created_text">Lade deine Kolleginnen und Kollegen ein, damit alle den Dienstplan sehen und Dienste mit dir tauschen können.</string>
     <string name="group_created_invite">Kollegium einladen</string>
     <string name="group_created_done">Fertig</string>
+    <string name="group_alone_title">Nur du bist hier</string>
+    <string name="group_alone_text">Eine Gruppe ist zum Tauschen von Diensten mit deinem Team da. Lade es ein, dann füllt sich der Dienstplan.</string>
+    <string name="group_alone_invite">Kollegium einladen</string>
     <string name="group_detail_code_changed">Speichere, damit der neue Code gültig wird.</string>
     <string name="group_detail_section_members">Mitglieder</string>
     <string name="group_detail_members_sheet_title">Gruppenmitglieder</string>

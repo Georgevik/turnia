@@ -191,6 +191,9 @@
     <string name="group_created_text">Invita i tuoi colleghi, così tutti vedono i turni e possono scambiarli con te.</string>
     <string name="group_created_invite">Invita i colleghi</string>
     <string name="group_created_done">Fatto</string>
+    <string name="group_alone_title">Ci sei solo tu</string>
+    <string name="group_alone_text">Un gruppo serve a scambiare turni con la tua squadra. Invitala e i turni si riempiranno.</string>
+    <string name="group_alone_invite">Invita i colleghi</string>
     <string name="group_detail_code_changed">Salva perché il nuovo codice inizi a funzionare.</string>
     <string name="group_detail_section_members">Membri</string>
     <string name="group_detail_members_sheet_title">Membri del gruppo</string>

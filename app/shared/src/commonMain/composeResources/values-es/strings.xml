@@ -191,6 +191,9 @@
     <string name="group_created_text">Invita a tus compañeros para que todos vean el cuadrante y puedan cambiarte turnos.</string>
     <string name="group_created_invite">Invitar a compañeros</string>
     <string name="group_created_done">Hecho</string>
+    <string name="group_alone_title">Solo estás tú</string>
+    <string name="group_alone_text">Un grupo sirve para cambiar turnos con tu equipo. Invítalos y el cuadrante se llenará.</string>
+    <string name="group_alone_invite">Invitar a compañeros</string>
     <string name="group_detail_code_changed">Guarda para que el código nuevo empiece a funcionar.</string>
     <string name="group_detail_section_members">Miembros</string>
     <string name="group_detail_members_sheet_title">Miembros del grupo</string>

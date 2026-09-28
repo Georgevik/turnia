@@ -191,6 +191,9 @@
     <string name="group_created_text">Invite your colleagues so everyone sees the rota and can swap shifts with you.</string>
     <string name="group_created_invite">Invite colleagues</string>
     <string name="group_created_done">Done</string>
+    <string name="group_alone_title">Only you here</string>
+    <string name="group_alone_text">A group is for swapping shifts with your team. Invite them and the rota fills up.</string>
+    <string name="group_alone_invite">Invite colleagues</string>
     <string name="group_detail_code_changed">Save so the new code starts working.</string>
     <string name="group_detail_section_members">Members</string>
     <string name="group_detail_members_sheet_title">Group members</string>

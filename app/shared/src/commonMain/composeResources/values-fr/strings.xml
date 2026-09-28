@@ -191,6 +191,9 @@
     <string name="group_created_text">Invitez vos collègues pour que tout le monde voie le planning et puisse échanger des gardes avec vous.</string>
     <string name="group_created_invite">Inviter des collègues</string>
     <string name="group_created_done">Terminé</string>
+    <string name="group_alone_title">Vous êtes seul ici</string>
+    <string name="group_alone_text">Un groupe sert à échanger des gardes avec votre équipe. Invitez-la et le planning se remplira.</string>
+    <string name="group_alone_invite">Inviter des collègues</string>
     <string name="group_detail_code_changed">Enregistre pour que le nouveau code fonctionne.</string>
     <string name="group_detail_section_members">Membres</string>
     <string name="group_detail_members_sheet_title">Membres du groupe</string>

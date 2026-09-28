@@ -108,6 +108,9 @@ import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import androidx.compose.ui.tooling.preview.Preview
 import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
+import turnia.app.shared.generated.resources.group_alone_invite
+import turnia.app.shared.generated.resources.group_alone_text
+import turnia.app.shared.generated.resources.group_alone_title
 import turnia.app.shared.generated.resources.group_created_done
 import turnia.app.shared.generated.resources.group_created_invite
 import turnia.app.shared.generated.resources.group_created_text
@@ -298,6 +301,7 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel) {
                     onMembersClick = { membersSheetOpen = true },
                     onSave = viewModel::onSave,
                     onRemoveType = viewModel::onRemoveType,
+                    onInvitationShared = viewModel::onInvitationShared,
                     onTypeClick = { row ->
                         rootNavigator.goTo(
                             RootRoute.EventTypeDetailKey(
@@ -450,6 +454,7 @@ private fun GroupDetailContent(
     onMembersClick: () -> Unit,
     onSave: () -> Unit,
     onRemoveType: (EventTypeId) -> Unit,
+    onInvitationShared: () -> Unit,
     onTypeClick: (GroupTypeRowUi) -> Unit,
     onAddType: () -> Unit,
 ) {
@@ -510,6 +515,12 @@ private fun GroupDetailContent(
                 onAutoApproveChanged = onAutoApproveChanged,
                 onRegenerateCode = onRegenerateCode,
             )
+        }
+
+        if (state.isAlone) {
+            rememberInvitationShare(form, onInvitationShared)?.let { share ->
+                AloneCard(onInvite = share)
+            }
         }
 
         if (!state.isNew) {
@@ -1087,5 +1098,55 @@ private fun GroupCreatedContent(
 private fun GroupCreatedContentPreview() {
     PreviewTurniaTheme {
         GroupCreatedContent(share = {}, onDone = {})
+    }
+}
+
+/** A group of one holds nobody to swap with: the card says so until a second member arrives. */
+@Composable
+private fun AloneCard(onInvite: () -> Unit) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                text = stringResource(Res.string.group_alone_title),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = stringResource(Res.string.group_alone_text),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Button(
+                onClick = onInvite,
+                shape = RoundedCornerShape(percent = 50),
+                contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Share,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                )
+                Text(
+                    text = stringResource(Res.string.group_alone_invite),
+                    modifier = Modifier.padding(start = 8.dp),
+                )
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun AloneCardPreview() {
+    PreviewTurniaTheme {
+        AloneCard(onInvite = {})
     }
 }
