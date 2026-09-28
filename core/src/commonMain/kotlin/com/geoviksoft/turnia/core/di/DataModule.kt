@@ -6,6 +6,10 @@ import com.geoviksoft.turnia.core.data.config.AppConfigRepositoryImpl
 import com.geoviksoft.turnia.core.data.config.DeviceSettings
 import com.geoviksoft.turnia.core.data.config.RemoteConfigService
 import com.geoviksoft.turnia.core.data.config.SharePromptRepositoryImpl
+import com.geoviksoft.turnia.core.data.config.TeamPromptRepositoryImpl
+import com.geoviksoft.turnia.core.data.user.FirestoreGroupMembership
+import com.geoviksoft.turnia.core.data.user.GroupMembership
+import com.geoviksoft.turnia.core.domain.repository.TeamPromptRepository
 import com.geoviksoft.turnia.core.domain.repository.ShiftSetupRepository
 import com.geoviksoft.turnia.core.data.user.ShiftSetupRepositoryImpl
 import com.geoviksoft.turnia.core.data.user.FirestoreAccountContents
@@ -174,6 +178,10 @@ val dataModule: Module = module {
     single<AppConfigRepository> { AppConfigRepositoryImpl(get(), get()) }
     single<SharePromptRepository> { SharePromptRepositoryImpl(get(), get(), get()) }
     single<AccountContents> { FirestoreAccountContents(get(), get()) }
+    single<GroupMembership> { FirestoreGroupMembership(get()) }
+    single<TeamPromptRepository> {
+        TeamPromptRepositoryImpl(get<UserRepository>().userSession, get(), get(), get(), get())
+    }
     single<ShiftSetupRepository> {
         ShiftSetupRepositoryImpl(get<UserRepository>().userSession, get(), get(), get(), get(), get(), get())
     }

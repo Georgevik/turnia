@@ -7,6 +7,7 @@ import com.geoviksoft.turnia.core.domain.repository.FcmDelegate
 import com.geoviksoft.turnia.core.domain.repository.GroupRepository
 import com.geoviksoft.turnia.core.domain.repository.PersonalEventRepository
 import com.geoviksoft.turnia.core.domain.repository.SharedCalendarRepository
+import com.geoviksoft.turnia.core.domain.repository.TeamPromptRepository
 import com.geoviksoft.turnia.core.domain.repository.UserRepository
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
@@ -29,4 +30,5 @@ val demoModule: Module = module {
     single<Analytics> { DemoAnalytics }
     single<AppConfigRepository> { DemoAppConfigRepository() }
     single<ShiftSetupRepository> { DemoShiftSetupRepository(get()) }
+    single<TeamPromptRepository> { DemoTeamPromptRepository }
 }

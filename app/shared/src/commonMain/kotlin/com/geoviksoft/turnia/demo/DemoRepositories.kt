@@ -2,6 +2,8 @@ package com.geoviksoft.turnia.demo
 
 import com.geoviksoft.turnia.core.domain.model.ShiftSetupVia
 import com.geoviksoft.turnia.core.domain.repository.ShiftSetupRepository
+import com.geoviksoft.turnia.core.domain.repository.TeamPromptRepository
+import com.geoviksoft.turnia.core.domain.model.TeamPromptChoice
 import com.geoviksoft.turnia.core.domain.analytics.Analytics
 import com.geoviksoft.turnia.core.domain.analytics.AnalyticsEvent
 import com.geoviksoft.turnia.core.domain.analytics.AnalyticsUserProperty
@@ -448,4 +450,12 @@ internal class DemoShiftSetupRepository(
     ): Outcome<Unit, Unit> = personalEventRepository.createEventTypes(types)
 
     override fun hintShown() = Unit
+}
+
+/** The demo user already has groups: nobody asks them whether they work with a team. */
+internal object DemoTeamPromptRepository : TeamPromptRepository {
+    override val pending: StateFlow<Boolean> = MutableStateFlow(false)
+    override suspend fun eventsAdded(count: Int) = Unit
+    override suspend fun shown() = Unit
+    override fun answered(choice: TeamPromptChoice): Boolean = false
 }
