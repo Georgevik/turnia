@@ -110,8 +110,12 @@ class ShiftSetupViewModel(
         }
     }
 
+    // A second tap lands while the first skip is still writing, before the screen closes.
+    private var skipping = false
+
     fun skip() {
-        if (_uiState.value.closed) return
+        if (_uiState.value.closed || skipping) return
+        skipping = true
         val interacted = _uiState.value.interacted
         // Settled before the screen leaves, or Main would find the setup still owed and open it again.
         viewModelScope.launch {

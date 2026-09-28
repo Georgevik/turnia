@@ -1,5 +1,6 @@
 package com.geoviksoft.turnia.ui.shiftsetup
 
+import kotlinx.coroutines.CompletableDeferred
 import com.geoviksoft.turnia.core.domain.model.PersonalEventType
 import com.geoviksoft.turnia.core.domain.model.ShiftSetupVia
 import com.geoviksoft.turnia.core.domain.repository.ShiftSetupRepository
@@ -168,6 +169,20 @@ class ShiftSetupViewModelTest {
         assertTrue(viewModel.uiState.value.closed)
     }
 
+    @Test
+    fun skippingTwiceBeforeTheScreenClosesReportsOnce() {
+        val gate = CompletableDeferred<Unit>()
+        repository.skipGate = gate
+        val viewModel = viewModel()
+
+        viewModel.skip()
+        viewModel.skip()
+        gate.complete(Unit)
+
+        assertEquals(1, repository.skipped.size)
+        assertTrue(viewModel.uiState.value.closed)
+    }
+
     private companion object {
         val spanish = mapOf(
             ShiftPreset.Morning to ("Mañana" to "M"),
@@ -186,6 +201,7 @@ private class FakeShiftSetupRepository : ShiftSetupRepository {
     val skipped = mutableListOf<Pair<ShiftSetupVia, Boolean>>()
     val completed = mutableListOf<Completed>()
     var fails = false
+    var skipGate: CompletableDeferred<Unit>? = null
 
     override val shouldShow: StateFlow<Boolean> = MutableStateFlow(true)
     override val hintPending: StateFlow<Boolean> = MutableStateFlow(false)
@@ -196,6 +212,7 @@ private class FakeShiftSetupRepository : ShiftSetupRepository {
 
     override suspend fun skipped(via: ShiftSetupVia, interacted: Boolean) {
         skipped += via to interacted
+        skipGate?.await()
     }
 
     override suspend fun complete(
