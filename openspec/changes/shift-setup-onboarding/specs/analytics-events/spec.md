@@ -51,8 +51,8 @@ The system SHALL log `first_event_added` when the first event is added on the de
 - `typed` for an event of a personal or group event type;
 - `one_off` for a personal one-off event.
 
-It SHALL be logged at most once per device, and only once the event has been written. The count
-SHALL be the same device-wide one the share prompt uses. A device that had already added events
+It SHALL be logged at most once per device, when the add is issued by a signed-in user, the same
+moment the share prompt counts it. The count SHALL be the same device-wide one the share prompt uses. A device that had already added events
 before this change SHALL NOT log it.
 
 #### Scenario: First event is a shift
