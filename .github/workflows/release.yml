@@ -210,8 +210,30 @@ jobs:
           mkdir -p "$RUNNER_TEMP/asc"
           echo "$ASC_KEY_P8" > "$RUNNER_TEMP/asc/AuthKey.p8"
 
-      # Automatic signing with the API key: Xcode fetches or creates the distribution certificate
-      # and profile itself, so none of them live in the repo or in secrets.
+      - name: Import the signing certificate
+        env:
+          CERT_P12_BASE64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
+          CERT_PASSWORD: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
+        run: |
+          KEYCHAIN_PATH="$RUNNER_TEMP/signing.keychain-db"
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 24)
+          echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> "$GITHUB_ENV"
+
+          echo "$CERT_P12_BASE64" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$RUNNER_TEMP/cert.p12" -P "$CERT_PASSWORD" -A \
+            -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH" login.keychain-db
+
+          rm -f "$RUNNER_TEMP/cert.p12"
+
+      # Automatic signing with the imported certificate: Xcode reuses it and only has to fetch or
+      # renew the matching provisioning profile through the API key.
       - name: Archive
         env:
           APP_BUILD_NUMBER: ${{ needs.validate.outputs.buildNumber }}
@@ -244,6 +266,10 @@ jobs:
       - name: Remove the API key
         if: always()
         run: rm -rf "$RUNNER_TEMP/asc"
+
+      - name: Remove the signing keychain
+        if: always()
+        run: security delete-keychain "$KEYCHAIN_PATH" 2>/dev/null || true
 
   # A TestFlight upload carries no notes, unlike Play's, so they are added once the build is there.
   testflight-notes:

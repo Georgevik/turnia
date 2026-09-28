@@ -119,11 +119,34 @@ tracks* for Turnia. Play only accepts API uploads once the app has had one bundl
 | `ASC_KEY_ID` | Key ID of an App Store Connect API key |
 | `ASC_ISSUER_ID` | Issuer ID shown above the keys list |
 | `ASC_KEY_P8` | The contents of the downloaded `AuthKey_XXXX.p8` |
+| `IOS_DIST_CERT_P12_BASE64` | The distribution certificate + private key, exported as `.p12`, base64: `base64 -i dist.p12 \| pbcopy` |
+| `IOS_DIST_CERT_PASSWORD` | The password chosen when exporting that `.p12` |
 
 App Store Connect → **Users and Access** → **Integrations** → **App Store Connect API** → generate
-a team key with the **Admin** role. Admin is what lets Xcode create the distribution certificate
-and profile on the runner (cloud signing), so no certificate or profile is stored anywhere. The
-`.p8` can only be downloaded once.
+a team key with the **Admin** role. Admin is what lets Xcode create or renew the provisioning
+profile on the runner (cloud signing), so no profile is stored anywhere. The `.p8` can only be
+downloaded once.
+
+The certificate is different: it **is** stored, as a secret, and reused on every run instead of
+being minted fresh each time. A GitHub Actions macOS runner starts with an empty keychain, so
+without a stored certificate Xcode had to create a brand new "Apple Distribution" certificate on
+every single release — and Apple caps how many an account can have, so releases eventually started
+failing with "Choose a certificate to revoke. Your account has reached the maximum number of
+certificates."
+
+To create it once (Keychain Access on a Mac with access to the team):
+
+1. Xcode → Settings → Accounts → select the team → **Manage Certificates** → **+** → **Apple
+   Distribution**. This creates one certificate and installs it in the login keychain.
+2. Keychain Access → *login* keychain → *My Certificates* → find the new "Apple Distribution:
+   Geoviksoft..." certificate → right-click → **Export...** → save as `dist.p12`, choosing a
+   password when prompted.
+3. `base64 -i dist.p12 | pbcopy` and paste as the `IOS_DIST_CERT_P12_BASE64` secret; the password
+   chosen above becomes `IOS_DIST_CERT_PASSWORD`.
+4. Delete the local `dist.p12` once both secrets are saved.
+
+If this certificate is ever revoked or expires, repeat the steps above and update both secrets —
+nothing else in the workflow changes.
 
 ### Build machines
 
