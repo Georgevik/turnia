@@ -60,7 +60,7 @@
 
 ## 6. The move in the UI
 
-- [ ] 6.1 Add strings in `values/`, `values-es/`, `values-fr/`, `values-de/` and `values-it/`:
+- [x] 6.1 Add strings in `values/`, `values-es/`, `values-fr/`, `values-de/` and `values-it/`:
   - "Move to a group", the group and type picker titles, "Only this one" and "All of them";
   - the plural "%d moved" / "%d already had a shift";
   - "You already have a shift in this group that day", and "Couldn't move the shift".

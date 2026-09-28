@@ -529,4 +529,29 @@
     <string name="add_pane_other_event">Altro evento…</string>
     <string name="one_off_event_save_as_shift">Salva come turno</string>
     <string name="shift_setup_edit_hours">Modifica orario</string>
+    <!-- Moving a personal shift to a group -->
+    <string name="event_move_to_group">Sposta in un gruppo</string>
+    <string name="move_pick_group_title">In quale gruppo?</string>
+    <string name="move_pick_type_title">Quale turno di %1$s?</string>
+    <string name="move_scope_title">Solo questo o tutti?</string>
+    <plurals name="move_scope_body">
+        <item quantity="one">%1$s ha %2$d turno da un mese fa in poi. Spostandoli tutti sparisce da I miei turni; quelli più vecchi restano come sono.</item>
+        <item quantity="other">%1$s ha %2$d turni da un mese fa in poi. Spostandoli tutti sparisce da I miei turni; quelli più vecchi restano come sono.</item>
+    </plurals>
+    <string name="move_scope_one">Solo questo</string>
+    <string name="move_scope_all">Tutti</string>
+    <string name="move_moving">Spostamento…</string>
+    <string name="move_done_title">Spostati in %1$s</string>
+    <plurals name="move_done_moved">
+        <item quantity="one">%1$d spostato</item>
+        <item quantity="other">%1$d spostati</item>
+    </plurals>
+    <plurals name="move_done_skipped">
+        <item quantity="one">%1$d aveva già un turno</item>
+        <item quantity="other">%1$d avevano già un turno</item>
+    </plurals>
+    <string name="move_done">Fatto</string>
+    <string name="move_cancel">Annulla</string>
+    <string name="move_error_day_taken">Hai già un turno di questo gruppo quel giorno</string>
+    <string name="move_error_failed">Impossibile spostare il turno</string>
 </resources>

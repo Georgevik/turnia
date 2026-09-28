@@ -531,4 +531,29 @@
     <string name="add_pane_other_event">Other event…</string>
     <string name="one_off_event_save_as_shift">Save as shift</string>
     <string name="shift_setup_edit_hours">Edit hours</string>
+    <!-- Moving a personal shift to a group -->
+    <string name="event_move_to_group">Move to a group</string>
+    <string name="move_pick_group_title">Move to which group?</string>
+    <string name="move_pick_type_title">Which shift of %1$s?</string>
+    <string name="move_scope_title">Only this one, or all of them?</string>
+    <plurals name="move_scope_body">
+        <item quantity="one">%1$s has %2$d shift from a month ago onward. Moving all of it takes it out of My shifts; older ones stay as they are.</item>
+        <item quantity="other">%1$s has %2$d shifts from a month ago onward. Moving all of them takes it out of My shifts; older ones stay as they are.</item>
+    </plurals>
+    <string name="move_scope_one">Only this one</string>
+    <string name="move_scope_all">All of them</string>
+    <string name="move_moving">Moving…</string>
+    <string name="move_done_title">Moved to %1$s</string>
+    <plurals name="move_done_moved">
+        <item quantity="one">%1$d moved</item>
+        <item quantity="other">%1$d moved</item>
+    </plurals>
+    <plurals name="move_done_skipped">
+        <item quantity="one">%1$d already had a shift</item>
+        <item quantity="other">%1$d already had a shift</item>
+    </plurals>
+    <string name="move_done">Done</string>
+    <string name="move_cancel">Cancel</string>
+    <string name="move_error_day_taken">You already have a shift in this group that day</string>
+    <string name="move_error_failed">Couldn't move the shift</string>
 </resources>

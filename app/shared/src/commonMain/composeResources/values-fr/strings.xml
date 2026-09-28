@@ -529,4 +529,29 @@
     <string name="add_pane_other_event">Autre événement…</string>
     <string name="one_off_event_save_as_shift">Enregistrer comme poste</string>
     <string name="shift_setup_edit_hours">Modifier l'horaire</string>
+    <!-- Moving a personal shift to a group -->
+    <string name="event_move_to_group">Déplacer vers un groupe</string>
+    <string name="move_pick_group_title">Vers quel groupe ?</string>
+    <string name="move_pick_type_title">Quel poste de %1$s ?</string>
+    <string name="move_scope_title">Seulement celui-ci, ou tous ?</string>
+    <plurals name="move_scope_body">
+        <item quantity="one">%1$s a %2$d poste depuis un mois. Tout déplacer le retire de Mes postes ; les plus anciens restent tels quels.</item>
+        <item quantity="other">%1$s a %2$d postes depuis un mois. Tous les déplacer le retire de Mes postes ; les plus anciens restent tels quels.</item>
+    </plurals>
+    <string name="move_scope_one">Seulement celui-ci</string>
+    <string name="move_scope_all">Tous</string>
+    <string name="move_moving">Déplacement…</string>
+    <string name="move_done_title">Déplacés vers %1$s</string>
+    <plurals name="move_done_moved">
+        <item quantity="one">%1$d déplacé</item>
+        <item quantity="other">%1$d déplacés</item>
+    </plurals>
+    <plurals name="move_done_skipped">
+        <item quantity="one">%1$d avait déjà un poste</item>
+        <item quantity="other">%1$d avaient déjà un poste</item>
+    </plurals>
+    <string name="move_done">Terminé</string>
+    <string name="move_cancel">Annuler</string>
+    <string name="move_error_day_taken">Vous avez déjà un poste de ce groupe ce jour-là</string>
+    <string name="move_error_failed">Impossible de déplacer le poste</string>
 </resources>

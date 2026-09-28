@@ -529,4 +529,29 @@
     <string name="add_pane_other_event">Anderer Termin…</string>
     <string name="one_off_event_save_as_shift">Als Schicht speichern</string>
     <string name="shift_setup_edit_hours">Zeiten bearbeiten</string>
+    <!-- Moving a personal shift to a group -->
+    <string name="event_move_to_group">In eine Gruppe verschieben</string>
+    <string name="move_pick_group_title">In welche Gruppe?</string>
+    <string name="move_pick_type_title">Welche Schicht von %1$s?</string>
+    <string name="move_scope_title">Nur diese oder alle?</string>
+    <plurals name="move_scope_body">
+        <item quantity="one">%1$s hat %2$d Schicht ab einem Monat zurück. Wenn du alle verschiebst, verschwindet sie aus Meine Schichten; ältere bleiben, wie sie sind.</item>
+        <item quantity="other">%1$s hat %2$d Schichten ab einem Monat zurück. Wenn du alle verschiebst, verschwindet sie aus Meine Schichten; ältere bleiben, wie sie sind.</item>
+    </plurals>
+    <string name="move_scope_one">Nur diese</string>
+    <string name="move_scope_all">Alle</string>
+    <string name="move_moving">Wird verschoben…</string>
+    <string name="move_done_title">Nach %1$s verschoben</string>
+    <plurals name="move_done_moved">
+        <item quantity="one">%1$d verschoben</item>
+        <item quantity="other">%1$d verschoben</item>
+    </plurals>
+    <plurals name="move_done_skipped">
+        <item quantity="one">%1$d hatte schon eine Schicht</item>
+        <item quantity="other">%1$d hatten schon eine Schicht</item>
+    </plurals>
+    <string name="move_done">Fertig</string>
+    <string name="move_cancel">Abbrechen</string>
+    <string name="move_error_day_taken">Du hast an diesem Tag schon eine Schicht in dieser Gruppe</string>
+    <string name="move_error_failed">Die Schicht konnte nicht verschoben werden</string>
 </resources>
