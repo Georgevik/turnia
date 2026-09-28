@@ -123,6 +123,24 @@ fun DayEventRow(
                             overflow = TextOverflow.Ellipsis,
                         )
                         event.timeRange?.let { EventHours(timeRange = it) }
+                        // An icon beside delete, not a line of its own: most personal shifts are
+                        // meant to stay personal, and the row should not suggest otherwise.
+                        if (onMove != null) {
+                            IconButton(
+                                onClick = onMove,
+                                modifier = Modifier
+                                    .padding(start = 4.dp)
+                                    .size(28.dp)
+                                    .testTag(TestTags.MOVE_TO_GROUP),
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Groups,
+                                    contentDescription = stringResource(Res.string.event_move_to_group),
+                                    modifier = Modifier.size(18.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
                         if (onRemove != null) {
                             // Kept clear of the hours, so a tap meant for neither lands on delete.
                             IconButton(
@@ -204,11 +222,6 @@ fun DayEventRow(
                         Spacer(Modifier.height(8.dp))
                         AddNoteButton(onClick = onEditNotes)
                     }
-
-                    if (onMove != null) {
-                        Spacer(Modifier.height(4.dp))
-                        MoveToGroupButton(onClick = onMove)
-                    }
                 }
             }
         }
@@ -267,30 +280,6 @@ private fun AddNoteButton(onClick: () -> Unit) {
 
 
 
-
-@Composable
-private fun MoveToGroupButton(onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .testTag(TestTags.MOVE_TO_GROUP)
-            .clickable(onClick = onClick)
-            .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        Icon(
-            imageVector = Icons.Default.Groups,
-            contentDescription = null,
-            modifier = Modifier.size(16.dp),
-            tint = MaterialTheme.colorScheme.primary,
-        )
-        Text(
-            text = stringResource(Res.string.event_move_to_group),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.primary,
-        )
-    }
-}
 
 /** Offering the shift, or taking the offer back. Only ever shown to whoever covers it. */
 @Composable

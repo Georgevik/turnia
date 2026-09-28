@@ -9,7 +9,8 @@ event of a personal type at once, so that colleagues see them and they can be of
 
 ### Requirement: A personal typed event offers "Move to a group"
 On the user's own calendar, the day sheet row of a personal typed event SHALL offer "Move to a
-group". It SHALL NOT be offered on a personal one-off event, on a group event, or on a colleague's
+group" as an icon action in the row's header, beside delete, and not as a line of its own: most
+personal shifts are meant to stay personal. It SHALL NOT be offered on a personal one-off event, on a group event, or on a colleague's
 shared calendar. It SHALL be offered only when the user is a member of at least one group, not
 revoked, that has at least one event type.
 
