@@ -659,22 +659,35 @@ private fun InvitationSection(
 /** Any member can invite: the link carries the code, and an admin still answers the request. */
 @Composable
 private fun ShareInvitationAction(form: GroupDetailUi.GroupForm, onShared: () -> Unit) {
-    val code = form.invitationCode ?: return
+    val share = rememberInvitationShare(form, onShared) ?: return
+
+    IconButton(onClick = share) {
+        Icon(
+            imageVector = Icons.Default.Share,
+            contentDescription = stringResource(Res.string.group_detail_share_invitation),
+        )
+    }
+}
+
+/**
+ * Hands the group's invitation link to the system share sheet. Every share button on this screen
+ * goes through here, so they all send the same text; null while the code cannot be passed on yet.
+ */
+@Composable
+private fun rememberInvitationShare(
+    form: GroupDetailUi.GroupForm,
+    onShared: () -> Unit,
+): (() -> Unit)? {
+    val code = form.invitationCode?.takeIf { form.canPassOnCode } ?: return null
     val sharer = LocalTextSharer.current
     val shareText = stringResource(
         Res.string.group_detail_share_invitation_text,
         form.name,
         InvitationLink.of(code),
     )
-
-    IconButton(onClick = {
+    return {
         sharer.share(shareText)
         onShared()
-    }) {
-        Icon(
-            imageVector = Icons.Default.Share,
-            contentDescription = stringResource(Res.string.group_detail_share_invitation),
-        )
     }
 }
 
