@@ -35,6 +35,17 @@ class InvitationLinkRepositoryImpl(private val analytics: Analytics) : Invitatio
         _pendingCode.value = null
     }
 
+    private val _joinSheetRequested = MutableStateFlow(false)
+    override val joinSheetRequested: StateFlow<Boolean> = _joinSheetRequested.asStateFlow()
+
+    override fun requestJoinSheet() {
+        _joinSheetRequested.value = true
+    }
+
+    override fun joinSheetOpened() {
+        _joinSheetRequested.value = false
+    }
+
     private companion object {
         const val TAG = "InvitationLinkRepository"
     }

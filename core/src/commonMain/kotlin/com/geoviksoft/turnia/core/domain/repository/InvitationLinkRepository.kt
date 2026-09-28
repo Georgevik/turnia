@@ -21,4 +21,16 @@ interface InvitationLinkRepository {
 
     /** Called by the UI once the code is in the join sheet, so it is not offered twice. */
     fun codeHandled()
+
+    /**
+     * The user asked to join with a code they have yet to type — "I have a code" on the team
+     * prompt. Kept apart from [pendingCode], which means an invitation is waiting and holds the
+     * shift setup back.
+     */
+    val joinSheetRequested: StateFlow<Boolean>
+
+    fun requestJoinSheet()
+
+    /** Called by the Groups tab once the join sheet is open. */
+    fun joinSheetOpened()
 }

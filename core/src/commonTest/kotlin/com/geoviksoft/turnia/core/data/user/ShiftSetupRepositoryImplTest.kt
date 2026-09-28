@@ -215,6 +215,9 @@ private class FakeInvitations : InvitationLinkRepository {
     override fun codeHandled() {
         pendingCode.value = null
     }
+    override val joinSheetRequested = MutableStateFlow(false)
+    override fun requestJoinSheet() = Unit
+    override fun joinSheetOpened() = Unit
 }
 
 private class FakeAccountContents : AccountContents {
