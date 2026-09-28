@@ -244,13 +244,13 @@
     <string name="event_type_error_not_implemented">Esta función todavía no está disponible.</string>
 
     <!-- Personal event types: "Mis eventos" -->
-    <string name="personal_event_types_title">Mis eventos</string>
-    <string name="personal_event_types_add">Nuevo evento</string>
-    <string name="personal_event_types_empty">Todavía no has creado ningún evento personal.</string>
+    <string name="personal_event_types_title">Mis turnos</string>
+    <string name="personal_event_types_add">Nuevo turno</string>
+    <string name="personal_event_types_empty">Todavía no has creado ningún turno.</string>
     <string name="personal_event_types_delete">Eliminar</string>
-    <string name="personal_event_types_delete_dialog_title">¿Eliminar el evento?</string>
-    <string name="personal_event_types_delete_dialog_message">Se eliminará «%1$s» de tus eventos personales.</string>
-    <string name="personal_event_types_error_delete">No se ha podido eliminar el evento. Inténtalo de nuevo.</string>
+    <string name="personal_event_types_delete_dialog_title">¿Eliminar el turno?</string>
+    <string name="personal_event_types_delete_dialog_message">Se eliminará «%1$s» de tus turnos.</string>
+    <string name="personal_event_types_error_delete">No se ha podido eliminar el turno. Inténtalo de nuevo.</string>
 
     <!-- Components -->
     <string name="time_field_hint">HH:mm</string>
@@ -263,7 +263,7 @@
     <string name="dialog_error_retry">Reintentar</string>
 
     <!-- Profile -->
-    <string name="profile_my_events">Mis eventos</string>
+    <string name="profile_my_events">Mis turnos</string>
     <string name="profile_logout">Cerrar sesión</string>
     <string name="profile_logout_dialog_title">¿Cerrar sesión?</string>
     <string name="profile_logout_dialog_message">Tendrás que iniciar sesión de nuevo para acceder a tus turnos.</string>
@@ -420,7 +420,7 @@
 
     <!-- Day detail sheet -->
     <string name="day_detail_personal_one_off_events">EVENTO LIBRE</string>
-    <string name="day_detail_personal_events">EVENTOS PERSONALES</string>
+    <string name="day_detail_personal_events">MIS TURNOS</string>
     <string name="one_off_event_name">Nombre</string>
     <string name="one_off_event_start">Empieza</string>
     <string name="one_off_event_end">Termina</string>

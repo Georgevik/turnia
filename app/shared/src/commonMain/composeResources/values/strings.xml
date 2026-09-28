@@ -244,13 +244,13 @@
     <string name="event_type_error_not_implemented">This feature isn't available yet.</string>
 
     <!-- Personal event types: "My events" -->
-    <string name="personal_event_types_title">My events</string>
-    <string name="personal_event_types_add">New event</string>
-    <string name="personal_event_types_empty">You haven't created any personal events yet.</string>
+    <string name="personal_event_types_title">My shifts</string>
+    <string name="personal_event_types_add">New shift</string>
+    <string name="personal_event_types_empty">You haven't created any shifts yet.</string>
     <string name="personal_event_types_delete">Delete</string>
-    <string name="personal_event_types_delete_dialog_title">Delete the event?</string>
-    <string name="personal_event_types_delete_dialog_message">“%1$s” will be removed from your personal events.</string>
-    <string name="personal_event_types_error_delete">Couldn't delete the event. Please try again.</string>
+    <string name="personal_event_types_delete_dialog_title">Delete the shift?</string>
+    <string name="personal_event_types_delete_dialog_message">“%1$s” will be removed from your shifts.</string>
+    <string name="personal_event_types_error_delete">Couldn't delete the shift. Please try again.</string>
 
     <!-- Components -->
     <string name="time_field_hint">HH:mm</string>
@@ -263,7 +263,7 @@
     <string name="dialog_error_retry">Retry</string>
 
     <!-- Profile -->
-    <string name="profile_my_events">My events</string>
+    <string name="profile_my_events">My shifts</string>
     <string name="profile_logout">Sign out</string>
     <string name="profile_logout_dialog_title">Sign out?</string>
     <string name="profile_logout_dialog_message">You'll have to sign in again to see your shifts.</string>
@@ -419,7 +419,7 @@
     <string name="calendar_more_options">More options</string>
 
     <!-- Day detail sheet -->
-    <string name="day_detail_personal_events">PERSONAL EVENTS</string>
+    <string name="day_detail_personal_events">MY SHIFTS</string>
     <string name="day_detail_personal_one_off_events">ONE-OFF EVENT</string>
     <string name="one_off_event_name">Name</string>
     <string name="one_off_event_start">Starts</string>

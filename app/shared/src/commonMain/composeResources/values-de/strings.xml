@@ -244,13 +244,13 @@
     <string name="event_type_error_not_implemented">Diese Funktion ist noch nicht verfügbar.</string>
 
     <!-- Personal event types: "My events" -->
-    <string name="personal_event_types_title">Meine Termine</string>
-    <string name="personal_event_types_add">Neuer Termin</string>
-    <string name="personal_event_types_empty">Du hast noch keine persönlichen Termine erstellt.</string>
+    <string name="personal_event_types_title">Meine Schichten</string>
+    <string name="personal_event_types_add">Neue Schicht</string>
+    <string name="personal_event_types_empty">Du hast noch keine Schichten angelegt.</string>
     <string name="personal_event_types_delete">Löschen</string>
-    <string name="personal_event_types_delete_dialog_title">Termin löschen?</string>
-    <string name="personal_event_types_delete_dialog_message">„%1$s“ wird aus deinen persönlichen Terminen entfernt.</string>
-    <string name="personal_event_types_error_delete">Der Termin konnte nicht gelöscht werden. Bitte versuch es erneut.</string>
+    <string name="personal_event_types_delete_dialog_title">Schicht löschen?</string>
+    <string name="personal_event_types_delete_dialog_message">„%1$s“ wird aus deinen Schichten entfernt.</string>
+    <string name="personal_event_types_error_delete">Die Schicht konnte nicht gelöscht werden. Bitte versuch es erneut.</string>
 
     <!-- Components -->
     <string name="time_field_hint">HH:mm</string>
@@ -263,7 +263,7 @@
     <string name="dialog_error_retry">Erneut versuchen</string>
 
     <!-- Profile -->
-    <string name="profile_my_events">Meine Termine</string>
+    <string name="profile_my_events">Meine Schichten</string>
     <string name="profile_logout">Abmelden</string>
     <string name="profile_logout_dialog_title">Abmelden?</string>
     <string name="profile_logout_dialog_message">Du musst dich erneut anmelden, um deine Dienste zu sehen.</string>
@@ -419,7 +419,7 @@
     <string name="calendar_more_options">Weitere Optionen</string>
 
     <!-- Day detail sheet -->
-    <string name="day_detail_personal_events">PERSÖNLICHE TERMINE</string>
+    <string name="day_detail_personal_events">MEINE SCHICHTEN</string>
     <string name="day_detail_personal_one_off_events">EINZELTERMIN</string>
     <string name="one_off_event_name">Name</string>
     <string name="one_off_event_start">Beginn</string>
