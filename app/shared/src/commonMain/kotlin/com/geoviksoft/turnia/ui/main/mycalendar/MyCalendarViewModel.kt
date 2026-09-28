@@ -6,6 +6,7 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.geoviksoft.turnia.core.domain.model.EventId
+import com.geoviksoft.turnia.core.domain.model.Group
 import com.geoviksoft.turnia.core.domain.model.GroupEvent
 import com.geoviksoft.turnia.core.domain.model.GroupId
 import com.geoviksoft.turnia.core.domain.model.PersonalTypedEvent
@@ -18,6 +19,7 @@ import com.geoviksoft.turnia.ui.components.calendar.model.swapFirst
 import com.geoviksoft.turnia.ui.components.calendar.model.toUi
 import com.geoviksoft.turnia.ui.components.daydetail.model.OneOffEventUi
 import com.geoviksoft.turnia.ui.components.daydetail.model.toUiByDate
+import com.geoviksoft.turnia.ui.components.movetogroup.canReceiveMovedEvents
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,6 +42,20 @@ sealed interface MyCalendarUiState {
         val eventsByDate: Map<LocalDate, List<DayEventUi>>,
         val oneOffsByDate: Map<LocalDate, List<OneOffEventUi>> = emptyMap(),
     ) : MyCalendarUiState
+}
+
+/**
+ * [revoked]: the groups the user was removed from. Their leftover shifts still belong on the
+ * calendar, but nothing there can be offered or taken any more and the rules refuse the write, so the
+ * controls have to know. [canMoveTo]: a group a personal shift could be moved to exists.
+ */
+private data class Membership(val revoked: Set<GroupId>, val canMoveTo: Boolean) {
+    companion object {
+        fun of(groups: List<Group>) = Membership(
+            revoked = groups.filter { it.isRevoked }.map { it.id }.toSet(),
+            canMoveTo = groups.any { it.canReceiveMovedEvents },
+        )
+    }
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -91,22 +107,18 @@ class MyCalendarViewModel(
     ): Flow<Map<LocalDate, List<DayEventUi>>> = combine(
         personalRepository.getEvents(userId, date, monthDelta = 2),
         groupRepository.getEventsByUser(userId, date, monthDelta = 2),
-        // The groups the user was removed from. Their leftover shifts still belong on the calendar,
-        // but nothing there can be offered or taken any more and the rules refuse the write, so the
-        // controls have to know.
-        groupRepository.getGroups()
-            .map { groups -> groups.filter { it.isRevoked }.map { it.id }.toSet() },
+        groupRepository.getGroups().map { groups -> Membership.of(groups) },
         // Most months have none, so the shifts paint without waiting on it.
         groupRepository.getMyEventNotes(date, monthDelta = 2).onStart { emit(emptyMap()) },
-    ) { personal, group, revokedGroups, notes ->
-        mapToUiState(userId, group, personal, revokedGroups, notes)
+    ) { personal, group, membership, notes ->
+        mapToUiState(userId, group, personal, membership, notes)
     }
 
     private fun mapToUiState(
         userId: UserId,
         groupEvents: List<GroupEvent>,
         personalEvents: List<PersonalTypedEvent>,
-        revokedGroups: Set<GroupId>,
+        membership: Membership,
         notes: Map<EventId, String>,
     ): Map<LocalDate, List<DayEventUi>> {
         val eventsByDate: Map<LocalDate, MutableList<DayEventUi>> = buildMap {
@@ -116,7 +128,7 @@ class MyCalendarViewModel(
                     ev.toUi(
                         currentUserId = userId,
                         removable = removable,
-                        activeMember = ev.groupId !in revokedGroups,
+                        activeMember = ev.groupId !in membership.revoked,
                         notes = notes[ev.id],
                         notesEditable = true,
                     )
@@ -124,7 +136,7 @@ class MyCalendarViewModel(
             }
             personalEvents.forEach { ev ->
                 getOrPut(ev.date) { mutableListOf() }.add(
-                    ev.toUi(removable = true, notesEditable = true)
+                    ev.toUi(removable = true, notesEditable = true, movable = membership.canMoveTo)
                 )
             }
         }

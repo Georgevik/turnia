@@ -88,6 +88,25 @@ class GroupEventNotesOnCalendarsTest {
         assertFalse(rows.any { it.notesEditable })
     }
 
+    @Test
+    fun onlyMyPersonalShiftsCanBeMoved() = runTest {
+        val viewModel = MyCalendarViewModel(DemoUserRepository(), groups, personal, DemoShiftSetupRepository(personal))
+        val rows = (viewModel.uiState.value as MyCalendarUiState.Success).eventsByDate.values.flatten()
+
+        assertTrue(rows.filter { it.source == EventSource.PERSONAL }.let { it.isNotEmpty() && it.all { row -> row.movable } })
+        assertTrue(rows.filter { it.source == EventSource.GROUP }.none { it.movable })
+    }
+
+    @Test
+    fun aColleaguesCalendarOffersNoMove() = runTest {
+        val colleague = world.groupEvents.first { it.assigneeId != DemoPeople.me.id }
+
+        val viewModel = externalCalendar(ExternalCalendarData.Personal(colleague.assigneeId.value, "Colleague"))
+        val rows = viewModel.uiState.first { !it.loading }.events.values.flatten()
+
+        assertTrue(rows.none { it.movable })
+    }
+
     private fun kotlinx.coroutines.test.TestScope.externalCalendar(data: ExternalCalendarData) =
         ExternalCalendarViewModel(
             data,

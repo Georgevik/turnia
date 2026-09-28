@@ -136,6 +136,7 @@ fun DayDetailSheet(
     var pendingReturn by remember { mutableStateOf<DayEventUi?>(null) }
     var editingNotes by remember { mutableStateOf<DayEventUi?>(null) }
     var pendingTake by remember { mutableStateOf<DayEventUi?>(null) }
+    var moving by remember { mutableStateOf<DayEventUi?>(null) }
 
     val noteError by viewModel.noteError.collectAsStateWithLifecycle()
     val snackbar = LocalSnackbar.current
@@ -304,6 +305,7 @@ fun DayDetailSheet(
         onEditNotes = { editingNotes = it },
         onSwapChange = viewModel::setOnSwap,
         onTake = { pendingTake = it },
+        onMove = { moving = it },
         onEditOneOff = { event ->
             viewModel.onOneOffAction(OneOffFormAction.Edit(event))
             adding = true
@@ -337,6 +339,7 @@ private fun DayDetailContent(
     onTake: (DayEventUi) -> Unit,
     onEditOneOff: (OneOffEventUi) -> Unit,
     modifier: Modifier = Modifier,
+    onMove: (DayEventUi) -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -420,6 +423,11 @@ private fun DayDetailContent(
                                 },
                                 onTake = if (event.canTake) {
                                     { onTake(event) }
+                                } else {
+                                    null
+                                },
+                                onMove = if (event.movable) {
+                                    { onMove(event) }
                                 } else {
                                     null
                                 },

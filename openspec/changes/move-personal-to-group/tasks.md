@@ -66,7 +66,7 @@
   - "You already have a shift in this group that day", and "Couldn't move the shift".
 
   Verify every key exists in all five files.
-- [ ] 6.2 Add `onMove` to `DayEventRow` and wire it in `DayDetailSheet`, only for personal typed rows on the user's own calendar and only when an eligible group exists (not revoked, with at least one type). Add a `TestTags` tag for the action. Verify with a Compose preview, and with a ViewModel test that one-off, group and shared-calendar rows get no move.
+- [x] 6.2 Add `onMove` to `DayEventRow` and wire it in `DayDetailSheet`, only for personal typed rows on the user's own calendar and only when an eligible group exists (not revoked, with at least one type). Add a `TestTags` tag for the action. Verify with a Compose preview, and with a ViewModel test that one-off, group and shared-calendar rows get no move.
 - [ ] 6.3 Create `MoveToGroupViewModel` and `MoveToGroupSheet`:
   - steps `PickGroup → PickType → PickScope → Moving → Done`;
   - the group step is skipped with a single group;

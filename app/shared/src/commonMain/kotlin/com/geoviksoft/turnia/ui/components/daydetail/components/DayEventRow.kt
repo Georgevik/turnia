@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.NoteAdd
 import androidx.compose.material.icons.filled.StickyNote2
 import androidx.compose.material.icons.filled.SwapHoriz
@@ -55,6 +56,7 @@ import org.jetbrains.compose.resources.stringResource
 import turnia.app.shared.generated.resources.Res
 import turnia.app.shared.generated.resources.event_assigned_to
 import turnia.app.shared.generated.resources.event_assigned_to_me
+import turnia.app.shared.generated.resources.event_move_to_group
 import turnia.app.shared.generated.resources.event_note_add
 import turnia.app.shared.generated.resources.event_note_edit
 import turnia.app.shared.generated.resources.event_remove
@@ -71,6 +73,7 @@ fun DayEventRow(
     onEditNotes: (() -> Unit)? = null,
     onSwapChange: ((Boolean) -> Unit)? = null,
     onTake: (() -> Unit)? = null,
+    onMove: (() -> Unit)? = null,
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth().testTag(TestTags.dayEvent(event.id)),
@@ -201,6 +204,11 @@ fun DayEventRow(
                         Spacer(Modifier.height(8.dp))
                         AddNoteButton(onClick = onEditNotes)
                     }
+
+                    if (onMove != null) {
+                        Spacer(Modifier.height(4.dp))
+                        MoveToGroupButton(onClick = onMove)
+                    }
                 }
             }
         }
@@ -259,6 +267,30 @@ private fun AddNoteButton(onClick: () -> Unit) {
 
 
 
+
+@Composable
+private fun MoveToGroupButton(onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .testTag(TestTags.MOVE_TO_GROUP)
+            .clickable(onClick = onClick)
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Icon(
+            imageVector = Icons.Default.Groups,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+            tint = MaterialTheme.colorScheme.primary,
+        )
+        Text(
+            text = stringResource(Res.string.event_move_to_group),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+        )
+    }
+}
 
 /** Offering the shift, or taking the offer back. Only ever shown to whoever covers it. */
 @Composable
@@ -349,6 +381,12 @@ fun DayEventRowPreview() {
             }
             Labelled("personal, no note yet") {
                 DayEventRow(event = personalEvent(), onEditNotes = {}, onRemove = {})
+            }
+            Labelled("personal, and the user is in a group it could move to") {
+                DayEventRow(event = personalEvent(), onEditNotes = {}, onRemove = {}, onMove = {})
+            }
+            Labelled("group, with my private note") {
+                DayEventRow(event = groupEvent().copy(notes = "Parking B"), onEditNotes = {}, onRemove = {})
             }
             Labelled("group, I cover it") {
                 DayEventRow(event = groupEvent(), onRemove = {})

@@ -22,6 +22,7 @@ object TestTags {
     fun shiftSetupEnd(index: Int) = "shift_setup_end_$index"
 
     const val SWAP_TOGGLE = "swap_toggle"
+    const val MOVE_TO_GROUP = "move_to_group"
     const val GROUPS_FAB = "groups_fab"
     const val JOIN_CODE_FIELD = "join_code_field"
     const val USER_SEARCH_FIELD = "user_search_field"
