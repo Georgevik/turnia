@@ -81,12 +81,16 @@ The read must be reported with `.trackData(TAG, "hasAnyGroup(SERVER)")` like eve
 `CalendarViewer` stops hosting `SharePromptHost` directly. It hosts `CalendarPromptHost(allowTeamPrompt)`,
 where `allowTeamPrompt` is `true` only from `MyCalendarScreen`. The host:
 
-- shows the team prompt when team `pending` is true and team prompts are allowed there;
+- shows the team prompt when team `pending` is true, team prompts are allowed there, and no share
+  prompt was shown during this visit;
 - otherwise shows the share prompt, unless a team prompt was already shown during this visit.
 
-The "this visit" flag is a plain `remember { mutableStateOf(false) }`, hoisted into `CalendarViewer`
-because the host itself leaves the composition whenever a day sheet opens. The host sets it once the
-team sheet is on screen. It dies when the calendar leaves the composition, on a tab switch or a
+Whichever prompt a visit shows first keeps the screen. The team prompt waits on a server read, so it
+can become due after the share prompt is already up; replacing it then would stack two sheets.
+
+The "this visit" state (`CalendarPrompt?`, the prompt shown first) is a plain `remember`, hoisted into `CalendarViewer`
+because the host itself leaves the composition whenever a day sheet opens. The host sets it once a sheet
+is on screen. It dies when the calendar leaves the composition, on a tab switch or a
 navigation away, which gives "the next time a calendar opens" with no stored state.
 
 It is deliberately not `rememberSaveable`: Nav3's saveable state holder keeps saved state for an entry

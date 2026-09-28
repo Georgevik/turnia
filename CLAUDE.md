@@ -162,7 +162,8 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
   spent only once the sheet is on screen, like a share prompt milestone.
 - **Only on the user's own calendar, and it wins over the share prompt.** When both are due, the
   share prompt keeps its milestone and waits until a calendar is opened again, never straight after
-  the team prompt closes.
+  the team prompt closes. A prompt already on screen is never replaced: a team prompt that becomes
+  due while a share prompt is up (its server read came back late) waits for the next visit.
 - **A new group starts with Morning, Afternoon, Night and Morning & afternoon proposed**, in the
   language on screen when the form opens, so naming it is enough to create it. The proposed types
   can be edited or removed, and at least one type is still required.

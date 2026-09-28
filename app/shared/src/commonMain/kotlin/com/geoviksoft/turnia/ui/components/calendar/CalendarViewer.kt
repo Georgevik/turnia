@@ -115,9 +115,9 @@ fun CalendarViewer(
     // calendar already answers.
     showTeamPrompt: Boolean = false,
 ) {
-    // Not saveable on purpose: saved state would outlive a tab switch, and a share prompt held back
-    // by the team prompt is owed as soon as the calendar opens again.
-    var teamPromptShown by remember { mutableStateOf(false) }
+    // Not saveable on purpose: saved state would outlive a tab switch, and a prompt held back by the
+    // other one is owed as soon as the calendar opens again.
+    var promptShownThisVisit by remember { mutableStateOf<CalendarPrompt?>(null) }
 
     val anchorMonth = remember {
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
@@ -274,8 +274,8 @@ fun CalendarViewer(
             CalendarPromptHost(
                 allowSharePrompt = showSharePrompt,
                 allowTeamPrompt = showTeamPrompt,
-                teamPromptShown = teamPromptShown,
-                onTeamPromptShown = { teamPromptShown = true },
+                shownThisVisit = promptShownThisVisit,
+                onShown = { promptShownThisVisit = it },
             )
         }
     }

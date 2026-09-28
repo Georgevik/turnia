@@ -2,6 +2,9 @@ package com.geoviksoft.turnia.e2e.infra
 
 import com.geoviksoft.turnia.core.data.config.SharePromptRepositoryImpl
 import com.geoviksoft.turnia.core.data.config.TeamPromptRepositoryImpl
+import com.geoviksoft.turnia.core.data.user.FirestoreGroupMembership
+import com.geoviksoft.turnia.core.data.user.GroupMembership
+import kotlinx.coroutines.CompletableDeferred
 import com.geoviksoft.turnia.core.data.config.mappers.SharePromptMilestonesMapper
 import com.geoviksoft.turnia.core.domain.analytics.Analytics
 import com.geoviksoft.turnia.core.domain.analytics.AnalyticsEvent
@@ -40,6 +43,7 @@ internal val e2eModule = module {
     single<SharePromptRepository> {
         CountingSharePromptRepository(SharePromptRepositoryImpl(get(), get(), get()))
     }
+    single<GroupMembership> { GatedGroupMembership(FirestoreGroupMembership(get())) }
     single<TeamPromptRepository> {
         CountingTeamPromptRepository(
             TeamPromptRepositoryImpl(get<UserRepository>().userSession, get(), get(), get(), get())
@@ -177,5 +181,22 @@ internal class CountingTeamPromptRepository(
         private val decided = AtomicInteger()
 
         val eventsDecided: Int get() = decided.get()
+    }
+}
+
+/**
+ * The server's membership answer, held back while a test keeps [gate] closed: the only way to have
+ * the team prompt become due after a share prompt is already on screen, as a slow network would.
+ */
+internal class GatedGroupMembership(private val delegate: GroupMembership) : GroupMembership {
+
+    override suspend fun serverHasAnyGroup(uid: UserId): Outcome<Boolean, Unit> {
+        gate.await()
+        return delegate.serverHasAnyGroup(uid)
+    }
+
+    companion object {
+        @Volatile
+        var gate = CompletableDeferred(Unit)
     }
 }

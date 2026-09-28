@@ -113,6 +113,9 @@ Not now. Its text SHALL be in the app's current language, in all five supported 
 When the team prompt and a share prompt are both due on the user's own calendar, the system SHALL
 show only the team prompt. The share prompt SHALL stay due, its milestone unspent, and SHALL be shown
 the next time a calendar where it can appear is opened, never straight after the team prompt closes.
+A prompt already on screen SHALL keep it: when the team prompt becomes due while a share prompt is
+showing, the share prompt stays, and the team prompt waits for the next time the user's own calendar
+is opened.
 
 #### Scenario: Both due on the same event
 - **WHEN** the event added reaches both the team prompt threshold and a share prompt milestone
@@ -122,3 +125,8 @@ the next time a calendar where it can appear is opened, never straight after the
 #### Scenario: The share prompt waits for the next open
 - **WHEN** the team prompt was shown and answered, and the user later switches to another tab and back to their calendar
 - **THEN** the share prompt is shown
+
+#### Scenario: The team prompt does not interrupt a share prompt
+- **WHEN** a share prompt is on screen and the team prompt only then becomes due, because the server answered late
+- **THEN** the share prompt stays on screen and the team prompt is not shown
+- **THEN** after the user answers the share prompt, the team prompt appears only once the calendar is opened again
