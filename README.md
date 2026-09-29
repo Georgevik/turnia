@@ -1,6 +1,12 @@
 # Turnia
 
+[![Android E2E](https://github.com/Georgevik/turnia/actions/workflows/android-e2e.yml/badge.svg)](https://github.com/Georgevik/turnia/actions/workflows/android-e2e.yml)
+[![Latest release](https://img.shields.io/github/v/tag/Georgevik/turnia?sort=semver&label=version)](https://github.com/Georgevik/turnia/releases/latest)
+[![License](https://img.shields.io/badge/license-source--available-lightgrey)](LICENSE)
+
 Shift management and swapping for healthcare teams, on Android and iOS.
+
+## The problem
 
 Shift swaps are usually arranged over WhatsApp, and chained swaps (A → B → C) make it easy to lose
 track of who actually covers a shift. Turnia keeps a single source of truth for every shift and an
@@ -13,6 +19,64 @@ append-only history of every transfer, so the chain can always be traced.
 - **Push notifications** for everything that affects your schedule.
 - Free with **AdMob** banners (behind Google's consent message in the EEA), with premium
   subscriptions planned.
+
+## Screenshots
+
+<!-- TODO: refresh these from store/screenshots/generate.py before making the repo public -->
+
+<p align="center">
+  <img src="firebase/hosting/screen_calendar.jpg" width="260" alt="Group calendar">
+  <img src="firebase/hosting/screen_day.jpg" width="260" alt="Day view with a swap chain">
+</p>
+
+## Architecture
+
+```
++-----------------------+     +-----------------------+
+|   Android (Compose)   |     |   iOS (Compose Mult.)  |
++-----------+-----------+     +-----------+-----------+
+            |                             |
+            +--------------+--------------+
+                           |
+                 app/shared (Compose UI)
+                           |
+                        core (KMP)
+        domain, data, Outcome<T,E> error handling
+                           |
+              GitLive Firebase Kotlin SDK
+                           |
+        +------------------+------------------+
+        |          |            |             |
+   Firestore   Auth / App   Cloud Functions   FCM
+  (data, rules)   Check      (TypeScript)   (push)
+```
+
+No custom backend: Firestore, Auth, Cloud Functions, FCM, Remote Config and Hosting are the whole
+server side, called from shared Kotlin code through the GitLive SDK. Business logic that must not
+run on the client (joining a group, taking a shift, sending push, verifying a subscription receipt,
+purging old events) lives in Cloud Functions instead.
+
+## How this was built
+
+This app is built with an AI coding agent (Claude Code) directed under an explicit engineering
+process, not ad-hoc prompting. The artifacts below are the evidence, not a claim:
+
+- **[`CLAUDE.md`](CLAUDE.md)** — the domain rules, architecture decisions and code conventions that
+  govern every change the agent makes, kept in sync with the codebase as it evolves.
+- **[`openspec/`](openspec)** — every non-trivial change is a written proposal and spec before it's
+  code: see [`openspec/specs`](openspec/specs) for the current capabilities and
+  [`openspec/changes/archive`](openspec/changes/archive) for the history of how they got there.
+- **[`Outcome<T, E>`](core/src/commonMain/kotlin/com/geoviksoft/turnia/core/system/Outcome.kt)** —
+  a typed-error result type used instead of exceptions across the domain layer, so the UI maps every
+  failure exhaustively instead of catching `Throwable`. The reasoning is documented in `CLAUDE.md`.
+- **[Firestore cost audit](firebase/firestore-usage.md)** — every read and write is instrumented
+  ([`FirestoreUsageMetrics.kt`](core/src/commonMain/kotlin/com/geoviksoft/turnia/core/data/datasource/firestore/analytics/FirestoreUsageMetrics.kt)),
+  so the cost of a feature is measured per action, not guessed after the Firebase bill arrives.
+- **68 end-to-end happy paths** ([`app/androidApp/src/androidTest`](app/androidApp/src/androidTest))
+  run against real Firebase emulators — the offer → take → A→B→C chain, give-backs, revoked members,
+  shared calendars — and gate every release.
+- **CI/CD**: the [Release workflow](.github/workflows/release.yml) builds and uploads both apps only
+  after the [E2E suite](.github/workflows/android-e2e.yml) is green.
 
 ## Tech stack
 
@@ -32,61 +96,21 @@ turnia/
 │   └── iosApp/       iOS entry point (Xcode project, Swift bridges for the Google SDKs)
 ├── core/             Domain and data layer shared by both apps
 ├── firebase/         Firestore rules and indexes, Cloud Functions (TypeScript), Hosting
+├── openspec/         Specs and change proposals that drive AI-assisted development
 ├── store/            Store listing texts and screenshot generation
 └── .github/          Release pipeline
 ```
 
-## Getting started
+## Status
 
-### Requirements
-
-- JDK 17 or newer
-- Android Studio with the Kotlin Multiplatform plugin
-- Xcode, to build the iOS app (macOS only)
-- Node.js and the Firebase CLI, only to work on the backend
-
-### Run the apps
-
-- **Android:** `./gradlew :app:androidApp:assembleDebug`, or the run configuration in Android
-  Studio.
-- **iOS:** open [`app/iosApp`](app/iosApp) in Xcode and run the `iosApp` scheme. Xcode builds the
-  shared Kotlin framework through Gradle in a build phase.
-
-Debug builds use Google's test ad units and a Firebase App Check debug token. The token is printed
-on first launch and has to be registered once per device in the Firebase console.
-
-### Tests
-
-```bash
-./gradlew :core:allTests
-```
-
-### Backend
-
-Run Firebase commands from [`firebase/`](firebase), where `firebase.json` lives:
-
-```bash
-cd firebase/functions && npm install && npm run build
-cd firebase && firebase deploy --only functions,firestore:rules,firestore:indexes
-cd firebase && firebase deploy --only hosting
-```
-
-## Releasing
-
-Releases go out through a manual GitHub Actions workflow: **Actions → Release → Run workflow**,
-typing the version name (e.g. `1.04`). It uploads Android to Play's internal testing track and iOS to
-TestFlight, with the same version name on both and a build number it sets itself. Promoting a build
-to production is done in each store's console.
-
-The secrets the workflow needs, and how to create them, are in [.github/RELEASE.md](.github/RELEASE.md).
-
-To build a signed Android bundle locally, copy
-[`keystore.properties.example`](keystore.properties.example) to `keystore.properties` and run
-`./gradlew :app:androidApp:bundleRelease`.
+In closed testing: Android on Play's internal testing track, iOS on TestFlight. Not yet listed
+publicly on either store. Firebase App Check attestation is wired into release builds; production
+enforcement is being rolled out in stages (see `openspec/changes` for the current rollout).
 
 ## Documentation
 
 - [CLAUDE.md](CLAUDE.md): domain concepts, business rules, architecture and code conventions.
+- [openspec/specs](openspec/specs): the current capabilities, as written specs.
 - [firebase/firestore-schema.md](firebase/firestore-schema.md): collections, fields, security
   rules and invariants.
 - [firebase/firestore-usage.md](firebase/firestore-usage.md): expected Firestore cost per action and
@@ -95,4 +119,5 @@ To build a signed Android bundle locally, copy
 
 ## License
 
-To be defined.
+Source-available for portfolio and demonstration purposes — see [LICENSE](LICENSE). All rights
+reserved; no reuse is granted.
