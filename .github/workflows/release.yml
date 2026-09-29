@@ -139,6 +139,13 @@ jobs:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
         run: echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/upload.jks"
 
+      # google-services.json is not in git (see app/androidApp/google-services.json.example);
+      # CI decodes it from a repo secret instead.
+      - name: Write google-services.json
+        env:
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        run: echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > app/androidApp/google-services.json
+
       - name: Build the release bundle
         env:
           TURNIA_UPLOAD_STORE_FILE: ${{ runner.temp }}/upload.jks
@@ -196,6 +203,13 @@ jobs:
           java-version: 21
 
       - uses: gradle/actions/setup-gradle@v5
+
+      # GoogleService-Info.plist is not in git (see the .example in the same folder); CI decodes it
+      # from a repo secret instead.
+      - name: Write GoogleService-Info.plist
+        env:
+          GOOGLE_SERVICE_INFO_PLIST_BASE64: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST_BASE64 }}
+        run: echo "$GOOGLE_SERVICE_INFO_PLIST_BASE64" | base64 --decode > app/iosApp/iosApp/GoogleService-Info.plist
 
       - name: Cache the Kotlin/Native toolchain
         uses: actions/cache@v5

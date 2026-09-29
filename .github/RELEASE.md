@@ -107,6 +107,10 @@ The workflow reads these from Repository → Settings → Secrets and variables 
 | `ANDROID_UPLOAD_KEY_ALIAS` | `keyAlias` from `keystore.properties` |
 | `ANDROID_UPLOAD_KEY_PASSWORD` | `keyPassword` from `keystore.properties` |
 | `PLAY_SERVICE_ACCOUNT_JSON` | JSON key of a Google Cloud service account invited in Play Console |
+| `GOOGLE_SERVICES_JSON_BASE64` | `app/androidApp/google-services.json`, base64: `base64 -i google-services.json \| pbcopy` |
+
+`google-services.json` is not in git (see `app/androidApp/google-services.json.example`); every
+workflow that builds the app decodes it from this secret first.
 
 The service account: Google Cloud console → IAM → Service accounts → create one and add a JSON key.
 Then Play Console → **Users and permissions** → invite its email, with *Release apps to testing
@@ -121,6 +125,10 @@ tracks* for Turnia. Play only accepts API uploads once the app has had one bundl
 | `ASC_KEY_P8` | The contents of the downloaded `AuthKey_XXXX.p8` |
 | `IOS_DIST_CERT_P12_BASE64` | The distribution certificate + private key, exported as `.p12`, base64: `base64 -i dist.p12 \| pbcopy` |
 | `IOS_DIST_CERT_PASSWORD` | The password chosen when exporting that `.p12` |
+| `GOOGLE_SERVICE_INFO_PLIST_BASE64` | `app/iosApp/iosApp/GoogleService-Info.plist`, base64: `base64 -i GoogleService-Info.plist \| pbcopy` |
+
+`GoogleService-Info.plist` is not in git (see the `.example` in the same folder); the `ios` job
+decodes it from this secret first.
 
 App Store Connect → **Users and Access** → **Integrations** → **App Store Connect API** → generate
 a team key with the **Admin** role. Admin is what lets Xcode create or renew the provisioning
