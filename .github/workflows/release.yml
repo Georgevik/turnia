@@ -105,7 +105,7 @@ jobs:
             echo "This build is uploaded **without running the tests**. Check it by hand before promoting it."
           } >> "$GITHUB_STEP_SUMMARY"
 
-  # The 21 critical happy paths, on an Android emulator against the Firebase emulators. Android only,
+  # The 68 critical happy paths, on an Android emulator against the Firebase emulators. Android only,
   # but it gates both uploads: the two apps share every line of logic it covers.
   android-e2e:
     needs: validate
@@ -310,3 +310,23 @@ jobs:
           git tag -a "$TAG" -m "Release $TAG ($PLATFORMS)" "$GITHUB_SHA"
           git push origin "$TAG"
           echo "### Tagged \`$TAG\` ($PLATFORMS)" >> "$GITHUB_STEP_SUMMARY"
+
+      # The README's version badge and "what's new" link point at the GitHub Release, not the bare
+      # tag, so it needs a real Release object with a body — reruns just update it in place.
+      - name: Publish the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: v${{ needs.validate.outputs.versionName }}-${{ needs.validate.outputs.buildNumber }}
+          PLATFORMS: ${{ inputs.platforms }}
+        run: |
+          {
+            cat .github/whatsnew/whatsnew-en-GB
+            echo
+            echo
+            echo "Platforms: $PLATFORMS"
+          } > "$RUNNER_TEMP/release-notes.md"
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release edit "$TAG" --notes-file "$RUNNER_TEMP/release-notes.md"
+          else
+            gh release create "$TAG" --title "$TAG" --notes-file "$RUNNER_TEMP/release-notes.md"
+          fi
