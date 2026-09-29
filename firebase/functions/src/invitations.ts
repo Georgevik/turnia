@@ -24,7 +24,7 @@ import { writeJoinRequestPointer } from "./users";
  * Request data: `{ code: string }`
  * Returns: `{ groupId: string, status: "already_member" | "joined" | "requested" }`
  */
-export const requestToJoinGroup = onCall(async (request) => {
+export const requestToJoinGroup = onCall({ enforceAppCheck: true }, async (request) => {
   const uid = requireUid(request);
   const { code } = requireFields(request, "code");
 
@@ -114,7 +114,7 @@ export const requestToJoinGroup = onCall(async (request) => {
  * Request data: `{ groupId: string, uid: string }`
  * Returns: `{ groupId: string, uid: string, status: "accepted" }`
  */
-export const acceptJoinRequest = onCall(async (request) => {
+export const acceptJoinRequest = onCall({ enforceAppCheck: true }, async (request) => {
   const adminUid = requireUid(request);
   const { groupId, uid } = requireFields(request, "groupId", "uid");
 
@@ -175,7 +175,7 @@ export const acceptJoinRequest = onCall(async (request) => {
  * Request data: `{ groupId: string, uid: string }`
  * Returns: `{ groupId: string, uid: string, status: "rejected" }`
  */
-export const rejectJoinRequest = onCall(async (request) => {
+export const rejectJoinRequest = onCall({ enforceAppCheck: true }, async (request) => {
   const adminUid = requireUid(request);
   const { groupId, uid } = requireFields(request, "groupId", "uid");
 

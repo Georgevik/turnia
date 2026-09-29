@@ -28,7 +28,7 @@ import { markGroupEventsUpdated } from "./sync";
  * Request data: `{ groupId: string, eventId: string }`
  * Returns: `{ groupId, eventId, assigneeId, status: "taken" }`
  */
-export const takeEvent = onCall(async (request) => {
+export const takeEvent = onCall({ enforceAppCheck: true }, async (request) => {
   const taker = requireUid(request);
   const { groupId, eventId } = requireFields(request, "groupId", "eventId");
 
@@ -124,7 +124,7 @@ export function holderStack(ownerId: string, history: HistoryEntry[]): string[] 
  * Request data: `{ groupId: string, eventId: string }`
  * Returns: `{ groupId, eventId, assigneeId, status: "returned" }`
  */
-export const returnEvent = onCall(async (request) => {
+export const returnEvent = onCall({ enforceAppCheck: true }, async (request) => {
   const caller = requireUid(request);
   const { groupId, eventId } = requireFields(request, "groupId", "eventId");
 

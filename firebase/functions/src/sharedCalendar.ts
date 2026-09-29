@@ -34,7 +34,7 @@ const MAX_RANGE_DAYS = 92; // ~3 months
  *
  * Request data: `{ ownerUid: string, from: "YYYY-MM-DD", to: "YYYY-MM-DD", since?: ISO 8601 }`
  */
-export const getSharedCalendar = onCall(async (request) => {
+export const getSharedCalendar = onCall({ enforceAppCheck: true }, async (request) => {
   const viewer = requireUid(request);
   const { ownerUid, from, to } = requireFields(request, "ownerUid", "from", "to");
   const sinceRaw = (request.data as { since?: unknown } | undefined)?.since;

@@ -67,7 +67,7 @@ export async function pushTargetsOf(uids: string[]): Promise<PushTarget[]> {
  * Request data: `{ name: string, username: string }`
  * Returns: `{ name, username, status: "updated" }`
  */
-export const updateProfile = onCall(async (request) => {
+export const updateProfile = onCall({ enforceAppCheck: true }, async (request) => {
   const uid = requireUid(request);
   const fields = requireFields(request, "name", "username");
   const name = fields.name;

@@ -30,7 +30,7 @@ import { markGroupUpdated, markJoinRequestSettled } from "./sync";
  *
  * Returns: `{ status: "deleted" }`
  */
-export const deleteAccount = onCall(async (request) => {
+export const deleteAccount = onCall({ enforceAppCheck: true }, async (request) => {
   const uid = requireUid(request);
   const db = getFirestore();
 

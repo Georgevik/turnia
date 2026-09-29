@@ -93,7 +93,7 @@ async function revoke(db: Firestore, groupId: string, uid: string) {
  * Request data: `{ groupId: string }`
  * Returns: `{ groupId: string, status: "revoked" | "removed" }`
  */
-export const leaveGroup = onCall(async (request) => {
+export const leaveGroup = onCall({ enforceAppCheck: true }, async (request) => {
   const uid = requireUid(request);
   const { groupId } = requireFields(request, "groupId");
 
@@ -121,7 +121,7 @@ export const leaveGroup = onCall(async (request) => {
  * Request data: `{ groupId: string, uid: string }`
  * Returns: `{ groupId: string, uid: string, status: "revoked" | "removed" }`
  */
-export const removeMember = onCall(async (request) => {
+export const removeMember = onCall({ enforceAppCheck: true }, async (request) => {
   const adminUid = requireUid(request);
   const { groupId, uid } = requireFields(request, "groupId", "uid");
 
@@ -163,7 +163,7 @@ export const removeMember = onCall(async (request) => {
  * Request data: `{ groupId: string }`
  * Returns: `{ groupId: string, status: "deleted" }`
  */
-export const deleteGroup = onCall(async (request) => {
+export const deleteGroup = onCall({ enforceAppCheck: true }, async (request) => {
   const uid = requireUid(request);
   const { groupId } = requireFields(request, "groupId");
 
