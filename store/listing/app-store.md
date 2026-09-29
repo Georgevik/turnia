@@ -11,6 +11,20 @@ Cada bloque va tal cual en su campo. Entre paréntesis, los caracteres usados / 
 
 ---
 
+## Novedades genéricas — para cualquier versión sin cambios destacables
+
+Van en *Novedades de esta versión* de cada idioma, en la página de la versión.
+
+| Idioma | Texto |
+|--------|-------|
+| Español | `Hemos mejorado Turnia para que organizar tus turnos sea más rápido y fiable: pequeños ajustes de diseño, mejoras de rendimiento y corrección de errores. ¡Gracias por usar Turnia!` |
+| English | `We've improved Turnia to make organizing your shifts faster and more reliable: small design tweaks, performance improvements and bug fixes. Thanks for using Turnia!` |
+| Français | `Nous avons amélioré Turnia pour que l'organisation de tes gardes soit plus rapide et plus fiable : petites retouches de design, meilleures performances et corrections de bugs. Merci d'utiliser Turnia !` |
+| Deutsch | `Wir haben Turnia verbessert, damit du deine Dienste schneller und zuverlässiger organisieren kannst: kleine Designanpassungen, bessere Performance und Fehlerbehebungen. Danke, dass du Turnia nutzt!` |
+| Italiano | `Abbiamo migliorato Turnia per rendere l'organizzazione dei tuoi turni più veloce e affidabile: piccoli ritocchi al design, prestazioni migliori e correzione di bug. Grazie per usare Turnia!` |
+
+---
+
 Pulsa un idioma para abrir su ficha; el resto se queda plegado.
 
 <details>
