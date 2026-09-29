@@ -103,6 +103,9 @@ turnia/
 
 ## Status
 
+<!-- TODO: once there's a public listing, add the official Google Play / App Store badges here,
+     linking to the real store pages — not before, per each store's brand guidelines. -->
+
 In closed testing: Android on Play's internal testing track, iOS on TestFlight. Not yet listed
 publicly on either store. Firebase App Check attestation is wired into release builds; production
 enforcement is being rolled out in stages (see `openspec/changes` for the current rollout).
