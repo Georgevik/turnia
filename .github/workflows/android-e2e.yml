@@ -97,7 +97,9 @@ jobs:
           disable-animations: false
           script: echo "Generated the AVD snapshot"
 
-      # The runner executes each script line on its own, so the whole run is one line.
+      # The runner executes each script line on its own, so the whole run is one line. A test that
+      # fails is retried once by run-e2e-with-retry.sh before this step actually fails — the same
+      # Firebase and Android emulators stay up for the retry, so it costs only the failed test(s).
       - name: Run the E2E suite
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -110,7 +112,7 @@ jobs:
           disk-size: 2G
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
-          script: cd firebase && firebase emulators:exec --only auth,firestore,functions --project turnia-23ebc "cd .. && ./gradlew :app:androidApp:connectedDebugAndroidTest"
+          script: cd firebase && firebase emulators:exec --only auth,firestore,functions --project turnia-23ebc "cd .. && bash .github/scripts/run-e2e-with-retry.sh"
 
       - name: Upload the E2E report
         id: report
@@ -121,6 +123,7 @@ jobs:
           path: |
             app/androidApp/build/reports/androidTests/connected
             app/androidApp/build/outputs/androidTest-results/connected
+            app/androidApp/build/outputs/androidTest-results/connected-attempt1
             firebase/*-debug.log
 
       - name: Summarize the E2E results

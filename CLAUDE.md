@@ -573,6 +573,10 @@ The 68 critical happy paths run on an Android emulator against the Firebase emul
 - The suite's CI job lives in `.github/workflows/android-e2e.yml`, runnable on its own from Actions.
   The Release workflow calls it as its `android-e2e` job, and both uploads wait for it. Its
   `runTests` checkbox (on by default) can skip it.
+- **CI retries a failed test exactly once** (`run-e2e-with-retry.sh`), against the same running
+  emulators — a CI-runner-speed flake fails twice in a row only by bad luck, a real regression fails
+  both times. Local runs never retry: a failure there is the honest first-attempt signal. The job
+  summary marks a test that needed the retry with 🔁 so a passing run still shows it was flaky.
 
 ### Android release build
 

@@ -61,8 +61,9 @@ fails even when everything else works. *Re-run failed jobs* repeats only what fa
 
 ## Skipping the tests
 
-Before uploading, the workflow runs the automated tests on an Android emulator. If they fail,
-nothing is uploaded.
+Before uploading, the workflow runs the automated tests on an Android emulator. A test that fails is
+retried once, against the same emulators, before the run is failed for real — a test still failing
+after that retry is treated as a genuine failure, and nothing is uploaded.
 
 Unticking **Run the Android E2E suite** skips them, and the builds are uploaded untested. The run's
 summary page then shows a **Tests skipped** warning. Only do this when the tests fail for a reason
