@@ -31,3 +31,10 @@ keystore.properties
 
 # Firebase CLI deploy cache
 /firebase/.firebase/
+
+# Firebase app config: project-specific, copy the .example and fill in your own project's values
+app/androidApp/google-services.json
+app/iosApp/iosApp/GoogleService-Info.plist
+
+# Local Claude Code worktrees
+.claude/worktrees/
