@@ -21,10 +21,10 @@
 		515FEE473028AF8D00A40A69 /* FirebaseInAppMessaging-Beta in Frameworks */ = {isa = PBXBuildFile; productRef = 515FEE463028AF8D00A40A69 /* FirebaseInAppMessaging-Beta */; };
 		515FEE493028AF8D00A40A69 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 515FEE483028AF8D00A40A69 /* FirebaseMessaging */; };
 		515FEE4B3028AF8D00A40A69 /* FirebasePerformance in Frameworks */ = {isa = PBXBuildFile; productRef = 515FEE4A3028AF8D00A40A69 /* FirebasePerformance */; };
-		515FEE6E3028B62F00A40A69 /* FirebaseRemoteConfig in Frameworks */ = {isa = PBXBuildFile; productRef = 515FEE6D3028B62F00A40A69 /* FirebaseRemoteConfig */; };
 		515FEE663028B62F00A40A69 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 515FEE653028B62F00A40A69 /* GoogleSignIn */; };
 		515FEE683028B62F00A40A69 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 515FEE673028B62F00A40A69 /* GoogleSignInSwift */; };
 		515FEE6C3028B62F00A40A69 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 515FEE6B3028B62F00A40A69 /* GoogleMobileAds */; };
+		515FEE6E3028B62F00A40A69 /* FirebaseRemoteConfig in Frameworks */ = {isa = PBXBuildFile; productRef = 515FEE6D3028B62F00A40A69 /* FirebaseRemoteConfig */; };
 		929887402EF083DE75296FB4 /* KotlinMultiplatformLinkedPackage in Frameworks */ = {isa = PBXBuildFile; productRef = C4838CBF7967ADC8A4C519BE /* KotlinMultiplatformLinkedPackage */; };
 /* End PBXBuildFile section */
 
@@ -585,14 +585,14 @@
 			package = 515FEE6A3028B62F00A40A69 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */;
 			productName = GoogleMobileAds;
 		};
-		C4838CBF7967ADC8A4C519BE /* KotlinMultiplatformLinkedPackage */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = KotlinMultiplatformLinkedPackage;
-		};
 		515FEE6D3028B62F00A40A69 /* FirebaseRemoteConfig */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 515FEE2F3028AF8D00A40A69 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseRemoteConfig;
+		};
+		C4838CBF7967ADC8A4C519BE /* KotlinMultiplatformLinkedPackage */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = KotlinMultiplatformLinkedPackage;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
