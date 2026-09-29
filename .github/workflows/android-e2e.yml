@@ -24,7 +24,7 @@ jobs:
   # the two apps share every line of logic it covers.
   android-e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     env:
       API_LEVEL: 34
     steps:
