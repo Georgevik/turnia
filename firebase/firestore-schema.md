@@ -206,7 +206,7 @@ receipt. An absent document means the free tier.
 | Field | Type | Description |
 |-------|------|-------------|
 | `tier` | string | `free` \| `premium`. |
-| `plan` | string \| null | `monthly` ([redacted]) \| `annual` ([redacted]); `null` when free. |
+| `plan` | string \| null | `monthly` \| `annual`; `null` when free. Pricing: `CLAUDE.local.md`. |
 | `platform` | string \| null | `play` \| `appstore` — where it was purchased. |
 | `expiresAt` | timestamp \| null | Current period end; entitlement is active while now &lt; `expiresAt`. |
 | `updatedAt` | timestamp | Last time the server updated this from a store notification. |
