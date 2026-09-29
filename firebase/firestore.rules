@@ -1,7 +1,6 @@
 rules_version = '2';
 
-// Starting point that mirrors the model documented in firestore-schema.md.
-// Review and tighten before going to production.
+// Mirrors the model documented in firestore-schema.md.
 service cloud.firestore {
   match /databases/{database}/documents {
 
