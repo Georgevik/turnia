@@ -81,41 +81,33 @@ process, not ad-hoc prompting. The artifacts below are the evidence, not a claim
 
 ## Firebase cost engineering
 
-Firestore bills per document read and written, and Cloud Functions per invocation. With no server of
-its own, the local cache is the only lever Turnia has on that bill, so its effect is measured, not
-assumed — every call reports itself, split into free cache hits and billed server reads, logged per
-class and per query. See [firestore-usage.md](firebase/firestore-usage.md) for the full breakdown and
-[firestore-schema.md](firebase/firestore-schema.md) for the sync-marker model it depends on.
+Firestore bills per document read/written, Functions per invocation. Every call is instrumented and
+logged per class and query, cache hits split from billed server reads — see
+[firestore-usage.md](firebase/firestore-usage.md) and the sync-marker model behind it in
+[firestore-schema.md](firebase/firestore-schema.md).
 
-Measured on the same account, before and after a read-optimisation pass:
+Measured on the same account, before/after a read-optimisation pass:
 
 | | Before | After |
 |---|---:|---:|
 | Cold start (> 30 min since the last one) | 11 reads | 1 read + 1 per group |
-| Reads / user / day (typical usage) | ~55 | ~17 |
-| Projected bill at 10,000 daily active users | ~$9.00 / month | ~$2.20 / month |
+| Reads / user / day | ~55 | ~17 |
+| Bill at 10,000 DAU | ~$9.00 / month | ~$2.20 / month |
 
-What actually moved that number:
+What moved it:
 
-- **Local cache first, server only on a marker.** Every user and group carries a `sync/updates`
-  document; the app keeps one listener per sync document and reads everything else from the local
-  cache unless its marker says the server moved on. A quiet session costs only the listener attaches,
-  plus a read for whatever someone else actually changed.
-- **No subcollection for data that's always read as a whole.** An event's `history` and a group's
-  event types are arrays on the parent document, not subcollections — showing a swap chain or a
-  group's types costs the one read already paid for, never one read per entry.
-- **Denormalization with a single writer.** Groups carry their members' names, so the calendar
-  renders with no read per member; a Cloud Function (`onUserRenamed`) is the only thing allowed to
-  update those copies, atomically with the marker that tells other devices to refetch.
-- **Cross-group aggregation happens once, server-side.** Viewing a colleague's shared calendar is one
-  `getSharedCalendar` Cloud Function call with admin privileges — not a client fan-out across every
-  group it spans, which the security rules would refuse anyway.
-- **Listener billing matches Firestore's own free window.** A re-attach within 30 minutes of the last
-  listen is free; the audit treats every attach as a worst-case charge, so that saving is visible
-  instead of assumed, and listener lifetime decisions are made on the real number.
-- **The retention window bounds what there is left to read.** Events older than a month are purged
-  from Firestore by one scheduled Cloud Function and already live in the local cache by then, so old
-  data costs nothing to keep showing on-device and nothing per client to delete.
+- **Cache first, server only on a marker.** One listener per user/group `sync/updates` document;
+  everything else comes from the local cache unless its marker moved.
+- **No subcollections for data read as a whole.** `history` and a group's event types are arrays on
+  the parent document — one read, not one per entry.
+- **Denormalization, single writer.** Groups carry members' names for the calendar; only
+  `onUserRenamed` updates those copies, atomically with the sync marker.
+- **Aggregation server-side, one call.** A shared calendar is one `getSharedCalendar` Function call
+  with admin rights, not a client fan-out the security rules would block anyway.
+- **Listeners billed like Firestore bills them.** A re-attach within 30 minutes is free; the audit
+  counts it as a worst-case charge, so listener lifetime is tuned on real numbers.
+- **Retention bounds what's left to read.** Events past the 1-month window are purged by one
+  scheduled Function; they're already in the local cache, so old data costs nothing to keep showing.
 
 ## Tech stack
 
