@@ -38,3 +38,6 @@ app/iosApp/iosApp/GoogleService-Info.plist
 
 # Local Claude Code worktrees
 .claude/worktrees/
+
+# Business rules kept out of the public repo (pricing, ads/premium mechanics) — see CLAUDE.md
+CLAUDE.local.md
