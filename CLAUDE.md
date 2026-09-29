@@ -365,9 +365,14 @@ Build one with `value.toSuccess()` / `error.toFailure()` — both work on any re
     Firebase is touched (`TurniaApplication`, `iOSApp.init`); the native SDKs under GitLive then
     attach the token on their own. Android release builds attest with **Play Integrity**, iOS
     release builds with **App Attest**; debug builds use a **debug token**, printed on first launch,
-    that has to be registered in the console once per device. Not enforced yet: enforce each service
-    (Firestore, Functions, Auth) in the console only once its metrics show current traffic verified.
-    Enforcing before a release that attests is in users' hands locks every older build out.
+    that has to be registered in the console once per device. **Not enforced yet**: Firestore and
+    Authentication were briefly enforced on 2026-09-29 and reverted to monitoring-only the same day
+    after it crashed the app and blocked Google Sign-In on a sideloaded test build — see
+    `openspec/changes/enable-app-check-enforcement` for the staged rollout that replaces that ad hoc
+    attempt. Functions has no metrics at all yet: `enforceAppCheck: true` has been added to its
+    `onCall` functions but not deployed, since Cloud Functions has no monitoring-only mode — deploying
+    it is immediate enforcement. Enforcing before a release that attests is in users' hands locks
+    every older build out.
   - **Cloud Scheduler** — triggers the periodic retention cleanup of old events.
 - **GitLive Firebase Kotlin SDK** (`dev.gitlive:firebase-*`) — Firebase access from `commonMain`.
 - **Native FCM per platform** — push reception uses the native SDK on each platform (iOS involves APNs, `AppDelegate` and permissions).
