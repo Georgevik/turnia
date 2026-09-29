@@ -20,6 +20,7 @@ import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Source
 import dev.gitlive.firebase.firestore.Timestamp
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.mapNotNull
@@ -77,6 +78,9 @@ class PersonalEventFirestore(
                     known.areNotDeleted()
                 }
             )
+        }.catch { throwable ->
+            Logger.e(TAG, "Events listener failed", throwable)
+            emit(emptyList())
         }
 
     suspend fun set(uid: UserId, event: PersonalTypedEvent): Outcome<Unit, GenericFirestoreError> =

@@ -22,6 +22,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.mapNotNull
@@ -83,6 +84,9 @@ class PersonalOneOffEventFirestore(
                 settled = true
                 known.areNotDeleted()
             })
+    }.catch { throwable ->
+        Logger.e(TAG, "Events listener failed", throwable)
+        emit(emptyList())
     }
 
     suspend fun set(uid: UserId, event: PersonalOneOffEvent): Outcome<Unit, GenericFirestoreError> =
