@@ -2,7 +2,7 @@
 
 ## 1. Setup
 
-- [ ] 1.1 Create branch `features/enable-app-check-enforcement` off `main` and verify it is checked out (`git status`)
+- [x] 1.1 Create branch `features/enable-app-check-enforcement` off `main` and verify it is checked out (`git status`)
 
 ## 2. Ship the crash-safety fix
 
@@ -16,11 +16,11 @@
 
 ## 3. Enforce Cloud Functions
 
-- [ ] 3.1 Commit the `enforceAppCheck: true` change already made to the 11 `onCall` functions in `firebase/functions/src/{account,events,membership,invitations,users,sharedCalendar}.ts`
-- [ ] 3.2 Deploy the functions (`firebase deploy --only functions`) and verify the deploy completes without error
-- [ ] 3.3 From a genuine app build on Android, exercise at least one representative flow per function family (e.g. `requestToJoinGroup`, `takeEvent`, `returnEvent`, `updateProfile`, `getSharedCalendar`, `leaveGroup`) and verify each still succeeds
-- [ ] 3.4 Repeat 3.3 on iOS and verify each still succeeds
-- [ ] 3.5 Confirm rejection behavior: invoke one function from a client without a valid App Check token (e.g. a stale pre-fix build still installed on a spare device, or a direct unauthenticated call) and verify it is rejected
+- [x] 3.1 Commit the `enforceAppCheck: true` change already made to the 11 `onCall` functions in `firebase/functions/src/{account,events,membership,invitations,users,sharedCalendar}.ts`
+- [x] 3.2 Deploy the functions (`firebase deploy --only functions`) and verify the deploy completes without error
+- [x] 3.3 From a genuine app build on Android, exercise at least one representative flow per function family (e.g. `requestToJoinGroup`, `takeEvent`, `returnEvent`, `updateProfile`, `getSharedCalendar`, `leaveGroup`) and verify each still succeeds
+- [x] 3.4 Repeat 3.3 on iOS and verify each still succeeds
+- [x] 3.5 Confirm rejection behavior: invoke one function from a client without a valid App Check token (e.g. a stale pre-fix build still installed on a spare device, or a direct unauthenticated call) and verify it is rejected
 - [ ] 3.6 Monitor Cloud Functions logs for 24–48h for unexpected 401/403 responses from real client traffic, and verify none are found before proceeding to section 4 (if any are found, redeploy without `enforceAppCheck: true` and investigate before retrying this section)
 
 ## 4. Enforce Cloud Firestore
