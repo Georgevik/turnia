@@ -11,6 +11,12 @@ import xml.etree.ElementTree as ET
 
 results_dir, report_url = sys.argv[1], (sys.argv[2] if len(sys.argv) > 2 else "")
 
+try:
+    with open(".github/known-flaky-e2e-tests.txt") as f:
+        known_flaky = {line.strip() for line in f if line.strip()}
+except FileNotFoundError:
+    known_flaky = set()
+
 
 def read_cases(dir_path):
     cases = {}
@@ -30,7 +36,7 @@ if os.path.isdir(attempt1_dir):
 else:
     cases = final_cases
 
-rows, passed, failed, skipped, retried_ok = [], 0, 0, 0, 0
+rows, passed, failed, skipped, retried_ok, flaky_allowed = [], 0, 0, 0, 0, 0
 for key in sorted(cases):
     classname, name = key
     case = cases[key]
@@ -40,9 +46,14 @@ for key in sorted(cases):
     if problem is None:
         problem = case.find("error")
     if problem is not None:
-        failed += 1
         reason = (problem.text or problem.get("message") or "").strip().splitlines()
-        tag = "❌ (after retry)" if was_retried else "❌"
+        key_id = f"{classname}#{name}"
+        if was_retried and key_id in known_flaky:
+            flaky_allowed += 1
+            tag = "🟡 (known flaky, not blocking)"
+        else:
+            failed += 1
+            tag = "❌ (after retry)" if was_retried else "❌"
         rows.append(f"| {tag} | `{display_name}` | {case.get('time')}s | {reason[0] if reason else ''} |")
     elif case.find("skipped") is not None:
         skipped += 1
@@ -62,6 +73,8 @@ else:
     summary = f"**{verdict}** — {passed + retried_ok} passed, {failed} failed, {skipped} skipped"
     if retried_ok:
         summary += f" ({retried_ok} needed a retry)"
+    if flaky_allowed:
+        summary += f", {flaky_allowed} known flaky (not blocking)"
     lines += [
         summary,
         "",

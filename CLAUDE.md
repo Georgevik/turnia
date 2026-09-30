@@ -591,6 +591,12 @@ The 68 critical happy paths run on an Android emulator against the Firebase emul
   emulators — a CI-runner-speed flake fails twice in a row only by bad luck, a real regression fails
   both times. Local runs never retry: a failure there is the honest first-attempt signal. The job
   summary marks a test that needed the retry with 🔁 so a passing run still shows it was flaky.
+- **A test still failing after that retry only skips blocking the run if it's on
+  [`.github/known-flaky-e2e-tests.txt`](.github/known-flaky-e2e-tests.txt)** — a short, explicit,
+  reviewed allowlist (`Class#method` per line), not a blanket "ignore flakiness" switch. Any other
+  test still failing after the retry blocks as before. The summary marks an allowed one 🟡, distinct
+  from ✅/🔁/❌, so it stays visible even on a green run. Add a test here only once it's confirmed to
+  fail solely on CI and never locally, and remove it once the root cause is fixed.
 
 ### Android release build
 
