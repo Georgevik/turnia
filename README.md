@@ -4,6 +4,12 @@
 [![Latest release](https://img.shields.io/github/v/tag/Georgevik/turnia?sort=semver&label=version)](https://github.com/Georgevik/turnia/releases/latest)
 [![License](https://img.shields.io/badge/license-source--available-lightgrey)](LICENSE)
 
+![Kotlin](https://img.shields.io/badge/Kotlin-7F52FF?logo=kotlin&logoColor=white)
+![Compose Multiplatform](https://img.shields.io/badge/Compose%20Multiplatform-4285F4?logo=jetpackcompose&logoColor=white)
+![Android](https://img.shields.io/badge/Android-3DDC84?logo=android&logoColor=white)
+![iOS](https://img.shields.io/badge/iOS-000000?logo=apple&logoColor=white)
+![Firebase](https://img.shields.io/badge/Firebase-FFCA28?logo=firebase&logoColor=black)
+
 Shift management and swapping for healthcare teams, on Android and iOS.
 
 ## The problem
