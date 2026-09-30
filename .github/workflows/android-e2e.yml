@@ -1,10 +1,14 @@
 name: AndroidE2E
 
-# Run on its own from Actions, or called by release.yml to gate the uploads. Never on push: nothing
-# in this repo runs automatically.
+# Run on its own from Actions, called by release.yml to gate the uploads, or on every push to main
+# now that the repo is public and Actions minutes for public repos are free. A reusable-workflow
+# call from release.yml does not show up as a run of this workflow on its own, which is why the
+# push trigger exists separately — it's also what keeps this workflow's own status badge fresh.
 on:
   workflow_dispatch:
   workflow_call:
+  push:
+    branches: [main]
 
 # Not `release`: a called workflow in its caller's group is cancelled as a deadlock. Called from
 # Release, github.workflow is the caller's name, so a standalone run never queues behind a release.
