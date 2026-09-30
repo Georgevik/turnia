@@ -1,17 +1,31 @@
 # Turnia
 
-Kotlin Multiplatform (Compose Multiplatform, Android/iOS) application for managing and swapping shifts in the healthcare sector. The backend is 100% Firebase (KMP client, no custom server). The central goal is **full traceability of chained shift changes** (A→B→C) that today are handled over WhatsApp, causing confusion.
+Kotlin Multiplatform (Compose Multiplatform, Android/iOS) application for managing shifts and swapping them with teammates in the healthcare sector. The backend is 100% Firebase (KMP client, no custom server). It replaces WhatsApp-organized shift work, which breaks in two ways: **entry** — a calendar built for one-off events forces repeating the same creation flow for every recurring shift — and **truth** — once shifts change hands, nobody, including someone who only reads the schedule, can tell who covers a day, because a snapshot goes stale the moment the next swap happens.
 
 ## The problem
 
-Shift changes are currently handled over WhatsApp, which causes confusion and errors, especially when **chained changes** happen:
+Shift work runs on WhatsApp today, and that breaks in two ways.
+
+**Entry.** A calendar built for one-off events forces a worker to repeat the same creation flow for
+every recurring shift — 20 morning shifts in a month means the same form 20 times — and to
+delete-and-recreate on every change. Turnia makes a shift something defined once and placed on the
+calendar in three taps.
+
+**Truth.** Once shifts start changing hands, nobody can tell who actually covers a day, especially
+when changes chain:
 
 > A swaps their shift with B. Later, B swaps that same shift (originally A's) with C.
 
-Without a single source of truth it is easy to lose track of who actually covers each shift. Turnia solves this by keeping full traceability of every change and a state that is always consistent.
+Without a single source of truth it is easy to lose track of who actually covers each shift — and a
+snapshot shared with someone who only *reads* the schedule (a partner, family) goes stale the moment
+the next swap happens. Turnia solves this by keeping one live, append-only record of every transfer,
+so the chain (A→B→C) can always be traced and whoever looks at it sees the current truth, not
+yesterday's.
 
 ## Goals
 
+- Low-friction entry: define a shift once, add it to the calendar in three taps — no repeating the
+  same creation flow for every recurrence.
 - Single source of truth about who covers each shift at any given moment.
 - Full traceability of the chain of changes (auditable, append-only history).
 - Conflict prevention (double assignments, changes over already-reassigned shifts).
