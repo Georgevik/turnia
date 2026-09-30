@@ -111,6 +111,7 @@ jobs:
     needs: validate
     if: inputs.runTests
     uses: ./.github/workflows/android-e2e.yml
+    secrets: inherit
 
   android:
     needs: [validate, android-e2e]
