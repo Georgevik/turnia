@@ -37,10 +37,12 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  # The build number is this run's, offset past every build uploaded by hand before the pipeline
-  # existed. The version name is worked out by the validate job from the last release tag.
+  # The build number is this run's, offset past every build already uploaded to the stores. The
+  # version name is worked out by the validate job from the last release tag. Raised to 200 when
+  # the repo moved to a fresh history (see README) and github.run_number reset to 1 — the highest
+  # build already on Play/TestFlight was 121.
   BUILD_NUMBER: ${{ github.run_number }}
-  BUILD_NUMBER_OFFSET: 100
+  BUILD_NUMBER_OFFSET: 200
 
 jobs:
   validate:
@@ -211,6 +213,13 @@ jobs:
         env:
           GOOGLE_SERVICE_INFO_PLIST_BASE64: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST_BASE64 }}
         run: echo "$GOOGLE_SERVICE_INFO_PLIST_BASE64" | base64 --decode > app/iosApp/iosApp/GoogleService-Info.plist
+
+      # The "Compile Kotlin Framework" build phase runs Gradle for the whole project, and the
+      # Google Services plugin needs this file even though this job only ships the iOS app.
+      - name: Write google-services.json
+        env:
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        run: echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > app/androidApp/google-services.json
 
       - name: Cache the Kotlin/Native toolchain
         uses: actions/cache@v5
