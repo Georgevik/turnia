@@ -1,13 +1,16 @@
 name: AndroidE2E
 
-# Run on its own from Actions, called by release.yml to gate the uploads, or on every push to main
-# now that the repo is public and Actions minutes for public repos are free. A reusable-workflow
-# call from release.yml does not show up as a run of this workflow on its own, which is why the
-# push trigger exists separately — it's also what keeps this workflow's own status badge fresh.
+# Run on its own from Actions, called by release.yml to gate the uploads, or when a PR into main is
+# merged — not on every push to main, which a merge (any strategy) also produces, so the trigger is
+# pull_request/closed filtered to merged==true rather than push. A reusable-workflow call from
+# release.yml does not show up as a run of this workflow on its own, which is why the pull_request
+# trigger exists separately — it's also what keeps this workflow's own status badge fresh, now only
+# on merges rather than on every push.
 on:
   workflow_dispatch:
   workflow_call:
-  push:
+  pull_request:
+    types: [closed]
     branches: [main]
 
 # Not `release`: a called workflow in its caller's group is cancelled as a deadlock. Called from
@@ -24,12 +27,18 @@ jobs:
   # Firebase emulators seeded from firebase/test/fixtures. Android only, but it gates both uploads:
   # the two apps share every line of logic it covers.
   android-e2e:
+    # pull_request also fires on a closed-without-merging PR; only a real merge runs the suite.
+    if: github.event_name != 'pull_request' || github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
       API_LEVEL: 34
     steps:
+      # pull_request/closed checks out the PR head by default, not the commit that actually landed
+      # on main (squash/rebase rewrite it) — ask for main explicitly once the merge has happened.
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'pull_request' && 'main' || '' }}
 
       # The emulator's userdata partition does not fit in what the runner has left after the build.
       - name: Free disk space
