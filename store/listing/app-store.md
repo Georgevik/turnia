@@ -63,6 +63,7 @@ Ofrece un turno, un compañero lo cubre con un toque y queda registrado quién l
 Pensada para enfermeras, médicos, TCAE, técnicos y cualquier profesional sanitario que trabaje a turnos.
 
 TU CUADRANTE, DE UN VISTAZO
+• Define un turno una vez y añádelo con un toque: nunca más el mismo formulario en cada repetición.
 • Mañanas, tardes, noches y guardias, cada tipo de turno con su color y su horario.
 • Los turnos de todos tus grupos y tus eventos personales (vacaciones, formación, citas…) en un mismo calendario.
 • Añade notas a tus eventos personales.
@@ -155,6 +156,7 @@ Swapping shifts over group chats and losing track of who works when? Turnia brin
 Built for nurses, doctors, healthcare assistants and anyone in healthcare who works shifts.
 
 YOUR ROSTER AT A GLANCE
+• Define a shift once and add it with a tap — never the same form twice for a repeating shift.
 • Mornings, afternoons, nights and on-call shifts, each shift type with its own color and hours.
 • Shifts from all your groups and your personal events (vacation, training, appointments…) on one calendar.
 • Add notes to your personal events.
@@ -247,6 +249,7 @@ Tu échanges tes gardes par messages et au final plus personne ne sait qui trava
 Pensée pour les infirmières et infirmiers, médecins, aides-soignants, manipulateurs radio et tous les professionnels de santé qui travaillent en horaires décalés.
 
 TON PLANNING EN UN COUP D'ŒIL
+• Définis une garde une fois et ajoute-la en un geste : plus jamais le même formulaire à chaque répétition.
 • Matins, après-midis, nuits et astreintes : chaque type de garde avec sa couleur et ses horaires.
 • Les gardes de tous tes groupes et tes événements personnels (congés, formation, rendez-vous…) dans un seul calendrier.
 • Ajoute des notes à tes événements personnels.
@@ -339,6 +342,7 @@ Tauschst du Dienste per Nachricht, und am Ende weiß niemand mehr, wer wann arbe
 Gemacht für Pflegekräfte, Ärztinnen und Ärzte, MFA, Pflegehelfer und alle im Gesundheitswesen, die im Schichtdienst arbeiten.
 
 DEIN DIENSTPLAN AUF EINEN BLICK
+• Definiere einen Dienst einmal und füge ihn mit einem Tipp hinzu – nie wieder dasselbe Formular bei jeder Wiederholung.
 • Früh-, Spät-, Nacht- und Bereitschaftsdienste, jede Dienstart mit eigener Farbe und eigenen Zeiten.
 • Die Dienste all deiner Gruppen und deine persönlichen Termine (Urlaub, Fortbildung, Arzttermine…) in einem Kalender.
 • Füge deinen persönlichen Terminen Notizen hinzu.
@@ -431,6 +435,7 @@ Cambi i turni via messaggio e alla fine nessuno sa più chi lavora e quando? Tur
 Pensata per infermieri, medici, OSS, tecnici e ogni professionista sanitario che lavora a turni.
 
 IL TUO PIANO TURNI A COLPO D'OCCHIO
+• Definisci un turno una volta e aggiungilo con un tocco: mai più lo stesso modulo a ogni ripetizione.
 • Mattine, pomeriggi, notti e reperibilità, ogni tipo di turno con il suo colore e il suo orario.
 • I turni di tutti i tuoi gruppi e i tuoi eventi personali (ferie, formazione, appuntamenti…) in un unico calendario.
 • Aggiungi note ai tuoi eventi personali.
