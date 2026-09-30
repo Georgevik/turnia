@@ -21,7 +21,7 @@
 - [x] 3.3 From a genuine app build on Android, exercise at least one representative flow per function family (e.g. `requestToJoinGroup`, `takeEvent`, `returnEvent`, `updateProfile`, `getSharedCalendar`, `leaveGroup`) and verify each still succeeds
 - [x] 3.4 Repeat 3.3 on iOS and verify each still succeeds
 - [x] 3.5 Confirm rejection behavior: invoke one function from a client without a valid App Check token (e.g. a stale pre-fix build still installed on a spare device, or a direct unauthenticated call) and verify it is rejected
-- [ ] 3.6 Monitor Cloud Functions logs for 24–48h for unexpected 401/403 responses from real client traffic, and verify none are found before proceeding to section 4 (if any are found, redeploy without `enforceAppCheck: true` and investigate before retrying this section)
+- [x] 3.6 Monitor Cloud Functions logs for 24–48h for unexpected 401/403 responses from real client traffic, and verify none are found before proceeding to section 4 (if any are found, redeploy without `enforceAppCheck: true` and investigate before retrying this section)
 
 ## 4. Enforce Cloud Firestore
 
