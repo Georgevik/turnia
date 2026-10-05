@@ -201,16 +201,15 @@ class GroupDetailViewModel(
     fun onSave() {
         val state = _uiState.value as? GroupDetailUi.Success ?: return
         val form = state.form
-        if (!form.editable || form.name.isBlank()) return
+        if (!form.editable || form.name.isBlank() || state.saving) return
         // A group nobody can add a shift to is not a group; the button is disabled, this is the rule.
         if (groupId == null && groupRepository.pendingEventTypes.value.isEmpty()) return
 
         val name = form.name.trim()
         val loaded = loadedGroup
+        updateSuccess { it.copy(saving = true) }
 
         viewModelScope.launch {
-            updateSuccess { it.copy(saving = true) }
-
             val outcome = if (loaded == null) {
                 // The whole group is one document, types included, so a group is created with its
                 // types in a single write and never exists without them.
