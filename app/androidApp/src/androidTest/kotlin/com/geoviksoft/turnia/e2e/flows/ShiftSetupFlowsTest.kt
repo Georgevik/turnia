@@ -99,6 +99,23 @@ class ShiftSetupFlowsTest {
         setup.awaitText("08:00 – 08:00 +1")
     }
 
+    /** A tap landing after confirm already succeeded must not create a second batch of shifts. */
+    @Test
+    @SignedInAs("nuevo")
+    fun rapidRepeatedConfirms_createOnlyOneBatch() {
+        setup.awaitSetup()
+        val confirmButton = hasTestTag(TestTags.SHIFT_SETUP_CONFIRM)
+        repeat(5) {
+            val stillThere = compose.onAllNodes(confirmButton).fetchSemanticsNodes().isNotEmpty()
+            if (stillThere) runCatching { compose.onNode(confirmButton).scrollAndClick() }
+        }
+
+        setup.awaitNoSetup()
+        setup.awaitText(ShiftSetupRobot.HINT)
+        val types = awaitTypes("nuevo", count = 3)
+        assertEquals(3, types.size)
+    }
+
     @Test
     @SignedInAs("nuevo")
     fun skipping_isRememberedOnTheDevice() {

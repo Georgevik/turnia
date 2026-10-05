@@ -144,6 +144,28 @@ class ShiftSetupViewModelTest {
     }
 
     @Test
+    fun confirmingTwiceCreatesOnlyOnce() {
+        val viewModel = viewModel()
+
+        viewModel.confirm(spanish)
+        viewModel.confirm(spanish)
+
+        assertEquals(1, repository.completed.size)
+    }
+
+    @Test
+    fun aTapAfterASuccessfulConfirmCreatesNothingExtra() {
+        val viewModel = viewModel()
+
+        viewModel.confirm(spanish)
+        assertFalse(viewModel.uiState.value.canConfirm, "The setup already closed; confirm should be disabled")
+
+        viewModel.confirm(spanish)
+
+        assertEquals(1, repository.completed.size)
+    }
+
+    @Test
     fun confirmingUntouchedReportsNoInteraction() {
         val viewModel = viewModel()
 
