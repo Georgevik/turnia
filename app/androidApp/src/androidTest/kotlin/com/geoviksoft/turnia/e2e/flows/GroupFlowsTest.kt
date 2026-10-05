@@ -2,10 +2,13 @@ package com.geoviksoft.turnia.e2e.flows
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.geoviksoft.turnia.e2e.infra.Documents
 import com.geoviksoft.turnia.e2e.infra.E2eRule
+import com.geoviksoft.turnia.e2e.infra.FirestoreRest
 import com.geoviksoft.turnia.e2e.infra.RecordingAnalytics
 import com.geoviksoft.turnia.e2e.infra.RecordingTextSharer
 import com.geoviksoft.turnia.e2e.infra.SignedInAs
@@ -13,6 +16,7 @@ import com.geoviksoft.turnia.e2e.infra.UI_TIMEOUT_MS
 import com.geoviksoft.turnia.e2e.infra.awaitLogged
 import com.geoviksoft.turnia.e2e.infra.awaitUserProperty
 import com.geoviksoft.turnia.e2e.infra.objects
+import com.geoviksoft.turnia.e2e.infra.scrollAndClick
 import com.geoviksoft.turnia.e2e.infra.string
 import com.geoviksoft.turnia.e2e.infra.strings
 import com.geoviksoft.turnia.e2e.robots.AppRobot
@@ -56,6 +60,22 @@ class JoinGroupFlowsTest {
         )
         compose.awaitUserProperty("group_count", "1")
         compose.awaitUserProperty("is_admin", "true")
+    }
+
+    /** A tap landing while the first save is still in flight must not create a second group. */
+    @Test
+    fun rapidRepeatedCreateTaps_createOnlyOneGroup() {
+        groups.openNewGroupForm()
+        groups.type("Group name", "Quirófano")
+        val createButton = hasText("Create group") and hasClickAction()
+        repeat(5) {
+            val stillThere = compose.onAllNodes(createButton).fetchSemanticsNodes().isNotEmpty()
+            if (stillThere) runCatching { compose.onNode(createButton).scrollAndClick() }
+        }
+
+        groups.awaitInviteStep()
+        assertEquals(1, FirestoreRest.list("groups").values.count { it.string("name") == "Quirófano" })
+        groups.finishInviteStep()
     }
 
     @Test
