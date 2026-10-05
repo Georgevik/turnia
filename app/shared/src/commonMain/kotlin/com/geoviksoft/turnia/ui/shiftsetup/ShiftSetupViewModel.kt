@@ -79,13 +79,18 @@ class ShiftSetupViewModel(
         copy(rows = rows + rowFactory.custom(form, rows), custom = null)
     }
 
+    // A second tap lands while the first confirm is still writing, or after it already closed the
+    // screen, before the screen actually leaves composition.
+    private var confirming = false
+
     /**
      * [presetText] holds each preset's name and acronym in the language on screen, which is the one
      * the types are created in: from then on they are the user's words, not the app's.
      */
     fun confirm(presetText: Map<ShiftPreset, Pair<String, String>>) {
         val state = _uiState.value
-        if (!state.canConfirm) return
+        if (!state.canConfirm || confirming) return
+        confirming = true
         _uiState.update { it.copy(saving = true) }
 
         val selected = state.rows.filter { it.selected }
@@ -111,6 +116,7 @@ class ShiftSetupViewModel(
             ).fold(
                 onSuccess = { _uiState.update { it.copy(saving = false, closed = true) } },
                 onFailure = {
+                    confirming = false
                     _uiState.update { it.copy(saving = false, userMessage = Res.string.shift_setup_save_error) }
                 },
             )

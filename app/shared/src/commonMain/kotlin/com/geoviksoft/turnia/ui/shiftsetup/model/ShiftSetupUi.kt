@@ -39,5 +39,5 @@ data class ShiftSetupUi(
     val closed: Boolean = false,
 ) {
     val selectedCount: Int get() = rows.count { it.selected }
-    val canConfirm: Boolean get() = selectedCount > 0 && !saving
+    val canConfirm: Boolean get() = selectedCount > 0 && !saving && !closed
 }
