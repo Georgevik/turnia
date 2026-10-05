@@ -622,6 +622,14 @@ tags the commit `v<versionName>-<buildNumber>`. Neither app is uploaded unless t
 passes first.
 Secrets and setup: [.github/RELEASE.md](.github/RELEASE.md).
 
+## Pull requests
+
+A PR description has exactly three sections, in this order:
+
+- **What changes?** — 1–3 sentences.
+- **Why?** — the context/motivation.
+- **How to test it** — concrete steps, not a restatement of the test suite.
+
 ## iOS signing & Apple setup
 
 The app is signed by the paid team `83GQ2T4N4H` with automatic signing, so Xcode keeps the App ID's
