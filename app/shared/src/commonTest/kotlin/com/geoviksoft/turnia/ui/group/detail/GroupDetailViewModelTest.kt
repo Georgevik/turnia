@@ -10,6 +10,7 @@ import com.geoviksoft.turnia.core.system.toSuccess
 import com.geoviksoft.turnia.core.domain.model.GroupId
 import com.geoviksoft.turnia.core.domain.model.GroupMember
 import com.geoviksoft.turnia.core.domain.model.UserId
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import com.geoviksoft.turnia.demo.DemoAnalytics
@@ -140,6 +141,35 @@ class GroupDetailViewModelTest {
     }
 
     @Test
+    fun savingTwiceWhileTheFirstIsInFlightCreatesOnlyOnce() {
+        val gate = CompletableDeferred<Unit>()
+        groups.createGate = gate
+        groups.createSucceeds = true
+        val viewModel = newGroup()
+        viewModel.proposeTypes(texts)
+        viewModel.onNameChanged("Quirófano")
+
+        viewModel.onSave()
+        viewModel.onSave()
+        gate.complete(Unit)
+
+        assertEquals(1, groups.createCount)
+    }
+
+    @Test
+    fun savingCanBeRetriedAfterAFailure() {
+        val viewModel = newGroup()
+        viewModel.proposeTypes(texts)
+        viewModel.onNameChanged("Quirófano")
+
+        viewModel.onSave()
+        assertFalse(viewModel.success.saving, "A failed save clears the busy state")
+        viewModel.onSave()
+
+        assertEquals(2, groups.createCount)
+    }
+
+    @Test
     fun savingAnExistingGroupClosesStraightAway() {
         val demo = DemoGroupRepository(DemoWorld(LocalDate(2026, 9, 28)))
         val viewModel = GroupDetailViewModel(GroupId("demo-urgencias"), demo, DemoUserRepository(), DemoAnalytics)
@@ -149,6 +179,20 @@ class GroupDetailViewModelTest {
 
         assertTrue(viewModel.success.isSaved)
         assertFalse(viewModel.success.created)
+    }
+
+    @Test
+    fun savingAnExistingGroupTwiceWhileTheFirstIsInFlightUpdatesOnlyOnce() {
+        val gate = CompletableDeferred<Unit>()
+        groups.updateGate = gate
+        val viewModel = GroupDetailViewModel(GroupId("demo-urgencias"), groups, DemoUserRepository(), DemoAnalytics)
+        viewModel.onNameChanged(" renamed")
+
+        viewModel.onSave()
+        viewModel.onSave()
+        gate.complete(Unit)
+
+        assertEquals(1, groups.updateCount)
     }
 
     @Test
@@ -186,9 +230,13 @@ class GroupDetailViewModelTest {
     ) : GroupRepository by delegate {
         var created: NewGroup? = null
         var createSucceeds = false
+        var createCount = 0
+        var createGate: CompletableDeferred<Unit>? = null
 
         override suspend fun createGroup(group: NewGroup): Outcome<Group, GroupError> {
             created = group
+            createCount++
+            createGate?.await()
             if (!createSucceeds) return GroupError.SaveFailed.toFailure()
             return Group(
                 id = GroupId("quirofano"),
@@ -200,6 +248,15 @@ class GroupDetailViewModelTest {
                 autoApprove = group.autoApprove,
                 isAdmin = true,
             ).toSuccess()
+        }
+
+        var updateCount = 0
+        var updateGate: CompletableDeferred<Unit>? = null
+
+        override suspend fun updateGroup(group: Group): Outcome<Group, GroupError> {
+            updateCount++
+            updateGate?.await()
+            return delegate.updateGroup(group)
         }
     }
 
