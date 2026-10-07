@@ -79,6 +79,20 @@ val keystoreProperties = Properties().apply {
 fun signingValue(key: String, env: String): String? =
     keystoreProperties.getProperty(key) ?: providers.environmentVariable(env).orNull
 
+/**
+ * The App Check debug token, fixed at build time so it is registered in the console once per
+ * developer instead of once per install: the SDK's own secret lives in the app's data, which a
+ * clear-data or a reinstall throws away. From `turnia.appCheckDebugToken` in `local.properties`
+ * at the project root (never committed) or `TURNIA_APPCHECK_DEBUG_TOKEN` on CI; left unset the
+ * debug build falls back to the SDK's random per-install secret.
+ */
+val appCheckDebugToken: String = Properties().apply {
+    providers.fileContents(rootProject.layout.projectDirectory.file("local.properties"))
+        .asText.orNull?.let { load(it.reader()) }
+}.getProperty("turnia.appCheckDebugToken")
+    ?: providers.environmentVariable("TURNIA_APPCHECK_DEBUG_TOKEN").orNull
+    ?: ""
+
 android {
     namespace = "com.geoviksoft.turnia"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
@@ -130,6 +144,7 @@ android {
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"
+            buildConfigField("String", "APP_CHECK_DEBUG_TOKEN", "\"$appCheckDebugToken\"")
         }
         release {
             signingConfig = signingConfigs.findByName("release")

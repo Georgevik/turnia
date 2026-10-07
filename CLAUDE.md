@@ -378,8 +378,16 @@ Build one with `value.toSuccess()` / `error.toFailure()` — both work on any re
   - **App Check** — proves requests come from the genuine app. Installed in platform code before
     Firebase is touched (`TurniaApplication`, `iOSApp.init`); the native SDKs under GitLive then
     attach the token on their own. Android release builds attest with **Play Integrity**, iOS
-    release builds with **App Attest**; debug builds use a **debug token**, printed on first launch,
-    that has to be registered in the console once per device. **Not enforced yet**: Firestore and
+    release builds with **App Attest**; debug builds use a **debug token**, registered in the
+    console (App Check → Apps → Manage debug tokens) **once per developer, not once per install** —
+    the token is fixed by the build, so clearing the app's data or moving to another emulator keeps
+    it. It is a per-developer secret and never committed: `turnia.appCheckDebugToken` in
+    `local.properties` on Android, which `DebugAppCheckSecretRegistrar` feeds to the SDK ahead of
+    the random secret it would otherwise keep in the app's own data, and the `AppCheckDebugToken`
+    environment variable on the Xcode scheme (under `xcuserdata`) on iOS, which the debug provider
+    reads before its own `UserDefaults`. Set neither and each install falls back to a random token
+    the SDK prints on first launch — which, with enforcement on, is every read failing as
+    `PERMISSION_DENIED` until that one is registered too. **Not enforced yet**: Firestore and
     Authentication were briefly enforced on 2026-09-29 and reverted to monitoring-only the same day
     after it crashed the app and blocked Google Sign-In on a sideloaded test build — see
     `openspec/changes/enable-app-check-enforcement` for the staged rollout that replaces that ad hoc
@@ -647,7 +655,10 @@ outside the repo, and breaks silently if it is lost or changed:
 - **Universal Links** — `apple-app-site-association` in `firebase/hosting` names the app by
   `TEAM_ID.bundleId`: a change of team or bundle id has to be redeployed there.
 - **App Check** — App Attest is registered for the iOS app in the console. Enforcement waits until
-  an iOS release is out and its traffic shows as verified.
+  an iOS release is out and its traffic shows as verified. A debug run attests with the
+  `AppCheckDebugToken` environment variable on the scheme, which lives in `xcuserdata` and so is
+  each developer's own; it reaches the app only when Xcode launches it, so a debug build opened by
+  tapping its icon falls back to a random token of its own.
 
 ## License
 
