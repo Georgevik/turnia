@@ -135,6 +135,7 @@ fun DayDetailSheet(
     DisposableEffect(Unit) {
         onDispose {
             viewModel.onOneOffAction(OneOffFormAction.Cancel)
+            viewModel.sheetClosed()
             onFormOpenChange(false)
         }
     }

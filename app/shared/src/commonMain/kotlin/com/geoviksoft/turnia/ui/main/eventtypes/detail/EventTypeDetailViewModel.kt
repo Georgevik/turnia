@@ -48,6 +48,8 @@ class EventTypeDetailViewModel(
     private val _uiState = MutableStateFlow<EventTypeDetailUi>(EventTypeDetailUi.Loading)
     val uiState: StateFlow<EventTypeDetailUi> = _uiState.asStateFlow()
 
+    private var saving = false
+
     init {
         loadForm()
     }
@@ -183,6 +185,9 @@ class EventTypeDetailViewModel(
             }
         }
 
+        if (saving) return
+        saving = true
+
         when (key) {
             is EventTypeDetailData.EditPersonal -> savePersonal(EventTypeId(key.typeId), form, isNew = false)
             EventTypeDetailData.NewPersonal,
@@ -206,19 +211,13 @@ class EventTypeDetailViewModel(
             endTime = form.endTime.toTimeOrNull(),
         )
 
-        viewModelScope.launch {
-            updateSuccess { it.copy(saveButtonLoading = true) }
+        updateSuccess { it.copy(saveButtonLoading = true) }
 
+        viewModelScope.launch {
             personalRepository.saveEventType(type, isNew).fold(
-                onSuccess = {
-                    updateSuccess {
-                        it.copy(
-                            saveButtonLoading = false,
-                            isSaved = true
-                        )
-                    }
-                },
+                onSuccess = { updateSuccess { it.copy(isSaved = true) } },
                 onFailure = {
+                    saving = false
                     updateSuccess {
                         it.copy(
                             toastError = EventTypeToastError.SavePersonal,
@@ -248,19 +247,22 @@ class EventTypeDetailViewModel(
         )
 
         // Nowhere to write it yet: it waits with the group's other types until the form that
-        // is creating the group saves the lot.
+        // is creating the group saves the lot. There is no write to wait for and so no loading
+        // state here: the latch in onSave is the only thing stopping a second tap from minting
+        // another id, which the pending list dedupes by and so would hold twice.
         if (groupId == null) {
             groupRepository.setPendingEventType(type)
             updateSuccess { it.copy(isSaved = true) }
             return
         }
 
-        viewModelScope.launch {
-            updateSuccess { it.copy(saveButtonLoading = true) }
+        updateSuccess { it.copy(saveButtonLoading = true) }
 
+        viewModelScope.launch {
             groupRepository.saveEventType(groupId, type).fold(
-                onSuccess = { updateSuccess { it.copy(saveButtonLoading = false, isSaved = true) } },
+                onSuccess = { updateSuccess { it.copy(isSaved = true) } },
                 onFailure = {
+                    saving = false
                     updateSuccess {
                         it.copy(
                             toastError = EventTypeToastError.SaveGroup,

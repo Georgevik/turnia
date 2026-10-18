@@ -64,6 +64,10 @@ class DayDetailSheetViewModel(
     private val _oneOffMessage = MutableStateFlow<OneOffEventMessage?>(null)
     val oneOffMessage = _oneOffMessage.asStateFlow()
 
+    // Picking a shift closes the pane, so a visit adds one event. A second tap lands while the
+    // first is still writing, or after it was accepted, before the sheet leaves composition.
+    private var added = false
+
     fun oneOffMessageShown() {
         _oneOffMessage.value = null
     }
@@ -270,7 +274,14 @@ class DayDetailSheetViewModel(
         color = color.toHex(),
     )
 
+    fun sheetClosed() {
+        added = false
+    }
+
     fun addEventOfType(eventTypeUi: EventTypeUi) {
+        if (added) return
+        added = true
+
         when (val eventType = eventTypeUi.eventType) {
             is GroupEventType -> addNewEvent(eventType, eventTypeUi)
             is PersonalEventType -> addNewEvent(eventType)
