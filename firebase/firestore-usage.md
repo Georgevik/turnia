@@ -89,6 +89,29 @@ function reads and writes on the server does not appear in the client audit.
 | The day sheet takes its one-off events from the calendar instead of querying them | A second cache query and staleness check per open sheet |
 | A colleague's calendar is cached per month on the device and caught up through the owner's markers (`groupEvents`) with `since` | 1 call per month visited, 1 on every reopen, a second call on every open |
 
+## The offline path costs nothing
+
+An event added, edited or deleted with no connection shows on the calendar at once, and **not one
+billable read** goes into that. When the sync marker arrives unconfirmed — the device is offline, or
+it holds writes the server has not acknowledged — the reader re-reads `Source.CACHE` for the open
+months and never asks the server. In the audit that shows as `ReadCache` climbing while
+`Read Server` stays still:
+
+```
+Firestore  Read Server: 0 ReadCache: 12 Writes: 2
+    PersonalEventFirestore -> Read Server: 0 ReadCache: 12 Writes: 2
+        · events(CACHE) -> Read Server: 0 ReadCache: 12 Writes: 0
+        · setEvent -> Read Server: 0 ReadCache: 0 Writes: 2
+```
+
+So a rise in `ReadCache` after this change is the caching working, not a regression. Two things do
+still cost what they always did: the **write** itself, billed whenever the device syncs, and the one
+**server delta** for the month once the marker resolves on reconnect — the same delta the add would
+have triggered online.
+
+Reconnecting adds no read of its own, and neither does a connection dropping: the marker emission
+that follows it takes the cache path.
+
 ## Keeping it this way
 
 - **Every Firestore call reports itself** (see *Firestore usage tracking* in `CLAUDE.md`). A listener goes

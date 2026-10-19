@@ -13,6 +13,7 @@ import com.geoviksoft.turnia.core.domain.model.PersonalEventType
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.system.Outcome
 import com.geoviksoft.turnia.core.system.outcomeCatching
+import com.geoviksoft.turnia.core.system.valueOrNull
 import com.geoviksoft.turnia.core.system.toInstantOrNull
 import com.geoviksoft.turnia.core.system.toTimestamp
 import dev.gitlive.firebase.firestore.FirebaseFirestore
@@ -20,6 +21,8 @@ import dev.gitlive.firebase.firestore.Source
 import dev.gitlive.firebase.firestore.Timestamp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.mapNotNull
@@ -47,27 +50,44 @@ class PersonalEventTypesFirestore(
         var known = cachedTypes
         emit(personalEventTypeDocMapper.map(known))
 
-        emitAll(userSyncFirestore.observe(uid).mapNotNull { sync ->
+        emitAll(userSyncFirestore.observeWithPendingWrites(uid).mapNotNull { synced ->
+            val serverCannotAnswer = !synced.confirmed
+            if (serverCannotAnswer) {
+                known = known.mergedWith(queryEventTypes(uid, null, Source.CACHE))
+                return@mapNotNull personalEventTypeDocMapper.map(known)
+            }
+
             val cacheUpdatedAt = known.mapNotNull { it.doc.updateAt.toInstantOrNull() }.maxOrNull()
 
             val serverUpdatedAt =
-                sync.personalEventTypesUpdatedAt.toInstantOrNull() ?: return@mapNotNull null
+                synced.value.personalEventTypesUpdatedAt.toInstantOrNull()
+                    ?: return@mapNotNull null
 
             val settled = cacheUpdatedAt != null && cacheUpdatedAt >= serverUpdatedAt
             if (settled) {
                 return@mapNotNull personalEventTypeDocMapper.map(known)
             }
 
-            val changed = queryEventTypes(
-                uid,
-                cacheUpdatedAt?.toTimestamp(),
-                Source.SERVER
-            ).associateBy { it.id }.toMutableMap()
+            val fromServer = outcomeCatching(TAG, { it }) {
+                queryEventTypes(uid, cacheUpdatedAt?.toTimestamp(), Source.SERVER)
+            }.valueOrNull()
+                ?: outcomeCatching(TAG, { it }) { queryEventTypes(uid, null, Source.CACHE) }
+                    .valueOrNull()
+                ?: known
 
-            val merged = known.map { cached -> changed.remove(cached.id) ?: cached }
-            known = merged + changed.values
+            known = known.mergedWith(fromServer)
             personalEventTypeDocMapper.map(known)
         })
+    }.distinctUntilChanged().catch { throwable ->
+        Logger.e(TAG, "Personal event types listener failed", throwable)
+        emit(emptyList())
+    }
+
+    private fun List<DocHolder<PersonalEventTypeDocument>>.mergedWith(
+        fresh: List<DocHolder<PersonalEventTypeDocument>>
+    ): List<DocHolder<PersonalEventTypeDocument>> {
+        val incoming = fresh.associateBy { it.id }.toMutableMap()
+        return map { held -> incoming.remove(held.id) ?: held } + incoming.values
     }
 
     suspend fun set(
@@ -136,10 +156,11 @@ class PersonalEventTypesFirestore(
     private suspend fun queryEventTypes(
         uid: UserId, sinceUpdateAt: Timestamp?, source: Source
     ): List<DocHolder<PersonalEventTypeDocument>> {
-        val since = sinceUpdateAt ?: Timestamp(0, 0)
-        val snapshot = firestore.collection(PATH_PERSONAL_TYPES(uid.value)).where {
-            PersonalEventTypeDocument.FIELD_UPDATE_AT greaterThan since
-        }.get(source).trackData(TAG, "eventTypes($source)")
+        val collection = firestore.collection(PATH_PERSONAL_TYPES(uid.value))
+        val query = if (sinceUpdateAt == null) collection else collection.where {
+            PersonalEventTypeDocument.FIELD_UPDATE_AT greaterThan sinceUpdateAt
+        }
+        val snapshot = query.get(source).trackData(TAG, "eventTypes($source)")
 
         Logger.i(
             TAG,

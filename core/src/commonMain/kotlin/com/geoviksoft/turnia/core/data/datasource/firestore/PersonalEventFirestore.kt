@@ -16,11 +16,13 @@ import com.geoviksoft.turnia.core.system.outcomeCatching
 import com.geoviksoft.turnia.core.system.toInstantOrNull
 import com.geoviksoft.turnia.core.system.toTimestamp
 import com.geoviksoft.turnia.core.system.toYearMonth
+import com.geoviksoft.turnia.core.system.valueOrNull
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Source
 import dev.gitlive.firebase.firestore.Timestamp
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.mapNotNull
@@ -56,8 +58,17 @@ class PersonalEventFirestore(
             var settled = false
 
             emitAll(
-                userSyncFirestore.observe(userId).mapNotNull { sync ->
-                    val staleMonths = staleEventMonths(months, sync, known.updatedByMonth())
+                userSyncFirestore.observeWithPendingWrites(userId).mapNotNull { synced ->
+                    val serverCannotAnswer = !synced.confirmed
+                    if (serverCannotAnswer) {
+                        known = known.mergedWith(
+                            queryEvents(userId, months.associateWith { null }, Source.CACHE)
+                        )
+                        settled = true
+                        return@mapNotNull known.areNotDeleted()
+                    }
+
+                    val staleMonths = staleEventMonths(months, synced.value, known.updatedByMonth())
 
                     if (staleMonths.isEmpty()) {
                         // Nothing moved: the emission before this one still stands
@@ -66,19 +77,20 @@ class PersonalEventFirestore(
                         return@mapNotNull known.areNotDeleted()
                     }
 
-                    val serverEvents = queryEvents(
-                        userId,
-                        staleMonths.mapValues { (_, updatedAt) -> updatedAt?.toTimestamp() },
-                        Source.SERVER
-                    ).associateBy { it.id }.toMutableMap()
+                    val serverEvents = outcomeCatching(TAG, { it }) {
+                        queryEvents(
+                            userId,
+                            staleMonths.mapValues { (_, updatedAt) -> updatedAt?.toTimestamp() },
+                            Source.SERVER
+                        )
+                    }.valueOrNull() ?: staleMonths.keys.fromCacheOrKnown(userId, known)
 
-                    val merged = known.map { cached -> serverEvents.remove(cached.id) ?: cached }
-                    known = merged + serverEvents.values
+                    known = known.mergedWith(serverEvents)
                     settled = true
                     known.areNotDeleted()
                 }
             )
-        }.catch { throwable ->
+        }.distinctUntilChanged().catch { throwable ->
             Logger.e(TAG, "Events listener failed", throwable)
             emit(emptyList())
         }
@@ -170,6 +182,20 @@ class PersonalEventFirestore(
 
     private fun List<DocHolder<PersonalEventDocument>>.areNotDeleted() =
         filterNot { it.doc.isDeleted }
+
+    private suspend fun Set<YearMonth>.fromCacheOrKnown(
+        uid: UserId,
+        known: List<DocHolder<PersonalEventDocument>>,
+    ): List<DocHolder<PersonalEventDocument>> =
+        outcomeCatching(TAG, { it }) { queryEvents(uid, associateWith { null }, Source.CACHE) }
+            .valueOrNull() ?: known
+
+    private fun List<DocHolder<PersonalEventDocument>>.mergedWith(
+        fresh: List<DocHolder<PersonalEventDocument>>
+    ): List<DocHolder<PersonalEventDocument>> {
+        val incoming = fresh.associateBy { it.id }.toMutableMap()
+        return map { held -> incoming.remove(held.id) ?: held } + incoming.values
+    }
 
     private fun List<DocHolder<PersonalEventDocument>>.updatedByMonth(): Map<YearMonth, Instant> =
         this

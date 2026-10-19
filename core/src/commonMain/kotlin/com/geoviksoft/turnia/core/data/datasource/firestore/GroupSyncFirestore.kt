@@ -45,6 +45,8 @@ class GroupSyncFirestore(
     fun observe(groupId: GroupId): Flow<GroupSyncDocument> =
         synced(groupId).map { it.value }.distinctUntilChanged()
 
+    fun observeWithPendingWrites(groupId: GroupId): Flow<Synced<GroupSyncDocument>> = synced(groupId)
+
     /** The document as the server last confirmed it, served by the listener rather than a read. */
     suspend fun get(groupId: GroupId): Outcome<GroupSyncDocument, GenericFirestoreError> =
         outcomeCatching(TAG, { GenericFirestoreError(it) }) { synced(groupId).awaitConfirmed() }
@@ -60,7 +62,6 @@ class GroupSyncFirestore(
                 else snapshot.data(GroupSyncDocument.serializer())
                 Synced(document, snapshot.metadata.isConfirmed)
             }
-            .distinctUntilChanged()
             // A group created on this device is followed the moment the batch lands in the cache,
             // before the server has the group document the rules look membership up in, so the
             // first listen is denied. Given up on, it would leave the calendar deaf to that group

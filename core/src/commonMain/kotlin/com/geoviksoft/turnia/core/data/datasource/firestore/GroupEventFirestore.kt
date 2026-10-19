@@ -12,6 +12,7 @@ import com.geoviksoft.turnia.core.domain.model.GroupId
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.system.Outcome
 import com.geoviksoft.turnia.core.system.outcomeCatching
+import com.geoviksoft.turnia.core.system.valueOrNull
 import com.geoviksoft.turnia.core.system.toInstantOrNull
 import com.geoviksoft.turnia.core.system.toTimestamp
 import com.geoviksoft.turnia.core.system.toYearMonth
@@ -20,6 +21,7 @@ import dev.gitlive.firebase.firestore.Source
 import dev.gitlive.firebase.firestore.Timestamp
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.mapNotNull
@@ -60,8 +62,22 @@ class GroupEventFirestore(
             var settled = false
 
             emitAll(
-                groupSyncFirestore.observe(groupId).mapNotNull { sync ->
-                    val staleMonths = staleEventMonths(months, sync, known.updatedByMonth())
+                groupSyncFirestore.observeWithPendingWrites(groupId).mapNotNull { synced ->
+                    val serverCannotAnswer = !synced.confirmed
+                    if (serverCannotAnswer) {
+                        known = known.mergedWith(
+                            queryEvents(
+                                groupId,
+                                months.associateWith { null },
+                                Source.CACHE,
+                                assigneeId,
+                            )
+                        )
+                        settled = true
+                        return@mapNotNull known.visible()
+                    }
+
+                    val staleMonths = staleEventMonths(months, synced.value, known.updatedByMonth())
 
                     if (staleMonths.isEmpty()) {
                         if (settled) {
@@ -72,20 +88,22 @@ class GroupEventFirestore(
                         return@mapNotNull known.visible()
                     }
 
-                    val serverEvents = queryEvents(
-                        groupId,
-                        staleMonths.mapValues { (_, updatedAt) -> updatedAt?.toTimestamp() },
-                        Source.SERVER,
-                        assigneeId,
-                    ).associateBy { it.id }.toMutableMap()
+                    val serverEvents = outcomeCatching(TAG, { it }) {
+                        queryEvents(
+                            groupId,
+                            staleMonths.mapValues { (_, updatedAt) -> updatedAt?.toTimestamp() },
+                            Source.SERVER,
+                            assigneeId,
+                        )
+                    }.valueOrNull()
+                        ?: staleMonths.keys.fromCacheOrKnown(groupId, assigneeId, known)
 
-                    val merged = known.map { cached -> serverEvents.remove(cached.id) ?: cached }
-                    known = merged + serverEvents.values
+                    known = known.mergedWith(serverEvents)
                     settled = true
                     known.visible()
                 }
             )
-        }.catch { throwable ->
+        }.distinctUntilChanged().catch { throwable ->
             Logger.e(TAG, "Events listener failed", throwable)
             emit(emptyList())
         }
@@ -187,6 +205,22 @@ class GroupEventFirestore(
     }
 
     private fun List<DocHolder<GroupEventDocument>>.visible() = filterNot { it.doc.isDeleted }
+
+    private suspend fun Set<YearMonth>.fromCacheOrKnown(
+        groupId: GroupId,
+        assigneeId: UserId?,
+        known: List<DocHolder<GroupEventDocument>>,
+    ): List<DocHolder<GroupEventDocument>> =
+        outcomeCatching(TAG, { it }) {
+            queryEvents(groupId, associateWith { null }, Source.CACHE, assigneeId)
+        }.valueOrNull() ?: known
+
+    private fun List<DocHolder<GroupEventDocument>>.mergedWith(
+        fresh: List<DocHolder<GroupEventDocument>>
+    ): List<DocHolder<GroupEventDocument>> {
+        val incoming = fresh.associateBy { it.id }.toMutableMap()
+        return map { held -> incoming.remove(held.id) ?: held } + incoming.values
+    }
 
     private fun List<DocHolder<GroupEventDocument>>.updatedByMonth(): Map<YearMonth, Instant> =
         groupBy { YearMonth.parse(it.doc.yearMonth) }
