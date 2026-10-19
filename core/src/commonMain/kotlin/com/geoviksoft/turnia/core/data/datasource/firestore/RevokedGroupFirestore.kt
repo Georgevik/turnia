@@ -78,10 +78,11 @@ class RevokedGroupFirestore(
         sinceUpdateAt: Timestamp?,
         source: Source,
     ): List<DocHolder<RevokedGroupDocument>> {
-        val since = sinceUpdateAt ?: Timestamp(0, 0)
-        val snapshot = firestore.collection(PATH_REVOKED_GROUPS(userId.value)).where {
-            RevokedGroupDocument.FIELD_UPDATE_AT greaterThan since
-        }.get(source).trackData(TAG, "revokedGroups($source)")
+        val collection = firestore.collection(PATH_REVOKED_GROUPS(userId.value))
+        val query = if (sinceUpdateAt == null) collection else collection.where {
+            RevokedGroupDocument.FIELD_UPDATE_AT greaterThan sinceUpdateAt
+        }
+        val snapshot = query.get(source).trackData(TAG, "revokedGroups($source)")
 
         Logger.i(TAG, "Revoked groups. Source: $source. Amount: ${snapshot.documents.size}")
 
