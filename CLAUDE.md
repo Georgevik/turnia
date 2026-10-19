@@ -431,7 +431,12 @@ Two rules that are easy to get wrong:
   it. `trackedSnapshots` listens with metadata changes and counts the result set on every attach —
   an upper bound, since a re-attach within 30 minutes of the last listen is free — then only the
   documents a remote change touches. Its extra metadata-only emissions repeat the same value, so
-  follow it with `distinctUntilChanged()`.
+  **dedupe them in the consumer, never on the listener itself**: `distinctUntilChanged()` goes on
+  what a consumer finally produces, after it has read whatever it needs from the snapshot. On the
+  listener it also collapses emissions whose metadata is the only thing that moved, and a reader
+  that serves the cache while the server cannot answer needs exactly those — two writes to the same
+  month leave an unresolved marker looking identical, so the second would be lost. See
+  `UserSyncFirestore.snapshots`.
 - **A write has no cache variant.** It is billed even offline; the charge simply lands when the device syncs. Only reads can be free.
 
 - **`trackFunction` goes *before* the call**, which is the opposite rule and has the opposite reason: a callable is billed the moment it reaches Google, refusals included, so counting it afterwards would hide exactly the failures worth seeing. What a function then spends on its own reads and writes never reaches this audit — it happens server-side with admin privileges — so one `Calls: 1` can stand for a dozen documents.
