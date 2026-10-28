@@ -6,8 +6,10 @@ import com.geoviksoft.turnia.core.data.datasource.firestore.doc.RevokedGroupDocu
 import com.geoviksoft.turnia.core.data.datasource.firestore.sync.SharedListeners
 import com.geoviksoft.turnia.core.data.logger.Logger
 import com.geoviksoft.turnia.core.domain.model.UserId
+import com.geoviksoft.turnia.core.system.outcomeCatching
 import com.geoviksoft.turnia.core.system.toInstantOrNull
 import com.geoviksoft.turnia.core.system.toTimestamp
+import com.geoviksoft.turnia.core.system.valueOrNull
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Source
 import dev.gitlive.firebase.firestore.Timestamp
@@ -55,10 +57,13 @@ class RevokedGroupFirestore(
             val settled = cacheUpdatedAt != null && cacheUpdatedAt >= serverUpdatedAt
             if (settled) return@mapNotNull known.live()
 
-            val changed = query(userId, cacheUpdatedAt?.toTimestamp(), Source.SERVER)
-                .associateBy { it.id }
-                .toMutableMap()
+            val fresh = outcomeCatching(TAG, { it }) {
+                query(userId, cacheUpdatedAt?.toTimestamp(), Source.SERVER)
+            }.valueOrNull()
+                ?: outcomeCatching(TAG, { it }) { query(userId, null, Source.CACHE) }.valueOrNull()
+                ?: known
 
+            val changed = fresh.associateBy { it.id }.toMutableMap()
             val merged = known.map { cached -> changed.remove(cached.id) ?: cached }
             known = merged + changed.values
             known.live()
@@ -73,10 +78,11 @@ class RevokedGroupFirestore(
         sinceUpdateAt: Timestamp?,
         source: Source,
     ): List<DocHolder<RevokedGroupDocument>> {
-        val since = sinceUpdateAt ?: Timestamp(0, 0)
-        val snapshot = firestore.collection(PATH_REVOKED_GROUPS(userId.value)).where {
-            RevokedGroupDocument.FIELD_UPDATE_AT greaterThan since
-        }.get(source).trackData(TAG, "revokedGroups($source)")
+        val collection = firestore.collection(PATH_REVOKED_GROUPS(userId.value))
+        val query = if (sinceUpdateAt == null) collection else collection.where {
+            RevokedGroupDocument.FIELD_UPDATE_AT greaterThan sinceUpdateAt
+        }
+        val snapshot = query.get(source).trackData(TAG, "revokedGroups($source)")
 
         Logger.i(TAG, "Revoked groups. Source: $source. Amount: ${snapshot.documents.size}")
 

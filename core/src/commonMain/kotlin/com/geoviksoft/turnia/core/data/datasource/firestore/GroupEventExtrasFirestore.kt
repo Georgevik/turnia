@@ -12,6 +12,7 @@ import com.geoviksoft.turnia.core.domain.model.GroupId
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.system.Outcome
 import com.geoviksoft.turnia.core.system.outcomeCatching
+import com.geoviksoft.turnia.core.system.valueOrNull
 import com.geoviksoft.turnia.core.system.toInstantOrNull
 import com.geoviksoft.turnia.core.system.toTimestamp
 import dev.gitlive.firebase.firestore.FirebaseFirestore
@@ -19,6 +20,8 @@ import dev.gitlive.firebase.firestore.Source
 import dev.gitlive.firebase.firestore.Timestamp
 import dev.gitlive.firebase.firestore.WriteBatch
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.mapNotNull
@@ -50,8 +53,17 @@ class GroupEventExtrasFirestore(
             var settled = false
 
             emitAll(
-                userSyncFirestore.observe(userId).mapNotNull { sync ->
-                    val staleMonths = staleMonths(months, sync, known.updatedByMonth())
+                userSyncFirestore.observeWithPendingWrites(userId).mapNotNull { synced ->
+                    val serverCannotAnswer = !synced.confirmed
+                    if (serverCannotAnswer) {
+                        known = known.mergedWith(
+                            query(userId, months.associateWith { null }, Source.CACHE)
+                        )
+                        settled = true
+                        return@mapNotNull known.withNotes()
+                    }
+
+                    val staleMonths = staleMonths(months, synced.value, known.updatedByMonth())
 
                     if (staleMonths.isEmpty()) {
                         if (settled) return@mapNotNull null
@@ -59,18 +71,22 @@ class GroupEventExtrasFirestore(
                         return@mapNotNull known.withNotes()
                     }
 
-                    val server = query(
-                        userId,
-                        staleMonths.mapValues { (_, updatedAt) -> updatedAt?.toTimestamp() },
-                        Source.SERVER,
-                    ).associateBy { it.id }.toMutableMap()
+                    val server = outcomeCatching(TAG, { it }) {
+                        query(
+                            userId,
+                            staleMonths.mapValues { (_, updatedAt) -> updatedAt?.toTimestamp() },
+                            Source.SERVER,
+                        )
+                    }.valueOrNull() ?: staleMonths.keys.fromCacheOrKnown(userId, known)
 
-                    val merged = known.map { cachedDoc -> server.remove(cachedDoc.id) ?: cachedDoc }
-                    known = merged + server.values
+                    known = known.mergedWith(server)
                     settled = true
                     known.withNotes()
                 }
             )
+        }.distinctUntilChanged().catch { throwable ->
+            Logger.e(TAG, "Group event notes listener failed", throwable)
+            emit(emptyList())
         }
 
     suspend fun set(
@@ -130,6 +146,20 @@ class GroupEventExtrasFirestore(
         return snapshot.documents.map {
             DocHolder(it.id, it.data(GroupEventExtrasDocument.serializer()))
         }
+    }
+
+    private suspend fun Set<YearMonth>.fromCacheOrKnown(
+        uid: UserId,
+        known: List<DocHolder<GroupEventExtrasDocument>>,
+    ): List<DocHolder<GroupEventExtrasDocument>> =
+        outcomeCatching(TAG, { it }) { query(uid, associateWith { null }, Source.CACHE) }
+            .valueOrNull() ?: known
+
+    private fun List<DocHolder<GroupEventExtrasDocument>>.mergedWith(
+        fresh: List<DocHolder<GroupEventExtrasDocument>>
+    ): List<DocHolder<GroupEventExtrasDocument>> {
+        val incoming = fresh.associateBy { it.id }.toMutableMap()
+        return map { held -> incoming.remove(held.id) ?: held } + incoming.values
     }
 
     private fun List<DocHolder<GroupEventExtrasDocument>>.withNotes() =

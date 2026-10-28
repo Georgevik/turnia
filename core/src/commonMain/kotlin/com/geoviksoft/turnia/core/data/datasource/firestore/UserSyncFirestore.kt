@@ -88,7 +88,8 @@ class UserSyncFirestore(
                 else snapshot.data(UserSyncDocument.serializer())
                 Synced(document, snapshot.metadata.isConfirmed)
             }
-            .distinctUntilChanged()
+            // Not `distinctUntilChanged`: two writes to the same month look identical, so a reader
+            // serving the cache would miss the second.
 
     fun writePersonalEvents(batch: WriteBatch, uid: UserId, yearMonth: YearMonth) = write(
         "writePersonalEvents",

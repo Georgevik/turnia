@@ -81,6 +81,31 @@ seed; a test that counts calls waits for it to settle first. `preferences` is on
 whose `private/preferences` exists: in production it is written with that document, and a user who
 has never picked a colour or hidden a calendar has neither. A marker a fixture writes itself wins.
 
+## Cutting the connection
+
+`Network` (`e2e/infra/Network.kt`) is how a test goes offline without touching the emulators. It
+resolves the app's **own** Firestore from Koin and toggles its connection, so the local cache keeps
+answering reads and writes queue up exactly as they do in airplane mode:
+
+```kotlin
+Network.offline {
+    calendar.openDay(world.today)
+    calendar.addEventOfTypeLabelled("CUR")
+    calendar.awaitDayShows(world.today, "CUR")   // from the cache, with nothing uploaded yet
+}
+// Back online: the queued write reaches the emulator on its own.
+Documents.awaitIn("users/alice/personalEvents") { it.string("name") == "Curso" }
+```
+
+`goOffline()` and `goOnline()` are there for a test that has to assert across the reconnection
+rather than inside one block. The emulators stay up throughout — that is what separates *offline*
+from *no backend*, and the two fail differently.
+
+Two things to keep in mind. Seeding and sign-in in `E2eRule.before()` go over REST and through Auth,
+so cut the connection inside the test body, never before the rule has run. And a queued write
+flushes asynchronously after `goOnline()`, so assert on the server with `Documents.await…`, which
+polls.
+
 ## Changing the data model
 
 The fixtures are written in the shape the app and the functions store today. When a field is
