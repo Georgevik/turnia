@@ -2,6 +2,8 @@ package com.geoviksoft.turnia
 
 import com.geoviksoft.turnia.core.domain.repository.UserRepository
 import com.google.firebase.messaging.FirebaseMessagingService
+import dev.gitlive.firebase.Firebase
+import dev.gitlive.firebase.auth.auth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
@@ -20,6 +22,9 @@ class TurniaMessagingService : FirebaseMessagingService(), KoinComponent {
     private val scope: CoroutineScope by inject()
 
     override fun onNewToken(token: String) {
+        // Reading `users` while signed out would start the session listener early, and a sign-in
+        // that follows would then be logged as `login` even when the app has just been launched.
+        if (Firebase.auth.currentUser == null) return
         val uid = users.loggedUser?.id ?: return
 
         // The registrar reads the token itself, which is now the new one. The old one stays in the

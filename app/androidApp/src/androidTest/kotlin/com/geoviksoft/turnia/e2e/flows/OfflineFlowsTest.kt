@@ -164,6 +164,7 @@ class OfflineFlowsTest {
 
         // e4 is alice's own Urgencias shift, on +6, and base gives it no note.
         calendar.openDay(world.day(6))
+        calendar.awaitEvent("e4")
 
         Network.offline {
             calendar.writeNote("e4", "Parking B")
@@ -366,6 +367,8 @@ class OfflineFlowsTest {
     @Test
     fun offline_deletingAnEvent_hidesItAtOnce() {
         calendar.awaitMain()
+        // Loaded online first: +6 can fall in a month the device has never fetched.
+        calendar.awaitDayShows(world.day(6), "MN")
 
         Network.offline {
             calendar.openDay(world.day(6))
