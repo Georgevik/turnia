@@ -1,15 +1,22 @@
 package com.geoviksoft.turnia.e2e.flows
 
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.geoviksoft.turnia.core.domain.model.EventTypeId
 import com.geoviksoft.turnia.e2e.infra.Documents
 import com.geoviksoft.turnia.e2e.infra.E2eRule
+import com.geoviksoft.turnia.e2e.infra.FirestoreRest
 import com.geoviksoft.turnia.e2e.infra.RecordingAnalytics
 import com.geoviksoft.turnia.e2e.infra.awaitLogged
 import com.geoviksoft.turnia.e2e.infra.boolean
+import com.geoviksoft.turnia.e2e.infra.scrollAndClick
 import com.geoviksoft.turnia.e2e.infra.string
 import com.geoviksoft.turnia.e2e.robots.AppRobot
 import com.geoviksoft.turnia.e2e.robots.CalendarRobot
+import com.geoviksoft.turnia.ui.system.TestTags
 import kotlinx.datetime.yearMonth
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -60,6 +67,53 @@ class CalendarFlowsTest {
                 it.string("groupEventTypeId") == "manana"
         }
         compose.awaitLogged("group_event_created")
+    }
+
+    /** A tap landing while the day sheet is still closing must not add a second event. */
+    @Test
+    fun rapidRepeatedShiftTaps_addOnlyOneEvent() {
+        val date = world.day(11)
+
+        calendar.openDay(date)
+        calendar.clickDescription("Add event")
+        val chip = hasTestTag(TestTags.eventTypeChip(EventTypeId("manana")))
+        repeat(5) {
+            val stillThere = compose.onAllNodes(chip).fetchSemanticsNodes().isNotEmpty()
+            if (stillThere) runCatching { compose.onNode(chip).scrollAndClick() }
+        }
+
+        calendar.awaitDayClosed()
+        calendar.awaitDayShows(date, "MN")
+        assertEquals(
+            1,
+            FirestoreRest.list("groups/urgencias/events").values.count {
+                it.string("date") == date.toString() && it.string("groupEventTypeId") == "manana"
+            },
+        )
+    }
+
+    /** A tap landing while the shift form is closing must not create a second shift. */
+    @Test
+    fun rapidRepeatedSaveTaps_createOnlyOneShift() {
+        calendar.openTab(AppRobot.TAB_SETTINGS)
+        calendar.click("My shifts")
+        calendar.click("New shift")
+        calendar.type("Name", "Guardia extra")
+        calendar.type("Abbr.", "GX")
+
+        val save = hasText("Save") and hasClickAction()
+        repeat(5) {
+            val stillThere = compose.onAllNodes(save).fetchSemanticsNodes().isNotEmpty()
+            if (stillThere) runCatching { compose.onNode(save).scrollAndClick() }
+        }
+
+        calendar.awaitText("Guardia extra")
+        assertEquals(
+            1,
+            FirestoreRest.list("users/alice/personalEventTypes").values.count {
+                it.string("name") == "Guardia extra"
+            },
+        )
     }
 
     @Test
