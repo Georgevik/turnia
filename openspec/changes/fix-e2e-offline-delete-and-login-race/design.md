@@ -28,16 +28,18 @@ See proposal.md - Why.
 
 **Non-Goals:**
 - Changing when or how `login`, `sign_up` or the FCM token registration happen in production.
-- Auditing every E2E test for month-boundary sensitivity. Only the two offline tests that read `e4`
-  right after going offline are touched.
+- Auditing every E2E test for month-boundary sensitivity. Only the offline tests that failed on CI
+  because `e4` had not loaded are touched; `offline_writingANoteOnAGroupShift_showsItAtOnce` opens
+  the day online first and has never failed, so it keeps its current shape.
 - Adding either test to `.github/known-flaky-e2e-tests.txt`. Both have a cause that can be fixed.
 
 ## Decisions
 
 **1. Wait for `e4` online, in the test, rather than prefetch in the app.**
 `offline_deletingAnEvent_hidesItAtOnce` calls `calendar.awaitDayShows(world.day(6), "MN")` before
-`Network.offline { }`; `offline_writingANoteOnAGroupShift_showsItAtOnce` calls
-`calendar.awaitEvent("e4")` after `openDay` and before going offline. Both tests are about what
+`Network.offline { }`; `offline_aMonthTheDeviceNeverSynced_keepsTheRestOfTheCalendar` makes the
+same call before `Network.goOffline()`, next to its existing wait for `day(2)` — that one is a
+personal event, and group events load separately. Both tests are about what
 happens to an event the device *already has* when it goes offline, so loading it first is the
 precondition they meant to state.
 *Alternative:* pin the fixture date so `+6` never crosses a month. Rejected: the fixtures are

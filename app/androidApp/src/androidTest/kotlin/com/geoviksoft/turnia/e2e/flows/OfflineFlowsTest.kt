@@ -164,7 +164,6 @@ class OfflineFlowsTest {
 
         // e4 is alice's own Urgencias shift, on +6, and base gives it no note.
         calendar.openDay(world.day(6))
-        calendar.awaitEvent("e4")
 
         Network.offline {
             calendar.writeNote("e4", "Parking B")
@@ -229,6 +228,8 @@ class OfflineFlowsTest {
 
         calendar.awaitMain()
         calendar.awaitDayShows(world.day(2), "CUR")
+        // Group events load apart from personal ones: they have to be held before going offline.
+        calendar.awaitDayShows(world.day(6), "MN")
 
         Network.goOffline()
         try {

@@ -7,9 +7,11 @@
   `Network.offline { }`. Verify the test passes locally against the emulators with
   `./gradlew :app:androidApp:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.geoviksoft.turnia.e2e.flows.OfflineFlowsTest#offline_deletingAnEvent_hidesItAtOnce`
   on a day when `today + 6` is in the next month (true through Oct 31, 2026).
-- [x] 1.2 In `OfflineFlowsTest.offline_writingANoteOnAGroupShift_showsItAtOnce`, call
-  `calendar.awaitEvent("e4")` after `calendar.openDay(world.day(6))` and before `Network.offline { }`.
-  Verify it passes with the same command, targeting this test.
+- [x] 1.2 In `OfflineFlowsTest.offline_aMonthTheDeviceNeverSynced_keepsTheRestOfTheCalendar`, call
+  `calendar.awaitDayShows(world.day(6), "MN")` after the existing `awaitDayShows(world.day(2), "CUR")`
+  and before `Network.goOffline()`. Verify it passes locally with the same command, targeting this
+  test. (`offline_writingANoteOnAGroupShift_showsItAtOnce` was checked without a wait: 10/10 locally
+  and never failed on CI, so it stays unchanged.)
 
 ## 2. `onNewToken` does not start the user session while signed out
 
@@ -34,5 +36,8 @@
 
 ## 3. CI
 
-- [ ] 3.1 Push the branch and run the `AndroidE2E` workflow on it from Actions. Verify the job is
+- [x] 3.1 Push the branch and run the `AndroidE2E` workflow on it from Actions. Verify the job is
   green with neither test needing the retry (no 🔁 next to either in the job summary).
+  *Result:* run 40776385541 green; both passed first try. It surfaced the race in 1.2.
+- [ ] 3.2 Push the 1.2 fix and run the `AndroidE2E` workflow again. Verify the delete,
+  never-synced-month and `calendar_showsTheSeededMonth` tests all pass without the retry.
