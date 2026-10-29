@@ -55,5 +55,5 @@
   unsent-is-indistinguishable. Verify the whole E2E suite passes locally on Oct 29, 2026.
   *Result:* 84/85 passed locally on Oct 29; the one failure is the known-flaky
   `ShiftSetupFlowsTest#editingTimesAndAddingAShift_createsWhatIsOnTheList`, which does not page the calendar.
-- [ ] 4.3 Push and run the `AndroidE2E` workflow. Verify it is green with no offline test needing
+- [x] 4.3 Push and run the `AndroidE2E` workflow. Verify it is green with no offline test needing
   the retry.
