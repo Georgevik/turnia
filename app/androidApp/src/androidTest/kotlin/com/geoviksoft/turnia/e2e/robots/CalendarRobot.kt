@@ -29,7 +29,7 @@ import kotlinx.datetime.yearMonth
 
 /**
  * A month grid — the user's own, a group's or a colleague's — and the day sheet it opens. Every
- * grid starts on the current month; the robot pages forward to reach a later one.
+ * grid starts on the current month; the robot pages to whichever month a date is in.
  */
 internal class CalendarRobot(compose: ComposeTestRule, today: LocalDate) : AppRobot(compose) {
 
@@ -52,12 +52,14 @@ internal class CalendarRobot(compose: ComposeTestRule, today: LocalDate) : AppRo
 
     fun showMonthOf(date: LocalDate) {
         val target = date.yearMonth
-        require(target >= shown) { "The robot only pages forward, from $shown to $target" }
-        while (shown < target) {
+        // Both ways: dates a few days apart straddle a month boundary at the end of every month.
+        while (shown != target) {
+            val forward = shown < target
             // Awaited: a test that pages first thing would otherwise tap while the splash is still up.
-            compose.awaitNode(hasContentDescription("Next month") and hasClickAction())
-                .scrollAndClick()
-            shown = shown.plusMonth()
+            compose.awaitNode(
+                hasContentDescription(if (forward) "Next month" else "Previous month") and hasClickAction()
+            ).scrollAndClick()
+            shown = if (forward) shown.plusMonth() else shown.minusMonth()
         }
         // The pager keeps the neighbouring months composed; only the shown one is on screen.
         compose.waitUntil(UI_TIMEOUT_MS) {

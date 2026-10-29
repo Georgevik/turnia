@@ -39,5 +39,21 @@
 - [x] 3.1 Push the branch and run the `AndroidE2E` workflow on it from Actions. Verify the job is
   green with neither test needing the retry (no 🔁 next to either in the job summary).
   *Result:* run 40776385541 green; both passed first try. It surfaced the race in 1.2.
-- [ ] 3.2 Push the 1.2 fix and run the `AndroidE2E` workflow again. Verify the delete,
+- [x] 3.2 Push the 1.2 fix and run the `AndroidE2E` workflow again. Verify the delete,
   never-synced-month and `calendar_showsTheSeededMonth` tests all pass without the retry.
+  *Result:* run 40919916714 failed on two other offline tests: the month-boundary paging and the
+  group-type race fixed in group 4.
+
+## 4. Month boundaries and the shift buttons
+
+- [x] 4.1 Make `CalendarRobot.showMonthOf` page back with "Previous month" when the target month is
+  earlier than the one shown. Verify `reconnecting_uploadsEveryOfflineAdd_exactlyOnce` passes on a
+  day when `day(1)` and `day(3)` are in different months (Oct 29, 2026).
+- [x] 4.2 Add `awaitSeedHeld()` to `OfflineFlowsTest` (seeded "CUR" on `day(2)` and "MN" on
+  `day(3)`), and call it before going offline in every test that adds a shift of a seeded type:
+  adding a personal shift, adding a group shift, reconnecting, closed-and-reopened and
+  unsent-is-indistinguishable. Verify the whole E2E suite passes locally on Oct 29, 2026.
+  *Result:* 84/85 passed locally on Oct 29; the one failure is the known-flaky
+  `ShiftSetupFlowsTest#editingTimesAndAddingAShift_createsWhatIsOnTheList`, which does not page the calendar.
+- [ ] 4.3 Push and run the `AndroidE2E` workflow. Verify it is green with no offline test needing
+  the retry.

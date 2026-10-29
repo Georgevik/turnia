@@ -80,6 +80,7 @@ class OfflineFlowsTest {
 
         // base puts alice's Curso events on +2, +4 and +6, so +1 starts empty.
         val day = world.day(1)
+        awaitSeedHeld()
         calendar.awaitDayDoesNotShow(day, "CUR")
 
         Network.offline {
@@ -102,6 +103,7 @@ class OfflineFlowsTest {
 
         // Urgencias' shifts sit on +3 to +7, so +1 holds none of them.
         val day = world.day(1)
+        awaitSeedHeld()
         calendar.awaitDayDoesNotShow(day, "MN")
 
         Network.offline {
@@ -145,7 +147,7 @@ class OfflineFlowsTest {
         calendar.awaitDayShows(start, SPANNING)
 
         Network.offline {
-            // Edited before either assertion pages forward: the robot only pages one way.
+            // Edited on the month it was seeded on, before any assertion pages away from it.
             calendar.editOneOff(start, SPANNING, "Congress week")
 
             calendar.awaitDayShows(start, "Congress week")
@@ -289,6 +291,7 @@ class OfflineFlowsTest {
         calendar.awaitMain()
         val first = world.day(1)
         val second = world.day(3)
+        awaitSeedHeld()
 
         Network.offline {
             calendar.openDay(first)
@@ -324,6 +327,7 @@ class OfflineFlowsTest {
     fun offline_closedAndReopened_keepsTheEventAndStillUploadsIt() {
         calendar.awaitMain()
         val day = world.day(1)
+        awaitSeedHeld()
 
         Network.goOffline()
         try {
@@ -348,6 +352,7 @@ class OfflineFlowsTest {
     fun offline_anUnsentEventIsIndistinguishable() {
         calendar.awaitMain()
         val day = world.day(1)
+        awaitSeedHeld()
 
         Network.offline {
             calendar.openDay(day)
@@ -380,6 +385,15 @@ class OfflineFlowsTest {
         }
 
         Documents.await("groups/urgencias/events/e4") { it.boolean("isDeleted") == true }
+    }
+
+    /**
+     * Waits for alice's seeded shifts to show: a personal one on +2 and a group one on +3. Each can
+     * only render once its type has reached the cache too, and nothing offline can fetch either.
+     */
+    private fun awaitSeedHeld() {
+        calendar.awaitDayShows(world.day(2), "CUR")
+        calendar.awaitDayShows(world.day(3), "MN")
     }
 
     /** Moves alice's `personalEvents` marker for [month], the way another device's write would. */

@@ -28,9 +28,10 @@ See proposal.md - Why.
 
 **Non-Goals:**
 - Changing when or how `login`, `sign_up` or the FCM token registration happen in production.
-- Auditing every E2E test for month-boundary sensitivity. Only the offline tests that failed on CI
-  because `e4` had not loaded are touched; `offline_writingANoteOnAGroupShift_showsItAtOnce` opens
-  the day online first and has never failed, so it keeps its current shape.
+- Auditing every E2E test for month-boundary sensitivity by hand. The robot handles both directions
+  instead, which covers every test that reaches a date through it.
+- `offline_writingANoteOnAGroupShift_showsItAtOnce` keeps its current shape: it opens the day
+  online first and has never failed on CI.
 - Adding either test to `.github/known-flaky-e2e-tests.txt`. Both have a cause that can be fixed.
 
 ## Decisions
@@ -42,10 +43,21 @@ same call before `Network.goOffline()`, next to its existing wait for `day(2)` â
 personal event, and group events load separately. Both tests are about what
 happens to an event the device *already has* when it goes offline, so loading it first is the
 precondition they meant to state.
+The tests that add a shift offline share `awaitSeedHeld()`: a seeded personal shift on `+2` and a
+group shift on `+3` must show before the network goes off. A shift renders only once its type is
+known, so the two prove the personal types, the group document and both event readers have reached
+the cache. A negative check ("`+1` shows no MN") proves nothing, since it holds before anything loads.
 *Alternative:* pin the fixture date so `+6` never crosses a month. Rejected: the fixtures are
 relative to today on purpose, and the month boundary is a case the calendar has to handle anyway.
 
-**2. Guard `onNewToken` on `Firebase.auth.currentUser`, in the app, rather than in the harness.**
+**2. Let the robot page backward.**
+`CalendarRobot.showMonthOf` taps "Previous month" when the target is earlier than the month shown.
+The forward-only rule made the result depend on the calendar day: a test reading `+1` after `+3`
+passes on most days and fails on the two days where they fall in different months.
+*Alternative:* reorder each test so it only ever reads later dates. Rejected: it has to be redone for
+every new test, and the order a test reads in is part of what it checks.
+
+**3. Guard `onNewToken` on `Firebase.auth.currentUser`, in the app, rather than in the harness.**
 `onNewToken` returns when `Firebase.auth.currentUser` is `null`, before the lazy `users` is
 resolved. The repository then starts only once the UI asks for it, by which time the test has signed
 in, and the first emission it sees is alice: a restored session, as `analytics-events` requires.
