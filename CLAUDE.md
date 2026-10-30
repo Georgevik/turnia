@@ -633,6 +633,10 @@ release chosen when it is run (hotfix, minor or major), and the build number is 
 workflow, on both platforms. It runs from `main` only, and once every chosen upload succeeds it
 tags the commit `v<versionName>-<buildNumber>`. Neither app is uploaded unless the Android E2E suite
 passes first.
+
+Deploying and releasing are the developer's. `.claude/hooks/guard_production.py` stops an agent's
+`firebase deploy`, release, push to `main` and force push; run its tests after changing it, with
+`python3 .claude/hooks/test_guard_production.py`.
 Secrets and setup: [.github/RELEASE.md](.github/RELEASE.md).
 
 ## Pull requests
