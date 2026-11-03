@@ -3,7 +3,7 @@
 ## 1. Guide: property setup and custom definitions
 
 - [x] 1.1 Create `docs/analytics-dashboard.md` in Spanish with an introduction (what the dashboard answers, that only production releases send data, that definitions fill in only from registration on, in 24 to 48 hours) and the property settings: event data retention to 14 months and reporting identity to *Blended*, each in numbered steps with the menu path and exact field names (Spanish console name, English in parentheses). Verify the file renders as Markdown and every step names a path, a field and a value.
-- [ ] 1.2 Add the custom definitions section: one table per scope (event-scoped dimensions, user-scoped dimensions, the `event_count` custom metric) giving *Dimension name* / *Scope* / *Description* / *Event parameter* or *User property* exactly as typed, plus the click path and the note to skip a definition that already exists. Verify the list matches every parameter in `AnalyticsEvent.kt` and every property in `AnalyticsUserProperty.kt`, with nothing extra.
+- [x] 1.2 Add the custom definitions section: one table per scope (event-scoped dimensions, user-scoped dimensions, the `event_count` custom metric) giving *Dimension name* / *Scope* / *Description* / *Event parameter* or *User property* exactly as typed, plus the click path and the note to skip a definition that already exists. Verify the list matches every parameter in `AnalyticsEvent.kt` and every property in `AnalyticsUserProperty.kt`, with nothing extra.
 
 ## 2. Guide: the "Turnia" collection
 

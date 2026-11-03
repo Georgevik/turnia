@@ -70,3 +70,83 @@ quien usa Turnia en dos móviles. Para eso:
 Resultado: la opción *Combinada* queda marcada. Es un ajuste de visualización: no borra ni cambia
 datos, y se puede cambiar en cualquier momento (ver
 [Se aplican umbrales de datos](#se-aplican-umbrales-de-datos)).
+
+## 2. Definiciones personalizadas
+
+GA recibe todos los parámetros que envía la app, pero no los muestra en informes hasta que los
+registras como **definición personalizada**. Regístralas todas ahora, aunque hoy solo uses
+algunas: el día que quieras otra, ya tendrá datos acumulados.
+
+Si una ya existe (la lista aparece al abrir la página), sáltala. No la crees dos veces.
+
+### 2.1 Dimensiones de evento
+
+Para cada fila de la tabla de abajo:
+
+1. **Administrar** (*Admin*) → columna *Propiedad* → **Visualización de datos** (*Data display*) →
+   **Definiciones personalizadas** (*Custom definitions*).
+2. Pestaña **Dimensiones personalizadas** (*Custom dimensions*) → botón **Crear dimensión
+   personalizada** (*Create custom dimension*).
+3. Rellena:
+   - **Nombre de la dimensión** (*Dimension name*): la columna *Nombre*, tal cual.
+   - **Ámbito** (*Scope*): **Evento** (*Event*).
+   - **Descripción** (*Description*): la columna *Descripción*.
+   - **Parámetro de evento** (*Event parameter*): la columna *Parámetro*, tal cual. Si no aparece en
+     el desplegable (GA solo lista los que ya ha recibido), escríbelo a mano.
+4. Haz clic en **Guardar** (*Save*).
+
+| Nombre | Parámetro | Descripción | Lo envía |
+|---|---|---|---|
+| `method` | `method` | Método de acceso: google, apple, email u other | `sign_up`, `login` |
+| `auto_approve` | `auto_approve` | El grupo admite sin aprobación | `group_created` |
+| `type_count` | `type_count` | Número de tipos de evento creados | `group_created`, `onboard_shift_completed` |
+| `custom_type_count` | `custom_type_count` | Turnos propios añadidos en la configuración | `onboard_shift_completed` |
+| `audience` | `audience` | A quién habla el prompt de compartir | `share_prompt_*` |
+| `milestone` | `milestone` | Hito de eventos añadidos que lo mostró | `share_prompt_*` |
+| `all_day` | `all_day` | Evento puntual de día completo | `one_off_event_created` |
+| `multi_month` | `multi_month` | Evento puntual que abarca varios meses | `one_off_event_created` |
+| `via` | `via` | Por dónde llegó: configuración inicial, panel de añadir, enlace… | `onboard_shift_*`, `invitation_opened` |
+| `interacted` | `interacted` | Tocó el panel antes de salir | `onboard_shift_skipped`, `onboard_shift_completed` |
+| `choice` | `choice` | Respuesta a "¿Trabajas en equipo?" | `onboard_team_answered` |
+| `kind` | `kind` | Primer evento: de un tipo o puntual | `first_event_added` |
+| `scope` | `scope` | Mover a grupo: solo uno o todos | `personal_events_moved` |
+| `event_count` | `event_count` | Eventos movidos a un grupo | `personal_events_moved` |
+| `skipped_count` | `skipped_count` | Eventos que no se movieron | `personal_events_moved` |
+| `type` | `type` | Tipo de notificación abierta | `notification_opened` |
+| `screen_name` | `screen_name` | Pantalla vista | `screen_view` |
+
+`screen_name` es opcional: GA ya lo muestra en la dimensión **Título de la página y nombre de la
+pantalla** (*Page title and screen name*). Si al guardarla GA da un error, sáltala; no se pierde
+nada.
+
+### 2.2 Dimensiones de usuario
+
+Igual que antes, pero con **Ámbito** (*Scope*) **Usuario** (*User*). El último campo pasa a llamarse
+**Propiedad de usuario** (*User property*).
+
+| Nombre | Propiedad de usuario | Descripción |
+|---|---|---|
+| `group_count` | `group_count` | Grupos de los que es miembro, sin contar donde está revocado |
+| `is_admin` | `is_admin` | Administra al menos un grupo |
+| `app_language` | `app_language` | Idioma elegido en Preferencias, o `system` si sigue al dispositivo |
+
+### 2.3 Métrica: eventos movidos
+
+Una dimensión agrupa por valor; para **sumar** los eventos movidos a un grupo hace falta además una
+métrica.
+
+1. Misma página, pestaña **Métricas personalizadas** (*Custom metrics*) → **Crear métrica
+   personalizada** (*Create custom metric*).
+2. Rellena:
+   - **Nombre de la métrica** (*Metric name*): `events_moved`
+   - **Ámbito** (*Scope*): **Evento** (*Event*)
+   - **Descripción** (*Description*): `Suma de eventos movidos a un grupo`
+   - **Parámetro de evento** (*Event parameter*): `event_count`
+   - **Unidad de medida** (*Unit of measurement*): **Estándar** (*Standard*)
+3. Haz clic en **Guardar** (*Save*).
+
+GA permite que el mismo parámetro sea a la vez dimensión y métrica, así que `event_count` sigue
+también en la tabla de dimensiones.
+
+Resultado: la pestaña *Dimensiones personalizadas* lista 20 (17 de evento y 3 de usuario), y
+*Métricas personalizadas* lista 1.
