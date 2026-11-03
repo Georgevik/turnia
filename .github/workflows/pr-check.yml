@@ -1,0 +1,105 @@
+name: PR check
+
+# The fast gate on every pull request to main: it compiles both apps, runs the common tests and
+# checks the Cloud Functions, the OpenSpec changes and the production guard. No E2E: that suite is
+# android-e2e.yml. Branch protection matches on the job names below, so keep them stable; the pr- prefix keeps
+# any other workflow's job from satisfying them.
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# A new push to the same pull request cancels the run it makes obsolete.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # The debug app, plus the common tests of core and app/shared on the JVM host.
+  pr-android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v5
+
+      # Every Gradle build configures androidApp, which reads google-services.json. A pull request
+      # from a fork gets no secrets, and compiling needs no real project, so it uses the example.
+      - name: Write google-services.json
+        env:
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        run: bash .github/scripts/write-google-services.sh
+
+      - name: Build the debug app and run the common tests
+        run: ./gradlew :app:androidApp:assembleDebug :core:testAndroidHostTest :app:shared:testAndroidHostTest
+
+      - name: Upload the test reports
+        if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: unit-test-reports
+          path: |
+            core/build/reports/tests
+            app/shared/build/reports/tests
+
+  # The only check iOS gets: the shared Kotlin compiled for the simulator, without Xcode linking it.
+  pr-ios:
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v5
+
+      - name: Write google-services.json
+        env:
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        run: bash .github/scripts/write-google-services.sh
+
+      - name: Cache the Kotlin/Native toolchain
+        uses: actions/cache@v5
+        with:
+          path: ~/.konan
+          key: konan-${{ runner.os }}-${{ hashFiles('gradle/libs.versions.toml') }}
+
+      - name: Compile the shared Kotlin for iosSimulatorArm64
+        run: ./gradlew :app:shared:compileKotlinIosSimulatorArm64
+
+  # Everything outside Gradle: the Cloud Functions, the OpenSpec changes and specs, the guard hook.
+  pr-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: firebase/functions/package-lock.json
+
+      - name: Build the Cloud Functions
+        run: |
+          npm ci --prefix firebase/functions
+          npm run build --prefix firebase/functions
+
+      # Not --strict: it fails on the "requirement text is very long" warnings older specs carry.
+      - name: Validate the OpenSpec changes and specs
+        run: npx --yes @fission-ai/openspec@1.14.3 validate --all --no-interactive
+
+      - name: Test the production guard
+        run: python3 .claude/hooks/test_guard_production.py
