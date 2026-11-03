@@ -1,5 +1,6 @@
 package com.geoviksoft.turnia.ui.main.people.model
 
+import com.geoviksoft.turnia.core.domain.model.ProfilePhoto
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.domain.model.UserProfile
 
@@ -11,4 +12,5 @@ data class PersonRowUi(
     val name: String,
     val username: String,
     val avatar: UserProfile.AnimalAvatar = UserProfile.AnimalAvatar.NONE,
+    val photo: ProfilePhoto? = null,
 )

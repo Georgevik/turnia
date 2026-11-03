@@ -14,6 +14,7 @@ import com.geoviksoft.turnia.core.domain.model.GroupMember
 import com.geoviksoft.turnia.core.domain.model.JoinRequest
 import com.geoviksoft.turnia.core.domain.model.NewGroup
 import com.geoviksoft.turnia.core.domain.model.UserId
+import com.geoviksoft.turnia.core.domain.model.ProfilePhoto
 import com.geoviksoft.turnia.core.domain.model.UserProfile
 import com.geoviksoft.turnia.core.domain.repository.GroupRepository
 import com.geoviksoft.turnia.core.domain.repository.UserRepository
@@ -384,23 +385,22 @@ class GroupDetailViewModel(
     )
 
     /**
-     * The group document carries every member's name but not their avatar, which lives on their own
-     * profile — one read each, and the cache answers from the second open on.
+     * The group document carries every member's name and photo but not their animal, which lives on
+     * their own profile — one read each, and the cache answers from the second open on.
      */
     private suspend fun avatarsOf(
         group: Group,
         requests: List<JoinRequest>,
-    ): Map<UserId, UserProfile.AnimalAvatar> {
+    ): Map<UserId, UserProfile> {
         val uids = (group.members.map { it.id } + requests.map { it.userId }).distinct()
         if (uids.isEmpty()) return emptyMap()
 
-        return userRepository.getProfiles(uids).valueOrEmpty()
-            .associate { it.id to it.avatar }
+        return userRepository.getProfiles(uids).valueOrEmpty().associateBy { it.id }
     }
 
     private fun Group.toUiState(
         requests: List<JoinRequest>,
-        avatars: Map<UserId, UserProfile.AnimalAvatar>,
+        avatars: Map<UserId, UserProfile>,
     ) = GroupDetailUi.Success(
         form = GroupForm(
             groupId = id,
@@ -414,23 +414,29 @@ class GroupDetailViewModel(
         eventTypes = types.map { it.toUiRow() },
         members = members.map { it.toUiRow(avatars) },
         joinRequests = requests.map {
-            JoinRequestUi(it.userId, it.name, it.username, avatars.avatarOf(it.userId))
+            // Not a member yet, so no copy on the group: the photo comes from the cached profile.
+            JoinRequestUi(
+                it.userId, it.name, it.username, avatars.avatarOf(it.userId),
+                ProfilePhoto.of(it.userId, avatars[it.userId]?.photoId),
+            )
         },
         isNew = false,
         // Derived from the members the listener already brings: the card costs no read.
         isAlone = members.size == 1,
     )
 
-    private fun GroupMember.toUiRow(avatars: Map<UserId, UserProfile.AnimalAvatar>) = GroupMemberUi(
+    private fun GroupMember.toUiRow(avatars: Map<UserId, UserProfile>) = GroupMemberUi(
         id = id,
         name = name,
         username = username,
         isAdmin = isAdmin,
         avatar = avatars.avatarOf(id),
+        // The group's copy, which a new photo reaches with the group: a cached profile would not.
+        photo = ProfilePhoto.of(id, photoId),
     )
 
-    private fun Map<UserId, UserProfile.AnimalAvatar>.avatarOf(id: UserId) =
-        this[id] ?: UserProfile.AnimalAvatar.NONE
+    private fun Map<UserId, UserProfile>.avatarOf(id: UserId) =
+        this[id]?.avatar ?: UserProfile.AnimalAvatar.NONE
 
     private fun GroupEventType.toUiRow() = GroupTypeRowUi(
         typeId = id,

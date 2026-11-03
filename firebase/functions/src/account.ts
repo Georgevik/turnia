@@ -5,6 +5,7 @@ import { TurniaError } from "./errors";
 import { deleteGroupTree, isLastAdminOfOthers } from "./membership";
 import { requireUid } from "./requests";
 import { markGroupUpdated, markJoinRequestSettled } from "./sync";
+import { photoBucket, profilePhotoFolder } from "./users";
 
 /**
  * Deletes the caller's account by **anonymizing** it, then deletes the Auth user.
@@ -13,7 +14,7 @@ import { markGroupUpdated, markJoinRequestSettled } from "./sync";
  * `ownerId` and `assigneeId`, every `history` entry — so nothing that refers to it has to be
  * chased down, and the A→B→C chain of a shift the account once held stays whole, with one link that
  * no longer says who. What goes is everything that says who they were: the name and username (on
- * the profile and on every group's copy), the avatar, the username reservation, and everything under
+ * the profile and on every group's copy), the avatar and the photo, the username reservation, and everything under
  * their own document — email, push tokens, preferences, personal events and their notes. A blank
  * name is what the app already renders as a former member.
  *
@@ -38,6 +39,11 @@ export const deleteAccount = onCall({ enforceAppCheck: true }, async (request) =
   if (memberOf.docs.some((group) => isLastAdminOfOthers(group, uid))) {
     throw TurniaError.DeleteAccountLastAdmin;
   }
+
+  // The photo first: `onGroupMemberPhotoLost` restores a member's photo copy from the profile, and
+  // the group writes below would otherwise give it one to restore.
+  const profile = await db.doc(`users/${uid}`).get();
+  if (profile.get("photoId")) await profile.ref.update({ photoId: FieldValue.delete() });
 
   // The name every group copies. Entry and sync marker in one batch per group, as `updateProfile`
   // writes them, so a reader's cache can settle.
@@ -74,6 +80,16 @@ export const deleteAccount = onCall({ enforceAppCheck: true }, async (request) =
     const reservationRef = db.doc(`usernames/${username}`);
     const reservation = await reservationRef.get();
     if (reservation.get("uid") === uid) await reservationRef.delete();
+  }
+
+  // Every photo, the current one and any upload that was never published. The profile and each
+  // group's entry lose `photoId` below, where they are overwritten whole. Best effort: a Storage
+  // failure leaves a file nobody can see named anywhere, while stopping here would leave the
+  // account half anonymized.
+  try {
+    await photoBucket().deleteFiles({ prefix: profilePhotoFolder(uid) });
+  } catch (error) {
+    console.error(`deleteAccount: could not delete the photos of ${uid}`, error);
   }
 
   // Private documents, personal events and types, sync markers, revoked-group snapshots.

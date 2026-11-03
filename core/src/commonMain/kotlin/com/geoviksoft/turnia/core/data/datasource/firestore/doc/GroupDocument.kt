@@ -36,10 +36,36 @@ data class GroupDocument(
     }
 }
 
+/**
+ * What an admin's save writes, merged over `groups/{groupId}`. Membership is the server's to write,
+ * and `members` carries fields a later build may add — a build that sent it back whole would wipe
+ * them, as the ones before photos wipe `photoId` — so neither is ever sent from here.
+ */
+@Serializable
+data class GroupEditDocument(
+    @SerialName("name") val name: String,
+    @SerialName("color") val color: String?,
+    @SerialName("groupEventTypes") val groupEventTypes: List<GroupEventTypeDocument>,
+    @SerialName("invitation") val invitation: InvitationDocument,
+    @SerialName(GroupDocument.FIELD_UPDATE_AT) val updateAt: BaseTimestamp? = Timestamp.ServerTimestamp,
+) {
+    companion object {
+        fun of(group: GroupDocument) = GroupEditDocument(
+            name = group.name,
+            color = group.color,
+            groupEventTypes = group.groupEventTypes,
+            invitation = group.invitation,
+        )
+    }
+}
+
 @Serializable
 data class GroupMemberDocument(
     @SerialName("name") val name: String,
     @SerialName("username") val username: String,
+    // Kept here, not only on the profile, so a new photo reaches colleagues with the group. Written
+    // by the server alone; a client never sends `members` back (see GroupEditDocument).
+    @SerialName("photoId") val photoId: String? = null,
 )
 
 /**

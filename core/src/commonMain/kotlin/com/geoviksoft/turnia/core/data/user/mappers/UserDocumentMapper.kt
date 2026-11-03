@@ -32,6 +32,7 @@ class UserDocumentMapper {
         username = profile?.username.orEmpty(),
         membership = subscription.toMembership(),
         avatar = profile?.avatar ?: UserProfile.AnimalAvatar.NONE,
+        photoId = profile?.photoId,
         showAds = profile?.showAds == true,
         hasProfile = profile != null,
     )
@@ -48,6 +49,7 @@ class UserDocumentMapper {
             background = document.backgroundColor,
         ),
         showAds = document.showAds,
+        photoId = document.photoId,
     )
 
     /** No subscription document means the user has never bought anything: free tier. */

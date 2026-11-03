@@ -11,7 +11,7 @@ import {
   markJoinRequestSettled,
   markUserUpdated,
 } from "./sync";
-import { writeJoinRequestPointer } from "./users";
+import { memberEntry, writeJoinRequestPointer } from "./users";
 
 /**
  * Requests to join a group by validating its (single) invitation code.
@@ -70,7 +70,7 @@ export const requestToJoinGroup = onCall({ enforceAppCheck: true }, async (reque
       memberUids: FieldValue.arrayUnion(uid),
       // Rejoining undoes a revocation: a uid is a member or revoked, never both.
       revokedUids: FieldValue.arrayRemove(uid),
-      [`members.${uid}`]: profile,
+      [`members.${uid}`]: memberEntry(user),
       updateAt: FieldValue.serverTimestamp(),
     });
     clearRevokedGroup(db, batch, groupDoc, uid);
@@ -143,10 +143,7 @@ export const acceptJoinRequest = onCall({ enforceAppCheck: true }, async (reques
     memberUids: FieldValue.arrayUnion(uid),
     // Rejoining undoes a revocation: a uid is a member or revoked, never both.
     revokedUids: FieldValue.arrayRemove(uid),
-    [`members.${uid}`]: {
-      name: user.get("name") ?? "",
-      username: user.get("username") ?? "",
-    },
+    [`members.${uid}`]: memberEntry(user),
     updateAt: FieldValue.serverTimestamp(),
   });
   clearRevokedGroup(db, batch, group, uid);

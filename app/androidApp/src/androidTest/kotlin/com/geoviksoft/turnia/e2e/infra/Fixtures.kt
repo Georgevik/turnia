@@ -27,6 +27,8 @@ internal data class FixtureUser(val uid: String, val email: String, val password
 internal class Fixture(
     val users: Map<String, FixtureUser>,
     val documents: Map<String, JsonObject>,
+    /** Storage objects: the path in the bucket, and the bundled asset uploaded there. */
+    val files: Map<String, String>,
 )
 
 /**
@@ -48,6 +50,7 @@ internal object Fixtures {
     fun load(names: List<String>, today: LocalDate, now: Instant): Fixture {
         val users = linkedMapOf<String, FixtureUser>()
         val documents = linkedMapOf<String, JsonObject>()
+        val files = linkedMapOf<String, String>()
 
         names.forEach { name ->
             val raw = Json.parseToJsonElement(readAsset("$name.json")).jsonObject
@@ -64,14 +67,21 @@ internal object Fixtures {
                     documents[path] = resolve(document, today, now).jsonObject
                 }
             }
+            raw["storage"]?.jsonObject?.forEach { (path, asset) ->
+                if (asset is JsonNull) files.remove(path) else files[path] = asset.jsonPrimitive.content
+            }
         }
 
-        return Fixture(users, withSyncMarkers(documents, now))
+        return Fixture(users, withSyncMarkers(documents, now), files)
     }
 
     private fun readAsset(fileName: String): String =
         InstrumentationRegistry.getInstrumentation().context.assets.open(fileName)
             .bufferedReader().use { it.readText() }
+
+    fun readAssetBytes(fileName: String): ByteArray =
+        InstrumentationRegistry.getInstrumentation().context.assets.open(fileName)
+            .use { it.readBytes() }
 
     private fun resolve(element: JsonElement, today: LocalDate, now: Instant): JsonElement =
         when (element) {

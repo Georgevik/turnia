@@ -124,9 +124,20 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
   on their public profile, so anyone who can find them sees the same one. Neither is stored until
   it is picked: a profile that has never opened the picker renders the client's default — the first
   colour of the palette behind a default animal — and the default lives in the client, not in the
-  document, so changing it re-skins everyone who never picked. Unlike the name, the avatar is
+  document, so changing it re-skins everyone who never picked. Unlike the name, the animal is
   **copied nowhere**: it is read from the profile wherever a person is shown, so changing it needs
   no fan-out and no Cloud Function.
+- **Profile photo**: a user may also upload a **photo**, and when they have one it is shown instead
+  of the animal, everywhere; the animal stays underneath, for while it loads, when it cannot be
+  loaded and once it is removed. It is picked with the system picker (no permission, no camera),
+  cropped to a circle and compressed on the device to a 384×384 WebP, metadata gone, at most
+  100 KB. It lives in Cloud Storage at `profilePhotos/{uid}/{photoId}.webp`, which any signed-in
+  user can read and nobody can open through a public link. Uploading and removing apply at once,
+  not on *Save*. **The photo, like the name, has a keeper**: it is copied into every group's member
+  entry so a colleague sees a new one with the group, so only `setProfilePhoto` writes `photoId`,
+  every writer of a member entry keeps it, and `onGroupMemberPhotoLost` puts back a copy that a
+  build from before photos wipes when its admin saves the group. There is **no moderation yet**
+  (TUR-60), and no store release carries photos before it.
 - A user can belong to **several groups** and can invite another user to view **their entire calendar** (crossing groups).
 - Whoever a calendar is shared with can **hide** it: it leaves "Shared with me" for a *Hidden* chip,
   by swipe or long press, and comes back the same way. It is their view only — the owner's grant
@@ -140,7 +151,7 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
 - A user can **delete their account** from their profile. It is **anonymized, not erased**, by the `deleteAccount`
   Cloud Function: the uid stays wherever it is referenced (`memberUids`, events, `history`), so no chain
   loses a link, and what goes is everything that says who it was — name and username on the profile and
-  on every group's copy, avatar, username reservation, and everything under `users/{uid}/**`. A blank
+  on every group's copy, avatar, photo (and every file in Storage), username reservation, and everything under `users/{uid}/**`. A blank
   name renders as a former member. A group the account is alone in is deleted, pending join requests
   are withdrawn, and the Auth user is deleted last. The last-admin rule applies: the only admin of a
   group with other members is refused.
@@ -432,6 +443,8 @@ Build one with `value.toSuccess()` / `error.toFailure()` — both work on any re
 - **In-app subscriptions** — **Google Play Billing** (Android) and **StoreKit / App Store** (iOS) for premium plans.
 - **Firebase** — backend, no custom server:
   - **Firestore** — data.
+  - **Cloud Storage** — profile photos only (`firebase/storage.rules`). Read and written through the
+    SDK, never through download URLs, so the rules and App Check apply to every image.
   - **Firebase Auth** — authentication.
   - **Cloud Functions (TypeScript)** — join requests, taking events, push, shared-calendar aggregation,
     account deletion (anonymization),
@@ -469,7 +482,7 @@ Build one with `value.toSuccess()` / `error.toFailure()` — both work on any re
     attempt. Functions has no metrics at all yet: `enforceAppCheck: true` has been added to its
     `onCall` functions but not deployed, since Cloud Functions has no monitoring-only mode — deploying
     it is immediate enforcement. Enforcing before a release that attests is in users' hands locks
-    every older build out.
+    every older build out. Cloud Storage is not enforced either, and joins the same staged rollout.
   - **Cloud Scheduler** — triggers the periodic retention cleanup of old events.
 - **GitLive Firebase Kotlin SDK** (`dev.gitlive:firebase-*`) — Firebase access from `commonMain`.
 - **Native FCM per platform** — push reception uses the native SDK on each platform (iOS involves APNs, `AppDelegate` and permissions).
@@ -493,6 +506,7 @@ What a user is expected to cost, per action and per day, is in [firebase/firesto
 | a listener (document or query) | subscribe through `.trackedSnapshots(TAG, "operation")` instead of `.snapshots` — never `.snapshots` + `trackData` |
 | `set` / `updateFields` / `delete` | `trackWrite(TAG, "operation")` on the line **after** the call |
 | `httpsCallable(NAME)` on a Cloud Function | `trackFunction(NAME)` on the line **before** the call |
+| a Cloud Storage upload or download | `trackStorage(TAG, "operation", UPLOAD \| DOWNLOAD, bytes)` on the line **after** the transfer; never for a hit in the image cache |
 
 `TAG` is the reporting class's own log tag, and `operation` names the **call inside it**: usage is counted per class *and per query*, so the audit says who spent the reads, how many, and through which of that class's calls — the only one of the three you can act on. Function calls are the exception: they are counted per callable, which is already both.
 
@@ -611,7 +625,7 @@ Functions  Calls: 3
 
 ## Sensitive points (do not overlook)
 
-1. **No private fields on shared docs** — Firestore does not hide individual fields: if you can read the document, you read all of it. A group event doc is readable by every group member, so never put private data (notes, etc.) on it — a member's note on one goes in their own `users/{uid}/groupEventExtras`. `users/{uid}` is readable by **any signed-in user** — that is what lets a search result render a stranger's name and avatar — so it holds only the name, the username, the avatar, `calendarSharedWith` and `showAds`; email, FCM tokens, entitlement and the user's own colour picks live in `users/{uid}/private/**`. Personal events are readable only by the owner and their shared users, so their `notes` may live on the doc.
+1. **No private fields on shared docs** — Firestore does not hide individual fields: if you can read the document, you read all of it. A group event doc is readable by every group member, so never put private data (notes, etc.) on it — a member's note on one goes in their own `users/{uid}/groupEventExtras`. `users/{uid}` is readable by **any signed-in user** — that is what lets a search result render a stranger's name and avatar — so it holds only the name, the username, the avatar, the photo's id, `calendarSharedWith` and `showAds`; email, FCM tokens, entitlement and the user's own colour picks live in `users/{uid}/private/**`. Personal events are readable only by the owner and their shared users, so their `notes` may live on the doc.
 2. **Viewing another user's full calendar (crosses groups)** — group events live under group members, so a user **outside** the group cannot read them directly. The cross-group shared calendar is served **on demand** by the `getSharedCalendar` Cloud Function. A grant has a **single source of truth**: A may read B only if `A ∈ users/B.calendarSharedWith`, a list only B writes. The function checks it, then aggregates the owner's group + personal events for a bounded date range (admin privileges, no stored copy).
 3. **A username is a reservation, not a field** — `usernames/{username}` is a public collection keyed by the handle: the lock that makes a handle unique, and the index a prefix search runs over (a document id cannot be prefix-queried, so the handle is repeated as a field). Uniqueness is enforced by Firestore's create-vs-update distinction in the rules, so **always claim the reservation before writing `users/{uid}.username`**, and release the previous one after. Search there is prefix-only; Firestore has no full-text search.
 
@@ -620,7 +634,7 @@ Functions  Calls: 3
 5. **Taking / push are server-only** — `takeEvent` reassigns the event in a transaction that verifies `onSwap` first; **push** is sent only from Cloud Functions, never from the client. The notification wording is **not** written server-side: a push has to render while the app is not running, so the server sends a localization key and its arguments (`bodyLocKey` on Android, `loc-key` on iOS) and the operating system fills in the words from the app's own `res/values(-es|-fr|-de|-it)/strings.xml` and `{en,es,fr,de,it}.lproj/Localizable.strings`. That keeps the server in English whatever the app speaks; a new push needs its key, with the same arguments, in all ten files. The data payload carries a `type` for routing the tap. `users/{uid}/private/account.fcmTokens` is one entry per device, touched only through `arrayUnion` / `arrayRemove`, and the server prunes the tokens FCM reports as unregistered.
 
    **A tapped notification is state, not an event.** The platform delivers the tap whenever it likes — on a cold start, long before the UI that has to act on it exists — so `NotificationRepository` holds the `PushDestination` until a screen says it has navigated, exactly as a `userMessage` is held until it has been shown. A `Channel` would drop precisely the cold-start case. The destinations are split by the back stack that owns them: `GroupDetail` is `RootScreen`'s, the tabs are `MainScreen`'s, and each consumes only its own.
-6. **Denormalized names have a keeper** — a group carries its members' names so the calendar costs no read to show them, and `onUserRenamed` is the only thing keeping those copies true. A document and the sync marker that gates it must be written in the **same commit**, or the marker is always the later of the two and no cache ever settles.
+6. **Denormalized names and photos have a keeper** — a group carries its members' names and photo ids so the calendar costs no read to show them, and only `updateProfile` and `setProfilePhoto` keep those copies true, field by field. A client never writes `members`: an admin's save merges only what it edits, since a build that wrote the group back whole would wipe whatever fields a later build added (`onGroupMemberPhotoLost` repairs the photos the builds before this rule wipe). A document and the sync marker that gates it must be written in the **same commit**, or the marker is always the later of the two and no cache ever settles.
 
    **One marker per document, not one per subcollection.** `users/{uid}/sync/updates` carries `account`, `joinRequests` and `preferences` separately; they used to share a single `private` field, so registering a push token invalidated the join-request cache and answering a request invalidated the account cache. A marker named after a subcollection invites exactly that, because the documents under it are almost never read on the same schedule.
 7. **Premium entitlement is server-verified** — the client may *request* a purchase but must never mark itself premium. Only a Cloud Function that validated the store receipt (Play RTDN / App Store Server Notifications) writes `users/{uid}/private/subscription`; security rules forbid the client from setting it. Ad-hiding and premium gating must read the server-verified state, not a local flag.
@@ -636,7 +650,7 @@ turnia/
 │   └── iosApp/         # iOS entry point (Xcode)
 ├── core/               # Shared domain + business logic (KMP)
 └── firebase/           # Firebase project: config + Cloud Functions (deployed separately)
-    ├── firebase.json · .firebaserc · firestore.rules · firestore.indexes.json · firestore-schema.md
+    ├── firebase.json · .firebaserc · firestore.rules · storage.rules · firestore.indexes.json · firestore-schema.md
     ├── functions/      # Cloud Functions (TypeScript): join requests, taking events, push, subscription verification, retention cleanup
     └── hosting/        # Firebase Hosting: the invitation-link landing page + Android/iOS link verification files
 ```
@@ -660,7 +674,7 @@ Use the run configurations provided by the run widget in your IDE's toolbar. You
 
 ### E2E tests
 
-The 68 critical happy paths run on an Android emulator against the Firebase emulators, seeded from
+The 101 critical happy paths run on an Android emulator against the Firebase emulators, seeded from
 [`firebase/test/fixtures`](firebase/test/README.md) — see that README to run them. They live in
 `app/androidApp/src/androidTest/.../e2e`: `flows/` holds the tests, `robots/` drives the screens,
 `infra/` seeds the emulators and points the app at them (`TurniaTestApplication`).

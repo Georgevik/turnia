@@ -3,6 +3,7 @@ package com.geoviksoft.turnia.ui.main.people
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.geoviksoft.turnia.core.domain.model.UserId
+import com.geoviksoft.turnia.core.domain.model.ProfilePhoto
 import com.geoviksoft.turnia.core.domain.model.UserProfile
 import com.geoviksoft.turnia.core.domain.repository.UserRepository
 import com.geoviksoft.turnia.core.domain.username.USERNAME_SEARCH_MIN_LENGTH
@@ -194,6 +195,7 @@ class PeopleViewModel(private val userRepository: UserRepository) : ViewModel() 
                     username = user.username,
                     alreadyShared = user.id in shared,
                     avatar = user.avatar,
+                    photo = ProfilePhoto.of(user.id, user.photoId),
                 )
             }
 
@@ -220,6 +222,7 @@ class PeopleViewModel(private val userRepository: UserRepository) : ViewModel() 
         name = user.name,
         username = user.username,
         avatar = user.avatar,
+        photo = ProfilePhoto.of(user.id, user.photoId),
     )
 
     private data class SharedWithMe(val visible: List<PersonRowUi>, val hidden: List<PersonRowUi>)

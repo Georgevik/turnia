@@ -298,6 +298,14 @@
     <string name="profile_avatar_animal">Animal</string>
     <string name="profile_avatar_color">Couleur</string>
     <string name="profile_avatar_done">Terminé</string>
+    <string name="profile_photo_upload">Importer une photo</string>
+    <string name="profile_photo_choose_animal">Choisir un animal et une couleur</string>
+    <string name="profile_photo_remove">Supprimer la photo</string>
+    <string name="profile_photo_crop_title">Déplacer et ajuster</string>
+    <string name="profile_photo_crop_use">Utiliser la photo</string>
+    <string name="profile_photo_error_upload">Nous n'avons pas pu importer ta photo. Réessaie.</string>
+    <string name="profile_photo_error_remove">Nous n'avons pas pu supprimer ta photo. Réessaie.</string>
+    <string name="profile_photo_error_unreadable">Cette image ne peut pas être utilisée. Essaie avec une autre.</string>
 
     <string name="settings_preferences">Préférences</string>
     <string name="settings_my_groups">Mes groupes</string>

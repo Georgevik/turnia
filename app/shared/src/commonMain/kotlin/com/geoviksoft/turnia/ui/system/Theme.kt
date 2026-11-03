@@ -19,6 +19,8 @@ import androidx.navigation3.runtime.NavKey
 import com.geoviksoft.turnia.navigation.LocalNavigator
 import com.geoviksoft.turnia.navigation.LocalRootNavigator
 import com.geoviksoft.turnia.navigation.Navigator
+import com.geoviksoft.turnia.ui.system.photo.LocalPhotoPicker
+import com.geoviksoft.turnia.ui.system.photo.NoPhotoPicker
 import com.geoviksoft.turnia.ui.system.color.Amber300
 import com.geoviksoft.turnia.ui.system.color.Amber500
 import com.geoviksoft.turnia.ui.system.color.Amber700
@@ -190,6 +192,7 @@ fun PreviewTurniaTheme(background: Color = Color.White, content: @Composable () 
         LocalNavigator provides FakeNavigator,
         LocalSnackbar provides SnackbarHostState(),
         LocalTextSharer provides NoTextSharer,
+        LocalPhotoPicker provides NoPhotoPicker,
     ) {
         Box(Modifier.background(background)) {
             TurniaTheme(content = content)

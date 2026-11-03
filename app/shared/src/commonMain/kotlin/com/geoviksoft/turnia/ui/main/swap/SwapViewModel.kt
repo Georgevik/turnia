@@ -6,6 +6,7 @@ import com.geoviksoft.turnia.core.data.logger.Logger
 import com.geoviksoft.turnia.core.domain.model.Group
 import com.geoviksoft.turnia.core.domain.model.GroupEvent
 import com.geoviksoft.turnia.core.domain.model.GroupId
+import com.geoviksoft.turnia.core.domain.model.ProfilePhoto
 import com.geoviksoft.turnia.core.domain.model.SwapError
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.domain.model.UserProfile
@@ -131,6 +132,11 @@ class SwapViewModel(
         val revoked = groups.filter { it.isRevoked }.map { it.id }.toSet()
         val visible = events.filter { it.groupId !in filters.deselected }
         val hasCovered = visible.any { it.handedAwayBy(userId) }
+        // A requester is a member of the shift's group, which carries their photo: a new one shows
+        // with the group, where their cached profile would never be read again.
+        val photos = groups.flatMap { it.members }
+            .mapNotNull { member -> member.photoId?.let { member.id to it } }
+            .toMap()
 
         return SwapUi.Success(
             segments = SwapSegment.entries.associateWith { segment ->
@@ -140,7 +146,7 @@ class SwapViewModel(
                             it.handedAwayBy(userId)
                     }
                     .sortedWith(compareBy({ it.date }, { it.id.value }))
-                    .map { event -> row(segment, event, userId, revoked, avatars) }
+                    .map { event -> row(segment, event, userId, revoked, avatars, photos) }
             },
             segment = filters.segment,
             onlyUncovered = filters.onlyUncovered,
@@ -168,6 +174,7 @@ class SwapViewModel(
         userId: UserId,
         revoked: Set<GroupId>,
         avatars: Map<UserId, UserProfile.AnimalAvatar>,
+        photos: Map<UserId, String>,
     ) = SwapRowUi(
         event = event
             .toUi(currentUserId = userId, activeMember = event.groupId !in revoked),
@@ -175,6 +182,7 @@ class SwapViewModel(
             SwapRequesterUi(
                 name = event.assigneeName,
                 avatar = avatars[event.assigneeId] ?: UserProfile.AnimalAvatar.NONE,
+                photo = ProfilePhoto.of(event.assigneeId, photos[event.assigneeId]),
             )
         } else {
             null

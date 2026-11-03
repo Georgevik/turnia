@@ -1,5 +1,7 @@
 package com.geoviksoft.turnia.ui.root.di
 
+import com.geoviksoft.turnia.core.data.datasource.storage.ProfilePhotoStorage
+import com.geoviksoft.turnia.core.system.valueOrNull
 import com.geoviksoft.turnia.navigation.ScreenReporter
 import com.geoviksoft.turnia.ui.main.MainViewModel
 import com.geoviksoft.turnia.ui.onboarding.OnboardingViewModel
@@ -8,6 +10,8 @@ import com.geoviksoft.turnia.ui.root.name.CompleteNameViewModel
 import com.geoviksoft.turnia.ui.signin.SignInViewModel
 import com.geoviksoft.turnia.ui.signin.createaccount.CreateAccountViewModel
 import com.geoviksoft.turnia.ui.splash.SplashViewModel
+import com.geoviksoft.turnia.ui.system.photo.ProfilePhotoCache
+import com.geoviksoft.turnia.ui.system.photo.photoCacheDirectory
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
@@ -15,6 +19,13 @@ import org.koin.dsl.module
 /** The shell every other feature is shown inside: splash, onboarding, sign-in, and the tabbed main screen. */
 val rootModule: Module = module {
     single { ScreenReporter(get()) }
+    single {
+        val storage: ProfilePhotoStorage = get()
+        ProfilePhotoCache(
+            directory = photoCacheDirectory(),
+            download = { photo -> storage.download(photo).valueOrNull() },
+        )
+    }
     viewModelOf(::RootViewModel)
     viewModelOf(::SplashViewModel)
     viewModelOf(::OnboardingViewModel)

@@ -36,6 +36,7 @@ data class GroupMember(
     val name: String,
     val username: String,
     val isAdmin: Boolean,
+    val photoId: String? = null,
 )
 
 /** Somebody who used the code while the group was not auto-approving. */

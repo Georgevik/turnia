@@ -1,0 +1,112 @@
+{
+  "_comment": "Layered over base: bruno has a profile photo, on his profile, on both his groups' member entries and in Storage. See firebase/test/README.md.",
+  "firestore": {
+    "users/bruno": {
+      "name": "Bruno Bravo",
+      "username": "bruno",
+      "calendarSharedWith": [
+        "alice"
+      ],
+      "showAds": false,
+      "updateAt": "$now",
+      "photoId": "bruno1"
+    },
+    "groups/urgencias": {
+      "name": "Urgencias",
+      "color": "#E57373",
+      "memberUids": [
+        "alice",
+        "bruno",
+        "carla"
+      ],
+      "revokedUids": [],
+      "members": {
+        "alice": {
+          "name": "Alice Admin",
+          "username": "alice"
+        },
+        "bruno": {
+          "name": "Bruno Bravo",
+          "username": "bruno",
+          "photoId": "bruno1"
+        },
+        "carla": {
+          "name": "Carla Cruz",
+          "username": "carla"
+        }
+      },
+      "adminUids": [
+        "alice"
+      ],
+      "groupEventTypes": [
+        {
+          "id": "manana",
+          "name": "Mañana",
+          "acronym": "MN",
+          "description": null,
+          "startTime": "08:00",
+          "endTime": "15:00",
+          "swappable": true,
+          "color": "#4DB6AC"
+        },
+        {
+          "id": "noche",
+          "name": "Noche",
+          "acronym": "NC",
+          "description": null,
+          "startTime": "22:00",
+          "endTime": "08:00",
+          "swappable": false,
+          "color": "#7986CB"
+        }
+      ],
+      "invitation": {
+        "code": "URG001",
+        "active": true,
+        "autoApprove": false,
+        "expiresAt": null
+      },
+      "updateAt": "$now"
+    },
+    "groups/planta": {
+      "name": "Planta",
+      "color": "#81C784",
+      "memberUids": [
+        "bruno"
+      ],
+      "revokedUids": [],
+      "members": {
+        "bruno": {
+          "name": "Bruno Bravo",
+          "username": "bruno",
+          "photoId": "bruno1"
+        }
+      },
+      "adminUids": [
+        "bruno"
+      ],
+      "groupEventTypes": [
+        {
+          "id": "tarde",
+          "name": "Tarde",
+          "acronym": "TD",
+          "description": null,
+          "startTime": "15:00",
+          "endTime": "22:00",
+          "swappable": true,
+          "color": "#FFB74D"
+        }
+      ],
+      "invitation": {
+        "code": "PLA001",
+        "active": true,
+        "autoApprove": true,
+        "expiresAt": null
+      },
+      "updateAt": "$now"
+    }
+  },
+  "storage": {
+    "profilePhotos/bruno/bruno1.webp": "photo-bruno.webp"
+  }
+}

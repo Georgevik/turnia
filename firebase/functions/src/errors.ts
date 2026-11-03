@@ -53,6 +53,8 @@ export enum TurniaErrorCode {
   // profile
   UpdateProfileUsernameInvalid = 2003,
   UpdateProfileUsernameTaken = 2004,
+  SetProfilePhotoNotFound = 2005,
+  SetProfilePhotoInvalid = 2006,
 
   // shared calendar
   SharedCalendarNotShared = 4003,
@@ -122,6 +124,8 @@ const SPECS: Record<keyof typeof TurniaErrorCode, [FunctionsErrorCode, string]> 
   // profile
   UpdateProfileUsernameInvalid: ["invalid-argument", "Invalid username."],
   UpdateProfileUsernameTaken: ["failed-precondition", "Username already taken."],
+  SetProfilePhotoNotFound: ["not-found", "The photo was not uploaded."],
+  SetProfilePhotoInvalid: ["invalid-argument", "The photo must be a WebP of at most 100 KB."],
 
   // shared calendar
   SharedCalendarNotShared: ["permission-denied", "This calendar is not shared with you."],

@@ -19,6 +19,8 @@ data class UserDocument(
     @SerialName(FIELD_ANIMAL_ICON_ID) val animalIconId: String? = null,
     /** Hex from `ALL_COLORS`; null until the user picks one. */
     @SerialName(FIELD_BACKGROUND_COLOR) val backgroundColor: String? = null,
+    /** The profile photo's id in Storage; null without one. Only `setProfilePhoto` writes it. */
+    @SerialName(FIELD_PHOTO_ID) val photoId: String? = null,
     @SerialName(FIELD_CALENDAR_SHARED_WITH) val calendarSharedWith: List<String> = emptyList(),
     /** Set once the user has done enough in the app to be shown ads, and never cleared. */
     @SerialName(FIELD_SHOW_ADS) val showAds: Boolean = false,
@@ -30,6 +32,7 @@ data class UserDocument(
         const val FIELD_USERNAME = "username"
         const val FIELD_ANIMAL_ICON_ID = "animalIconId"
         const val FIELD_BACKGROUND_COLOR = "backgroundColor"
+        const val FIELD_PHOTO_ID = "photoId"
         const val FIELD_CALENDAR_SHARED_WITH = "calendarSharedWith"
         const val FIELD_SHOW_ADS = "showAds"
         const val FIELD_UPDATE_AT = "updateAt"

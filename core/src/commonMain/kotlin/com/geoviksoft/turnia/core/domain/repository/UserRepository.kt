@@ -2,6 +2,8 @@ package com.geoviksoft.turnia.core.domain.repository
 
 import com.geoviksoft.turnia.core.domain.model.DeleteAccountError
 import com.geoviksoft.turnia.core.domain.model.EmailAuthError
+import com.geoviksoft.turnia.core.domain.model.ProfilePhoto
+import com.geoviksoft.turnia.core.domain.model.ProfilePhotoError
 import com.geoviksoft.turnia.core.domain.model.User
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.domain.model.UserProfile
@@ -42,6 +44,11 @@ interface UserRepository : FcmDelegate {
     suspend fun updateProfile(name: String, username: String): Outcome<Unit, UsernameError>
 
     suspend fun updateAvatar(animalIconId: String?, backgroundColor: String?): Outcome<Unit, Unit>
+
+    /** Uploads [bytes], an encoded WebP, and makes it the profile's photo. */
+    suspend fun uploadProfilePhoto(bytes: ByteArray): Outcome<ProfilePhoto, ProfilePhotoError>
+
+    suspend fun removeProfilePhoto(): Outcome<Unit, ProfilePhotoError>
 
     /** Flags the profile as ready for ads. */
     suspend fun enableShowAds(): Outcome<Unit, Unit>

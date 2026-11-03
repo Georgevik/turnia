@@ -7,6 +7,7 @@ import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
 import dev.gitlive.firebase.firestore.firestore
 import dev.gitlive.firebase.functions.functions
+import dev.gitlive.firebase.storage.storage
 import org.koin.core.module.Module
 
 /**
@@ -25,6 +26,7 @@ class TurniaTestApplication : TurniaApplication() {
         Firebase.auth.useEmulator(Emulator.HOST, Emulator.AUTH_PORT)
         Firebase.firestore.useEmulator(Emulator.HOST, Emulator.FIRESTORE_PORT)
         Firebase.functions(Emulator.FUNCTIONS_REGION).useEmulator(Emulator.HOST, Emulator.FUNCTIONS_PORT)
+        Firebase.storage.useEmulator(Emulator.HOST, Emulator.STORAGE_PORT)
     }
 
     override fun extraModules(): List<Module> = listOf(e2eModule)

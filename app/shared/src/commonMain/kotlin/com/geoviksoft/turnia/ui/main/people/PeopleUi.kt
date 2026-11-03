@@ -1,6 +1,7 @@
 package com.geoviksoft.turnia.ui.main.people
 
 import com.geoviksoft.turnia.core.domain.model.UserId
+import com.geoviksoft.turnia.core.domain.model.ProfilePhoto
 import com.geoviksoft.turnia.core.domain.model.UserProfile
 import com.geoviksoft.turnia.ui.main.people.model.PeopleFilter
 import com.geoviksoft.turnia.ui.main.people.model.PersonRowUi
@@ -37,6 +38,7 @@ data class SearchResultUi(
     val username: String,
     val alreadyShared: Boolean,
     val avatar: UserProfile.AnimalAvatar = UserProfile.AnimalAvatar.NONE,
+    val photo: ProfilePhoto? = null,
 )
 
 sealed interface PeopleMessage {

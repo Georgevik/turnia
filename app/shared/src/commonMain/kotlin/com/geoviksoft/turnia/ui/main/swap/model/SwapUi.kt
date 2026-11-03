@@ -3,6 +3,7 @@ package com.geoviksoft.turnia.ui.main.swap.model
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import com.geoviksoft.turnia.core.domain.model.GroupId
+import com.geoviksoft.turnia.core.domain.model.ProfilePhoto
 import com.geoviksoft.turnia.core.domain.model.UserProfile
 import com.geoviksoft.turnia.ui.components.calendar.model.DayEventUi
 
@@ -25,6 +26,7 @@ data class SwapGroupFilterUi(
 data class SwapRequesterUi(
     val name: String,
     val avatar: UserProfile.AnimalAvatar,
+    val photo: ProfilePhoto? = null,
 )
 
 @Immutable

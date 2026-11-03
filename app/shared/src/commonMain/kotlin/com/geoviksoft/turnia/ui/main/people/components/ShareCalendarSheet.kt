@@ -117,7 +117,7 @@ private fun SearchUserList(users: List<SearchResultUi>, onPick: (UserId) -> Unit
                 },
                 subtitle = "@${result.username}",
                 onClick = if (result.alreadyShared) null else ({ onPick(result.id) }),
-                leading = { UserAvatar(avatar = result.avatar, modifier = Modifier.size(42.dp)) },
+                leading = { UserAvatar(avatar = result.avatar, modifier = Modifier.size(42.dp), photo = result.photo) },
                 maxLines = 1,
                 trailing = if (result.alreadyShared) {
                     {

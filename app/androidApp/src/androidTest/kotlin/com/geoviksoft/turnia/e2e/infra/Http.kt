@@ -18,7 +18,11 @@ internal class HttpResponse(val code: Int, val body: String) {
  * security rules, which is what seeding and checking the world from outside the app needs.
  */
 internal object Http {
-    fun send(method: String, url: String, body: JsonElement? = null): HttpResponse {
+    fun send(method: String, url: String, body: JsonElement? = null): HttpResponse =
+        sendBytes(method, url, body?.let { Json.encodeToString(it).toByteArray() }, "application/json")
+
+    /** [send] for a body that is not JSON, such as a file uploaded to the Storage emulator. */
+    fun sendBytes(method: String, url: String, body: ByteArray?, contentType: String): HttpResponse {
         val connection = URL(url).openConnection() as HttpURLConnection
         return try {
             connection.requestMethod = method
@@ -27,8 +31,8 @@ internal object Http {
             connection.setRequestProperty("Authorization", "Bearer owner")
             if (body != null) {
                 connection.doOutput = true
-                connection.setRequestProperty("Content-Type", "application/json")
-                connection.outputStream.use { it.write(Json.encodeToString(body).toByteArray()) }
+                connection.setRequestProperty("Content-Type", contentType)
+                connection.outputStream.use { it.write(body) }
             }
             val code = connection.responseCode
             val stream = if (code in 200..299) connection.inputStream else connection.errorStream

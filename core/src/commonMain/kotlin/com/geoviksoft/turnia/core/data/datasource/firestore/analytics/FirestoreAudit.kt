@@ -25,22 +25,37 @@ data class FirestoreUsage(
     val writes: Int = 0,
     /** Callable Cloud Functions invoked. Billed per invocation, not per document. */
     val calls: Int = 0,
+    /** Files sent to Cloud Storage. Billed per operation and per byte stored. */
+    val uploads: Int = 0,
+    /** Files fetched from Cloud Storage over the network; a hit in the image cache is not one. */
+    val downloads: Int = 0,
+    /** Bytes those uploads and downloads moved. */
+    val storageBytes: Long = 0,
 ) {
     operator fun plus(other: FirestoreUsage) = FirestoreUsage(
         serverReads = serverReads + other.serverReads,
         cachedReads = cachedReads + other.cachedReads,
         writes = writes + other.writes,
         calls = calls + other.calls,
+        uploads = uploads + other.uploads,
+        downloads = downloads + other.downloads,
+        storageBytes = storageBytes + other.storageBytes,
     )
 
     /** Documents, which is what Firestore prices. */
     val touchesFirestore: Boolean get() = serverReads > 0 || cachedReads > 0 || writes > 0
 
+    val touchesStorage: Boolean get() = uploads > 0 || downloads > 0
+
     fun firestoreLine(): String =
         "Read Server: $serverReads ReadCache: $cachedReads Writes: $writes"
 
     fun callsLine(): String = "Calls: $calls"
+
+    fun storageLine(): String = "Uploads: $uploads Downloads: $downloads KB: ${storageBytes / 1024}"
 }
+
+enum class StorageTransfer { UPLOAD, DOWNLOAD }
 
 /**
  * Counts what Firebase actually bills: one read per document the **server** returns, one write per
@@ -92,17 +107,22 @@ object FirestoreAudit {
     }
 
     /**
-     * Two blocks, because they are two different bills and two different units: Firestore charges
-     * per document, a callable charges per invocation. Mixing them on one line meant every
-     * datasource reporting `Calls: 0` and every function reporting three zeroes.
+     * Three blocks, because they are three different bills and three different units: Firestore
+     * charges per document, a callable per invocation, Storage per operation and per byte. Mixing
+     * them on one line meant every datasource reporting `Calls: 0` and every function reporting
+     * three zeroes.
      *
-     * Totals first in each, then a line per key — a reporting class under Firestore, a callable's
-     * name under Functions — and only those that spent something in that block.
+     * Totals first in each, then a line per key — a reporting class under Firestore and Storage, a
+     * callable's name under Functions — and only those that spent something in that block.
      *
      * Under Firestore each class breaks down into the calls that spent the money. Functions do not:
      * the callable's name is already the whole answer.
      */
     private fun printSummary() {
+        Logger.i(TAG, summary())
+    }
+
+    internal fun summary(): String {
         val usage = usageByTag.load()
         val byTag = usage.mapValues { (_, operations) -> operations.values.total() }
         val total = byTag.values.total()
@@ -125,8 +145,13 @@ object FirestoreAudit {
             sorted.filter { it.value.calls > 0 }.forEach { (tag, tagUsage) ->
                 append("\n    $tag -> ${tagUsage.callsLine()}")
             }
+
+            append("\nStorage  ${total.storageLine()}")
+            sorted.filter { it.value.touchesStorage }.forEach { (tag, tagUsage) ->
+                append("\n    $tag -> ${tagUsage.storageLine()}")
+            }
         }
-        Logger.i(TAG, summary)
+        return summary
     }
 
     private fun Iterable<FirestoreUsage>.total() =
@@ -222,6 +247,20 @@ fun interface PendingWrite {
 fun trackFunction(name: String) {
     FirestoreAudit.add(name, name, FirestoreUsage(calls = 1))
     Logger.w(TAG, "$name - FUNCTION CALL")
+    FirestoreAudit.triggerSummary()
+}
+
+/**
+ * A file sent to or fetched from Cloud Storage, counted once it has arrived. Only a download that went
+ * to the network is one: the image cache answering is free, and is not reported at all.
+ */
+fun trackStorage(tag: String, operation: String, transfer: StorageTransfer, bytes: Int) {
+    val usage = when (transfer) {
+        StorageTransfer.UPLOAD -> FirestoreUsage(uploads = 1, storageBytes = bytes.toLong())
+        StorageTransfer.DOWNLOAD -> FirestoreUsage(downloads = 1, storageBytes = bytes.toLong())
+    }
+    FirestoreAudit.add(tag, operation, usage)
+    Logger.w(TAG, "$tag.$operation - STORAGE ${transfer.name}: $bytes bytes")
     FirestoreAudit.triggerSummary()
 }
 

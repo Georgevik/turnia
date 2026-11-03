@@ -16,6 +16,7 @@ object TestTags {
     fun swapEvent(id: EventId) = "swap_event_${id.value}"
     fun eventTypeChip(id: EventTypeId) = "event_type_${id.value}"
     fun personRow(id: UserId) = "person_row_${id.value}"
+    fun avatarPhoto(id: UserId) = "avatar_photo_${id.value}"
     fun moveType(id: EventTypeId) = "move_type_${id.value}"
     fun shiftSetupRow(index: Int) = "shift_setup_row_$index"
     fun shiftSetupExpand(index: Int) = "shift_setup_expand_$index"
@@ -38,4 +39,8 @@ object TestTags {
     const val SHIFT_SETUP_CUSTOM_ACRONYM = "shift_setup_custom_acronym"
     const val SHIFT_SETUP_CUSTOM_START = "shift_setup_custom_start"
     const val SHIFT_SETUP_CUSTOM_END = "shift_setup_custom_end"
+    const val PHOTO_CROP = "photo_crop"
+    const val PHOTO_CROP_USE = "photo_crop_use"
+    const val PROFILE_AVATAR = "profile_avatar"
+    const val PROFILE_PHOTO_BUSY = "profile_photo_busy"
 }

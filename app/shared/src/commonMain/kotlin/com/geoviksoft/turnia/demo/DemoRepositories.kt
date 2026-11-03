@@ -35,6 +35,8 @@ import com.geoviksoft.turnia.core.domain.model.RetentionWindow
 import com.geoviksoft.turnia.core.domain.model.SharedCalendarError
 import com.geoviksoft.turnia.core.domain.model.SwapError
 import com.geoviksoft.turnia.core.domain.model.User
+import com.geoviksoft.turnia.core.domain.model.ProfilePhoto
+import com.geoviksoft.turnia.core.domain.model.ProfilePhotoError
 import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.domain.model.UserProfile
 import com.geoviksoft.turnia.core.domain.model.UserSession
@@ -119,6 +121,13 @@ internal class DemoUserRepository : UserRepository {
 
     override suspend fun updateAvatar(animalIconId: String?, backgroundColor: String?) =
         Unit.toSuccess()
+
+    // The demo uploads nothing: a photo would have nowhere to go.
+    override suspend fun uploadProfilePhoto(bytes: ByteArray): Outcome<ProfilePhoto, ProfilePhotoError> =
+        ProfilePhotoError.UploadFailed.toFailure()
+
+    override suspend fun removeProfilePhoto(): Outcome<Unit, ProfilePhotoError> =
+        ProfilePhotoError.RemoveFailed.toFailure()
 
     override suspend fun enableShowAds(): Outcome<Unit, Unit> = Unit.toSuccess()
 
