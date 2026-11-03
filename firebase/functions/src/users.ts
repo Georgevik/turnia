@@ -45,6 +45,17 @@ const PHOTO_MAX_BYTES = 100 * 1024;
  */
 const ORPHAN_AGE_MS = 5 * 60 * 1000;
 
+/**
+ * The bucket both apps upload to: `<project>.firebasestorage.app`, as their Firebase configs name it.
+ * Named rather than left to the default, which the emulator takes as `<project>.appspot.com` when
+ * the CLI is not signed in — as on CI — and the function would look for files in a bucket nobody
+ * uploads to.
+ */
+export function photoBucket() {
+  const projectId = process.env.GCLOUD_PROJECT ?? JSON.parse(process.env.FIREBASE_CONFIG ?? "{}").projectId;
+  return getStorage().bucket(`${projectId}.firebasestorage.app`);
+}
+
 /** Where a user's profile photos live. Only the current one survives a `setProfilePhoto`. */
 export function profilePhotoFolder(uid: string): string {
   return `profilePhotos/${uid}/`;
@@ -185,7 +196,7 @@ export const setProfilePhoto = onCall({ enforceAppCheck: true }, async (request)
   }
   const photoId = requested as string | null;
 
-  const bucket = getStorage().bucket();
+  const bucket = photoBucket();
   const folder = profilePhotoFolder(uid);
   if (photoId) {
     const file = bucket.file(`${folder}${photoId}.webp`);

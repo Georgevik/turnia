@@ -1,12 +1,11 @@
 import { onCall } from "firebase-functions/v2/https";
 import { getAuth } from "firebase-admin/auth";
-import { getStorage } from "firebase-admin/storage";
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import { TurniaError } from "./errors";
 import { deleteGroupTree, isLastAdminOfOthers } from "./membership";
 import { requireUid } from "./requests";
 import { markGroupUpdated, markJoinRequestSettled } from "./sync";
-import { profilePhotoFolder } from "./users";
+import { photoBucket, profilePhotoFolder } from "./users";
 
 /**
  * Deletes the caller's account by **anonymizing** it, then deletes the Auth user.
@@ -88,7 +87,7 @@ export const deleteAccount = onCall({ enforceAppCheck: true }, async (request) =
   // failure leaves a file nobody can see named anywhere, while stopping here would leave the
   // account half anonymized.
   try {
-    await getStorage().bucket().deleteFiles({ prefix: profilePhotoFolder(uid) });
+    await photoBucket().deleteFiles({ prefix: profilePhotoFolder(uid) });
   } catch (error) {
     console.error(`deleteAccount: could not delete the photos of ${uid}`, error);
   }
