@@ -307,3 +307,145 @@ primera columna de la tabla y elige otra dimensión.
 Resultado: en el menú izquierdo de *Informes* aparece **Turnia** → **Uso**, con los cuatro informes
 dentro. Arriba a la derecha de cada uno eliges el periodo; para el acumulado desde el lanzamiento,
 elige un intervalo personalizado (*Custom*) que empiece ese día.
+
+## 4. Exploraciones
+
+Los embudos y la retención solo existen en **Explorar** (*Explore*), en el menú izquierdo. Una
+exploración se **guarda sola** al hacer cambios; solo hay que ponerle nombre. Las exploraciones son
+personales: si alguien más del equipo tiene que verlas, en la lista de exploraciones, menú `⋮` →
+**Compartir** (*Share*).
+
+En todas, la columna de la izquierda (**Variables**) tiene lo que se puede usar, y la del centro
+(**Configuración de la pestaña**, *Tab settings*) lo que se está usando. Para añadir una dimensión o
+métrica a *Variables*, pulsa el **+** junto a **Dimensiones** (*Dimensions*) o **Métricas**
+(*Metrics*), búscala, márcala y pulsa **Importar** (*Import*).
+
+### 4.1 Embudo de activación
+
+Cuántos llegan desde la instalación hasta añadir su primer evento, y dónde se quedan.
+
+1. **Explorar** (*Explore*) → **Exploración de embudo** (*Funnel exploration*).
+2. Arriba a la izquierda, cambia *Exploración sin título* (*Untitled exploration*) por
+   `Embudo de activación`.
+3. En **Intervalo de fechas** (*Date range*), elige **Últimos 90 días** (*Last 90 days*).
+4. En *Configuración de la pestaña*, junto a **Pasos** (*Steps*), pulsa el lápiz. Se abre
+   **Editar los pasos del embudo** (*Edit funnel steps*). Borra los pasos de ejemplo y crea estos
+   cuatro: para cada uno, escribe el nombre, pulsa **Añadir nueva condición** (*Add new
+   condition*), busca el evento por su nombre y elígelo. **Añadir paso** (*Add step*) crea el
+   siguiente.
+
+   | Paso | Nombre | Condición |
+   |---|---|---|
+   | 1 | `Instalación` | evento `first_open` |
+   | 2 | `Cuenta creada` | evento `sign_up` |
+   | 3 | `Configuración de turnos` | evento `onboard_shift_completed` **O** (*OR*) evento `onboard_shift_skipped` |
+   | 4 | `Primer evento` | evento `first_event_added` |
+
+   Para el **O** del paso 3: tras elegir `onboard_shift_completed`, pulsa **O** (*Or*) a su derecha
+   y elige `onboard_shift_skipped`.
+5. Pulsa **Aplicar** (*Apply*).
+6. Deja **Hacer que el embudo sea abierto** (*Make open funnel*) desactivado: así cada paso solo
+   cuenta a quien pasó por los anteriores.
+
+Resultado: cuatro barras que bajan de izquierda a derecha, y debajo una tabla con el porcentaje que
+pasa de cada paso al siguiente (**Tasa de finalización**, *Completion rate*) y el que abandona
+(**Tasa de abandono**, *Abandonment rate*).
+
+- Para ver la evolución por día, cambia **Visualización** (*Visualization*) a **Embudo de
+  tendencias** (*Trended funnel*).
+- Para separar quien completa la configuración de quien la salta, mira la pestaña *Configuración de
+  turnos* de la exploración siguiente.
+
+Ten en cuenta al leerlo:
+
+- `sign_up` solo se envía al **crear** una cuenta. Quien reinstala y entra con una cuenta que ya
+  tenía envía `login` y se queda en el paso 1.
+- `first_event_added` se envía **una vez por móvil**: un segundo dispositivo o una reinstalación lo
+  envían otra vez.
+- Un usuario que no vio la configuración de turnos (ya tenía turnos o grupo) no pasa del paso 3.
+
+### 4.2 Onboarding y prompts
+
+Qué hace la gente con la configuración de turnos, con la pregunta de si trabaja en equipo y con el
+prompt de compartir. Es una exploración con tres pestañas.
+
+**Primera pestaña:**
+
+1. **Explorar** (*Explore*) → **Exploración de formato libre** (*Free form*).
+2. Cambia el nombre de la exploración por `Onboarding y prompts`, y el **Intervalo de fechas**
+   (*Date range*) por **Últimos 90 días** (*Last 90 days*).
+3. En *Variables*, importa las dimensiones **Nombre del evento** (*Event name*), `via`,
+   `interacted`, `choice`, `audience` y `milestone`, y las métricas **Recuento de eventos** (*Event
+   count*) y **Usuarios totales** (*Total users*).
+4. Haz doble clic en el nombre de la pestaña (*Formato libre 1*) y llámala
+   `Configuración de turnos`.
+5. En *Configuración de la pestaña*:
+   - **Visualización** (*Visualization*): **Tabla** (*Table*).
+   - **Filas** (*Rows*): arrastra **Nombre del evento**, `via` e `interacted`, en ese orden.
+   - **Columnas** (*Columns*): vacío. Si hay algo, quítalo con la `x`.
+   - **Valores** (*Values*): arrastra **Recuento de eventos** y **Usuarios totales**.
+   - **Filtros** (*Filters*): arrastra **Nombre del evento**, elige **coincide con la expresión
+     regular** (*matches regex*), escribe `onboard_shift_.*` y pulsa **Aplicar** (*Apply*).
+
+Resultado: filas como `onboard_shift_shown · onboarding`, `onboard_shift_completed · onboarding ·
+true` u `onboard_shift_skipped · add_pane · false`. En `via`, `onboarding` es la configuración tras
+crear la cuenta y `add_pane` la que se abre desde el panel de añadir. En `interacted`, `false`
+significa que salió sin tocar nada. La tasa de configuración es `onboard_shift_completed` entre
+`onboard_shift_shown`.
+
+En las filas de `onboard_shift_shown`, `interacted` sale `(not set)`: ese evento no lo lleva. Es
+normal.
+
+**Segunda pestaña:**
+
+1. En la pestaña `Configuración de turnos`, menú de la flecha junto a su nombre → **Duplicar**
+   (*Duplicate*). Llama a la copia `Equipo`.
+2. En **Filas** (*Rows*), quita `via` e `interacted` y arrastra `choice`.
+3. Cambia el valor del filtro a `onboard_team_.*`.
+
+Resultado: `onboard_team_shown` (veces que se mostró la pregunta) y `onboard_team_answered` por
+`choice`: `create` (crear un grupo), `join` (tengo un código) o `dismissed` (ahora no).
+
+**Tercera pestaña:**
+
+1. Duplica otra vez la pestaña `Configuración de turnos` y llama a la copia `Compartir`.
+2. En **Filas** (*Rows*), quita `via` e `interacted` y arrastra `audience` y `milestone`.
+3. Cambia el valor del filtro a `share_prompt_.*`.
+
+Resultado: para cada hito (`milestone`, el número de eventos añadidos que lo mostró) y cada público
+(`audience`: `coworkers` si el evento que llegó al hito era un turno, `friends` si era puntual), cuántas veces se mostró (`share_prompt_shown`), se
+compartió (`share_prompt_shared`) o se descartó (`share_prompt_dismissed`).
+
+Si una pestaña sale vacía, el prompt puede estar apagado: el de compartir y el de equipo se
+encienden desde Remote Config (`sharePromptEnabled`, `teamPromptEnabled`).
+
+### 4.3 Retención
+
+Qué parte de quienes instalan un día vuelve 1, 7 y 30 días después.
+
+1. **Explorar** (*Explore*) → **Exploración de cohortes** (*Cohort exploration*).
+2. Cambia el nombre por `Retención` y el **Intervalo de fechas** (*Date range*) por **Últimos 90
+   días** (*Last 90 days*). Para ver el D30 hacen falta más de 30 días de datos.
+3. En *Configuración de la pestaña*:
+   - **Inclusión en la cohorte** (*Cohort inclusion*): **Primer contacto (fecha de adquisición)**
+     (*First touch (acquisition date)*).
+   - **Criterios de regreso** (*Return criteria*): **Cualquier evento** (*Any event*).
+   - **Granularidad de la cohorte** (*Cohort granularity*): **Diaria** (*Daily*).
+   - **Cálculo** (*Calculation*): **Estándar** (*Standard*).
+   - **Métrica** (*Metric*): **Usuarios activos** (*Active users*).
+
+Resultado: una tabla en la que cada fila es el día en que un grupo de usuarios llegó por primera
+vez, y cada columna, los días que han pasado (**Día 0**, **Día 1**, …). Cuanto más oscura la celda,
+más usuarios volvieron.
+
+- **D1** es la columna *Día 1*; **D7**, *Día 7*; **D30**, *Día 30* (desplázate a la derecha).
+- La retención en porcentaje es la celda entre la de *Día 0* de la misma fila. La fila **Todos los
+  usuarios** (*All users*) de arriba da la media de todas las cohortes.
+- Si es difícil de leer día a día, cambia la granularidad a **Semanal** (*Weekly*): la columna
+  *Semana 1* es una buena aproximación del D7.
+
+Para GA, "volver" es abrir la app, no añadir un turno.
+
+Para un vistazo rápido sin montar nada, GA también trae el informe **Informes** (*Reports*) →
+**Interacción** (*Engagement*) → **Retención** (*Retention*). La exploración es la que da exactamente
+D1, D7 y D30.

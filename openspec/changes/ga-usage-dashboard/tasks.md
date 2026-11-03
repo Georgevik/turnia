@@ -11,7 +11,7 @@
 
 ## 3. Guide: Explorations
 
-- [ ] 3.1 Add the steps for the three saved Explorations: *Activation funnel* (funnel: `first_open` → `sign_up` → `onboard_shift_completed` → `first_event_added`), *Onboarding and prompts* (free-form, broken down by `via`, `interacted`, `choice`, `audience`, `milestone`) and *Retention* (cohort: first touch, any event, daily, D1/D7/D30). Each gets the steps to build and save it and what the result should look like, including the per-device caveat on the funnel. Verify every name used exists in `AnalyticsEvent.kt`.
+- [x] 3.1 Add the steps for the three saved Explorations: *Activation funnel* (funnel: `first_open` → `sign_up` → `onboard_shift_completed` → `first_event_added`), *Onboarding and prompts* (free-form, broken down by `via`, `interacted`, `choice`, `audience`, `milestone`) and *Retention* (cohort: first touch, any event, daily, D1/D7/D30). Each gets the steps to build and save it and what the result should look like, including the per-device caveat on the funnel. Verify every name used exists in `AnalyticsEvent.kt`.
 
 ## 4. Guide: troubleshooting
 
