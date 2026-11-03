@@ -9,7 +9,7 @@
   The picker and the crop are our own code (4.4, 4.5): no picker or crop library. Verify that
   `./gradlew :app:androidApp:assembleDebug` passes and that Compose Multiplatform stays at 1.11.1 and
   coroutines at 1.10.2 (`./gradlew :app:shared:dependencies --configuration androidRuntimeClasspath`).
-- [ ] 1.2 Link the `FirebaseStorage` package product to the iOS target in
+- [x] 1.2 Link the `FirebaseStorage` package product to the iOS target in
   `app/iosApp/iosApp.xcodeproj`, next to the other Firebase products. Verify with `xcodebuild` for
   the simulator: `BUILD SUCCEEDED`.
 
