@@ -84,8 +84,14 @@ export const deleteAccount = onCall({ enforceAppCheck: true }, async (request) =
   }
 
   // Every photo, the current one and any upload that was never published. The profile and each
-  // group's entry lose `photoId` below, where they are overwritten whole.
-  await getStorage().bucket().deleteFiles({ prefix: profilePhotoFolder(uid) });
+  // group's entry lose `photoId` below, where they are overwritten whole. Best effort: a Storage
+  // failure leaves a file nobody can see named anywhere, while stopping here would leave the
+  // account half anonymized.
+  try {
+    await getStorage().bucket().deleteFiles({ prefix: profilePhotoFolder(uid) });
+  } catch (error) {
+    console.error(`deleteAccount: could not delete the photos of ${uid}`, error);
+  }
 
   // Private documents, personal events and types, sync markers, revoked-group snapshots.
   for (const collection of await userRef.listCollections()) {

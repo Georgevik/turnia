@@ -39,6 +39,12 @@ const PHOTO_ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/;
 /** The size `storage.rules` caps an upload at, checked again in case the rules ever loosen. */
 const PHOTO_MAX_BYTES = 100 * 1024;
 
+/**
+ * An upload no profile names is left this long before a later `setProfilePhoto` deletes it: younger,
+ * it may be another device's photo whose publish is still on its way.
+ */
+const ORPHAN_AGE_MS = 5 * 60 * 1000;
+
 /** Where a user's profile photos live. Only the current one survives a `setProfilePhoto`. */
 export function profilePhotoFolder(uid: string): string {
   return `profilePhotos/${uid}/`;
@@ -162,10 +168,11 @@ export const updateProfile = onCall({ enforceAppCheck: true }, async (request) =
  * instead of reading the profile — so it needs a keeper, and the rules forbid the client from
  * writing `photoId` on its own document.
  *
- * Afterwards every other file in the user's folder is deleted: the photo this one replaced, and any
- * upload that never got as far as this call. What survives is whatever the profile names once the
- * write is done, read again rather than taken from the request, so two devices publishing at once
- * cannot each delete the other's file and leave the profile pointing at nothing.
+ * Afterwards the photo this one replaced is deleted, and so is any upload that never got as far as
+ * this call once it is a few minutes old. A younger one is left alone: it may be another device's,
+ * whose publish is still on its way, and deleting it would leave that profile naming a missing file.
+ * Each group copies whatever the profile names when its own transaction runs, not the request, so
+ * two devices publishing at once leave the groups agreeing with the profile.
  *
  * Request data: `{ photoId: string | null }`
  * Returns: `{ photoId, status: "updated" }`
@@ -196,7 +203,7 @@ export const setProfilePhoto = onCall({ enforceAppCheck: true }, async (request)
 
   // The profile and the reservation's marker resolve to the same instant, or a searcher's cache
   // never settles; a user who has no reservation yet has no marker to move.
-  await db.runTransaction(async (tx) => {
+  const replaced = await db.runTransaction(async (tx) => {
     const user = await tx.get(userRef);
     const username = user.get("username") as string | undefined;
     const reservationRef = username ? db.doc(`usernames/${username}`) : null;
@@ -207,27 +214,35 @@ export const setProfilePhoto = onCall({ enforceAppCheck: true }, async (request)
       tx.update(reservationRef, { updateAt: FieldValue.serverTimestamp() });
     }
     markUserUpdated(db, tx, uid, "profile");
+    return user.get("photoId") as string | undefined;
   });
 
-  // Entry and sync marker in one batch per group, as `updateProfile` writes the name.
+  // Entry and sync marker together, per group, with the photo the profile names when it runs.
   const groups = await db.collection("groups").where("memberUids", "array-contains", uid).get();
   await Promise.all(
-    groups.docs.map((group) => {
-      const batch = db.batch();
-      batch.update(group.ref, {
-        [`members.${uid}.photoId`]: photo,
-        updateAt: FieldValue.serverTimestamp(),
-      });
-      markGroupUpdated(db, batch, group.id);
-      return batch.commit();
-    })
+    groups.docs.map((group) =>
+      db.runTransaction(async (tx) => {
+        const current = (await tx.get(userRef)).get("photoId") as string | undefined;
+        tx.update(group.ref, {
+          [`members.${uid}.photoId`]: current ?? FieldValue.delete(),
+          updateAt: FieldValue.serverTimestamp(),
+        });
+        markGroupUpdated(db, tx, group.id);
+      })
+    )
   );
 
   const current = (await userRef.get()).get("photoId") as string | undefined;
-  const keep = current ? `${folder}${current}.webp` : null;
+  const fileOf = (id: string | undefined | null) => (id ? `${folder}${id}.webp` : null);
   const [files] = await bucket.getFiles({ prefix: folder });
+  const orphanedBefore = Date.now() - ORPHAN_AGE_MS;
   await Promise.all(
-    files.filter((file) => file.name !== keep).map((file) => file.delete({ ignoreNotFound: true }))
+    files
+      .filter((file) => file.name !== fileOf(current))
+      .filter((file) =>
+        file.name === fileOf(replaced) ||
+        new Date(file.metadata.timeCreated ?? Date.now()).getTime() < orphanedBefore)
+      .map((file) => file.delete({ ignoreNotFound: true }))
   );
 
   return { photoId, status: "updated" as const };

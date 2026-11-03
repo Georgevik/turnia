@@ -51,7 +51,6 @@ class ProfilePhotoBackendTest {
     @Test
     fun setProfilePhoto_publishesToTheProfileAndEveryGroup() = runBlocking {
         upload("profilePhotos/alice/p1.webp", photo)
-        upload("profilePhotos/alice/orphan.webp", photo)
 
         setProfilePhoto("p1")
 
@@ -61,7 +60,42 @@ class ProfilePhotoBackendTest {
             "The reservation's marker moves with the profile",
             profile["updateAt"], Documents.get("usernames/alice")["updateAt"],
         )
-        assertEquals(listOf("profilePhotos/alice/p1.webp"), StorageRest.list("profilePhotos/alice/"))
+    }
+
+    /** A fresh upload nobody names yet may be another device's photo on its way: only the replaced one goes. */
+    @Test
+    fun aNewPhoto_deletesTheOneItReplacesAndSparesAFreshUpload() = runBlocking {
+        upload("profilePhotos/alice/p1.webp", photo)
+        setProfilePhoto("p1")
+        upload("profilePhotos/alice/p2.webp", photo)
+        upload("profilePhotos/alice/inflight.webp", photo)
+
+        setProfilePhoto("p2")
+
+        assertEquals(
+            listOf("profilePhotos/alice/inflight.webp", "profilePhotos/alice/p2.webp"),
+            StorageRest.list("profilePhotos/alice/").sorted(),
+        )
+    }
+
+    /** A creator's photo is copied by the server from their profile, never from their session. */
+    @Test
+    fun aNewGroup_getsItsCreatorsPhoto() {
+        val urgencias = Documents.get("groups/urgencias")
+        val created = JsonObject(
+            urgencias + mapOf(
+                "name" to JsonPrimitive("Nueva"),
+                "memberUids" to JsonArray(listOf(JsonPrimitive("bruno"))),
+                "adminUids" to JsonArray(listOf(JsonPrimitive("bruno"))),
+                "members" to JsonObject(mapOf("bruno" to JsonObject(mapOf(
+                    "name" to JsonPrimitive("Bruno Bravo"), "username" to JsonPrimitive("bruno"),
+                )))),
+            )
+        )
+
+        FirestoreRest.write(mapOf("groups/nueva" to created))
+
+        Documents.await("groups/nueva") { it.member("bruno").string("photoId") == "bruno1" }
     }
 
     @Test

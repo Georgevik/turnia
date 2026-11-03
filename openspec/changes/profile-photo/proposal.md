@@ -24,7 +24,7 @@ animal; what it cannot do is take a photo.
   never reachable through a public link.
 - **A keeper for the photo.** A new `setProfilePhoto` callable publishes or removes a photo. It
   writes `photoId` on the profile, copies it into every group the user is a member of, moves the
-  sync markers, and deletes every other file in the user's folder. A colleague sees a new photo as
+  sync markers, and deletes the photo it replaced. A colleague sees a new photo as
   soon as the group's listener delivers it, with no read of the profile.
 - **Profile screen.** The avatar grows to 96 dp and opens a menu: *Upload photo*, *Choose animal and
   colour*, *Remove photo*. Uploading and removing apply at once. The animal, the name and the

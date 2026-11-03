@@ -690,8 +690,9 @@ Cloud Storage holds one thing: profile photos. Rules in [`storage.rules`](./stor
 | Update / delete | Nobody but the server: `setProfilePhoto` replaces and removes, `deleteAccount` clears the folder. |
 
 The client uploads the file, then calls `setProfilePhoto` with its id, which checks the file, writes
-`photoId` on the profile and on every group's member entry, and deletes every other file in the
-folder: the photo it replaced and any upload that never got that far. A path is never reused, so a
+`photoId` on the profile and on every group's member entry, and deletes the photo it replaced. An
+upload that never got that far is deleted by a later call once it is five minutes old: a younger one
+may be another device's photo, still on its way to being published. A path is never reused, so a
 file can be cached forever.
 
 ---
@@ -804,8 +805,8 @@ Firestore keeps only a **recent window** of events; older events are purged and 
   copied into every group, so only `updateProfile` and `setProfilePhoto` may change them, and every
   writer of a `members` entry keeps the fields it is not changing; the animal is copied nowhere and
   the client writes it.
-- **A user has at most one profile photo stored**: `setProfilePhoto` deletes every other file under
-  `profilePhotos/{uid}/`, and `deleteAccount` deletes them all.
+- **A user has one published profile photo**: `setProfilePhoto` deletes the one it replaces and,
+  once they are five minutes old, uploads nobody published; `deleteAccount` deletes them all.
 - **Sync timestamps are bumped on every personal write**: a write to `personalEvents` / `personalOneOffEvents` / `personalEventTypes` / `groupEventExtras` must also
   merge the matching field of `users/{uid}/sync/updates`, or readers keep serving a stale cache.
 - **`subscription` is server-only**: only the subscription-verification Cloud Function writes `users/{uid}/private/subscription`; the client can never set itself premium.

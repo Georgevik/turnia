@@ -69,13 +69,18 @@ photo SHALL be deleted from the backend.
 - **THEN** the menu offers *Upload photo* and *Choose animal and colour*, not *Remove photo*
 
 ### Requirement: Only the current photo is kept
-The backend SHALL keep at most one photo per user. Uploading a new one SHALL delete the previous
-one, and a file left behind by an upload that never finished SHALL be deleted the next time the
-user sets or removes a photo.
+The backend SHALL keep one published photo per user. Uploading a new one SHALL delete the one it
+replaces. A file left behind by an upload that was never published SHALL be deleted by a later set
+or remove once it is more than five minutes old; a younger one SHALL be kept, since it may be
+another device's photo whose publication is still in progress.
 
 #### Scenario: Replacing a photo
 - **WHEN** a user with a photo uploads another
-- **THEN** only the new photo remains stored for that user
+- **THEN** the replaced photo is no longer stored
+
+#### Scenario: Two devices publish at once
+- **WHEN** the same user publishes two photos from two devices at the same moment
+- **THEN** the profile and every group name the same photo, and its file is stored
 
 ### Requirement: A photo is visible to signed-in users only
 Any signed-in user SHALL be able to see any user's photo, as they can see the name and the animal.

@@ -46,7 +46,8 @@
   - check the file's metadata (exists, ≤ 100 KB, `image/webp`);
   - one transaction for the profile, the reservation marker and `sync/updates.profile`;
   - one batch per group for `members.{uid}.photoId`, the group's `updateAt` and the group marker;
-  - re-read the profile, then delete every other file under `profilePhotos/{uid}/`;
+  - delete the photo it replaced, and unpublished uploads older than five minutes (the cleanup was
+    narrowed in review: deleting every other file could race a second device's publish);
   - new `TurniaError` codes for a missing or invalid file.
 
   Verify `npm --prefix firebase/functions run build` passes. Behaviour is verified by 2.7.

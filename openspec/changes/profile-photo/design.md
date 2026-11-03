@@ -62,14 +62,17 @@ server: check the file exists and fits (metadata)
                users/{uid}/sync/updates.profile
         per group with uid in memberUids, one batch each:
                members.{uid}.photoId (or delete), updateAt, groups/{g}/sync/updates
-        re-read users/{uid}.photoId; delete every other object under profilePhotos/{uid}/
+        delete the photo it replaced, and unnamed uploads older than five minutes
 ```
 
 `setProfilePhoto` is shaped like `updateProfile`. The fan-out needs a server writer, since clients
 never write `members`, and `CLAUDE.md` already gives a copied field exactly that kind of keeper.
 
-**Cleanup reads the profile again** instead of trusting its own argument. Two devices publishing at
-once could otherwise each delete the other's file, leaving the profile pointing at nothing.
+**Two devices publishing at once must not break each other.** Each call deletes only the photo its
+own transaction replaced, plus unnamed uploads older than five minutes. A younger one may be the
+other device's photo, still on its way to being published. Each group copies whatever the profile
+names, read inside that group's own transaction, so the groups end up agreeing with the profile
+whichever call finishes last.
 
 **Alternatives rejected:**
 - *The client writes `photoId`, and a Firestore trigger fans it out.* This saves the callable but
