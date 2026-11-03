@@ -19,7 +19,7 @@
 
 ## 5. CLAUDE.md
 
-- [ ] 5.1 Update the *Analytics* section of `CLAUDE.md`: point to `docs/analytics-dashboard.md`, list `event_count` as a custom metric next to the dimensions, and say that a new parameter or property is also added to the guide's definitions table. Verify the section's list of definitions matches the guide's tables.
+- [x] 5.1 Update the *Analytics* section of `CLAUDE.md`: point to `docs/analytics-dashboard.md`, list `event_count` as a custom metric next to the dimensions, and say that a new parameter or property is also added to the guide's definitions table. Verify the section's list of definitions matches the guide's tables.
 
 ## 6. Integration check
 
