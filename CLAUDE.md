@@ -647,6 +647,9 @@ A PR description has exactly three sections, in this order:
 - **Why?** — the context/motivation.
 - **How to test it** — concrete steps, not a restatement of the test suite.
 
+Every PR to `main` runs `.github/workflows/pr-check.yml` — jobs `android`, `ios` and `checks` — the
+fast gate a merge waits for; the E2E suite is not part of it.
+
 ## iOS signing & Apple setup
 
 The app is signed by the paid team `83GQ2T4N4H` with automatic signing, so Xcode keeps the App ID's
