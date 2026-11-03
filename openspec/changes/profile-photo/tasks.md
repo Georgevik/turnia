@@ -100,11 +100,11 @@
   the summary (uploads, downloads, KB per class) printed apart from Firestore and Functions. Add its
   row to the *Firestore usage tracking* table in `CLAUDE.md`. Verify with a unit test on the summary
   text.
-- [ ] 3.3 Add `ProfilePhotoStorage`, registered in Koin's `DataModule`:
-  - `upload(uid, photoId, bytes)` through `putData`, with `image/webp` and an immutable
-    `cacheControl`, under a 30 s timeout;
-  - `download(uid, photoId)` capped at 100 KB, through `expect`/`actual` over the native handles if
-    GitLive has no `getBytes`;
+- [x] 3.3 Add `ProfilePhotoStorage`, registered in Koin's `DataModule`:
+  - `upload(photo, bytes)` through `putData`, with `image/webp` and an immutable `cacheControl`,
+    under a 30 s timeout;
+  - `download(photo)` capped at 100 KB, through GitLive's `getData` (only the `Data` ↔ `ByteArray`
+    conversion is `expect`/`actual`);
   - both call `trackStorage` on success.
 
   Verify with an instrumented `ProfilePhotoStorageTest`: an upload then a download returns the same

@@ -70,6 +70,7 @@ import com.geoviksoft.turnia.core.domain.repository.SharePromptRepository
 import com.geoviksoft.turnia.core.domain.repository.SharedCalendarRepository
 import com.geoviksoft.turnia.core.domain.repository.UserRepository
 import com.geoviksoft.turnia.core.domain.username.UsernameFactory
+import com.geoviksoft.turnia.core.data.datasource.storage.ProfilePhotoStorage
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.analytics.analytics
 import dev.gitlive.firebase.auth.auth
@@ -80,6 +81,7 @@ import dev.gitlive.firebase.firestore.persistentCacheSettings
 import dev.gitlive.firebase.functions.functions
 import dev.gitlive.firebase.messaging.messaging
 import dev.gitlive.firebase.remoteconfig.remoteConfig
+import dev.gitlive.firebase.storage.storage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -114,6 +116,8 @@ val dataModule: Module = module {
         }
     }
     single { Firebase.functions(FUNCTIONS_REGION) }
+    single { Firebase.storage }
+    single { ProfilePhotoStorage(get()) }
     single { Firebase.messaging }
     single { Firebase.analytics }
     single { Firebase.remoteConfig }
