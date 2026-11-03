@@ -671,6 +671,12 @@ skipped — and `pr-e2e` is green at once — only when every changed file is on
 `store/`, `.claude/`, `firebase/hosting/`, `app/iosApp/`, `.github/whatsnew/` and `LICENSE`. It is an
 exclusion list, so a path that might matter stays off it.
 
+## Agents
+
+Work is tracked as `TUR-N` GitHub issues ([docs/agents/issue-tracker.md](docs/agents/issue-tracker.md)). The
+`/director` skill runs one worker per issue as an `aoe` session; a worker follows
+[docs/agents/workers.md](docs/agents/workers.md), and only the director merges, once the developer accepts.
+
 ## iOS signing & Apple setup
 
 The app is signed by the paid team `83GQ2T4N4H` with automatic signing, so Xcode keeps the App ID's
