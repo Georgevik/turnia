@@ -9,6 +9,7 @@ import com.geoviksoft.turnia.core.domain.model.EventTypeId
 import com.geoviksoft.turnia.e2e.infra.Documents
 import com.geoviksoft.turnia.e2e.infra.E2eRule
 import com.geoviksoft.turnia.e2e.infra.FirestoreRest
+import com.geoviksoft.turnia.e2e.infra.Network
 import com.geoviksoft.turnia.e2e.infra.RecordingAnalytics
 import com.geoviksoft.turnia.e2e.infra.awaitLogged
 import com.geoviksoft.turnia.e2e.infra.boolean
@@ -84,6 +85,7 @@ class CalendarFlowsTest {
 
         calendar.awaitDayClosed()
         calendar.awaitDayShows(date, "MN")
+        Network.awaitPendingWrites()
         assertEquals(
             1,
             FirestoreRest.list("groups/urgencias/events").values.count {
@@ -108,6 +110,7 @@ class CalendarFlowsTest {
         }
 
         calendar.awaitText("Guardia extra")
+        Network.awaitPendingWrites()
         assertEquals(
             1,
             FirestoreRest.list("users/alice/personalEventTypes").values.count {
