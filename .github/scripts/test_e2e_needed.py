@@ -1,12 +1,10 @@
-"""Tests for e2e-needed.py against the real ignore list. Run: python3 .github/scripts/test_e2e_needed.py"""
-import importlib.util
+"""Tests for e2e_needed.py against the real ignore list. Run: python3 .github/scripts/test_e2e_needed.py"""
 import os
 import unittest
 
+import e2e_needed
+
 HERE = os.path.dirname(os.path.abspath(__file__))
-SPEC = importlib.util.spec_from_file_location("e2e_needed", os.path.join(HERE, "e2e-needed.py"))
-e2e_needed = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(e2e_needed)
 
 PATTERNS = e2e_needed.read_patterns(os.path.join(HERE, "..", "e2e-ignored-paths.txt"))
 
@@ -50,6 +48,10 @@ class E2eNeededTest(unittest.TestCase):
     def test_lookalike_prefix_runs(self):
         self.assertTrue(needs("app/iosAppTests/Foo.kt"))
         self.assertTrue(needs("LICENSE.txt"))
+
+    def test_comments_are_not_patterns(self):
+        self.assertNotIn("", PATTERNS)
+        self.assertFalse(any(p.startswith("#") for p in PATTERNS))
 
     def test_empty_list_runs(self):
         self.assertTrue(needs())

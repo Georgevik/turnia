@@ -11,7 +11,8 @@ import sys
 
 def read_patterns(path):
     with open(path) as f:
-        return [line.strip() for line in f if line.strip() and not line.startswith("#")]
+        lines = [line.strip() for line in f]
+    return [line for line in lines if line and not line.startswith("#")]
 
 
 def needs_e2e(paths, patterns):
