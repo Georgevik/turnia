@@ -13,6 +13,7 @@ import com.geoviksoft.turnia.core.system.toFailure
 import com.geoviksoft.turnia.core.system.toSuccess
 import com.geoviksoft.turnia.demo.DemoUserRepository
 import com.geoviksoft.turnia.ui.system.photo.PhotoProcessor
+import com.geoviksoft.turnia.ui.system.photo.PickedPhoto
 import com.geoviksoft.turnia.ui.system.photo.ProfilePhotoCache
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -54,7 +55,7 @@ class MyProfileViewModelPhotoTest {
     fun aPickedPhotoIsCroppedThenUploaded() = runTest(dispatcher) {
         val viewModel = viewModel()
 
-        viewModel.onPhotoPicked(byteArrayOf(1))
+        viewModel.onPhotoPicked(PickedPhoto.Image(byteArrayOf(1)))
         assertIs<PhotoStep.Cropping>(viewModel.uiState.value.photoStep)
         viewModel.onCropped(FakeImage)
 
@@ -70,7 +71,7 @@ class MyProfileViewModelPhotoTest {
         val viewModel = viewModel()
         val before = viewModel.uiState.value.photo
 
-        viewModel.onPhotoPicked(byteArrayOf(1))
+        viewModel.onPhotoPicked(PickedPhoto.Image(byteArrayOf(1)))
         viewModel.onCropped(FakeImage)
 
         assertEquals(before, viewModel.uiState.value.photo)
@@ -82,7 +83,17 @@ class MyProfileViewModelPhotoTest {
     fun anImageThatCannotBeReadIsNeverCropped() = runTest(dispatcher) {
         val viewModel = viewModel(FakeProcessor(decodes = false))
 
-        viewModel.onPhotoPicked(byteArrayOf(1))
+        viewModel.onPhotoPicked(PickedPhoto.Image(byteArrayOf(1)))
+
+        assertEquals(PhotoStep.Idle, viewModel.uiState.value.photoStep)
+        assertEquals(ProfileMessage.PhotoUnreadable, viewModel.uiState.value.userMessage)
+    }
+
+    @Test
+    fun aPickThatCannotBeReadSaysSo() = runTest(dispatcher) {
+        val viewModel = viewModel()
+
+        viewModel.onPhotoPicked(PickedPhoto.Unreadable)
 
         assertEquals(PhotoStep.Idle, viewModel.uiState.value.photoStep)
         assertEquals(ProfileMessage.PhotoUnreadable, viewModel.uiState.value.userMessage)
@@ -92,9 +103,9 @@ class MyProfileViewModelPhotoTest {
     fun aCancelledPickOrCropUploadsNothing() = runTest(dispatcher) {
         val viewModel = viewModel()
 
-        viewModel.onPhotoPicked(null)
+        viewModel.onPhotoPicked(PickedPhoto.Cancelled)
         assertEquals(PhotoStep.Idle, viewModel.uiState.value.photoStep)
-        viewModel.onPhotoPicked(byteArrayOf(1))
+        viewModel.onPhotoPicked(PickedPhoto.Image(byteArrayOf(1)))
         viewModel.onCropCancelled()
 
         assertEquals(PhotoStep.Idle, viewModel.uiState.value.photoStep)
@@ -104,7 +115,7 @@ class MyProfileViewModelPhotoTest {
     @Test
     fun removingThePhotoBringsTheAnimalBack() = runTest(dispatcher) {
         val viewModel = viewModel()
-        viewModel.onPhotoPicked(byteArrayOf(1))
+        viewModel.onPhotoPicked(PickedPhoto.Image(byteArrayOf(1)))
         viewModel.onCropped(FakeImage)
 
         viewModel.onRemovePhotoChosen()
@@ -116,7 +127,7 @@ class MyProfileViewModelPhotoTest {
     @Test
     fun aFailedRemovalKeepsThePhoto() = runTest(dispatcher) {
         val viewModel = viewModel()
-        viewModel.onPhotoPicked(byteArrayOf(1))
+        viewModel.onPhotoPicked(PickedPhoto.Image(byteArrayOf(1)))
         viewModel.onCropped(FakeImage)
         users.removeResult = ProfilePhotoError.RemoveFailed.toFailure()
 
@@ -131,7 +142,7 @@ class MyProfileViewModelPhotoTest {
         val viewModel = viewModel()
         viewModel.onNameChanged("Lucía Nueva")
 
-        viewModel.onPhotoPicked(byteArrayOf(1))
+        viewModel.onPhotoPicked(PickedPhoto.Image(byteArrayOf(1)))
         viewModel.onCropped(FakeImage)
 
         assertEquals("Lucía Nueva", viewModel.uiState.value.name)

@@ -33,7 +33,7 @@ import com.geoviksoft.turnia.ui.system.photo.LocalPhotoPicker
 import com.geoviksoft.turnia.ui.system.photo.PhotoPicker
 import com.geoviksoft.turnia.ui.system.photo.ProfilePhotoCache
 import com.geoviksoft.turnia.ui.system.photo.profilePhotoImageLoader
-import com.geoviksoft.turnia.ui.system.photo.rememberPhotoPicker
+import com.geoviksoft.turnia.ui.system.photo.SystemPhotoPicker
 import com.geoviksoft.turnia.ui.system.rememberTextSharer
 import coil3.compose.setSingletonImageLoaderFactory
 import org.koin.compose.getKoin
@@ -79,7 +79,6 @@ fun AppContent(
         val snackbarHostState = remember { SnackbarHostState() }
         val navigator = remember(backStack) { RootNavigator(backStack) }
         val platformSharer = rememberTextSharer()
-        val platformPhotoPicker = rememberPhotoPicker()
 
         CompositionLocalProvider(
             LocalRootNavigator provides navigator,
@@ -87,7 +86,7 @@ fun AppContent(
             LocalSnackbar provides snackbarHostState,
             LocalBuildInfo provides buildInfo,
             LocalTextSharer provides (textSharer ?: platformSharer),
-            LocalPhotoPicker provides (photoPicker ?: platformPhotoPicker),
+            LocalPhotoPicker provides (photoPicker ?: SystemPhotoPicker),
         ) {
             AppLanguageHost {
                 Scaffold(

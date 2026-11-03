@@ -4,37 +4,36 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/** The system Photo Picker, images only; below Android 11 it falls back to the document picker. */
+/**
+ * The system Photo Picker, images only; below Android 11 it falls back to the document picker. The
+ * activity result is delivered to the launcher registered on the current composition, so a result
+ * that arrives after the activity was recreated still finds its handler.
+ */
 @Composable
-actual fun rememberPhotoPicker(): PhotoPicker {
+internal actual fun rememberSystemPhotoLauncher(onPicked: (PickedPhoto) -> Unit): () -> Unit {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val pending = remember { arrayOfNulls<(ByteArray?) -> Unit>(1) }
+    val handler by rememberUpdatedState(onPicked)
 
     val launcher = rememberLauncherForActivityResult(PickVisualMedia()) { uri ->
-        val onPicked = pending[0] ?: return@rememberLauncherForActivityResult
-        pending[0] = null
-        if (uri == null) return@rememberLauncherForActivityResult onPicked(null)
+        if (uri == null) return@rememberLauncherForActivityResult handler(PickedPhoto.Cancelled)
 
         scope.launch {
             val bytes = withContext(Dispatchers.IO) {
                 runCatching { context.contentResolver.openInputStream(uri)?.use { it.readBytes() } }.getOrNull()
             }
-            onPicked(bytes)
+            handler(bytes?.let(PickedPhoto::Image) ?: PickedPhoto.Unreadable)
         }
     }
 
-    return remember(launcher) {
-        PhotoPicker { onPicked ->
-            pending[0] = onPicked
-            launcher.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
-        }
-    }
+    return remember(launcher) { { launcher.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly)) } }
 }

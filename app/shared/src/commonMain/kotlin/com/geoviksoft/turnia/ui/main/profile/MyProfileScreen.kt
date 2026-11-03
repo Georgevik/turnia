@@ -92,7 +92,7 @@ import turnia.app.shared.generated.resources.profile_title
 @Composable
 fun MyProfileScreen(viewModel: MyProfileViewModel = koinViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val photoPicker = LocalPhotoPicker.current
+    val launchPhotoPicker = LocalPhotoPicker.current.rememberLauncher(viewModel::onPhotoPicked)
 
     MyProfileScreenContent(
         uiState = uiState,
@@ -103,7 +103,7 @@ fun MyProfileScreen(viewModel: MyProfileViewModel = koinViewModel()) {
         onAvatarMenuDismissed = viewModel::onAvatarMenuDismissed,
         onUploadPhoto = {
             viewModel.onUploadPhotoChosen()
-            photoPicker.pick(viewModel::onPhotoPicked)
+            launchPhotoPicker()
         },
         onChooseAnimal = viewModel::onChooseAnimalChosen,
         onRemovePhoto = viewModel::onRemovePhotoChosen,

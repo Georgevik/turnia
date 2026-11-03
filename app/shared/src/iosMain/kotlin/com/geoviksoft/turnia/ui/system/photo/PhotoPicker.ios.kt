@@ -1,7 +1,9 @@
 package com.geoviksoft.turnia.ui.system.photo
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.usePinned
@@ -19,31 +21,35 @@ import platform.darwin.dispatch_get_main_queue
 import platform.posix.memcpy
 
 @Composable
-actual fun rememberPhotoPicker(): PhotoPicker = remember { IosPhotoPicker() }
+internal actual fun rememberSystemPhotoLauncher(onPicked: (PickedPhoto) -> Unit): () -> Unit {
+    val handler by rememberUpdatedState(onPicked)
+    val picker = remember { IosPhotoPicker() }
+    return remember(picker) { { picker.pick { handler(it) } } }
+}
 
 /**
- * `PHPickerViewController`, one image. The item is loaded as `public.jpeg`, which has the system
- * convert a HEIC photo on the way: Skia, which decodes images in Compose, cannot read HEIC.
+ * `PHPickerViewController`, one image. The item is loaded as whatever image it is — HEIC, JPEG, PNG
+ * — and decoded by UIKit later, which reads all of them.
  */
-private class IosPhotoPicker : PhotoPicker {
+private class IosPhotoPicker {
 
     // The controller holds its delegate weakly: this keeps it alive while the picker is up.
     private var delegate: PickerDelegate? = null
 
-    override fun pick(onPicked: (ByteArray?) -> Unit) {
+    fun pick(onPicked: (PickedPhoto) -> Unit) {
         val configuration = PHPickerConfiguration().apply {
             filter = PHPickerFilter.imagesFilter
             selectionLimit = 1
         }
         val picker = PHPickerViewController(configuration = configuration)
-        val pickerDelegate = PickerDelegate { bytes ->
+        val pickerDelegate = PickerDelegate { picked ->
             delegate = null
-            onPicked(bytes)
+            onPicked(picked)
         }
         delegate = pickerDelegate
         picker.delegate = pickerDelegate
         topViewController()?.presentViewController(picker, animated = true, completion = null)
-            ?: run { delegate = null; onPicked(null) }
+            ?: run { delegate = null; onPicked(PickedPhoto.Cancelled) }
     }
 
     private fun topViewController(): UIViewController? {
@@ -54,21 +60,21 @@ private class IosPhotoPicker : PhotoPicker {
     }
 }
 
-private class PickerDelegate(private val done: (ByteArray?) -> Unit) : NSObject(), PHPickerViewControllerDelegateProtocol {
+private class PickerDelegate(private val done: (PickedPhoto) -> Unit) : NSObject(), PHPickerViewControllerDelegateProtocol {
 
     override fun picker(picker: PHPickerViewController, didFinishPicking: List<*>) {
         picker.dismissViewControllerAnimated(true, completion = null)
-        val result = didFinishPicking.firstOrNull() as? PHPickerResult ?: return done(null)
+        val result = didFinishPicking.firstOrNull() as? PHPickerResult ?: return done(PickedPhoto.Cancelled)
 
-        result.itemProvider.loadDataRepresentationForTypeIdentifier(JPEG_TYPE) { data, _ ->
-            val bytes = data?.toByteArray()
-            dispatch_async(dispatch_get_main_queue()) { done(bytes) }
+        result.itemProvider.loadDataRepresentationForTypeIdentifier(IMAGE_TYPE) { data, _ ->
+            val picked = data?.toByteArray()?.let(PickedPhoto::Image) ?: PickedPhoto.Unreadable
+            dispatch_async(dispatch_get_main_queue()) { done(picked) }
         }
     }
 }
 
 // A top-level constant: an Objective-C subclass's companion may hold no fields.
-private const val JPEG_TYPE = "public.jpeg"
+private const val IMAGE_TYPE = "public.image"
 
 @OptIn(ExperimentalForeignApi::class)
 private fun NSData.toByteArray(): ByteArray {

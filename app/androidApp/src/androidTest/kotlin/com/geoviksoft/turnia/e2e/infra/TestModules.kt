@@ -20,7 +20,10 @@ import com.geoviksoft.turnia.core.domain.repository.UserRepository
 import com.geoviksoft.turnia.core.system.Outcome
 import com.geoviksoft.turnia.core.system.toSuccess
 import com.geoviksoft.turnia.ui.system.TextSharer
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import com.geoviksoft.turnia.ui.system.photo.PhotoPicker
+import com.geoviksoft.turnia.ui.system.photo.PickedPhoto
 import com.geoviksoft.turnia.ui.system.ads.AdConsent
 import com.geoviksoft.turnia.ui.system.ads.AdConsentStatus
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -208,5 +211,7 @@ internal class GatedGroupMembership(private val delegate: GroupMembership) : Gro
  * `photo-pick.webp`, a 640×480 landscape, at once, as if the user had chosen it.
  */
 internal object FixturePhotoPicker : PhotoPicker {
-    override fun pick(onPicked: (ByteArray?) -> Unit) = onPicked(Fixtures.readAssetBytes("photo-pick.webp"))
+    @Composable
+    override fun rememberLauncher(onPicked: (PickedPhoto) -> Unit): () -> Unit =
+        remember(onPicked) { { onPicked(PickedPhoto.Image(Fixtures.readAssetBytes("photo-pick.webp"))) } }
 }

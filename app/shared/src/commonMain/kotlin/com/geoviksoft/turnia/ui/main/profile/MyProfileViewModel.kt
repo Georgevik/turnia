@@ -12,6 +12,7 @@ import com.geoviksoft.turnia.core.system.fold
 import com.geoviksoft.turnia.core.system.onFailure
 import com.geoviksoft.turnia.ui.system.photo.CodecPhotoProcessor
 import com.geoviksoft.turnia.ui.system.photo.PhotoProcessor
+import com.geoviksoft.turnia.ui.system.photo.PickedPhoto
 import com.geoviksoft.turnia.ui.system.photo.ProfilePhotoCache
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -67,9 +68,13 @@ class MyProfileViewModel(
 
     fun onAvatarPickerDismissed() = _uiState.update { it.copy(pickingAvatar = false) }
 
-    /** What the picker returned: an image's bytes, or null when the user backed out of it. */
-    fun onPhotoPicked(bytes: ByteArray?) {
-        if (bytes == null || _uiState.value.photoStep.busy) return
+    fun onPhotoPicked(picked: PickedPhoto) {
+        if (_uiState.value.photoStep.busy) return
+        val bytes = when (picked) {
+            PickedPhoto.Cancelled -> return
+            PickedPhoto.Unreadable -> return _uiState.update { it.copy(userMessage = ProfileMessage.PhotoUnreadable) }
+            is PickedPhoto.Image -> picked.bytes
+        }
         _uiState.update { it.copy(photoStep = PhotoStep.Preparing) }
 
         viewModelScope.launch {
@@ -96,7 +101,7 @@ class MyProfileViewModel(
             userRepository.uploadProfilePhoto(bytes).fold(
                 onSuccess = { photo ->
                     // Shown from the bytes that went up, not downloaded back.
-                    photoCache.prime(photo, bytes)
+                    withContext(imageDispatcher) { photoCache.prime(photo, bytes) }
                     _uiState.update { it.copy(photo = photo, photoStep = PhotoStep.Idle) }
                 },
                 onFailure = { photoFailed(ProfileMessage.PhotoUploadFailed) },
