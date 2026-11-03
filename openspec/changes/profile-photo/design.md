@@ -111,13 +111,23 @@ already works for names. The round-trip is the smallest correct step.
 
 ### D5. Picking, cropping and encoding on the device
 
-- **Picker:** the system photo picker through a KMP picker library (FileKit). It uses PickVisualMedia
-  on Android and PHPicker on iOS, and asks for no permission.
-- **Crop:** Crayfish's `ImageCropperDialog` with `CropShape.Circle` and zoom gestures. The output is
-  the **square** behind the circle. The circle is only a mask, both when cropping and when drawing,
-  so the file needs no alpha.
+- **Picker: our own `expect`/`actual`.** No library: the only candidate, FileKit, needs Compose
+  Multiplatform 1.12 from 0.16, and its 0.15 pulls coroutines up to 1.11.
+  - Android: the system Photo Picker (`PickVisualMedia`, images only) through an activity result
+    launcher, read with the `ContentResolver`.
+  - iOS: `PHPickerViewController` with one image, loaded as `public.jpeg`. A HEIC photo then reaches
+    us as JPEG, which matters because Skia cannot decode HEIC.
+  - Neither asks for a permission.
+- **Crop: our own, in common Compose.** No library either. Crayfish needs Compose Multiplatform 1.12.
+  Native crops exist on iOS only (`UIImagePickerController.allowsEditing`, square, legacy API), so
+  Android would need its own crop anyway.
+  - The picked image sits under a fixed circle and is moved and zoomed with `transformable`. The
+    circle never leaves the image.
+  - The square behind the circle is drawn into a 384×384 `ImageBitmap`. The circle is only a mask,
+    both when cropping and when drawing, so the file needs no alpha.
+  - The geometry, meaning the initial fit, the clamping and the source rect, is a pure function so
+    that unit tests can cover it.
 - **Encode:**
-  - Scale to 384×384 in common code (`ImageBitmap`).
   - Encode to WebP at quality 80 through an `expect` function. On Android that is
     `Bitmap.compress`: `WEBP_LOSSY` from API 30, `WEBP` below, since minSdk is 24. On iOS it is
     Skia's `encodeToData(EncodedImageFormat.WEBP, 80)`.
@@ -198,10 +208,11 @@ already works for names. The round-trip is the smallest correct step.
 - **[No moderation until TUR-60]** An offensive photo is visible to every signed-in user until its
   owner removes it, and App Store review may cite guideline 1.2. → No store release carries this
   change before TUR-60. The developer confirms this in the `## Proposal`.
-- **[Crayfish is young (0.1.x) and built against Compose Multiplatform 1.12 / Kotlin 2.4.20; the app
-  is on 1.11.1 / 2.4.10]** Adding it may pull Compose up. → Check the resolved Compose version right
-  after adding it. If it moves, stop and ask the director whether to upgrade or fall back to Krop or
-  CMP-image-pick-n-crop. Writing the crop ourselves is the last resort.
+- **[Coil is held at 3.5.0]** 3.6 needs Compose Multiplatform 1.12. → The director is opening a
+  ticket for the Compose Multiplatform 1.12 / Kotlin 2.4.20 upgrade. Coil moves up with it.
+- **[Our own picker and crop to maintain]** About 150–200 lines of crop and two small platform
+  pickers. → The crop geometry is a pure function under unit tests, and the E2E flows drive the crop
+  on Android.
 - **[GitLive Storage may not expose `getBytes`, or `putData` from a `ByteArray`]** → `expect`/`actual`
   over the native handles. The decision stays, only some platform code is added.
 - **[`updateGroup` sends a stale `members` map]** An admin saving from a stale cache could put back an

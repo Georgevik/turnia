@@ -2,16 +2,13 @@
 
 ## 1. Dependencies
 
-- [ ] 1.1 Add to `gradle/libs.versions.toml`:
-  - `dev.gitlive:firebase-storage` (version ref `firebase`) to `core`;
-  - Coil 3 `coil-compose` to `app/shared`;
-  - the FileKit dialogs-compose picker to `app/shared`;
-  - Crayfish to `app/shared`.
+- [x] 1.1 Add to `gradle/libs.versions.toml`:
+  - `dev.gitlive:firebase-storage` (version ref `firebase`) to `core`, and to the Android test classpath;
+  - Coil 3 `coil-compose` 3.5.0 to `app/shared`: 3.6 needs Compose Multiplatform 1.12.
 
-  Verify that `./gradlew :app:androidApp:assembleDebug` passes and that the resolved Compose
-  Multiplatform is still 1.11.1 (`./gradlew :app:shared:dependencies --configuration
-  commonMainImplementationDependenciesMetadata | grep org.jetbrains.compose.ui`). If Crayfish pulls
-  Compose up, stop and ask the director whether to upgrade or use Krop / CMP-image-pick-n-crop.
+  The picker and the crop are our own code (4.4, 4.5): no picker or crop library. Verify that
+  `./gradlew :app:androidApp:assembleDebug` passes and that Compose Multiplatform stays at 1.11.1 and
+  coroutines at 1.10.2 (`./gradlew :app:shared:dependencies --configuration androidRuntimeClasspath`).
 - [ ] 1.2 Link the `FirebaseStorage` package product to the iOS target in
   `app/iosApp/iosApp.xcodeproj`, next to the other Firebase products. Verify with `xcodebuild` for
   the simulator: `BUILD SUCCEEDED`.
@@ -153,9 +150,24 @@
 
   Add a test tag on the photo layer. Verify with previews for photo, loading and fallback, and with
   `assembleDebug`.
-- [ ] 4.4 Put the picker behind a `PhotoPicker` interface (FileKit implementation, bound in Koin).
-  In `e2eModule`, bind a fake that returns a bundled test image. Verify that the app builds and that
-  the fake is used in 5.3.
+- [ ] 4.4 Add a `PhotoPicker` interface with our own `expect`/`actual`, bound in Koin. It returns the
+  picked image's bytes, or nothing when the user cancels:
+  - Android: the system Photo Picker (`PickVisualMedia`, images only) through an activity result
+    launcher, read with the `ContentResolver`;
+  - iOS: `PHPickerViewController` (images, one item), loading the item as `public.jpeg` so a HEIC
+    photo arrives as JPEG.
+
+  In `e2eModule`, bind a fake that returns a bundled test image. Verify that the app builds on both
+  platforms and that the fake is used in 5.3.
+- [ ] 4.5 Add our own circular crop in common Compose:
+  - the picked image under a fixed circle, moved and zoomed with `transformable`, never letting the
+    circle leave the image;
+  - *Cancel* and *Use*;
+  - on *Use*, the square behind the circle drawn into a 384×384 `ImageBitmap`, handed to the
+    encoder (4.1).
+
+  Keep the visible-square computation a pure function. Verify with unit tests: initial fit,
+  clamping at the edges, maximum zoom, and the source rect for a known pan and zoom.
 
 ## 5. Profile screen
 
@@ -170,7 +182,7 @@
 - [ ] 5.2 Update `MyProfileScreen`:
   - a 96 dp avatar that opens a menu: *Upload photo*, *Choose animal and colour*, and *Remove photo*
     only when there is a photo;
-  - the circular crop dialog with zoom gestures;
+  - the crop from 4.5 between the picker and the upload;
   - a spinner on the avatar while uploading;
   - snackbars for the failures;
   - test tags for the robot;

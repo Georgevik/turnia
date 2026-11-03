@@ -72,6 +72,7 @@ kotlin {
             implementation(libs.kmpauth.google)
             implementation(libs.kmpauth.apple)
             implementation(libs.kmpauth.firebase)
+            implementation(libs.coil.compose)
 
         }
         commonTest.dependencies {

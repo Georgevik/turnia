@@ -14,8 +14,8 @@ animal; what it cannot do is take a photo.
   as they are and remain the fallback: no photo, a photo still loading, no connection, a photo
   removed.
 - **Picking and cropping.** The photo comes from the system photo picker, which asks for no
-  permission, and is cropped to a circle with pan and pinch. There is no camera. The crop is a
-  Compose Multiplatform library, not code of our own.
+  permission, and is cropped to a circle with pan and pinch. There is no camera. Both the picker
+  and the crop are our own code, with no library for either.
 - **Compressed on the device.** The cropped photo is re-encoded as a 384×384 WebP at quality 80
   (about 15–30 KB), which drops its EXIF metadata, location included. Storage refuses anything over
   100 KB or not `image/webp`.
@@ -60,7 +60,7 @@ animal; what it cannot do is take a photo.
     - `acceptJoinRequest` and the auto-approve branch of `requestToJoinGroup` copy the `photoId`;
     - `deleteAccount` deletes the user's Storage folder.
 - **Client**:
-  - `dev.gitlive:firebase-storage`, Coil 3, a photo picker and a crop library.
+  - `dev.gitlive:firebase-storage` and Coil 3. The picker and the crop are our own code.
   - `UserAvatar` learns to draw a photo over the animal.
   - The profile screen and its ViewModel.
   - `GroupMemberDocument` and `GroupMember` gain `photoId`, so that an admin's group save keeps it.

@@ -32,6 +32,8 @@ firebaseBom = "34.17.0"
 kmpauth = "3.0.4"
 kotlinxDatetime = "0.7.1"
 playServicesAds = "25.4.0"
+# Coil 3.6 needs Compose Multiplatform 1.12: 3.5 is the last on 1.11.
+coil = "3.5.0"
 
 
 [libraries]
@@ -73,6 +75,7 @@ firebase-functions = { module = "dev.gitlive:firebase-functions", version.ref = 
 firebase-analytics = { module = "dev.gitlive:firebase-analytics", version.ref = "firebase" }
 firebase-config = { module = "dev.gitlive:firebase-config", version.ref = "firebase" }
 firebase-messaging = { module = "dev.gitlive:firebase-messaging", version.ref = "firebase" }
+firebase-storage = { module = "dev.gitlive:firebase-storage", version.ref = "firebase" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-messaging-android = { module = "com.google.firebase:firebase-messaging" }
 firebase-analytics-android = { module = "com.google.firebase:firebase-analytics" }
@@ -83,6 +86,7 @@ kmpauth-google = { module = "io.github.mirzemehdi:kmpauth-google", version.ref =
 kmpauth-apple = { module = "io.github.mirzemehdi:kmpauth-apple", version.ref = "kmpauth" }
 kmpauth-firebase = { module = "io.github.mirzemehdi:kmpauth-firebase", version.ref = "kmpauth" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAds" }
 
 [plugins]

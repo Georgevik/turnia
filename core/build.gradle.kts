@@ -32,6 +32,7 @@ kotlin {
             implementation(libs.firebase.firestore)
             implementation(libs.firebase.messaging)
             implementation(libs.firebase.functions)
+            implementation(libs.firebase.storage)
             implementation(libs.firebase.analytics)
             implementation(libs.firebase.config)
             api(libs.koin.core)
