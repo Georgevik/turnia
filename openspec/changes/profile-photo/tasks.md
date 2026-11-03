@@ -127,8 +127,9 @@
 
 ## 4. Showing photos
 
-- [ ] 4.1 Add the photo encoder (`expect`/`actual`):
-  - scale to 384×384;
+- [x] 4.1 Add the photo codec (`expect`/`actual`, `PhotoCodec`):
+  - decode the picked image upright (EXIF orientation on Android, UIKit on iOS, which also reads
+    HEIC) and no larger than 2048 px, the crop's input;
   - WebP at quality 80 (`WEBP_LOSSY` from API 30, `WEBP` below; Skia on iOS);
   - one retry at quality 60 if over 100 KB.
 
