@@ -11,10 +11,13 @@ release when it is promoted. TestFlight: the build's "What to Test", the only no
 build has; the App Store's "What's New" belongs to the App Store version, written on promotion.
 """
 
+from __future__ import annotations
+
 import json
 import os
 import sys
 import time
+from dataclasses import dataclass
 from pathlib import Path
 
 # The store clients are imported where they are used, so test_release_notes.py can load this file
@@ -111,6 +114,86 @@ def find_build(session, app_id: str, build_number: str) -> dict:
             return builds.json()["data"][0]
         time.sleep(60)
     sys.exit(f"::error::Build {build_number} never showed up in App Store Connect")
+
+
+# appVersionState values, plus the deprecated appStoreState's for a version that only reports that one.
+EDITABLE_STATES = {
+    "PREPARE_FOR_SUBMISSION", "DEVELOPER_REJECTED", "REJECTED", "METADATA_REJECTED", "INVALID_BINARY",
+}
+DONE_STATES = {
+    "READY_FOR_DISTRIBUTION", "REPLACED_WITH_NEW_VERSION",
+    "READY_FOR_SALE", "PREORDER_READY_FOR_SALE", "REMOVED_FROM_SALE", "DEVELOPER_REMOVED_FROM_SALE",
+}
+# Everything else is in flight — submitted, in review, approved or waiting for release — including a
+# state Apple adds later: a state the script does not know must never lead to a write.
+
+
+@dataclass(frozen=True)
+class AppStoreVersion:
+    id: str
+    name: str
+    state: str
+
+
+@dataclass(frozen=True)
+class VersionPlan:
+    action: str  # "use" | "rename" | "create" | "skip"
+    version: AppStoreVersion | None = None
+    reason: str = ""
+
+
+def version_key(name: str) -> tuple[int, ...]:
+    return tuple(int(part) for part in name.split("."))
+
+
+def plan_version(versions: list[AppStoreVersion], name: str) -> VersionPlan:
+    """Which App Store version a build of `name` goes on. Never plans a write to a version in flight."""
+    def editable(v: AppStoreVersion) -> bool:
+        return v.state in EDITABLE_STATES
+
+    def in_flight(v: AppStoreVersion) -> bool:
+        return v.state not in EDITABLE_STATES and v.state not in DONE_STATES
+
+    same = [v for v in versions if v.name == name]
+    if same:
+        target = next((v for v in same if editable(v)), None)
+        if target:
+            return VersionPlan("use", target)
+        return VersionPlan("skip", same[0], f"version {name} is already {same[0].state}")
+
+    flying = next((v for v in versions if in_flight(v)), None)
+    if flying:
+        return VersionPlan("skip", flying, f"version {flying.name} is {flying.state}")
+
+    newer = [v for v in versions if version_key(v.name) > version_key(name)]
+    if newer:
+        top = max(newer, key=lambda v: version_key(v.name))
+        return VersionPlan("skip", top, f"build {name} is older than version {top.name}")
+
+    # App Store Connect keeps a single editable version per platform; an unsubmitted older one is
+    # renamed rather than left to block the new one.
+    stale = next((v for v in versions if editable(v)), None)
+    if stale:
+        return VersionPlan("rename", stale)
+    return VersionPlan("create")
+
+
+@dataclass(frozen=True)
+class NotesPlan:
+    texts: dict[str, str]  # localization → its What's New
+    fallbacks: list[str]   # localizations given the English notes
+    unused: list[str]      # notes files with no localization to go on
+
+
+def plan_notes(localizations: list[str], texts: dict[str, str]) -> NotesPlan:
+    """What's New per existing localization, by App Store Connect locale. Never adds a localization."""
+    english = texts.get("en-GB") or next(iter(texts.values()))
+    planned = {loc: texts.get(loc, english) for loc in localizations}
+    return NotesPlan(
+        texts=planned,
+        fallbacks=[loc for loc in localizations if loc not in texts],
+        unused=[loc for loc in texts if loc not in localizations],
+    )
 
 
 def testflight(build_number: str, dry_run: bool) -> None:
