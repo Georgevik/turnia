@@ -17,9 +17,15 @@
 
 - [ ] 3.1 Open the pull request and verify `pr-e2e` runs the suite on it (it touches `.github/`) and ends green
 - [ ] 3.2 Push a second commit while the suite is running and verify the first run is cancelled
-- [ ] 3.3 Push a throwaway branch that changes only a `.md` file to a draft pull request, verify `e2e` is skipped and `pr-e2e` is green within minutes, then close it and delete the branch
+
+The skip cannot be seen on GitHub before the merge: a pull request runs the `pr-check.yml` of its
+merge commit, so a docs-only branch off `main` still has the old workflow, and one off this branch
+carries its `.github/` changes. Before the merge it is covered by `test_e2e_needed.py` and a local run
+of `pr-e2e`'s script over every combination of results.
 
 ## Workflow follow-up
+
+- Right after the merge, before `pr-e2e` is required: on the first docs-only pull request, verify `e2e` is skipped and `pr-e2e` is green within minutes.
 
 - Hand the developer the branch protection step: *Settings → Branches → `main` → Edit → Require status checks to pass → add `pr-e2e` → Save*.
 - Tell the director that `docs/agents/workers.md` can list `pr-e2e` among the checks to wait for, and drop the manual `gh workflow run android-e2e.yml` before *ready to test*.
