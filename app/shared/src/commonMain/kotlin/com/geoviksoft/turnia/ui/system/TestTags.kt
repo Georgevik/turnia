@@ -16,6 +16,7 @@ object TestTags {
     fun swapEvent(id: EventId) = "swap_event_${id.value}"
     fun eventTypeChip(id: EventTypeId) = "event_type_${id.value}"
     fun personRow(id: UserId) = "person_row_${id.value}"
+    fun avatarPhoto(id: UserId) = "avatar_photo_${id.value}"
     fun moveType(id: EventTypeId) = "move_type_${id.value}"
     fun shiftSetupRow(index: Int) = "shift_setup_row_$index"
     fun shiftSetupExpand(index: Int) = "shift_setup_expand_$index"

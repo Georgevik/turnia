@@ -607,7 +607,8 @@ private fun JoinRequestsSection(
                 ) {
                     UserAvatar(
                         avatar = request.avatar,
-                        size = UserAvatarSize.M
+                        size = UserAvatarSize.M,
+                        photo = request.photo,
                     )
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
@@ -856,7 +857,7 @@ private fun MembersSheet(
                 title = member.displayName(),
                 subtitle = "@${member.username}".takeIf { member.username.isNotBlank() },
                 onLongClick = { onMemberLongPress(member) }.takeIf { manageable },
-                leading = { UserAvatar(avatar = member.avatar) },
+                leading = { UserAvatar(avatar = member.avatar, photo = member.photo) },
                 trailing = { if (member.isAdmin) AdminBadge() },
             )
         }

@@ -3,6 +3,7 @@ package com.geoviksoft.turnia.ui.main.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.geoviksoft.turnia.core.domain.model.Membership
+import com.geoviksoft.turnia.core.domain.model.ProfilePhoto
 import com.geoviksoft.turnia.core.domain.model.UserSession
 import com.geoviksoft.turnia.core.domain.repository.AppConfigRepository
 import com.geoviksoft.turnia.core.domain.repository.UserRepository
@@ -41,6 +42,7 @@ class SettingsMenuViewModel(
                                 username = session.user.username,
                                 isPremium = session.user.membership == Membership.PREMIUM,
                                 avatar = session.user.avatar,
+                                photo = ProfilePhoto.of(session.user.id, session.user.photoId),
                             )
                         )
                     }

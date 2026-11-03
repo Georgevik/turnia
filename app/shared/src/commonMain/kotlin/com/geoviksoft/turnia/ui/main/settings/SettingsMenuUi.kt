@@ -1,5 +1,6 @@
 package com.geoviksoft.turnia.ui.main.settings
 
+import com.geoviksoft.turnia.core.domain.model.ProfilePhoto
 import com.geoviksoft.turnia.core.domain.model.UserProfile
 
 data class SettingsMenuUi(
@@ -13,5 +14,6 @@ data class SettingsMenuUi(
         val username: String,
         val isPremium: Boolean,
         val avatar: UserProfile.AnimalAvatar,
+        val photo: ProfilePhoto? = null,
     )
 }

@@ -30,7 +30,7 @@ fun PersonCard(
         subtitle = person.username.takeIf { it.isNotBlank() }?.let { "@$it" },
         onClick = onClick,
         onLongClick = onLongClick,
-        leading = { UserAvatar(avatar = person.avatar) },
+        leading = { UserAvatar(avatar = person.avatar, photo = person.photo) },
         trailing = trailing,
     )
 }

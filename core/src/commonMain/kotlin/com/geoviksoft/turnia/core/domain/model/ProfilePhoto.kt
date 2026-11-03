@@ -9,4 +9,9 @@ data class ProfilePhoto(val userId: UserId, val photoId: String) {
 
     /** What a cache keys it by: the same for the same file, on every device. */
     val key: String get() = "${userId.value}/$photoId"
+
+    companion object {
+        /** [userId]'s photo, or null when they have none. */
+        fun of(userId: UserId, photoId: String?): ProfilePhoto? = photoId?.let { ProfilePhoto(userId, it) }
+    }
 }

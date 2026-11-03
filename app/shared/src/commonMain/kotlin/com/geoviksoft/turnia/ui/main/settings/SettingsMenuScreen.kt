@@ -102,6 +102,7 @@ private fun SettingsMenuScreenContent(uiState: SettingsMenuUi, onLogoutClicked: 
             UserAvatar(
                 avatar = details?.avatar ?: UserProfile.AnimalAvatar.NONE,
                 modifier = Modifier.size(64.dp),
+                photo = details?.photo,
             )
 
             Column {

@@ -180,7 +180,7 @@ private fun RequesterHeader(requester: SwapRequesterUi) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        UserAvatar(avatar = requester.avatar, size = UserAvatarSize.S)
+        UserAvatar(avatar = requester.avatar, size = UserAvatarSize.S, photo = requester.photo)
         Text(
             text = requester.name.ifBlank { stringResource(Res.string.group_member_former) },
             modifier = Modifier.weight(1f, fill = false),

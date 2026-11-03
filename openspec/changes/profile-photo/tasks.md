@@ -144,7 +144,7 @@
 
   Verify with a unit test over a fake download: a second load does not download, and a primed photo
   never downloads.
-- [ ] 4.3 Change `UserAvatar` to take `AnimalAvatar` and an optional `ProfilePhoto`. It always draws
+- [x] 4.3 Change `UserAvatar` to take `AnimalAvatar` and an optional `ProfilePhoto`. It always draws
   the animal and draws the loaded photo over it, clipped to the circle. Update every caller:
   - profile and settings: `User.photoId`;
   - group members and swap rows: `GroupMember.photoId`;
