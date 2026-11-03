@@ -42,9 +42,10 @@ service cloud.firestore {
     // not see lives under `private`.
     match /users/{uid} {
       allow read: if isSignedIn();
-      // A profile is born without a photo: `photoId` is published by `setProfilePhoto` alone.
+      // A profile is born without a photo: `photoId` is published by `setProfilePhoto` alone. The
+      // app's own create writes it as null, which is no photo.
       allow create: if isSignedIn() && request.auth.uid == uid &&
-        !('photoId' in request.resource.data);
+        request.resource.data.get('photoId', null) == null;
       // `name`, `username` and `photoId` are copied into every group the user belongs to, so only
       // their functions may change them (`updateProfile`, `setProfilePhoto`) — a keeper that ships
       // inside the app is only as current as the oldest version still installed.
