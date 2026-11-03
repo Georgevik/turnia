@@ -15,7 +15,7 @@
 
 ## 4. Guide: troubleshooting
 
-- [ ] 4.1 Add the troubleshooting section: a dimension showing `(not set)` or missing, empty reports in the first 48 hours, debug builds sending nothing, the data-thresholds notice and the switch to *Device-based*, and a menu that has moved. Verify each case says what the developer sees and what to do.
+- [x] 4.1 Add the troubleshooting section: a dimension showing `(not set)` or missing, empty reports in the first 48 hours, debug builds sending nothing, the data-thresholds notice and the switch to *Device-based*, and a menu that has moved. Verify each case says what the developer sees and what to do.
 
 ## 5. CLAUDE.md
 

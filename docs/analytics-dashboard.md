@@ -449,3 +449,56 @@ Para GA, "volver" es abrir la app, no añadir un turno.
 Para un vistazo rápido sin montar nada, GA también trae el informe **Informes** (*Reports*) →
 **Interacción** (*Engagement*) → **Retención** (*Retention*). La exploración es la que da exactamente
 D1, D7 y D30.
+
+## 5. Si algo no sale
+
+### Un informe o una exploración sale vacío
+
+- **Han pasado menos de 24–48 horas** desde que registraste las definiciones: espera. Lo que ya
+  viene de serie (*Usuarios activos*, *Nombre del evento*…) suele aparecer antes, en unas horas.
+- **El periodo es anterior a una versión publicada** con ese evento, o a cuando registraste la
+  definición. Una definición personalizada nunca se rellena hacia atrás.
+- **Estás probando con una build debug** o en el emulador: no envían nada a GA, por diseño. Solo
+  cuentan las versiones descargadas de Google Play o del App Store (incluido TestFlight).
+
+### Una dimensión sale como `(not set)`
+
+Significa que el evento de esa fila no lleva ese parámetro, o que llegó antes de registrar la
+definición. Casos normales:
+
+- `method` en el informe *Usuarios*: quien en el periodo no inició sesión ni creó cuenta (la sesión
+  ya estaba abierta) no lo envía.
+- `interacted` en `onboard_shift_shown`, o cualquier parámetro en un evento que no lo lleva (la
+  columna *Lo envía* de la [sección 2](#2-definiciones-personalizadas) dice cuál lleva cada uno).
+- Datos anteriores al día en que registraste la definición.
+
+Si **todas** las filas salen `(not set)` pasados dos días, revisa en **Administrar** (*Admin*) →
+**Definiciones personalizadas** (*Custom definitions*) que el **Parámetro de evento** (*Event
+parameter*) está escrito exactamente como en la tabla, en minúsculas y con guiones bajos. Si está
+mal, no se puede editar: archívala (menú `⋮` → **Archivar**, *Archive*) y créala de nuevo.
+
+### Una dimensión o métrica no aparece al buscarla
+
+- En un informe o una exploración solo aparecen las definiciones **ya registradas**: vuelve a la
+  [sección 2](#2-definiciones-personalizadas).
+- Búscala por el **nombre** que le diste (`method`, `events_moved`…), no por la descripción.
+- En una exploración, primero hay que **importarla** en la columna *Variables* (botón **+**).
+- Si GA no te deja crear la métrica `events_moved` porque `event_count` ya es una dimensión, crea
+  la métrica igualmente con otro nombre, o archiva la dimensión `event_count` (no la usa ningún
+  informe de esta guía).
+
+### Se aplican umbrales de datos
+
+Si arriba a la derecha de un informe ves un triángulo naranja o el aviso **Se aplican umbrales de
+datos** (*Data thresholds applied*), GA está ocultando filas con pocos usuarios para proteger su
+privacidad. Pasa sobre todo al principio, cuando hay pocos usuarios.
+
+Para verlo todo, cambia la identidad (ver [1.2](#12-contar-a-cada-persona-una-vez-identidad-combinada))
+a **Basada en dispositivos** (*Device-based*). A cambio, quien use dos móviles contará como dos
+usuarios. Se puede volver a *Combinada* cuando haya más usuarios: no se pierde nada.
+
+### Un menú no está donde dice la guía
+
+GA reorganiza la consola de vez en cuando. Usa la barra de búsqueda de arriba y escribe el nombre
+del ajuste o del campo tal como aparece en la guía (por ejemplo `retención de datos` o `identidad
+para los informes`). Si tienes la consola en inglés, usa el nombre entre paréntesis.
