@@ -209,7 +209,7 @@
 
   Verify with previews of each state, and on the Android emulator through the flows in 5.3: a debug
   build talks to the production Firebase project, which has no bucket yet.
-- [ ] 5.3 Add `ProfileRobot` and `ProfilePhotoFlowsTest`:
+- [x] 5.3 Add `ProfileRobot` and `ProfilePhotoFlowsTest`:
   - upload: the avatar shows the photo, the file is in Storage, `photoId` is on the profile and on
     Urgencias' member entry, and `profile_photo_uploaded` is logged (`awaitLogged`);
   - remove: the animal is back and the file is deleted;
