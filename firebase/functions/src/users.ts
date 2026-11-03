@@ -1,3 +1,4 @@
+import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import { onCall } from "firebase-functions/v2/https";
 import { DocumentSnapshot, FieldValue, Firestore, WriteBatch, getFirestore } from "firebase-admin/firestore";
 import { getStorage } from "firebase-admin/storage";
@@ -230,4 +231,52 @@ export const setProfilePhoto = onCall({ enforceAppCheck: true }, async (request)
   );
 
   return { photoId, status: "updated" as const };
+});
+
+type MemberEntry = { name?: string; username?: string; photoId?: string };
+
+/**
+ * Puts back a member's photo copy that a write to their group lost.
+ *
+ * A client released before photos existed knows a member entry as `{ name, username }`, and when an
+ * admin on it saves the group it writes the whole document back, every `photoId` dropped. A group
+ * such a client creates starts without its creator's photo too. Whatever the profile still names is
+ * written back, so the copies heal as soon as the write lands, whoever opens the app.
+ *
+ * Only a uid still in `memberUids` with a named entry is considered: someone who left or was revoked
+ * has no entry to restore into, and a blank name is an anonymized account, whose profile
+ * `deleteAccount` has already cleared. Its own write loses nothing, so the run it causes does
+ * nothing.
+ */
+export const onGroupMemberPhotoLost = onDocumentWritten("groups/{groupId}", async (event) => {
+  const after = event.data?.after;
+  if (!after?.exists) return;
+  const before = event.data?.before;
+  const created = !before?.exists;
+
+  const afterMembers = (after.get("members") as Record<string, MemberEntry> | undefined) ?? {};
+  const beforeMembers = created ? {} : ((before?.get("members") as Record<string, MemberEntry> | undefined) ?? {});
+  const memberUids = (after.get("memberUids") as string[] | undefined) ?? [];
+
+  const lost = memberUids.filter((uid) => {
+    const entry = afterMembers[uid];
+    if (!entry?.name || entry.photoId) return false;
+    return created || Boolean(beforeMembers[uid]?.photoId);
+  });
+  if (lost.length === 0) return;
+
+  const db = getFirestore();
+  const profiles = await db.getAll(...lost.map((uid) => db.doc(`users/${uid}`)));
+  const restored: Record<string, string> = {};
+  profiles.forEach((profile, index) => {
+    const photoId = profile.get("photoId") as string | undefined;
+    if (photoId) restored[`members.${lost[index]}.photoId`] = photoId;
+  });
+  if (Object.keys(restored).length === 0) return;
+
+  const { groupId } = event.params;
+  const batch = db.batch();
+  batch.update(after.ref, { ...restored, updateAt: FieldValue.serverTimestamp() });
+  markGroupUpdated(db, batch, groupId);
+  await batch.commit();
 });

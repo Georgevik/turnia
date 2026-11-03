@@ -85,7 +85,7 @@
 
   Verify that it passes on the emulators.
 
-- [ ] 2.8 Add the `onGroupMemberPhotoLost` trigger (`onDocumentWritten("groups/{groupId}")`, design
+- [x] 2.8 Add the `onGroupMemberPhotoLost` trigger (`onDocumentWritten("groups/{groupId}")`, design
   D11). It restores `members.{uid}.photoId` from the profile for each member in `memberUids` whose
   named entry lost its photo, or lacks one on a new group, together with the group's `updateAt` and
   marker. It skips uids outside `memberUids` and anonymized entries. `deleteAccount` clears the

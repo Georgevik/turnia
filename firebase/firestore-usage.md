@@ -49,6 +49,7 @@ of its last listen pays nothing.
 | Team prompt: decide whether it is due | — | **0–1** per event added | 0 while switched off, below the threshold, or once the device has settled it (shown, or the account had a group). Otherwise one `hasAnyGroup` read, audited as `teamPrompt(SERVER)`, a `limit(1)` read, per event added past the threshold. It settles for good at the first answer, since shown and in-a-group both settle it, so in practice it costs 1 read per device. A failed read settles nothing and the next event tries again. |
 | Group screen: the "only you here" card | — | **0** | Derived from the members the group listener already brings. |
 | Rename yourself (`updateProfile`) | — | 1 call | Server: profile + marker + reservation + 2 per group. Your other devices pay 1 profile read; every member pays 1 group read per shared group. |
+| Any write to a group document | — | **0** | Server: `onGroupMemberPhotoLost` adds 1 invocation to every write of `groups/{g}` (saves, joins, leaves, renames, photo fan-outs) and reads nothing unless a member's photo copy was lost — 1 profile read each, then 1 group write and its marker — or the group was just created (1 read). A loss only happens when an admin on a build from before photos saves the group. |
 
 **Remote changes** are the part that scales with team activity and is the same before and after: when
 another member changes a shift in a month you are viewing, you pay 1 read for the sync document change

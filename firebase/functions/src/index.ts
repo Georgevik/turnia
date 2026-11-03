@@ -20,8 +20,9 @@ export { leaveGroup, removeMember, deleteGroup } from "./membership";
 export { takeEvent, returnEvent } from "./events";
 
 // Renames a user, and publishes or removes their photo, everywhere the name and the photo are
-// copied: the client may not write either itself.
-export { updateProfile, setProfilePhoto } from "./users";
+// copied: the client may not write either itself. A photo copy a released client's group save
+// wipes is put back as soon as the write lands.
+export { updateProfile, setProfilePhoto, onGroupMemberPhotoLost } from "./users";
 
 // Deletes the caller's account by anonymizing it: the uid stays everywhere it is referenced, and
 // everything that says who it was goes, along with the Auth user.

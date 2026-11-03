@@ -1,6 +1,7 @@
 package com.geoviksoft.turnia.e2e.flows
 
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
+import android.os.SystemClock
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.geoviksoft.turnia.e2e.infra.Documents
 import com.geoviksoft.turnia.e2e.infra.E2eRule
@@ -17,6 +18,7 @@ import dev.gitlive.firebase.storage.Data
 import dev.gitlive.firebase.storage.storage
 import dev.gitlive.firebase.storage.storageMetadata
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
@@ -127,6 +129,38 @@ class ProfilePhotoBackendTest {
         assertEquals(emptyList<String>(), StorageRest.list("profilePhotos/bruno/"))
     }
 
+    /** What an admin on a build from before photos writes when they save: every entry without `photoId`. */
+    @Test
+    fun aReleasedClientsGroupSave_getsThePhotoBack() {
+        FirestoreRest.write(mapOf("groups/urgencias" to Documents.get("groups/urgencias").withMember("bruno") { JsonObject(it - "photoId") }))
+
+        val healed = Documents.await("groups/urgencias") { it.member("bruno").string("photoId") == "bruno1" }
+
+        SystemClock.sleep(SETTLE_MS)
+        assertEquals("The restore causes no second write", healed["updateAt"], Documents.get("groups/urgencias")["updateAt"])
+    }
+
+    @Test
+    fun aRestoreSkipsWhoeverLeftAndAnonymizedAccounts() {
+        FirestoreRest.write(mapOf("users/carla" to JsonObject(Documents.get("users/carla") + ("photoId" to JsonPrimitive("carla1")))))
+        val group = Documents.get("groups/urgencias").withMember("carla") { JsonObject(it + ("photoId" to JsonPrimitive("carla1"))) }
+        FirestoreRest.write(mapOf("groups/urgencias" to group))
+        SystemClock.sleep(SETTLE_MS)
+
+        // Bruno left, keeping a stale entry; carla's account was anonymized.
+        val after = JsonObject(
+            group.withMember("bruno") { JsonObject(it - "photoId") }
+                .withMember("carla") { JsonObject(mapOf("name" to JsonPrimitive(""), "username" to JsonPrimitive(""))) }
+                + ("memberUids" to JsonArray(listOf(JsonPrimitive("alice"), JsonPrimitive("carla"))))
+        )
+        FirestoreRest.write(mapOf("groups/urgencias" to after))
+        SystemClock.sleep(SETTLE_MS)
+
+        val urgencias = Documents.get("groups/urgencias")
+        assertNull(urgencias.member("bruno").string("photoId"))
+        assertNull(urgencias.member("carla").string("photoId"))
+    }
+
     private suspend fun upload(path: String, bytes: ByteArray, contentType: String = StorageRest.WEBP) {
         Firebase.storage.reference(path).putData(Data(bytes), storageMetadata { this.contentType = contentType })
     }
@@ -160,7 +194,14 @@ class ProfilePhotoBackendTest {
 
     private fun JsonObject.member(uid: String): JsonObject = getValue("members").jsonObject.getValue(uid).jsonObject
 
+    private fun JsonObject.withMember(uid: String, change: (JsonObject) -> JsonObject): JsonObject {
+        val members = getValue("members").jsonObject
+        return JsonObject(this + ("members" to JsonObject(members + (uid to change(members.getValue(uid).jsonObject)))))
+    }
+
     private companion object {
         const val MAX_BYTES = 100L * 1024
+        // Long enough for the Functions emulator to have run any trigger a write set off.
+        const val SETTLE_MS = 4_000L
     }
 }

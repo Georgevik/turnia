@@ -41,6 +41,11 @@ export const deleteAccount = onCall({ enforceAppCheck: true }, async (request) =
     throw TurniaError.DeleteAccountLastAdmin;
   }
 
+  // The photo first: `onGroupMemberPhotoLost` restores a member's photo copy from the profile, and
+  // the group writes below would otherwise give it one to restore.
+  const profile = await db.doc(`users/${uid}`).get();
+  if (profile.get("photoId")) await profile.ref.update({ photoId: FieldValue.delete() });
+
   // The name every group copies. Entry and sync marker in one batch per group, as `updateProfile`
   // writes them, so a reader's cache can settle.
   for (const group of memberOf.docs) {
