@@ -23,7 +23,7 @@
 
 ## 2. Ownership before archive
 
-- [ ] 2.1 Check that every unmet row of `design.md`'s compliance map still names an open owner
+- [x] 2.1 Check that every unmet row of `design.md`'s compliance map still names an open owner
   issue (TUR-36 to TUR-41, TUR-46, TUR-62 to TUR-64), and update any the director has since
   renamed or merged. Verify each with `gh issue view`.
 - [ ] 2.2 Run `openspec validate offline-first-contract --strict` and verify it reports the change
