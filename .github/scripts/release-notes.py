@@ -15,10 +15,8 @@ import sys
 import time
 from pathlib import Path
 
-import jwt
-import requests
-from google.oauth2 import service_account
-from google.auth.transport.requests import AuthorizedSession
+# The store clients are imported where they are used, so test_release_notes.py can load this file
+# with nothing installed.
 
 WHATSNEW = Path(__file__).resolve().parent.parent / "whatsnew"
 PACKAGE_NAME = "com.geoviksoft.turnia"
@@ -39,6 +37,9 @@ def notes() -> dict[str, str]:
 
 
 def play(version_code: str) -> None:
+    from google.auth.transport.requests import AuthorizedSession
+    from google.oauth2 import service_account
+
     credentials = service_account.Credentials.from_service_account_info(
         json.loads(os.environ["PLAY_SERVICE_ACCOUNT_JSON"]),
         scopes=["https://www.googleapis.com/auth/androidpublisher"],
@@ -64,7 +65,10 @@ def play(version_code: str) -> None:
     print(f"Play: notes set on versionCode {version_code} ({', '.join(notes())})")
 
 
-def asc_session() -> requests.Session:
+def asc_session():
+    import jwt
+    import requests
+
     now = int(time.time())
     token = jwt.encode(
         {"iss": os.environ["ASC_ISSUER_ID"], "iat": now, "exp": now + 15 * 60, "aud": "appstoreconnect-v1"},
@@ -82,26 +86,31 @@ def asc_locale(play_language: str) -> str:
     return {"it-IT": "it"}.get(play_language, play_language)
 
 
-def testflight(build_number: str) -> None:
-    session = asc_session()
-
+def find_app(session) -> dict:
     app = session.get(f"{ASC_API}/apps", params={"filter[bundleId]": BUNDLE_ID})
     app.raise_for_status()
-    app = app.json()["data"][0]
-    primary_locale = app["attributes"]["primaryLocale"]
+    return app.json()["data"][0]
 
+
+def find_build(session, app_id: str, build_number: str) -> dict:
     # A build only appears once App Store Connect has received it; processing can take a while.
     for _ in range(30):
         builds = session.get(
-            f"{ASC_API}/builds", params={"filter[app]": app["id"], "filter[version]": build_number}
+            f"{ASC_API}/builds", params={"filter[app]": app_id, "filter[version]": build_number}
         )
         builds.raise_for_status()
         if builds.json()["data"]:
-            break
+            return builds.json()["data"][0]
         time.sleep(60)
-    else:
-        sys.exit(f"::error::Build {build_number} never showed up in App Store Connect")
-    build = builds.json()["data"][0]["id"]
+    sys.exit(f"::error::Build {build_number} never showed up in App Store Connect")
+
+
+def testflight(build_number: str) -> None:
+    session = asc_session()
+
+    app = find_app(session)
+    primary_locale = app["attributes"]["primaryLocale"]
+    build = find_build(session, app["id"], build_number)["id"]
 
     existing = session.get(f"{ASC_API}/builds/{build}/betaBuildLocalizations")
     existing.raise_for_status()
