@@ -643,6 +643,11 @@ workflow, on both platforms. It runs from `main` only, and once every chosen upl
 tags the commit `v<versionName>-<buildNumber>`. Neither app is uploaded unless the Android E2E suite
 passes first.
 
+Once the iOS build is processed, CI also prepares its **App Store version** — the same version name
+as Android's, the build attached, *What's New* from `.github/whatsnew` — so only *Submit for Review*
+is left by hand. CI never submits or releases, and never touches a version already submitted; the
+decisions are tested by `python3 .github/scripts/test_release_notes.py`.
+
 Deploying and releasing are the developer's. `.claude/hooks/guard_production.py` stops an agent's
 `firebase deploy`, release, push to `main` and force push; run its tests after changing it, with
 `python3 .claude/hooks/test_guard_production.py`.

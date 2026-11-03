@@ -1,6 +1,7 @@
 # Puts the notes in .github/whatsnew onto a build that is already uploaded: Play's internal-track
-# release and TestFlight's "What to Test". Run it from Actions after editing the notes, or let
-# release.yml call it for TestFlight, whose upload carries no notes of its own.
+# release, TestFlight's "What to Test", and the App Store version, which it also creates and attaches
+# the build to, leaving only "Submit for Review" by hand. Run it from Actions after editing the notes,
+# or let release.yml call it for iOS, whose upload carries no notes of its own.
 
 name: Release notes
 
@@ -21,6 +22,11 @@ on:
           - android
           - ios
 
+      dryRun:
+        description: Dry run — only report what would change, without writing to any store
+        type: boolean
+        default: false
+
   workflow_call:
     inputs:
       buildNumber:
@@ -29,6 +35,15 @@ on:
       platforms:
         type: string
         required: true
+      # The version name the release gave both apps; the App Store step refuses a build with another.
+      versionName:
+        type: string
+        required: false
+        default: ""
+      dryRun:
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -36,8 +51,20 @@ permissions:
 jobs:
   release-notes:
     runs-on: ubuntu-latest
-    # TestFlight can take a while to finish processing a build before it accepts notes.
-    timeout-minutes: 40
+    # App Store Connect can take a while to show a build and longer to finish processing it, and the
+    # App Store step waits for both.
+    timeout-minutes: 75
+    # Two runs planning the same App Store version at once would both try to create it.
+    concurrency:
+      group: release-notes
+      cancel-in-progress: false
+    # An explicit bash runs with pipefail, so a script that fails is not hidden by the `| tee` after it.
+    defaults:
+      run:
+        shell: bash
+    env:
+      # The waits last minutes; without this the log stays empty until the step ends.
+      PYTHONUNBUFFERED: "1"
     steps:
       - uses: actions/checkout@v5
 
@@ -45,6 +72,8 @@ jobs:
         id: build
         env:
           BUILD: ${{ inputs.buildNumber }}
+          VERSION_NAME: ${{ inputs.versionName }}
+          DRY_RUN: ${{ inputs.dryRun }}
         run: |
           if [ -z "$BUILD" ]; then
             last=$(git ls-remote --tags --refs origin 'v*' \
@@ -56,10 +85,31 @@ jobs:
               exit 1
             fi
             BUILD=${last##*-}
+            # The tag names the version both apps shipped as, which the App Store step checks.
+            VERSION=${last#v}
+            VERSION=${VERSION%-*}
             echo "Last release: $last"
           fi
           echo "number=$BUILD" >> "$GITHUB_OUTPUT"
+          echo "versionName=${VERSION_NAME:-$VERSION}" >> "$GITHUB_OUTPUT"
           echo "### Release notes for build \`$BUILD\`" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "Dry run: nothing is written to any store." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # What every store gets, so the run's summary shows the text and not only that it was set.
+      - name: Preview the notes
+        run: |
+          {
+            echo "#### Notes"
+            for file in .github/whatsnew/whatsnew-*; do
+              echo
+              echo "**${file##*/whatsnew-}** · $(wc -m < "$file" | tr -d ' ') characters"
+              echo
+              sed 's/^/> /' "$file"
+              echo
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/setup-python@v6
         with:
@@ -72,7 +122,7 @@ jobs:
         if: inputs.platforms == 'both' || inputs.platforms == 'android'
         env:
           PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
-        run: python3 .github/scripts/release-notes.py play "${{ steps.build.outputs.number }}" | tee -a "$GITHUB_STEP_SUMMARY"
+        run: python3 .github/scripts/release-notes.py play "${{ steps.build.outputs.number }}" ${{ inputs.dryRun && '--dry-run' || '' }} 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Update TestFlight
         if: inputs.platforms == 'both' || inputs.platforms == 'ios'
@@ -80,4 +130,18 @@ jobs:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
-        run: python3 .github/scripts/release-notes.py testflight "${{ steps.build.outputs.number }}" | tee -a "$GITHUB_STEP_SUMMARY"
+        run: python3 .github/scripts/release-notes.py testflight "${{ steps.build.outputs.number }}" ${{ inputs.dryRun && '--dry-run' || '' }} 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+
+      # Never submits for review or releases: the version stays in App Store Connect until the
+      # developer submits it. It does not depend on TestFlight's notes, so it runs even if those failed.
+      - name: Prepare the App Store version
+        if: ${{ !cancelled() && steps.build.outcome == 'success' && (inputs.platforms == 'both' || inputs.platforms == 'ios') }}
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+          VERSION_NAME: ${{ steps.build.outputs.versionName }}
+        run: |
+          python3 .github/scripts/release-notes.py appstore "${{ steps.build.outputs.number }}" \
+            ${VERSION_NAME:+--version-name "$VERSION_NAME"} ${{ inputs.dryRun && '--dry-run' || '' }} \
+            2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
