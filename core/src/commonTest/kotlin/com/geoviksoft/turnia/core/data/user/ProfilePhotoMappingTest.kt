@@ -9,8 +9,6 @@ import com.geoviksoft.turnia.core.data.datasource.firestore.doc.UserDocument
 import com.geoviksoft.turnia.core.data.group.mappers.GroupMapper
 import com.geoviksoft.turnia.core.data.user.mappers.UserDocumentMapper
 import com.geoviksoft.turnia.core.domain.model.UserId
-import kotlinx.serialization.builtins.MapSerializer
-import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlin.test.Test
@@ -40,24 +38,6 @@ class ProfilePhotoMappingTest {
         )
 
         assertEquals("p1", group.members.single().photoId)
-    }
-
-    /**
-     * An admin's group save sends `members` back whole, as it read it: a member's photo survives only
-     * if the document it is read into keeps the field.
-     */
-    @Test
-    fun aGroupSaveWritesThePhotosItRead() {
-        val serializer = MapSerializer(String.serializer(), GroupMemberDocument.serializer())
-        val read = Json.decodeFromString(
-            serializer,
-            """{"bruno":{"name":"Bruno","username":"bruno","photoId":"p1"},"carla":{"name":"Carla","username":"carla"}}""",
-        )
-
-        val written = Json.decodeFromString(serializer, Json.encodeToString(serializer, read))
-
-        assertEquals("p1", written.getValue("bruno").photoId)
-        assertNull(written.getValue("carla").photoId)
     }
 
     /** A group save merges what an admin edits and nothing else, so it can never wipe a member's photo. */

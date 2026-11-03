@@ -157,10 +157,11 @@ class GroupRepositoryImpl(
             // The creator is a member from the start, so their name has to be here too: the
             // calendar reads it off the group and nothing else would ever add it.
             members = mapOf(
+                // No photo: the copy is the server's to make. `onGroupMemberPhotoLost` reads it from
+                // the profile when the group is created, where this session's might be stale.
                 userId.value to GroupMemberDocument(
                     name = user.displayName.orEmpty(),
                     username = user.username,
-                    photoId = user.photoId,
                 )
             )
         )
@@ -182,9 +183,7 @@ class GroupRepositoryImpl(
         val userId = user.id
 
         val current = groupFirestore.get(group.id).valueOrNull()
-        val memberUids = current?.doc?.memberUids ?: listOf(userId.value)
         val adminUids = current?.doc?.adminUids ?: listOf(userId.value)
-        val revokedUids = current?.doc?.revokedUids.orEmpty()
 
         // A group without a code is a group nobody can join. The screens mint one up front so the
         // admin can read it before saving; this is what catches a group that arrived without.
@@ -192,7 +191,10 @@ class GroupRepositoryImpl(
             if (group.invitationCode.isBlank()) group.copy(invitationCode = createInvitationCode())
             else group
 
-        val edit = GroupEditDocument.of(groupMapper.map(coded, memberUids, adminUids, revokedUids))
+        // Membership is never sent, so none is mapped: the edit carries only what an admin edits.
+        val edit = GroupEditDocument.of(
+            groupMapper.map(coded, memberUids = emptyList(), adminUids = emptyList(), revokedUids = emptyList())
+        )
 
         groupFirestore.update(group.id, edit).errorOrNull()?.let { error ->
             Logger.e(TAG, "Failed to save group: $error")

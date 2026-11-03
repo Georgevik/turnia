@@ -63,8 +63,8 @@ data class GroupEditDocument(
 data class GroupMemberDocument(
     @SerialName("name") val name: String,
     @SerialName("username") val username: String,
-    // Kept here, not only on the profile, so a new photo reaches colleagues with the group. A
-    // group save writes this map back whole, so a member's photo survives only if it is read here.
+    // Kept here, not only on the profile, so a new photo reaches colleagues with the group. Written
+    // by the server alone; a client never sends `members` back (see GroupEditDocument).
     @SerialName("photoId") val photoId: String? = null,
 )
 
