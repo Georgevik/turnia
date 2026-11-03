@@ -2,7 +2,7 @@
 
 ## 1. The skip decision
 
-- [ ] 1.1 Add `.github/e2e-ignored-paths.txt` with the ignore list from the spec (one `fnmatch` pattern per line, a header saying `*` also crosses `/`) and verify it holds exactly the paths the explore settled
+- [x] 1.1 Add `.github/e2e-ignored-paths.txt` with the ignore list from the spec (one `fnmatch` pattern per line, a header saying `*` also crosses `/`) and verify it holds exactly the paths the explore settled
 - [ ] 1.2 Add `.github/scripts/e2e-needed.py`, reading changed paths on stdin and writing `run=true|false` to `$GITHUB_OUTPUT` (stdout when unset), and verify `printf 'CLAUDE.md\ncore/x.kt\n' | python3 .github/scripts/e2e-needed.py .github/e2e-ignored-paths.txt` prints `run=true`
 - [ ] 1.3 Add `.github/scripts/test_e2e_needed.py` covering every skip scenario of the spec plus the empty list, and verify `python3 .github/scripts/test_e2e_needed.py` passes on Python 3.9
 - [ ] 1.4 Run that test in the `pr-checks` job of `pr-check.yml` and verify the job's step list shows it next to the production guard's test

@@ -1,0 +1,13 @@
+# Paths that cannot change what the Android E2E suite runs. A pull request skips the suite only when
+# every file it changes matches one of these; anything else runs it, so when in doubt leave a path out.
+# Read by .github/scripts/e2e-needed.py with Python's fnmatch, where * also crosses /: *.md is any
+# Markdown file at any depth, and openspec/* is the whole tree under openspec/.
+*.md
+openspec/*
+docs/*
+store/*
+.claude/*
+firebase/hosting/*
+app/iosApp/*
+LICENSE
+pendingTests.md
