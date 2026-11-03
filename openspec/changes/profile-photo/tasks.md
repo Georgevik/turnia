@@ -161,7 +161,7 @@
 
   In `e2eModule`, bind a fake that returns a bundled test image. Verify that the app builds on both
   platforms and that the fake is used in 5.3.
-- [ ] 4.5 Add our own circular crop in common Compose:
+- [x] 4.5 Add our own circular crop in common Compose:
   - the picked image under a fixed circle, moved and zoomed with `transformable`, never letting the
     circle leave the image;
   - *Cancel* and *Use*;
