@@ -152,7 +152,7 @@
 
   Add a test tag on the photo layer. Verify with previews for photo, loading and fallback, and with
   `assembleDebug`.
-- [ ] 4.4 Add a `PhotoPicker` interface with our own `expect`/`actual`, bound in Koin. It returns the
+- [x] 4.4 Add a `PhotoPicker` interface with our own `expect`/`actual`, bound in Koin. It returns the
   picked image's bytes, or nothing when the user cancels:
   - Android: the system Photo Picker (`PickVisualMedia`, images only) through an activity result
     launcher, read with the `ContentResolver`;

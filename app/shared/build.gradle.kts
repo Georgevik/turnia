@@ -48,6 +48,8 @@ kotlin {
             // The per-app language: AppCompatDelegate stores it and applies it from API 24.
             implementation(libs.androidx.appcompat)
             implementation(libs.play.services.ads)
+            // The system photo picker's activity result launcher.
+            implementation(libs.androidx.activity.compose)
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.compose.uiTooling)
         }
