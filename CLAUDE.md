@@ -427,6 +427,7 @@ What a user is expected to cost, per action and per day, is in [firebase/firesto
 | a listener (document or query) | subscribe through `.trackedSnapshots(TAG, "operation")` instead of `.snapshots` — never `.snapshots` + `trackData` |
 | `set` / `updateFields` / `delete` | `trackWrite(TAG, "operation")` on the line **after** the call |
 | `httpsCallable(NAME)` on a Cloud Function | `trackFunction(NAME)` on the line **before** the call |
+| a Cloud Storage upload or download | `trackStorage(TAG, "operation", UPLOAD \| DOWNLOAD, bytes)` on the line **after** the transfer; never for a hit in the image cache |
 
 `TAG` is the reporting class's own log tag, and `operation` names the **call inside it**: usage is counted per class *and per query*, so the audit says who spent the reads, how many, and through which of that class's calls — the only one of the three you can act on. Function calls are the exception: they are counted per callable, which is already both.
 

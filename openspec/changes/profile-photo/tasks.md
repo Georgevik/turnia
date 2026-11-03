@@ -95,7 +95,7 @@
 
   Verify with unit tests: mapping both ways, and a test asserting that the `members` a group save
   writes back keep every `photoId` (`ProfilePhotoMappingTest`; end to end in 5.3).
-- [ ] 3.2 Add `trackStorage(tag, operation, bytes)` to `FirestoreAudit`, with a Storage block in
+- [x] 3.2 Add `trackStorage(tag, operation, bytes)` to `FirestoreAudit`, with a Storage block in
   the summary (uploads, downloads, KB per class) printed apart from Firestore and Functions. Add its
   row to the *Firestore usage tracking* table in `CLAUDE.md`. Verify with a unit test on the summary
   text.
