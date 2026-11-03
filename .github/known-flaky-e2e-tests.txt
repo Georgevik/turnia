@@ -1,1 +1,0 @@
-com.geoviksoft.turnia.e2e.flows.ShiftSetupFlowsTest#editingTimesAndAddingAShift_createsWhatIsOnTheList

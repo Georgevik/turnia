@@ -12,8 +12,10 @@ on:
 
 # Not `release`: a called workflow in its caller's group is cancelled as a deadlock. Called from
 # Release, github.workflow is the caller's name, so a standalone run never queues behind a release.
+# A manual dispatch gets a group of its own: measuring flakiness takes several runs side by side,
+# and a shared group would cancel every pending one but the last.
 concurrency:
-  group: ${{ github.workflow }}-android-e2e
+  group: ${{ github.workflow }}-android-e2e${{ github.workflow == 'AndroidE2E' && github.event_name == 'workflow_dispatch' && format('-{0}', github.run_id) || '' }}
   cancel-in-progress: false
 
 permissions:

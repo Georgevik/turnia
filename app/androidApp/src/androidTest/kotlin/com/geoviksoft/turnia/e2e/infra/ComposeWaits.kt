@@ -1,11 +1,13 @@
 package com.geoviksoft.turnia.e2e.infra
 
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
 import com.geoviksoft.turnia.core.domain.analytics.AnalyticsEvent
 
 // Long enough for a first read from the emulator, or a callable's cold start, to land on screen.
@@ -49,12 +51,15 @@ private fun ComposeTestRule.count(matcher: SemanticsMatcher, useUnmergedTree: Bo
     runCatching { onAllNodes(matcher, useUnmergedTree).fetchSemanticsNodes().size }.getOrNull()
 
 /**
- * A click lands where the node is drawn, so one scrolled out of view — below the fold, or behind
- * the keyboard — is brought into view first. Nodes outside any scrollable just get clicked.
+ * Clicks the node through its own click action. A tap is aimed at where the node was when it was
+ * looked up, on the test thread, and lands later on the main thread: a screen that moved in between
+ * — the keyboard coming up, content arriving above — takes the tap somewhere else, and on a slow CI
+ * emulator that happens. A node with no click action is still tapped, brought into view first.
  */
 internal fun SemanticsNodeInteraction.scrollAndClick(): SemanticsNodeInteraction {
     runCatching { performScrollTo() }
-    return performClick()
+    val clickable = SemanticsActions.OnClick in fetchSemanticsNode().config
+    return if (clickable) performSemanticsAction(SemanticsActions.OnClick) else performClick()
 }
 
 /**
