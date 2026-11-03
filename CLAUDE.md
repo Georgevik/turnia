@@ -221,10 +221,11 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
   definitions*), or they show only in DebugView and BigQuery. Event-scoped dimensions:
   `screen_name`, `method`, `audience`, `milestone`, `auto_approve`, `type_count`, `all_day`,
   `multi_month`, `via`, `type`, `interacted`, `custom_type_count`, `kind`, `choice`, `scope`,
-  `event_count`, `skipped_count`. User-scoped dimensions: `group_count`, `is_admin`, `app_language`.
+  `skipped_count`. User-scoped dimensions: `group_count`, `is_admin`, `app_language`.
   `choice` is registered under the name `choice_onboard`, since the property already had a
   `choice`. Custom metric: `events_moved`, over `event_count`. A dimension groups by value, so a number
-  that a report has to **sum** also needs a metric. A new one is added here and to the definitions
+  that a report has to **sum** is registered as a metric instead. GA refuses to register one
+  parameter as both. A new one is added here and to the definitions
   tables of the dashboard guide.
 - **The usage dashboard is built by hand from [docs/analytics-dashboard.md](docs/analytics-dashboard.md)**,
   a click-by-click guide in Spanish: the property settings, the custom definitions, a *Turnia*

@@ -62,9 +62,10 @@ by hand, and groups per day matter as much as events per day.
 ### `event_count` is registered as a custom metric
 
 A custom dimension groups by value. Summing the events moved needs a **custom metric**, named
-`events_moved` in the console. `event_count`
-stays registered as a dimension too, as `CLAUDE.md` already lists it: GA allows the same parameter to
-be both. The other numeric parameters (`type_count`, `milestone`, `custom_type_count`,
+`events_moved` in the console. GA refuses to register one parameter as both a dimension and a
+metric, which surfaced when the user built the dashboard. So `event_count` moves from the dimensions
+`CLAUDE.md` listed to a metric only, and a property that already had it as a dimension archives that
+dimension first. No report used it as a dimension. The other numeric parameters (`type_count`, `milestone`, `custom_type_count`,
 `skipped_count`) stay dimensions only. The dashboard breaks them down by value and never sums them,
 and adding metrics nobody reads would only spend the property's quota.
 

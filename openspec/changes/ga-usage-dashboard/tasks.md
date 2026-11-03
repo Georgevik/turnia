@@ -9,6 +9,7 @@
 
 - [x] 2.1 Add the steps to create the four Library reports (*Daily summary*, *Events created*, *Feature use*, *Users*) and the "Turnia" collection that publishes them. Each report gets the template to start from, dimensions, metrics and filters with exact values, how to save it, and what the result should look like. *Events created* states that the total of events added excludes moves. Verify every event name in the filters exists in `AnalyticsEvent.kt`.
 - [x] 2.2 Add a fifth report, *Groups created* (`group_created` per day, keyed on *Date*), to the guide and the collection, as the user chose after review, and align proposal.md and design.md with it. Verify the guide's report count, section numbers and collection order all say five.
+- [x] 2.3 Register `event_count` as a custom metric only, since GA refuses a parameter as both a dimension and a metric: drop it from the guide's dimensions table, tell a property that already has it to archive the dimension first, and align `CLAUDE.md` and design.md. Verify the guide counts 16 event-scoped dimensions and 1 metric.
 
 ## 3. Guide: Explorations
 

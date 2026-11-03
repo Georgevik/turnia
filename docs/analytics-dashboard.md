@@ -111,7 +111,6 @@ Para cada fila de la tabla de abajo:
 | `choice_onboard` | `choice` | Respuesta a "¿Trabajas en equipo?" | `onboard_team_answered` |
 | `kind` | `kind` | Primer evento: de un tipo o puntual | `first_event_added` |
 | `scope` | `scope` | Mover a grupo: solo uno o todos | `personal_events_moved` |
-| `event_count` | `event_count` | Eventos movidos a un grupo | `personal_events_moved` |
 | `skipped_count` | `skipped_count` | Eventos que no se movieron | `personal_events_moved` |
 | `type` | `type` | Tipo de notificación abierta | `notification_opened` |
 | `screen_name` | `screen_name` | Pantalla vista | `screen_view` |
@@ -152,10 +151,14 @@ métrica.
    - **Unidad de medida** (*Unit of measurement*): **Estándar** (*Standard*)
 3. Haz clic en **Guardar** (*Save*).
 
-GA permite que el mismo parámetro sea a la vez dimensión y métrica, así que `event_count` sigue
-también en la tabla de dimensiones.
+GA no deja registrar un mismo parámetro como dimensión y como métrica: por eso `event_count` no
+está en la tabla de dimensiones. Si ya lo registraste como dimensión y al guardar la métrica GA dice
+*Ya hay una dimensión o métrica registrada con este nombre de parámetro* (*A dimension or metric
+with this parameter name is already registered*), archiva antes esa dimensión: pestaña
+**Dimensiones personalizadas** (*Custom dimensions*), fila `event_count`, menú `⋮` → **Archivar**
+(*Archive*). Ningún informe de esta guía la usa.
 
-Resultado: la pestaña *Dimensiones personalizadas* lista 20 (17 de evento y 3 de usuario), y
+Resultado: la pestaña *Dimensiones personalizadas* lista 19 (16 de evento y 3 de usuario), y
 *Métricas personalizadas* lista 1.
 
 ## 3. La colección "Turnia"
@@ -507,9 +510,9 @@ mal, no se puede editar: archívala (menú `⋮` → **Archivar**, *Archive*) y 
   [sección 2](#2-definiciones-personalizadas).
 - Búscala por el **nombre** que le diste (`method`, `events_moved`…), no por la descripción.
 - En una exploración, primero hay que **importarla** en la columna *Variables* (botón **+**).
-- Si GA no te deja crear la métrica `events_moved` porque `event_count` ya es una dimensión, crea
-  la métrica igualmente con otro nombre, o archiva la dimensión `event_count` (no la usa ningún
-  informe de esta guía).
+- Si GA no te deja crear la métrica `events_moved` porque el parámetro `event_count` ya está
+  registrado, archiva la dimensión `event_count` y vuelve a crear la métrica (ver
+  [2.3](#23-métrica-eventos-movidos)).
 
 ### Se aplican umbrales de datos
 
