@@ -108,13 +108,19 @@ Para cada fila de la tabla de abajo:
 | `multi_month` | `multi_month` | Evento puntual que abarca varios meses | `one_off_event_created` |
 | `via` | `via` | Por dónde llegó: configuración inicial, panel de añadir, enlace… | `onboard_shift_*`, `invitation_opened` |
 | `interacted` | `interacted` | Tocó el panel antes de salir | `onboard_shift_skipped`, `onboard_shift_completed` |
-| `choice` | `choice` | Respuesta a "¿Trabajas en equipo?" | `onboard_team_answered` |
+| `choice_onboard` | `choice` | Respuesta a "¿Trabajas en equipo?" | `onboard_team_answered` |
 | `kind` | `kind` | Primer evento: de un tipo o puntual | `first_event_added` |
 | `scope` | `scope` | Mover a grupo: solo uno o todos | `personal_events_moved` |
 | `event_count` | `event_count` | Eventos movidos a un grupo | `personal_events_moved` |
 | `skipped_count` | `skipped_count` | Eventos que no se movieron | `personal_events_moved` |
 | `type` | `type` | Tipo de notificación abierta | `notification_opened` |
 | `screen_name` | `screen_name` | Pantalla vista | `screen_view` |
+
+En casi todas las filas, el nombre y el parámetro coinciden. La excepción es `choice_onboard`, cuyo
+parámetro es `choice`: el nombre `choice` ya está ocupado en la propiedad, pero la app envía
+`choice`, y lo que hay que escribir en *Parámetro de evento* es siempre lo que envía la app. Si GA
+dice que el parámetro `choice` ya está registrado, es que otra dimensión ya lo recoge: usa esa en
+lugar de `choice_onboard` y no crees otra.
 
 `screen_name` es opcional: GA ya lo muestra en la dimensión **Título de la página y nombre de la
 pantalla** (*Page title and screen name*). Si al guardarla GA da un error, sáltala; no se pierde
@@ -393,7 +399,7 @@ prompt de compartir. Es una exploración con tres pestañas.
 2. Cambia el nombre de la exploración por `Onboarding y prompts`, y el **Intervalo de fechas**
    (*Date range*) por **Últimos 90 días** (*Last 90 days*).
 3. En *Variables*, importa las dimensiones **Nombre del evento** (*Event name*), `via`,
-   `interacted`, `choice`, `audience` y `milestone`, y las métricas **Recuento de eventos** (*Event
+   `interacted`, `choice_onboard`, `audience` y `milestone`, y las métricas **Recuento de eventos** (*Event
    count*) y **Usuarios totales** (*Total users*).
 4. Haz doble clic en el nombre de la pestaña (*Formato libre 1*) y llámala
    `Configuración de turnos`.
@@ -418,11 +424,11 @@ normal.
 
 1. En la pestaña `Configuración de turnos`, menú de la flecha junto a su nombre → **Duplicar**
    (*Duplicate*). Llama a la copia `Equipo`.
-2. En **Filas** (*Rows*), quita `via` e `interacted` y arrastra `choice`.
+2. En **Filas** (*Rows*), quita `via` e `interacted` y arrastra `choice_onboard`.
 3. Cambia el valor del filtro a `onboard_team_.*`.
 
 Resultado: `onboard_team_shown` (veces que se mostró la pregunta) y `onboard_team_answered` por
-`choice`: `create` (crear un grupo), `join` (tengo un código) o `dismissed` (ahora no).
+`choice_onboard`: `create` (crear un grupo), `join` (tengo un código) o `dismissed` (ahora no).
 
 **Tercera pestaña:**
 
