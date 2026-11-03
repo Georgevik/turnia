@@ -66,22 +66,25 @@ nobody could tell an unhandled action from an undecided one, which is today's pr
 |---|---|---|
 | Event actions work locally at once | Met | — |
 | Shift types and the shift setup work locally at once | Types and setup hang until reconnect | TUR-39 |
-| … own colour for a group type shows at once | Shows only once the server acknowledges it | **Gap A** |
-| Profile and preferences work locally at once | Avatar save hangs with a spinner; notifications, hiding and language are met | **Gap B** |
+| … own colour for a group type shows at once | Shows only once the server acknowledges it | TUR-64 |
+| Profile and preferences work locally at once | Avatar save hangs with a spinner; notifications, hiding and language are met | TUR-63 |
 | Signing out works at once offline | Hangs on the push-token write | TUR-38 |
 | A local change is reported only when the server rejects it | Rejections are lost in silence | TUR-37 |
 | Group and membership actions need a connection | Creating or editing a group hangs, and the write lands on reconnect; callables fail with a generic error | TUR-39, TUR-41 |
 | Shift transfer and move actions need a connection | Generic error | TUR-41 |
-| Account, sharing and people actions need a connection | Stopping sharing is a queued write; the rest fail with a generic error | **Gap C**, TUR-41 |
+| Account, sharing and people actions need a connection | Stopping sharing is a queued write; the rest fail with a generic error | TUR-62, TUR-41 |
 | An action that needs a connection says so | No *No connection* error; callables can take ~70 s | TUR-41 |
 | … keeps what the user entered | Mostly met; to verify per screen with the error | TUR-41 |
 | … never runs later on its own | Callables met; creating or editing a group is queued | TUR-39 |
 | A screen shows what the device holds | Calendars met; the launch can block on consent | TUR-40 |
-| A screen with nothing cached says *No connection* | Generic errors or empty states | **Gap D** |
+| A screen with nothing cached says *No connection* | Generic errors or empty states | TUR-41 |
 | (testing the flows: process death, iOS) | — | TUR-36, TUR-46 |
 
-Gaps A–D have no issue yet. They were reported to the director, who files them or folds them in
-before this change is archived.
+The four gaps the explore found were filed by the director, all blocked by TUR-34:
+- TUR-64: one's own type colour;
+- TUR-63: the avatar save, also blocked by TUR-56;
+- TUR-62: stopping sharing;
+- screens with nothing cached: folded into TUR-41.
 
 ### D3. A new capability beside `offline-event-visibility`
 
@@ -131,8 +134,7 @@ Neither overlaps these sections.
 ## Risks / Trade-offs
 
 - **[The main spec states behaviour the app does not have yet]** → The compliance map names an owner
-  for every unmet requirement, and gaps A–D are filed before archive. A requirement with no owner
-  must not reach `openspec/specs`.
+  issue for every unmet requirement. A requirement with no owner must not reach `openspec/specs`.
 - **[Unsent changes are stranded if the user signs out offline and then clears the app's data, or
   only ever signs in elsewhere]** → Accepted by the developer, in exchange for never showing
   pending (D5).

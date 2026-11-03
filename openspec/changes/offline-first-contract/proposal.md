@@ -32,7 +32,7 @@ tests have anything to obey.
 - `CLAUDE.md` gains an *Offline-first contract* section with the table, and offline-first joins
   its *Goals*.
 - No code changes in this change. The contract is ahead of the code on purpose. Each requirement that is
-  not yet met is owned by an existing issue or by a follow-up named in `design.md`.
+  not yet met is owned by an issue named in `design.md`.
 
 ## Capabilities
 
@@ -64,10 +64,10 @@ requirement contradicts the contract:
   - TUR-40: an offline launch reaches the calendar;
   - TUR-41: the *No connection* error, the bounded wait, input kept;
   - TUR-36 and TUR-46: the offline flows to test.
-- **Gaps no issue covers yet** (reported to the director):
-  - the avatar save hangs;
-  - one's own colour for a group type shows only once the server confirms it;
-  - stopping sharing is a queued write today;
-  - screens with nothing cached show generic errors.
+- **Gaps the explore found**, filed by the director:
+  - TUR-63: the avatar save hangs;
+  - TUR-64: one's own colour for a group type shows only once the server confirms it;
+  - TUR-62: stopping sharing is a queued write today;
+  - TUR-41 (folded in): screens with nothing cached show generic errors.
 - **In flight:** TUR-56 (profile photo) is recorded as its own change decides. Uploading and removing
   a photo need a connection and keep their 30 s upload timeout.
