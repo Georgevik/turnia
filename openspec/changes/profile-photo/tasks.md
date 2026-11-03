@@ -129,7 +129,7 @@
 
   Verify with unit tests over fakes: a success logs the event once, and a failed upload, a failed
   publish and a removal log nothing.
-- [ ] 3.5 Add rows to `firebase/firestore-usage.md`: upload a photo (1 upload, 1 call; server writes
+- [x] 3.5 Add rows to `firebase/firestore-usage.md`: upload a photo (1 upload, 1 call; server writes
   for the profile, the marker and the reservation, plus 2 per group; each member pays 1 group read
   per shared group), remove a photo, and see photos (0 Firestore reads, 1 Storage download per
   photo version per device). Verify the numbers against the audit output of a manual upload on the
