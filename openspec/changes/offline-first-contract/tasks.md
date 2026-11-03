@@ -5,7 +5,7 @@
 - [x] 1.1 Add offline-first to *Goals* as one bullet: what the user does to their own data works
   with no connection, and what needs the server says so. Verify that it sits with the other goals
   and links to the new section.
-- [ ] 1.2 Add an *Offline-first contract* section right after *Data retention & local cache*. It
+- [x] 1.2 Add an *Offline-first contract* section right after *Data retention & local cache*. It
   holds:
   - the rule (D1) and its one exception;
   - the table of actions: local at once, needs a connection, reading;
