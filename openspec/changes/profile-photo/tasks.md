@@ -234,7 +234,7 @@
   Update the E2E count in `CLAUDE.md`. Verify all are green.
 - [ ] 6.3 On the iOS simulator, upload, crop and remove a photo and see a colleague's. Verify
   manually and note the result here.
-- [ ] 6.4 Take before and after screenshots of the profile screen, the avatar menu, the crop dialog,
+- [x] 6.4 Take before and after screenshots of the profile screen, the avatar menu, the crop dialog,
   a profile with a photo, and a group member list with photos. Verify they are saved under the
   change's `screenshots/`.
 
