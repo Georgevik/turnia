@@ -54,10 +54,13 @@ version in App Store Connect, so the only thing left by hand is **Submit for Rev
   workflow computed for **both** apps, so the App Store and Play show the same version; if the build
   reports another one, the job fails and changes nothing.
 - App Store Connect allows a single version waiting to be submitted. If one is there with an older
-  name that was never submitted, it is renamed to the new version rather than left in the way.
+  name that was never submitted, or was rejected, it is renamed to the new version rather than left in
+  the way. A version rejected only for its listing (*Metadata Rejected*) keeps its build and is left
+  alone, to be resubmitted as it is.
 - It attaches the build, and writes the public *What's New* on each language of the listing from
   `.github/whatsnew/`. A language with no file there gets the English (`en-GB`) text, and a file for a
-  language the listing does not have is not used; both show as warnings on the run.
+  language the listing does not have is not used; both show as warnings on the run. An app's very
+  first version has no *What's New*, so then the notes are skipped.
 - It **never** submits for review or releases, and it leaves alone any version that is already
   submitted, in review, approved or waiting for release: then it only warns, and the job stays green.
 

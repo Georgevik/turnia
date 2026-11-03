@@ -74,12 +74,13 @@ falling back to the deprecated `appStoreState`). States fall in three groups:
 
 | Group | States |
 |---|---|
-| editable | `PREPARE_FOR_SUBMISSION`, `DEVELOPER_REJECTED`, `REJECTED`, `METADATA_REJECTED`, `INVALID_BINARY` |
-| in flight | `WAITING_FOR_REVIEW`, `IN_REVIEW`, `READY_FOR_REVIEW`, `PENDING_DEVELOPER_RELEASE`, `PENDING_APPLE_RELEASE`, `PROCESSING_FOR_DISTRIBUTION`, `WAITING_FOR_EXPORT_COMPLIANCE`, `ACCEPTED` |
+| editable | `PREPARE_FOR_SUBMISSION`, `DEVELOPER_REJECTED`, `REJECTED`, `INVALID_BINARY` |
+| in flight | `METADATA_REJECTED` (its build stays and it is resubmitted as it is), `WAITING_FOR_REVIEW`, `IN_REVIEW`, `READY_FOR_REVIEW`, `PENDING_DEVELOPER_RELEASE`, `PENDING_APPLE_RELEASE`, `PROCESSING_FOR_DISTRIBUTION`, `WAITING_FOR_EXPORT_COMPLIANCE`, `ACCEPTED` |
 | done | anything else (`READY_FOR_DISTRIBUTION`, `READY_FOR_SALE`, `REPLACED_WITH_NEW_VERSION`, removed…) |
 
-The exact lists are checked against Apple's current API reference during the apply; an unknown state
-is treated as **in flight**, so a surprise never leads to a write.
+The lists match Apple's `AppVersionState` (and the deprecated `AppStoreVersionState` for the
+fallback); an unknown state is treated as **in flight**, so a surprise never leads to a write. Version
+names compare numerically with trailing zeros dropped, so `1.8` and `1.8.0` are the same version.
 
 `plan_version` returns one action:
 1. A version with this name exists: editable → **use** it; otherwise → **skip** ("already submitted
@@ -102,7 +103,8 @@ listed in the Proposal for confirmation.
 
 `PATCH /appStoreVersions/{id}/relationships/build` with the build, then `whatsNew` on each existing
 `appStoreVersionLocalizations` entry. App Store Connect copies a new version's localizations from
-the previous one, so they exist without the script creating any. A pure `plan_notes(locales, notes)`
+the previous one, so they exist without the script creating any. An app's first version takes no
+*What's New* (App Store Connect refuses it), so the notes are skipped while no version has been released. A pure `plan_notes(locales, notes)`
 maps each localization to its text (own file → en-GB fallback with a warning) and reports unused
 files. The script never `POST`s a localization.
 
@@ -133,7 +135,16 @@ an edit and deletes it instead of committing, TestFlight and the App Store skip 
 `release-notes.yml` gets a `dryRun` boolean input (default `false`) on both `workflow_dispatch` and
 `workflow_call`; `release.yml` never sets it.
 
-### 9. Pure logic testable with the standard library
+### 9. Long waits and failures stay visible
+
+An App Store Connect token lives 15 minutes and the waits last up to an hour, so the session mints a
+token per request. The job runs bash with `pipefail`, `PYTHONUNBUFFERED=1` and `2>&1 | tee`, so a
+failing script fails its step and its message reaches the log and summary as it happens. The App
+Store step runs even when TestFlight's notes failed, since it does not depend on them. A manual run
+with no build number takes the version name from the last release tag, so the version-name check
+applies there too, and a job-level concurrency group keeps two runs from planning the same version.
+
+### 10. Pure logic testable with the standard library
 
 `jwt`, `requests` and `google.*` are imported inside the functions that use them, so
 `.github/scripts/test_release_notes.py` (plain `unittest`) imports the module with nothing installed

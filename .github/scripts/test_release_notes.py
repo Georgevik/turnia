@@ -67,6 +67,18 @@ class PlanVersionTest(unittest.TestCase):
     def test_orders_versions_numerically(self):
         self.assertGreater(rn.version_key("1.10.0"), rn.version_key("1.9.3"))
 
+    def test_a_short_name_is_the_same_version(self):
+        plan = rn.plan_version([V("a", "1.8", "PREPARE_FOR_SUBMISSION")], "1.8.0")
+        self.assertEqual(plan.action, "use")
+
+    def test_a_metadata_rejection_is_left_alone(self):
+        plan = rn.plan_version([V("a", "1.11.3", "METADATA_REJECTED")], "1.12.0")
+        self.assertEqual(plan.action, "skip")
+
+    def test_the_first_version_takes_no_whats_new(self):
+        self.assertFalse(rn.takes_whats_new([V("a", "1.0", "PREPARE_FOR_SUBMISSION")]))
+        self.assertTrue(rn.takes_whats_new([V("a", "1.0", "READY_FOR_DISTRIBUTION")]))
+
 
 class CheckVersionNameTest(unittest.TestCase):
     def test_a_build_of_the_release_version_passes(self):
@@ -76,6 +88,9 @@ class CheckVersionNameTest(unittest.TestCase):
         error = rn.check_version_name("1.11.3", "1.12.0")
         self.assertIn("1.11.3", error)
         self.assertIn("1.12.0", error)
+
+    def test_trailing_zeros_do_not_count(self):
+        self.assertIsNone(rn.check_version_name("1.12", "1.12.0"))
 
     def test_without_a_release_version_the_build_decides(self):
         self.assertIsNone(rn.check_version_name("1.11.3", None))
