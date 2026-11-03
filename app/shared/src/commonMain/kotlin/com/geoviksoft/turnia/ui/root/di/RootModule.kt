@@ -11,7 +11,7 @@ import com.geoviksoft.turnia.ui.signin.SignInViewModel
 import com.geoviksoft.turnia.ui.signin.createaccount.CreateAccountViewModel
 import com.geoviksoft.turnia.ui.splash.SplashViewModel
 import com.geoviksoft.turnia.ui.system.photo.ProfilePhotoCache
-import okio.FileSystem
+import com.geoviksoft.turnia.ui.system.photo.photoCacheDirectory
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
@@ -22,7 +22,7 @@ val rootModule: Module = module {
     single {
         val storage: ProfilePhotoStorage = get()
         ProfilePhotoCache(
-            directory = FileSystem.SYSTEM_TEMPORARY_DIRECTORY / "profile_photos",
+            directory = photoCacheDirectory(),
             download = { photo -> storage.download(photo).valueOrNull() },
         )
     }

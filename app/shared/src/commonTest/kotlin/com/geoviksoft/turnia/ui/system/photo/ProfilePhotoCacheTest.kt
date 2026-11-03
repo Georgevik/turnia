@@ -65,4 +65,14 @@ class ProfilePhotoCacheTest {
     fun aPhotoThatCannotBeHadIsNull() = runTest {
         assertNull(cache(available = null).load(photo))
     }
+
+    @Test
+    fun aPhotoThatCannotBeHadIsNotAskedForAgain() = runTest {
+        val cache = cache(available = null)
+
+        cache.load(photo)
+        cache.load(photo)
+
+        assertEquals(1, downloads.size)
+    }
 }
