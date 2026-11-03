@@ -159,6 +159,7 @@ class GroupRepositoryImpl(
                 userId.value to GroupMemberDocument(
                     name = user.displayName.orEmpty(),
                     username = user.username,
+                    photoId = user.photoId,
                 )
             )
         )
@@ -187,6 +188,7 @@ class GroupRepositoryImpl(
             userId.value to GroupMemberDocument(
                 name = user.displayName.orEmpty(),
                 username = user.username,
+                photoId = user.photoId,
             )
         )
 

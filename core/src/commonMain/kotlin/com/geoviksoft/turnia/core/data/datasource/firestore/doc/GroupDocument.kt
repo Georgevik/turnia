@@ -40,6 +40,9 @@ data class GroupDocument(
 data class GroupMemberDocument(
     @SerialName("name") val name: String,
     @SerialName("username") val username: String,
+    // Kept here, not only on the profile, so a new photo reaches colleagues with the group. A
+    // group save writes this map back whole, so a member's photo survives only if it is read here.
+    @SerialName("photoId") val photoId: String? = null,
 )
 
 /**

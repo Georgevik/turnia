@@ -58,6 +58,7 @@ class GroupMapper {
                     name = member.name,
                     username = member.username,
                     isAdmin = uid in doc.adminUids,
+                    photoId = member.photoId,
                 )
             }.sortedByDescending { it.isAdmin },
             // The uids are the source of truth for membership; the names are a copy that a member
