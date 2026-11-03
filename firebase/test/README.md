@@ -24,7 +24,7 @@ elsewhere, set `turnia.firebaseCli=/path/to/firebase` in `~/.gradle/gradle.prope
 CI starts them on its own, and the task then leaves them alone:
 
 ```bash
-cd firebase && firebase emulators:exec --only auth,firestore,functions --project turnia-23ebc "cd .. && ./gradlew :app:androidApp:connectedDebugAndroidTest"
+cd firebase && firebase emulators:exec --only auth,firestore,functions,storage --project turnia-23ebc "cd .. && ./gradlew :app:androidApp:connectedDebugAndroidTest"
 ```
 
 The run installs the debug app on the emulator, clears its data before every test and uninstalls
