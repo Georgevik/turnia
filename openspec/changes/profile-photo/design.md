@@ -103,11 +103,9 @@ The upload then moves to a staging prefix that only its owner can read.
 | `updateProfile` | Writes `members.{uid}.name` and `members.{uid}.username` as separate fields, no longer the whole entry. |
 | `acceptJoinRequest`, auto-approve `requestToJoinGroup` | Add `photoId` from the profile they already read, when it has one. |
 | Client group creation | The creator's entry carries their `photoId`. |
-| `GroupRepositoryImpl.updateGroup` | `GroupMemberDocument` gains `photoId: String? = null`, so the full `set` round-trips it. |
+| `GroupRepositoryImpl.updateGroup` | No longer sends `members`: it merges only the fields an admin edits (D11). `GroupMemberDocument` still gains `photoId`, so a member entry read anywhere keeps it. |
 | `deleteAccount` | Unchanged: it overwrites the entry with `{ name: "", username: "" }`, which is exactly the drop it needs. It also deletes `profilePhotos/{uid}/` with `bucket.deleteFiles({ prefix })`. |
 
-Making `updateGroup` stop sending `members` would be cleaner, but it changes a write path that
-already works for names. The round-trip is the smallest correct step.
 
 ### D5. Picking, cropping and encoding on the device
 
@@ -204,6 +202,43 @@ already works for names. The round-trip is the smallest correct step.
   TUR-21's, so the edit comes after #58 merges. Until then the photo flows pass locally and fail on
   CI's emulators.
 
+### D11. A released client must not leave a group without its photos
+
+**The problem.** A client released before this change knows `GroupMemberDocument` as `{ name,
+username }`. When an admin on such a build saves their group, `updateGroup` decodes `members` into
+that class, which drops `photoId`, and `GroupFirestore.update` then writes the whole document back
+with a `set` that has no merge. Every member's photo copy in that group is wiped. The rules allow it,
+since they freeze only `memberUids`, `adminUids` and `revokedUids`. A group an old client creates
+also starts without its creator's photo.
+
+**Server-side fix: `onGroupMemberPhotoLost`.** It is an `onDocumentWritten("groups/{groupId}")`
+trigger.
+- **When it acts:** for every uid in `memberUids` whose entry has a name but no `photoId`, and either
+  had one before the write or is in a group that was just created. A blank name is an anonymized
+  account.
+- **What it does:** it reads `users/{uid}`, and if the profile still has a `photoId` it writes it
+  back to that entry in one batch, together with the group's `updateAt` and marker.
+- **Why it cannot loop:** its own write leaves nothing lost, so the next run finds nothing to do.
+- **What it never touches:** an uid that left or was revoked is no longer in `memberUids`, and an
+  anonymized entry has a blank name.
+- **Account deletion:** `deleteAccount` clears the profile's `photoId` before anything else, so there
+  is nothing to restore.
+
+**Client-side fix.** `GroupFirestore.update` stops writing the whole document. It now writes only
+what an admin edits (name, colour, event types, invitation, `updateAt`) through a document of its
+own, with `merge`. This build therefore cannot wipe a field a later build adds, and `members` is
+never sent at all.
+
+**Alternatives rejected:**
+- *The owner's own app notices the loss and publishes again.* Nothing would heal until that person
+  opened the app.
+- *Moving the copies to `groups/{g}/sync/updates`, which clients only ever merge into.* It changes
+  decision 5's location and reworks what is already built.
+
+**Cost:** one invocation for every write to a group document. Those writes are rare: saves, joins,
+leaves, renames and photo fan-outs. On top of that, one read per photo that was lost, and one when a
+group is created.
+
 ## Risks / Trade-offs
 
 - **[No moderation until TUR-60]** An offensive photo is visible to every signed-in user until its
@@ -216,9 +251,8 @@ already works for names. The round-trip is the smallest correct step.
   on Android.
 - **[GitLive Storage may not expose `getBytes`, or `putData` from a `ByteArray`]** → `expect`/`actual`
   over the native handles. The decision stays, only some platform code is added.
-- **[`updateGroup` sends a stale `members` map]** An admin saving from a stale cache could put back an
-  old `photoId`, as it can already put back an old name. → The same exposure as today. Making
-  `updateGroup` stop writing `members` is a follow-up, not this change.
+- **[A released client wipes the photo copies when its admin saves the group]** → `onGroupMemberPhotoLost`
+  restores them as soon as the write lands, and this build no longer sends `members` at all (D11).
 - **[A colleague's cached profile still freezes their photo outside group screens]** People cards and
   search results come from listeners and markers, so they stay current. Join requests use the cached
   profile. → Acceptable. Group screens are where colleagues are seen.

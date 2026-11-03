@@ -85,6 +85,16 @@
 
   Verify that it passes on the emulators.
 
+- [ ] 2.8 Add the `onGroupMemberPhotoLost` trigger (`onDocumentWritten("groups/{groupId}")`, design
+  D11). It restores `members.{uid}.photoId` from the profile for each member in `memberUids` whose
+  named entry lost its photo, or lacks one on a new group, together with the group's `updateAt` and
+  marker. It skips uids outside `memberUids` and anonymized entries. `deleteAccount` clears the
+  profile's `photoId` first. Add its cost to `firebase/firestore-usage.md`. Verify in
+  `ProfilePhotoBackendTest`:
+  - a released client's whole-document save without `photoId` gets bruno's photo back;
+  - the restore triggers no second write (`updateAt` holds still afterwards);
+  - a member who left, and an anonymized entry, get nothing back.
+
 ## 3. Core data layer
 
 - [x] 3.1 Carry `photoId` through the model:
@@ -124,6 +134,12 @@
   per shared group), remove a photo, and see photos (0 Firestore reads, 1 Storage download per
   photo version per device). Verify the numbers against the audit output of a manual upload on the
   emulator.
+
+- [ ] 3.6 Stop `GroupFirestore.update` from writing the whole group: merge a document holding only
+  what an admin edits (name, colour, event types, invitation, `updateAt`), so `members` is never sent
+  and a field a later build adds survives this one. Verify with a unit test that the edit document
+  encodes no `members`, `memberUids`, `adminUids` or `revokedUids`, and end to end in 5.3 (an admin's
+  rename keeps bruno's photo).
 
 ## 4. Showing photos
 
