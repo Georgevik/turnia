@@ -607,8 +607,10 @@ The 68 critical happy paths run on an Android emulator against the Firebase emul
   robot matches breaks the suite.
 - A change to a Firestore field is not finished until the fixtures change with it.
 - The suite's CI job lives in `.github/workflows/android-e2e.yml`, runnable on its own from Actions.
-  The Release workflow calls it as its `android-e2e` job, and both uploads wait for it. Its
-  `runTests` checkbox (on by default) can skip it.
+  Every pull request to `main` runs it before the merge, through the `pr-e2e` check (see *Pull
+  requests*), and every push to `main` runs it again after the merge, as a safety net for two PRs
+  that pass apart and fail together. The Release workflow calls it as its `android-e2e` job, and both
+  uploads wait for it. Its `runTests` checkbox (on by default) can skip it.
 - **CI retries a failed test exactly once** (`run-e2e-with-retry.sh`), against the same running
   emulators — a CI-runner-speed flake fails twice in a row only by bad luck, a real regression fails
   both times. Local runs never retry: a failure there is the honest first-attempt signal. The job
@@ -656,8 +658,13 @@ A PR description has exactly three sections, in this order:
 - **Why?** — the context/motivation.
 - **How to test it** — concrete steps, not a restatement of the test suite.
 
-Every PR to `main` runs `.github/workflows/pr-check.yml` — jobs `pr-android`, `pr-ios` and `pr-checks` — the
-fast gate a merge waits for; the E2E suite is not part of it.
+Every PR to `main` runs `.github/workflows/pr-check.yml`, the gate a merge waits for: the fast jobs
+`pr-android`, `pr-ios` and `pr-checks`, and `pr-e2e`, the Android E2E suite's result. The suite takes
+about 30 minutes and runs on every push to the PR, cancelling the run that push made obsolete. It is
+skipped — and `pr-e2e` is green at once — only when every changed file is on
+[`.github/e2e-ignored-paths.txt`](.github/e2e-ignored-paths.txt): Markdown, `openspec/`, `docs/`,
+`store/`, `.claude/`, `firebase/hosting/`, `app/iosApp/` and a few others. It is an exclusion list, so a
+path that might matter stays off it.
 
 ## iOS signing & Apple setup
 
