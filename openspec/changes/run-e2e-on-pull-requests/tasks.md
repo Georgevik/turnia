@@ -15,8 +15,8 @@
 
 ## 3. Verification on GitHub
 
-- [ ] 3.1 Open the pull request and verify `pr-e2e` runs the suite on it (it touches `.github/`) and ends green
-- [ ] 3.2 Push a second commit while the suite is running and verify the first run is cancelled
+- [x] 3.1 Open the pull request and verify `pr-e2e` runs the suite on it (it touches `.github/`) and ends green
+- [x] 3.2 Push a second commit while the suite is running and verify the first run is cancelled
 
 The skip cannot be seen on GitHub before the merge: a pull request runs the `pr-check.yml` of its
 merge commit, so a docs-only branch off `main` still has the old workflow, and one off this branch
