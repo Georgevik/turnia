@@ -19,6 +19,7 @@ Read `docs/agents/workers.md` (the workers' protocol) and `docs/agents/issue-tra
 - `aoe --version` must work, and so must `gh auth status` for `Georgevik/turnia`. If either fails, stop and tell the developer.
 - You run as an aoe session in the group `turnia`, in the main checkout. The group `turnia/workers` exists (`aoe group list`). If it doesn't, create it with `aoe group create workers --parent turnia`.
 - Your name is the first line of `ListAgents`. Workers message you by it.
+- **Your name changes when your session restarts**, and every live worker has the old one in its system prompt, so their messages would go nowhere, with no error. Don't close your session while workers are live. If you start as a new director with live workers in `turnia/workers`, send each one your new name with `SendMessage` first, and read their sessions with `aoe session capture` for anything they reported in between.
 - The main checkout stays on `main`, clean. Your own changes go through a branch and a PR, like anyone else's: `main` is protected.
 
 ## 2. Read the board
