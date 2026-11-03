@@ -2,8 +2,10 @@
 
 The worlds the Android E2E suite (`app/androidApp/src/androidTest/.../e2e`) seeds into the Firebase
 emulators before every test. The build packs this folder into the test APK as assets; the test
-wipes Auth and Firestore, creates the accounts under `auth` and writes every document under
-`firestore`, bypassing the security rules.
+wipes Auth, Firestore and Storage's `profilePhotos/`, creates the accounts under `auth`, writes
+every document under `firestore` and uploads every file under `storage`, bypassing the security
+rules. A `storage` entry maps a path in the bucket to an asset in this folder, and `null` removes one
+an earlier fixture added.
 
 ## Running the suite
 
@@ -15,7 +17,7 @@ With an Android emulator running (API 33+ recommended), from the repo root:
 
 Running a test from Android Studio's gutter works the same way. Every `connected…AndroidTest` task
 starts the Firebase emulators itself — building the Functions first — unless something already
-serves ports 9099, 8080 and 5001, and stops the ones it started when the build ends. Their output
+serves ports 9099, 8080, 5001 and 9199, and stops the ones it started when the build ends. Their output
 goes to `firebase/build/emulators.log`. The Firebase CLI is looked up on `PATH` and under `~/.nvm`;
 elsewhere, set `turnia.firebaseCli=/path/to/firebase` in `~/.gradle/gradle.properties`.
 
@@ -110,3 +112,9 @@ polls.
 
 The fixtures are written in the shape the app and the functions store today. When a field is
 added or renamed, change it here too: the suite then fails on exactly the paths that read it.
+
+## `profile-photo.json`
+
+Layered over `base` by the profile photo tests: bruno has a photo, `photoId` `bruno1`, on his
+profile and on his entry in Urgencias and Planta, and `profilePhotos/bruno/bruno1.webp` is
+`photo-bruno.webp`, a 384×384 WebP like the ones the app uploads.

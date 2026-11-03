@@ -8,10 +8,14 @@ internal object Emulator {
     const val AUTH_PORT = 9099
     const val FIRESTORE_PORT = 8080
     const val FUNCTIONS_PORT = 5001
+    const val STORAGE_PORT = 9199
 
     // Must match FUNCTIONS_REGION in core's DataModule: the emulator serves each callable under it.
     const val FUNCTIONS_REGION = "europe-southwest1"
 
     /** The emulators keep one namespace per project, and the client addresses the one in google-services.json. */
     val projectId: String get() = requireNotNull(FirebaseApp.getInstance().options.projectId)
+
+    /** The default bucket, as google-services.json names it: the one the app uploads to. */
+    val bucket: String get() = requireNotNull(FirebaseApp.getInstance().options.storageBucket)
 }

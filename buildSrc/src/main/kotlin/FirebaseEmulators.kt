@@ -20,7 +20,7 @@ abstract class FirebaseEmulators : BuildService<FirebaseEmulators.Params>, AutoC
         val firebaseCli: Property<String>
     }
 
-    private val ports = listOf(9099, 8080, 5001)
+    private val ports = listOf(9099, 8080, 5001, 9199)
     private var process: Process? = null
 
     @Synchronized
@@ -40,7 +40,7 @@ abstract class FirebaseEmulators : BuildService<FirebaseEmulators.Params>, AutoC
 
         val log = dir.resolve("build/emulators.log").apply { parentFile.mkdirs() }
         val started = ProcessBuilder(
-            cli.path, "emulators:start", "--only", "auth,firestore,functions", "--project", "turnia-23ebc",
+            cli.path, "emulators:start", "--only", "auth,firestore,functions,storage", "--project", "turnia-23ebc",
         ).directory(dir).redirectErrorStream(true).redirectOutput(log)
             .apply { environment()["PATH"] = path }
             .start()

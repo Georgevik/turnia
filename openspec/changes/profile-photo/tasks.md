@@ -28,7 +28,7 @@
   - `create` refuses any `photoId`.
 
   Verified by 2.7.
-- [ ] 2.3 Point the E2E stack at the Storage emulator:
+- [x] 2.3 Point the E2E stack at the Storage emulator:
   - `buildSrc/.../FirebaseEmulators.kt`: port 9199 in `ports` and `storage` in `--only`;
   - `Emulator.STORAGE_PORT`;
   - `TurniaTestApplication`: `Firebase.storage.useEmulator`;
@@ -38,7 +38,8 @@
     `photoId` on his profile and on his Urgencias and Planta member entries;
   - `firebase/test/README.md`: the `storage` key and the new fixture.
 
-  Verify `AuthFlowsTest` and `GroupFlowsTest` still pass with the Storage emulator running.
+  Verify `AuthFlowsTest` and the classes in `GroupFlowsTest.kt` (`JoinGroupFlowsTest`,
+  `InvitationLinkFlowTest`, `GroupMembershipFlowsTest`) still pass with the Storage emulator running.
 - [x] 2.4 Add the `setProfilePhoto` callable (`firebase/functions/src/users.ts`, exported from
   `index.ts`, `enforceAppCheck: true`), as in design D2:
   - validate `photoId` (pattern or null);

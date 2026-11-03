@@ -30,7 +30,7 @@ import kotlin.time.Instant
 annotation class SignedInAs(val uid: String)
 
 /**
- * One test's world: both emulators wiped and seeded from [fixtures], the app signed in as
+ * One test's world: the emulators wiped and seeded from [fixtures], the app signed in as
  * [signedInAs] or the test's [SignedInAs] (signed out when neither says), and [MainActivity]
  * launched with [intent]. Onboarding counts as already seen unless [onboardingSeen] says otherwise,
  * so only the test about it pays for its pages.
@@ -92,8 +92,10 @@ class E2eRule(
 
         FirestoreRest.wipe()
         AuthRest.wipe()
+        StorageRest.wipe()
         fixture.users.values.forEach(AuthRest::create)
         FirestoreRest.write(fixture.documents)
+        fixture.files.forEach { (path, asset) -> StorageRest.upload(path, Fixtures.readAssetBytes(asset)) }
 
         user?.let { uid ->
             val user = fixture.users.getValue(uid)
