@@ -1,10 +1,12 @@
 import { onCall } from "firebase-functions/v2/https";
 import { getAuth } from "firebase-admin/auth";
+import { getStorage } from "firebase-admin/storage";
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import { TurniaError } from "./errors";
 import { deleteGroupTree, isLastAdminOfOthers } from "./membership";
 import { requireUid } from "./requests";
 import { markGroupUpdated, markJoinRequestSettled } from "./sync";
+import { profilePhotoFolder } from "./users";
 
 /**
  * Deletes the caller's account by **anonymizing** it, then deletes the Auth user.
@@ -13,7 +15,7 @@ import { markGroupUpdated, markJoinRequestSettled } from "./sync";
  * `ownerId` and `assigneeId`, every `history` entry — so nothing that refers to it has to be
  * chased down, and the A→B→C chain of a shift the account once held stays whole, with one link that
  * no longer says who. What goes is everything that says who they were: the name and username (on
- * the profile and on every group's copy), the avatar, the username reservation, and everything under
+ * the profile and on every group's copy), the avatar and the photo, the username reservation, and everything under
  * their own document — email, push tokens, preferences, personal events and their notes. A blank
  * name is what the app already renders as a former member.
  *
@@ -75,6 +77,10 @@ export const deleteAccount = onCall({ enforceAppCheck: true }, async (request) =
     const reservation = await reservationRef.get();
     if (reservation.get("uid") === uid) await reservationRef.delete();
   }
+
+  // Every photo, the current one and any upload that was never published. The profile and each
+  // group's entry lose `photoId` below, where they are overwritten whole.
+  await getStorage().bucket().deleteFiles({ prefix: profilePhotoFolder(uid) });
 
   // Private documents, personal events and types, sync markers, revoked-group snapshots.
   for (const collection of await userRef.listCollections()) {

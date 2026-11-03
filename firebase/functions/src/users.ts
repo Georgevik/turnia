@@ -138,8 +138,10 @@ export const updateProfile = onCall({ enforceAppCheck: true }, async (request) =
   await Promise.all(
     groups.docs.map((group) => {
       const batch = db.batch();
+      // Field by field, never the whole entry: it also carries the photo, which a rename must keep.
       batch.update(group.ref, {
-        [`members.${uid}`]: { name, username },
+        [`members.${uid}.name`]: name,
+        [`members.${uid}.username`]: username,
         updateAt: FieldValue.serverTimestamp(),
       });
       markGroupUpdated(db, batch, group.id);

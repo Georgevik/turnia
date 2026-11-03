@@ -49,7 +49,7 @@
   - new `TurniaError` codes for a missing or invalid file.
 
   Verify `npm --prefix firebase/functions run build` passes. Behaviour is verified by 2.7.
-- [ ] 2.5 Keep `photoId` in every other writer of a member entry:
+- [x] 2.5 Keep `photoId` in every other writer of a member entry:
   - `updateProfile` writes `members.{uid}.name` and `.username` as separate fields;
   - `acceptJoinRequest` and the auto-approve branch of `requestToJoinGroup` copy the profile's
     `photoId` when it has one;
