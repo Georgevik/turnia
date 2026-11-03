@@ -17,7 +17,7 @@
 
 ## 4. Generic notes
 
-- [ ] 4.1 Rewrite the five `.github/whatsnew/whatsnew-*` files to a short generic "improvements and bug fixes" text, each in its own language; verify each is under 500 characters (`wc -m .github/whatsnew/*`) and contains no feature-specific wording
+- [x] 4.1 Rewrite the five `.github/whatsnew/whatsnew-*` files to a short generic "improvements and bug fixes" text, each in its own language; verify each is under 500 characters (`wc -m .github/whatsnew/*`) and contains no feature-specific wording
 
 ## 5. Documentation
 
