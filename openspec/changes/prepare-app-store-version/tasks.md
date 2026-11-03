@@ -25,7 +25,7 @@
 
 ## 6. Integration
 
-- [ ] 6.1 Run `python3 .github/scripts/test_release_notes.py` and `python3 .claude/hooks/test_guard_production.py`, and check `pr-android`, `pr-ios` and `pr-checks` are green on the PR
+- [x] 6.1 Run `python3 .github/scripts/test_release_notes.py` and `python3 .claude/hooks/test_guard_production.py`, and check `pr-android`, `pr-ios` and `pr-checks` are green on the PR
 
 ## Workflow follow-up
 
