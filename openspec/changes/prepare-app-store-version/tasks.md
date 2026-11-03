@@ -3,7 +3,7 @@
 ## 1. Script groundwork
 
 - [x] 1.1 In `.github/scripts/release-notes.py`, move the `jwt`, `requests` and `google.*` imports into the functions that use them and extract `find_app` / `find_build` from `testflight`; verify `python3 -I -c "import importlib.util, sys; s=importlib.util.spec_from_file_location('rn', '.github/scripts/release-notes.py'); m=importlib.util.module_from_spec(s); s.loader.exec_module(m)"` succeeds with no packages installed, and `python3 .github/scripts/release-notes.py` still prints the usage
-- [ ] 1.2 Add `--dry-run` to every subcommand (Play deletes its edit instead of committing; TestFlight prints `would …` instead of writing); verify by reading the diff that every `post`/`patch`/`put`/`commit` sits behind the flag
+- [x] 1.2 Add `--dry-run` to every subcommand (Play deletes its edit instead of committing; TestFlight prints `would …` instead of writing); verify by reading the diff that every `post`/`patch`/`put`/`commit` sits behind the flag
 
 ## 2. App Store version
 

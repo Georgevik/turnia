@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Puts the notes in .github/whatsnew onto a build that is already uploaded.
 
-    release-notes.py play <versionCode>
-    release-notes.py testflight <buildNumber>
+    release-notes.py play <versionCode> [--dry-run]
+    release-notes.py testflight <buildNumber> [--dry-run]
+
+--dry-run reads everything as usual and prints what it would write, without writing to any store.
 
 Play: the notes of the internal-track release holding that versionCode. They travel with the
 release when it is promoted. TestFlight: the build's "What to Test", the only notes a TestFlight
@@ -36,7 +38,7 @@ def notes() -> dict[str, str]:
     return found
 
 
-def play(version_code: str) -> None:
+def play(version_code: str, dry_run: bool) -> None:
     from google.auth.transport.requests import AuthorizedSession
     from google.oauth2 import service_account
 
@@ -58,6 +60,12 @@ def play(version_code: str) -> None:
     if release is None:
         session.delete(f"{base}/{edit}")
         sys.exit(f"::error::No release with versionCode {version_code} on Play's {PLAY_TRACK} track")
+
+    if dry_run:
+        # An edit is only a draft until committed; deleting it leaves Play as it was.
+        session.delete(f"{base}/{edit}")
+        print(f"Play: would set notes on versionCode {version_code} ({', '.join(notes())})")
+        return
 
     release["releaseNotes"] = [{"language": lang, "text": text} for lang, text in notes().items()]
     session.put(f"{base}/{edit}/tracks/{PLAY_TRACK}", json=track).raise_for_status()
@@ -105,7 +113,7 @@ def find_build(session, app_id: str, build_number: str) -> dict:
     sys.exit(f"::error::Build {build_number} never showed up in App Store Connect")
 
 
-def testflight(build_number: str) -> None:
+def testflight(build_number: str, dry_run: bool) -> None:
     session = asc_session()
 
     app = find_app(session)
@@ -120,6 +128,10 @@ def testflight(build_number: str) -> None:
     # Testers whose language has no notes see the app's primary language, so it must have some.
     if primary_locale not in texts:
         texts[primary_locale] = texts.get("en-GB") or next(iter(texts.values()))
+
+    if dry_run:
+        print(f"TestFlight: would set notes on build {build_number} ({', '.join(texts)})")
+        return
 
     written = []
     for locale, text in texts.items():
@@ -146,7 +158,14 @@ def testflight(build_number: str) -> None:
     print(f"TestFlight: notes set on build {build_number} ({', '.join(written)})")
 
 
-if __name__ == "__main__":
-    if len(sys.argv) != 3 or sys.argv[1] not in ("play", "testflight"):
+def main(argv: list[str]) -> None:
+    dry_run = "--dry-run" in argv
+    args = [a for a in argv if a != "--dry-run"]
+    commands = {"play": play, "testflight": testflight}
+    if len(args) != 2 or args[0] not in commands:
         sys.exit(__doc__)
-    {"play": play, "testflight": testflight}[sys.argv[1]](sys.argv[2])
+    commands[args[0]](args[1], dry_run)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
