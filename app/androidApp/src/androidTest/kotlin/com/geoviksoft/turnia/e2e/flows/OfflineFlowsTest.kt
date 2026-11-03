@@ -166,6 +166,8 @@ class OfflineFlowsTest {
 
         // e4 is alice's own Urgencias shift, on +6, and base gives it no note.
         calendar.openDay(world.day(6))
+        // A group shift arrives from the server after the personal ones: offline, it never would.
+        calendar.awaitEvent("e4")
 
         Network.offline {
             calendar.writeNote("e4", "Parking B")

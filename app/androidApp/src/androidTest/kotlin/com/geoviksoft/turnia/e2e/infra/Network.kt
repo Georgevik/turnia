@@ -1,6 +1,9 @@
 package com.geoviksoft.turnia.e2e.infra
 
+import com.google.android.gms.tasks.Tasks
 import dev.gitlive.firebase.firestore.FirebaseFirestore
+import dev.gitlive.firebase.firestore.android
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.runBlocking
 import org.koin.core.context.GlobalContext
 
@@ -20,6 +23,15 @@ internal object Network {
     fun goOffline() = runBlocking { firestore.disableNetwork() }
 
     fun goOnline() = runBlocking { firestore.enableNetwork() }
+
+    /**
+     * Returns once the emulator has answered every write the app queued so far. The screen shows a
+     * write from the local cache before it leaves the device, so counting on the server any sooner
+     * counts too little.
+     */
+    fun awaitPendingWrites() {
+        Tasks.await(firestore.android.waitForPendingWrites(), UI_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+    }
 
     /** Runs [block] with the connection cut, restoring it even if [block] fails. */
     fun <T> offline(block: () -> T): T {
