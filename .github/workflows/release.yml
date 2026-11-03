@@ -1,5 +1,6 @@
 # Builds the release apps and uploads them: Android to Play's internal testing track, iOS to
-# TestFlight. Promoting a build to production stays a click in each console.
+# TestFlight, with its App Store version prepared. Promoting to production stays a click in each
+# console: Play's promotion and App Store Connect's "Submit for Review".
 #
 # Run it from GitHub → Actions → Release → Run workflow. The secrets it needs are listed in
 # .github/RELEASE.md.
@@ -295,13 +296,15 @@ jobs:
         if: always()
         run: security delete-keychain "$KEYCHAIN_PATH" 2>/dev/null || true
 
-  # A TestFlight upload carries no notes, unlike Play's, so they are added once the build is there.
+  # A TestFlight upload carries no notes, unlike Play's, so they are added once the build is there,
+  # and the App Store version is prepared with the same version name Android got.
   testflight-notes:
     needs: [validate, ios]
     if: ${{ !cancelled() && needs.ios.result == 'success' }}
     uses: ./.github/workflows/release-notes.yml
     with:
       buildNumber: ${{ needs.validate.outputs.buildNumber }}
+      versionName: ${{ needs.validate.outputs.versionName }}
       platforms: ios
     secrets: inherit
 
