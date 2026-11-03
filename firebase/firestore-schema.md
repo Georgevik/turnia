@@ -70,6 +70,7 @@ one copy now, here. Everything a stranger must not see lives under `private` (be
 | `username` | string | Handle, `a-z0-9._`, 3-20 chars. Auto-generated from the name on sign-up (`jorgeg482`); the user can change it. Kept unique by the `usernames` collection. |
 | `animalIconId` | string \| null | The `animal_icon_*` drawable suffix the user picked (`"duck"`). Absent until they pick one. |
 | `backgroundColor` | string \| null | Hex behind the icon. Absent until they pick one. |
+| `photoId` | string \| null | The profile photo, at `profilePhotos/{uid}/{photoId}.webp` in Storage. Absent when the user has none, and then the animal is shown. Written only by `setProfilePhoto`. |
 | `calendarSharedWith` | string[] | UIDs this user grants read access to **their** calendar. Written only by the owner. |
 | `showAds` | boolean \| null | `true` once the user has done 10 actions (adding an event, or opening a group's or a colleague's calendar), which is when a free user starts seeing banners. Written once by the owner and never cleared; absent means not yet. |
 | `isDeleted` | boolean \| null | `true` once the account was deleted. Written only by `deleteAccount`, together with a blank `name` and `username` and an empty `calendarSharedWith`. |
@@ -83,13 +84,19 @@ one copy now, here. Everything a stranger must not see lives under `private` (be
 
 > **A deleted account is anonymized, not removed.** `deleteAccount` keeps this document so the uid
 > still resolves — to nobody — wherever groups, events and `history` refer to it: it blanks the name
-> and username here and on every `groups/{g}.members` copy, drops the avatar and the `usernames`
-> reservation, deletes every subcollection, and then deletes the Auth user.
+> and username here and on every `groups/{g}.members` copy, drops the avatar, the photo (and every
+> file under `profilePhotos/{uid}/`) and the `usernames` reservation, deletes every subcollection,
+> and then deletes the Auth user.
 
-> The avatar is written **straight from the client**, unlike the name. A rename goes through the
-> `updateProfile` Cloud Function because the name is copied into every group the user belongs to and
-> copies need a keeper; the avatar is copied nowhere, so there is nothing to chase. Both writes move
+> The animal and its colour are written **straight from the client**, unlike the name and the
+> photo. A rename goes through the `updateProfile` Cloud Function, and a photo through
+> `setProfilePhoto`, because both are copied into every group the user belongs to and copies need a
+> keeper; the animal is copied nowhere, so there is nothing to chase. Every one of these writes moves
 > `updateAt` here **and** on the reservation, in one commit.
+
+> **The photo is optional and wins over the animal.** With a `photoId` the client draws the photo,
+> and the animal stays underneath for while it loads, or when it cannot be loaded. A new photo is a
+> new id and so a new file: a path never changes, and a client can cache a photo forever.
 
 > `calendarSharedWith` has to stay on this document: the security rules read it to authorize the
 > very access it grants, and the "calendars shared with me" list is a query over it. Now that the
@@ -212,7 +219,8 @@ receipt. An absent document means the free tier.
 | `updatedAt` | timestamp | Last time the server updated this from a store notification. |
 
 **Access**: `users/{uid}` is readable by **any signed-in user** and writable only by the owner, who
-may not change `name` or `username` — only `updateProfile` may. `users/{uid}/private/**` is readable
+may not change `name` or `username` — only `updateProfile` may — nor `photoId`, which only
+`setProfilePhoto` writes and which a new profile may not be created with. `users/{uid}/private/**` is readable
 and writable only by the owner, except `private/subscription`, which the owner may read but never
 write. `private/joinRequests` is written by both the owner and the server, and the wildcard covers
 that: the server adds a pointer, the owner removes it.
@@ -495,7 +503,7 @@ it, and the rejoin path soft-deletes it.
 | `color` | string \| null | Accent color (`#RRGGBB`), picked by an admin and shared by every member. Null on groups saved before the field existed. |
 | `memberUids` | string[] | Every member. The **single source of truth** for membership — written only by `acceptJoinRequest`, `leaveGroup` and `removeMember`. |
 | `revokedUids` | string[] | Former members who still hold events here. They read **only the events assigned to them** and never the group document itself. A uid is in `memberUids` **xor** `revokedUids`, never both; someone who left with no events is in neither. Written only by `leaveGroup` / `removeMember`, and cleared when they rejoin. |
-| `members` | map&lt;uid, {`name`, `username`}&gt; | Who those uids are — **`memberUids` only**; a revoked uid is dropped from here, so the calendar renders their leftover shifts without a name and the UI labels them as a former member. Denormalized on purpose: a calendar shows who covers each shift constantly, so the alternative is a read of `users/{uid}` per member every time it renders. Here it costs **no read at all** — it arrives with the group. The **avatar is deliberately not copied here**: it is shown on the member list and the join requests, not on every calendar row, so it is read from the profile on demand and a new one needs no fan-out. |
+| `members` | map&lt;uid, {`name`, `username`, `photoId`?}&gt; | Who those uids are — **`memberUids` only**; a revoked uid is dropped from here, so the calendar renders their leftover shifts without a name and the UI labels them as a former member. Denormalized on purpose: a calendar shows who covers each shift constantly, so the alternative is a read of `users/{uid}` per member every time it renders. Here it costs **no read at all** — it arrives with the group. `photoId` is the member's profile photo, absent when they have none; it is copied here so that a new photo reaches every colleague with the group they already listen to, where a cached profile would never be read again. The **animal is deliberately not copied**: it is read from the profile on demand, and a new one needs no fan-out. Every writer of an entry keeps `photoId` — `updateProfile` writes `name` and `username` field by field, and `acceptJoinRequest` / `requestToJoinGroup` copy it from the profile. |
 | `adminUids` | string[] | UIDs with admin role. |
 | `groupEventTypes` | array&lt;map&gt; | Event type templates — see below. |
 | `invitation` | map | The group's single invitation — see below. |
@@ -669,6 +677,25 @@ here it travels with the event for free. Each entry:
 
 ---
 
+## Storage: `profilePhotos/{uid}/{photoId}.webp`
+
+Cloud Storage holds one thing: profile photos. Rules in [`storage.rules`](./storage.rules).
+
+| Property | Value |
+|----------|-------|
+| Path | `profilePhotos/{uid}/{photoId}.webp`; `photoId` is `[A-Za-z0-9_-]{1,64}`. |
+| Format | WebP, 384×384, encoded on the device at quality 80 with no metadata (no location). At most 100 KB. |
+| Read | Any signed-in user, like the profile that names it. Never through a public download URL. |
+| Create | The owner of `{uid}` only, `image/webp`, at most 100 KB. |
+| Update / delete | Nobody but the server: `setProfilePhoto` replaces and removes, `deleteAccount` clears the folder. |
+
+The client uploads the file, then calls `setProfilePhoto` with its id, which checks the file, writes
+`photoId` on the profile and on every group's member entry, and deletes every other file in the
+folder: the photo it replaced and any upload that never got that far. A path is never reused, so a
+file can be cached forever.
+
+---
+
 ## Enumerations
 
 ### Offered for swap
@@ -768,13 +795,17 @@ Firestore keeps only a **recent window** of events; older events are purged and 
 - **A username is unique and reserved**: `usernames/{username}` holds it; claim the reservation *before*
   writing `users/{uid}.username`, and release the old one after.
 - **A grant lives in one place**: `users/{owner}.calendarSharedWith`, written only by the owner. No mirrored list.
-- **`users/{uid}` is public to every signed-in user** — the name, the handle, the avatar and the
-  grant list; email, FCM tokens, entitlement and the user's own colour picks live under
+- **`users/{uid}` is public to every signed-in user** — the name, the handle, the avatar, the photo
+  and the grant list; email, FCM tokens, entitlement and the user's own colour picks live under
   `users/{uid}/private/**`.
 - **A profile write and its marker travel together**: any write to `users/{uid}` must also move
   `usernames/{username}.updateAt` in the **same commit**, or no reader's cache ever settles.
-- **The name has a keeper, the avatar does not**: `name` and `username` are copied into every group,
-  so only `updateProfile` may change them; the avatar is copied nowhere and the client writes it.
+- **The name and the photo have a keeper, the animal does not**: `name`, `username` and `photoId` are
+  copied into every group, so only `updateProfile` and `setProfilePhoto` may change them, and every
+  writer of a `members` entry keeps the fields it is not changing; the animal is copied nowhere and
+  the client writes it.
+- **A user has at most one profile photo stored**: `setProfilePhoto` deletes every other file under
+  `profilePhotos/{uid}/`, and `deleteAccount` deletes them all.
 - **Sync timestamps are bumped on every personal write**: a write to `personalEvents` / `personalOneOffEvents` / `personalEventTypes` / `groupEventExtras` must also
   merge the matching field of `users/{uid}/sync/updates`, or readers keep serving a stale cache.
 - **`subscription` is server-only**: only the subscription-verification Cloud Function writes `users/{uid}/private/subscription`; the client can never set itself premium.

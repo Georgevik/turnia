@@ -57,7 +57,7 @@
   - `deleteAccount` deletes `profilePhotos/{uid}/` with `bucket.deleteFiles({ prefix })`.
 
   Verify the functions build. Behaviour is verified by 2.7.
-- [ ] 2.6 Document the backend:
+- [x] 2.6 Document the backend:
   - `firebase/firestore-schema.md`:
     - `photoId` on `users/{uid}` and on `groups/{g}.members`;
     - a *Storage* section for `profilePhotos/{uid}/{photoId}.webp` (access, limits, single-file invariant);
