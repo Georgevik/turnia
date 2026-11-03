@@ -218,10 +218,19 @@ Everything on a calendar is an **event** (there is no separate "shift" term).
 - **User properties cost no listener**: `group_count` and `is_admin` ride on `getGroups()`, which the
   Calendar tab already collects, and are set only when they change.
 - **Parameters and properties must be registered by hand** in the GA console (*Admin → Custom
-  definitions*), or they show only in DebugView and BigQuery. Event-scoped: `screen_name`,
-  `method`, `audience`, `milestone`, `auto_approve`, `type_count`, `all_day`, `multi_month`, `via`,
-  `type`, `interacted`, `custom_type_count`, `kind`, `choice`, `scope`, `event_count`,
-  `skipped_count`. User-scoped: `group_count`, `is_admin`, `app_language`. A new one is added there too.
+  definitions*), or they show only in DebugView and BigQuery. Event-scoped dimensions:
+  `screen_name`, `method`, `audience`, `milestone`, `auto_approve`, `type_count`, `all_day`,
+  `multi_month`, `via`, `type`, `interacted`, `custom_type_count`, `kind`, `choice`, `scope`,
+  `skipped_count`. User-scoped dimensions: `group_count`, `is_admin`, `app_language`.
+  `choice` is registered under the name `choice_onboard`, since the property already had a
+  `choice`. Custom metric: `events_moved`, over `event_count`. A dimension groups by value, so a number
+  that a report has to **sum** is registered as a metric instead. GA refuses to register one
+  parameter as both. A new one is added here and to the definitions
+  tables of the dashboard guide.
+- **The usage dashboard is built by hand from [docs/analytics-dashboard.md](docs/analytics-dashboard.md)**,
+  a click-by-click guide in Spanish: the property settings, the custom definitions, a *Turnia*
+  report collection and three Explorations. No agent touches the console. An event that a report
+  or exploration should show is added to the guide in the same change.
 - **The shift setup** logs `onboard_shift_shown`, `onboard_shift_skipped` and
   `onboard_shift_completed`, all with `via` (`onboarding` | `add_pane`); the last two carry
   `interacted` — whether the user touched the panel at all before leaving it — and completion adds
