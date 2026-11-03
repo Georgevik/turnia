@@ -16,10 +16,10 @@ console.
   - registering every custom definition: each event-scoped and user-scoped dimension the app sends,
     plus `event_count` as a **custom metric**, so the group events a move to a group creates can be
     summed;
-  - a report collection **"Turnia"** in the Library with four reports: *Daily summary* (active and
-    new users per day, events added, events per active user), *Events created* (personal-type,
-    one-off and group events, and groups created, per day), *Feature use* and *Users* (sign-in
-    method, app language, group count);
+  - a report collection **"Turnia"** in the Library with five reports: *Daily summary* (active and
+    new users per day), *Events created* (personal-type, one-off and group events per day, and
+    events per user), *Groups created* (`group_created` per day), *Feature use* and *Users*
+    (sign-in method, app language, group count);
   - three saved Explorations: *Activation funnel*, *Onboarding and prompts*, *Retention* (D1, D7,
     D30 cohorts);
   - what each result should look like, and what to do when a dimension shows `(not set)` or is

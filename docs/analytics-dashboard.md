@@ -15,13 +15,14 @@ en inglés entre paréntesis cuando cambia, por si la tienes en inglés.
 |---|---|
 | Usuarios únicos y nuevos por día | Informe *Resumen diario* |
 | Eventos añadidos por día: turnos de un tipo, puntuales y de grupo | Informe *Eventos creados* |
-| Grupos creados por día, y uso de cada funcionalidad (cambios, devoluciones, calendario compartido, mover a grupo…) | Informe *Uso por funcionalidad* |
+| Grupos creados por día | Informe *Grupos creados* |
+| Uso de cada funcionalidad (cambios, devoluciones, calendario compartido, mover a grupo…) | Informe *Uso por funcionalidad* |
 | Método de login, idioma de la app, número de grupos | Informe *Usuarios* |
 | Activación: de instalar a añadir el primer evento | Exploración *Embudo de activación* |
 | Configuración de turnos y prompts de crecimiento | Exploración *Onboarding y prompts* |
 | Retención D1, D7, D30 | Exploración *Retención* |
 
-Los cuatro informes viven en una colección **"Turnia"** del menú izquierdo de *Informes*
+Los cinco informes viven en una colección **"Turnia"** del menú izquierdo de *Informes*
 (*Reports*); las tres exploraciones, en *Explorar* (*Explore*).
 
 ## Antes de empezar
@@ -153,12 +154,12 @@ Resultado: la pestaña *Dimensiones personalizadas* lista 20 (17 de evento y 3 d
 
 ## 3. La colección "Turnia"
 
-Primero se crean los cuatro informes en la **Biblioteca** (*Library*) y después se juntan en una
+Primero se crean los cinco informes en la **Biblioteca** (*Library*) y después se juntan en una
 colección que aparece en el menú izquierdo.
 
 ### Cómo se crea un informe de detalles
 
-Los cuatro informes se crean igual; solo cambia lo que pones en el panel de la derecha:
+Los cinco informes se crean igual; solo cambia lo que pones en el panel de la derecha:
 
 1. En el menú izquierdo, **Informes** (*Reports*) → abajo del todo, **Biblioteca** (*Library*).
    Si no la ves, te falta el rol *Editor*.
@@ -232,9 +233,27 @@ del evento* y elige **Fecha** (*Date*) como dimensión secundaria.
 Los eventos **movidos** a un grupo no están aquí a propósito: ya se contaron cuando se crearon como
 turnos propios, y sumarlos los contaría dos veces. Salen en *Uso por funcionalidad*.
 
-### 3.3 Uso por funcionalidad
+### 3.3 Grupos creados
 
-Grupos creados por día, y cuánto se usa cada funcionalidad.
+Cuántos grupos se crean cada día.
+
+| Campo | Valor |
+|---|---|
+| Dimensiones | **Fecha** (*Date*) |
+| Métricas | **Recuento de eventos** (*Event count*) |
+| Filtro | *Nombre del evento* · **coincide exactamente con** (*exactly matches*) · `group_created` |
+| Gráfico | **Gráfico de líneas** (*Line chart*) |
+| Nombre del informe | `Grupos creados` |
+
+Resultado: una línea con los grupos creados cada día y una tabla con una fila por día. La fila de
+**Total** de arriba, esta vez sí, es la suma de los días: los grupos creados en todo el periodo.
+
+Son grupos **creados**, no los que existen hoy. GA no ve los que se borran desde el servidor, por
+ejemplo al borrar la cuenta de alguien que estaba solo en su grupo.
+
+### 3.4 Uso por funcionalidad
+
+Cuánto se usa cada funcionalidad.
 
 | Campo | Valor |
 |---|---|
@@ -263,14 +282,13 @@ Resultado: una fila por evento. Para leerlas:
 | Tipos de turno | `personal_event_type_created`, `group_event_type_created` |
 | Otros | `notification_opened`, `account_deleted` |
 
-**Grupos creados por día**: en la tabla, marca solo la casilla de la fila `group_created` y el
-gráfico dibuja únicamente esa línea. Lo mismo sirve para cualquier otro evento (hasta cinco a la
-vez).
+Para ver un evento solo en el gráfico, marca únicamente la casilla de su fila en la tabla (se pueden
+marcar hasta cinco a la vez).
 
 **Eventos de grupo creados contando los movidos**: `group_event_created` en *Eventos creados* más el
 `events_moved` de la fila `personal_events_moved` de aquí.
 
-### 3.4 Usuarios
+### 3.5 Usuarios
 
 Quién usa la app: método de acceso, idioma y grupos.
 
@@ -292,19 +310,19 @@ primera columna de la tabla y elige otra dimensión.
 - `group_count`: `0` es quien usa Turnia sin grupo; `1` o más, con equipo.
 - `is_admin`: `true` si administra al menos un grupo.
 
-### 3.5 Juntar los informes en la colección
+### 3.6 Juntar los informes en la colección
 
 1. En la **Biblioteca** (*Library*), arriba, haz clic en **Crear nueva colección** (*Create new
    collection*) → **Colección en blanco** (*Blank*).
 2. Arriba a la izquierda, cambia *Colección sin título* (*Untitled collection*) por `Turnia`.
 3. Haz clic en **Crear nuevo tema** (*Create new topic*) y llámalo `Uso`.
 4. De la lista **Informes** (*Reports*) de la derecha, arrastra al tema `Uso`, en este orden:
-   `Resumen diario`, `Eventos creados`, `Uso por funcionalidad`, `Usuarios`. Usa la búsqueda de la
-   lista si no los ves.
+   `Resumen diario`, `Eventos creados`, `Grupos creados`, `Uso por funcionalidad`, `Usuarios`. Usa
+   la búsqueda de la lista si no los ves.
 5. Haz clic en **Guardar** (*Save*) → **Volver a la biblioteca** (*Back to library*).
 6. En la tarjeta **Turnia**, abre el menú `⋮` → **Publicar** (*Publish*).
 
-Resultado: en el menú izquierdo de *Informes* aparece **Turnia** → **Uso**, con los cuatro informes
+Resultado: en el menú izquierdo de *Informes* aparece **Turnia** → **Uso**, con los cinco informes
 dentro. Arriba a la derecha de cada uno eliges el periodo; para el acumulado desde el lanzamiento,
 elige un intervalo personalizado (*Custom*) que empiece ese día.
 

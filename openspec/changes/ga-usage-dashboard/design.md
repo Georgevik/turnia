@@ -36,7 +36,8 @@ running-total curves, which were also dropped.
 |---|---|---|
 | Unique and new users per day | *Daily summary* (detail report) | *Date* × built-in *Active users*, *New users* |
 | Events created per day, and events per user | *Events created* (detail report) | *Event name* filtered to `personal_event_created`, `one_off_event_created`, `group_event_created`; *Event count*, *Total users*, *Event count per active user* |
-| Groups created per day, and feature use | *Feature use* (detail report) | *Event name* filtered to `group_created` and the swap, hand-back, shared-calendar, move, notes and membership events; plus the `events_moved` metric |
+| Groups created per day | *Groups created* (detail report) | *Date* × *Event count*, filtered to `group_created` |
+| Feature use | *Feature use* (detail report) | *Event name* filtered to `group_created` and the swap, hand-back, shared-calendar, move, notes and membership events; plus the `events_moved` metric |
 | Sign-in method, language, groups | *Users* (detail report) | `method` on `sign_up` / `login`; user properties `app_language`, `group_count`, `is_admin` |
 | Activation | *Activation funnel* (funnel exploration) | `first_open` → `sign_up` → `onboard_shift_completed` or `onboard_shift_skipped` → `first_event_added` |
 | Onboarding and growth prompts | *Onboarding and prompts* (free-form exploration) | `onboard_shift_*` by `via`/`interacted`, `onboard_team_*` by `choice`, `share_prompt_*` by `audience`/`milestone` |
@@ -53,8 +54,10 @@ Every report is a detail report, even the daily summary, because a detail report
 gives exactly one row per day. *Events created* has to filter on event name, and a filter applies to
 the whole report, so its *Event count per active user* averages over the users who added an event.
 The average over all users is that report's total divided by the *Daily summary*'s active users.
-That is also why `group_created` lives in *Feature use* and not in *Events created*: there it would
-add groups to the total of events added.
+That is also why `group_created` has a report of its own, *Groups created*, and is not in *Events
+created*: there it would add groups to the total of events added. Leaving it only in *Feature use*
+was tried first. The user rejected it, because there a daily line for groups takes ticking its row
+by hand, and groups per day matter as much as events per day.
 
 ### `event_count` is registered as a custom metric
 
