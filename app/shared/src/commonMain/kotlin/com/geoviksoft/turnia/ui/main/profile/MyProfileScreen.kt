@@ -1,6 +1,8 @@
 package com.geoviksoft.turnia.ui.main.profile
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -35,14 +38,24 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.geoviksoft.turnia.core.domain.model.ProfilePhoto
+import com.geoviksoft.turnia.core.domain.model.UserId
 import com.geoviksoft.turnia.core.domain.model.UserProfile
 import com.geoviksoft.turnia.navigation.LocalNavigator
+import com.geoviksoft.turnia.ui.main.profile.components.AvatarMenuSheet
 import com.geoviksoft.turnia.ui.main.profile.components.AvatarPickerSheet
+import com.geoviksoft.turnia.ui.main.profile.components.PhotoCropDialog
+import com.geoviksoft.turnia.ui.system.TestTags
+import com.geoviksoft.turnia.ui.system.photo.LocalPhotoPicker
 import com.geoviksoft.turnia.ui.system.LocalSnackbar
 import com.geoviksoft.turnia.ui.system.PreviewTurniaTheme
 import com.geoviksoft.turnia.ui.system.components.ConfirmationDialog
@@ -79,6 +92,7 @@ import turnia.app.shared.generated.resources.profile_title
 @Composable
 fun MyProfileScreen(viewModel: MyProfileViewModel = koinViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val photoPicker = LocalPhotoPicker.current
 
     MyProfileScreenContent(
         uiState = uiState,
@@ -86,6 +100,15 @@ fun MyProfileScreen(viewModel: MyProfileViewModel = koinViewModel()) {
         onNameChanged = viewModel::onNameChanged,
         onSnackbarShown = viewModel::userMessageShown,
         onAvatarClicked = viewModel::onAvatarClicked,
+        onAvatarMenuDismissed = viewModel::onAvatarMenuDismissed,
+        onUploadPhoto = {
+            viewModel.onUploadPhotoChosen()
+            photoPicker.pick(viewModel::onPhotoPicked)
+        },
+        onChooseAnimal = viewModel::onChooseAnimalChosen,
+        onRemovePhoto = viewModel::onRemovePhotoChosen,
+        onCropCancelled = viewModel::onCropCancelled,
+        onCropped = viewModel::onCropped,
         onAvatarPickerDismissed = viewModel::onAvatarPickerDismissed,
         onAnimalPicked = viewModel::onAnimalPicked,
         onBackgroundPicked = viewModel::onBackgroundPicked,
@@ -101,6 +124,12 @@ private fun MyProfileScreenContent(
     onUsernameChanged: (String) -> Unit = {},
     onSnackbarShown: () -> Unit = {},
     onAvatarClicked: () -> Unit = {},
+    onAvatarMenuDismissed: () -> Unit = {},
+    onUploadPhoto: () -> Unit = {},
+    onChooseAnimal: () -> Unit = {},
+    onRemovePhoto: () -> Unit = {},
+    onCropCancelled: () -> Unit = {},
+    onCropped: (ImageBitmap) -> Unit = {},
     onAvatarPickerDismissed: () -> Unit = {},
     onAnimalPicked: (String) -> Unit = {},
     onBackgroundPicked: (String) -> Unit = {},
@@ -143,19 +172,35 @@ private fun MyProfileScreenContent(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
-            UserAvatar(
-                avatar = UserProfile.AnimalAvatar(
-                    animal = uiState.animalIconId,
-                    background = uiState.backgroundColor,
-                ),
-                modifier = Modifier
-                    .size(64.dp)
-                    .align(Alignment.CenterHorizontally)
-                    .clickable(
-                        onClick = onAvatarClicked,
-                        onClickLabel = stringResource(Res.string.profile_avatar_change),
+            Box(
+                modifier = Modifier.size(96.dp).align(Alignment.CenterHorizontally),
+                contentAlignment = Alignment.Center,
+            ) {
+                UserAvatar(
+                    avatar = UserProfile.AnimalAvatar(
+                        animal = uiState.animalIconId,
+                        background = uiState.backgroundColor,
                     ),
-            )
+                    photo = uiState.photo,
+                    modifier = Modifier
+                        .size(96.dp)
+                        .testTag(TestTags.PROFILE_AVATAR)
+                        .clickable(
+                            enabled = !uiState.photoStep.busy,
+                            onClick = onAvatarClicked,
+                            onClickLabel = stringResource(Res.string.profile_avatar_change),
+                        ),
+                )
+                if (uiState.photoStep.busy) {
+                    Box(
+                        modifier = Modifier.matchParentSize().clip(CircleShape)
+                            .background(Color.Black.copy(alpha = 0.4f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator(color = Color.White, modifier = Modifier.testTag(TestTags.PROFILE_PHOTO_BUSY))
+                    }
+                }
+            }
 
             OutlinedTextField(
                 value = uiState.name,
@@ -234,6 +279,20 @@ private fun MyProfileScreenContent(
         )
     }
 
+    if (uiState.avatarMenuOpen) {
+        AvatarMenuSheet(
+            hasPhoto = uiState.photo != null,
+            onUploadPhoto = onUploadPhoto,
+            onChooseAnimal = onChooseAnimal,
+            onRemovePhoto = onRemovePhoto,
+            onDismiss = onAvatarMenuDismissed,
+        )
+    }
+
+    (uiState.photoStep as? PhotoStep.Cropping)?.let { cropping ->
+        PhotoCropDialog(image = cropping.image, onCancel = onCropCancelled, onUse = onCropped)
+    }
+
     if (uiState.pickingAvatar) {
         AvatarPickerSheet(
             animalIconId = uiState.animalIconId,
@@ -292,6 +351,34 @@ fun MyProfileScreenPreview() {
         MyProfileScreenContent(
             uiState = MyProfileUi(
                 name = "John Due", username = "Georgevik", email = "myemail@domain.com"
+            )
+        )
+    }
+}
+
+@Preview
+@Composable
+fun MyProfileScreenUploadingPreview() {
+    PreviewTurniaTheme {
+        MyProfileScreenContent(
+            uiState = MyProfileUi(
+                name = "John Due", username = "georgevik", email = "myemail@domain.com",
+                photo = ProfilePhoto(UserId("me"), "p1"),
+                photoStep = PhotoStep.Uploading,
+            )
+        )
+    }
+}
+
+@Preview
+@Composable
+fun MyProfileScreenAvatarMenuPreview() {
+    PreviewTurniaTheme {
+        MyProfileScreenContent(
+            uiState = MyProfileUi(
+                name = "John Due", username = "georgevik", email = "myemail@domain.com",
+                photo = ProfilePhoto(UserId("me"), "p1"),
+                avatarMenuOpen = true,
             )
         )
     }

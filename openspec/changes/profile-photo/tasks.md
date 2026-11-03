@@ -198,7 +198,7 @@
 
   Verify with ViewModel tests: upload success, upload failure, cancelled crop, remove, remove
   failure, and an unsaved name kept across an upload.
-- [ ] 5.2 Update `MyProfileScreen`:
+- [x] 5.2 Update `MyProfileScreen`:
   - a 96 dp avatar that opens a menu: *Upload photo*, *Choose animal and colour*, and *Remove photo*
     only when there is a photo;
   - the crop from 4.5 between the picker and the upload;
@@ -207,7 +207,8 @@
   - test tags for the robot;
   - every new string in `values`, `values-es`, `values-fr`, `values-de` and `values-it`.
 
-  Verify with previews of each state, and manually on the Android emulator.
+  Verify with previews of each state, and on the Android emulator through the flows in 5.3: a debug
+  build talks to the production Firebase project, which has no bucket yet.
 - [ ] 5.3 Add `ProfileRobot` and `ProfilePhotoFlowsTest`:
   - upload: the avatar shows the photo, the file is in Storage, `photoId` is on the profile and on
     Urgencias' member entry, and `profile_photo_uploaded` is logged (`awaitLogged`);

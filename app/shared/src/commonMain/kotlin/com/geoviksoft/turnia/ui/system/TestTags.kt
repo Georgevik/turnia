@@ -41,4 +41,6 @@ object TestTags {
     const val SHIFT_SETUP_CUSTOM_END = "shift_setup_custom_end"
     const val PHOTO_CROP = "photo_crop"
     const val PHOTO_CROP_USE = "photo_crop_use"
+    const val PROFILE_AVATAR = "profile_avatar"
+    const val PROFILE_PHOTO_BUSY = "profile_photo_busy"
 }
