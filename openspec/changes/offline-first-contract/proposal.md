@@ -70,5 +70,9 @@ requirement contradicts the contract:
   - TUR-64: one's own colour for a group type shows only once the server confirms it;
   - TUR-62: stopping sharing is a queued write today;
   - TUR-41 (folded in): screens with nothing cached show generic errors.
+- **Gaps the PR's self-review found**, filed by the director:
+  - TUR-62 (extended): sharing is queued, like stopping sharing;
+  - TUR-66: a move to a group can run by itself on reconnect;
+  - TUR-41 (folded in): searching people offline returns cached or empty results.
 - **In flight:** TUR-56 (profile photo) is recorded as its own change decides. Uploading and removing
   a photo need a connection and keep their 30 s upload timeout.

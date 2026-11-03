@@ -84,8 +84,8 @@ nobody could tell an unhandled action from an undecided one, which is today's pr
 | An offline sign-out stops the account's notifications once back online | Not met: offline, the token removal would wait in the signed-out account's queue | TUR-38 |
 | A local change is reported only when the server rejects it | Rejections are lost in silence | TUR-37 |
 | Group and membership actions need a connection | Creating or editing a group hangs, and the write lands on reconnect; callables fail with a generic error | TUR-39, TUR-41 |
-| Shift transfer and move actions need a connection | Generic error. A move's commits are queued if the connection drops after its server reads, and then run on reconnect | TUR-41; the move's commits: *owner pending* |
-| Account, sharing and people actions need a connection | Sharing and stopping sharing are queued writes. Searching people offline returns cached or empty results with no error. The rest fail with a generic error | TUR-62 (stopping); sharing and search: *owner pending*; TUR-41 |
+| Shift transfer and move actions need a connection | Generic error. A move's commits are queued if the connection drops after its server reads, and then run on reconnect | TUR-41; the move's commits: TUR-66 |
+| Account, sharing and people actions need a connection | Sharing and stopping sharing are queued writes. Searching people offline returns cached or empty results with no error. The rest fail with a generic error | TUR-62 (sharing and stopping); TUR-41 (search and the rest) |
 | An action that needs a connection says so | No *No connection* error; callables can take ~70 s | TUR-41 |
 | … keeps what the user entered | Mostly met; to verify per screen with the error | TUR-41 |
 | … never runs later on its own | Callables met; creating or editing a group is queued | TUR-39 |
@@ -98,6 +98,13 @@ The four gaps the explore found were filed by the director, all blocked by TUR-3
 - TUR-63: the avatar save, also blocked by TUR-56;
 - TUR-62: stopping sharing;
 - screens with nothing cached: folded into TUR-41.
+
+The self-review of the PR found three more, also filed by the director:
+- TUR-62, extended: sharing is queued like stopping sharing;
+- TUR-66: a move's commits queue if the connection drops after its reads;
+- searching people offline: folded into TUR-41.
+
+The sign-out push requirement was noted on TUR-38, and the admin delete on TUR-37.
 
 ### D3. A new capability beside `offline-event-visibility`
 
@@ -164,8 +171,8 @@ Neither overlaps these sections.
   event's delete is a soft delete through `update`, which the rules allow for any admin. An admin who
   deletes, offline, a shift a colleague took meanwhile removes the colleague's shift on reconnect
   with no rejection to report. The same delete made online would show the new holder first. →
-  Reported to the director for TUR-37. The rejection scenario is written for a member who is not an
-  admin.
+  Noted on TUR-37, which decides whether it is wanted. The rejection scenario is written for a member
+  who is not an admin.
 - **[Admins cannot fix a group's types offline]** → Rare, and the alternative is a silent loss on
   reconnect (D1).
 - **[A new action is added without a class]** → The `CLAUDE.md` section states the rule, and an
