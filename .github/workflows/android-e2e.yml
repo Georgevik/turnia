@@ -15,10 +15,10 @@ on:
 # Release, github.workflow is the caller's name, so a standalone run never queues behind a release.
 # A manual dispatch gets a group of its own: measuring flakiness takes several runs side by side,
 # and a shared group would cancel every pending one but the last. Called from PR check, each pull
-# request gets a group of its own, or open pull requests would queue behind each other; cancelling a
-# run a new push made obsolete is PR check's own group's job.
+# request (or manual run of PR check) gets a group of its own, or they would queue behind each other;
+# cancelling a run a new push made obsolete is PR check's own group's job.
 concurrency:
-  group: ${{ github.workflow }}-android-e2e${{ github.workflow == 'AndroidE2E' && github.event_name == 'workflow_dispatch' && format('-{0}', github.run_id) || '' }}${{ github.event.pull_request.number && format('-pr-{0}', github.event.pull_request.number) || '' }}
+  group: ${{ github.workflow }}-android-e2e${{ github.workflow == 'AndroidE2E' && github.event_name == 'workflow_dispatch' && format('-{0}', github.run_id) || '' }}${{ github.workflow == 'PR check' && format('-pr-{0}', github.event.pull_request.number || github.run_id) || '' }}
   cancel-in-progress: false
 
 permissions:

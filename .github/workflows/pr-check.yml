@@ -110,7 +110,8 @@ jobs:
 
   # Whether the E2E suite has to run: not when every file the pull request changes is on the ignore
   # list. HEAD is the pull request merged into main and HEAD^1 is main, so their diff is exactly what
-  # the pull request would change. An empty list, or any other event, runs the suite.
+  # the pull request would change. --no-renames lists both sides of a move, so moving app code into an
+  # ignored path still runs the suite. An empty list, or any other event, runs the suite.
   e2e-paths:
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -129,7 +130,7 @@ jobs:
           if [ "$EVENT_NAME" != pull_request ]; then
             echo "run=true" | tee -a "$GITHUB_OUTPUT"
           else
-            git diff --name-only HEAD^1 HEAD | tee /dev/stderr | python3 .github/scripts/e2e-needed.py .github/e2e-ignored-paths.txt
+            git diff --name-only --no-renames HEAD^1 HEAD | tee /dev/stderr | python3 .github/scripts/e2e_needed.py .github/e2e-ignored-paths.txt
           fi
 
   e2e:
@@ -140,10 +141,11 @@ jobs:
 
   # The check branch protection requires, rather than e2e itself: a skipped caller of a reusable
   # workflow reports under another name than the one it reports when it runs, so a required e2e
-  # would wait forever on every pull request that skips the suite.
+  # would wait forever on every pull request that skips the suite. Not always(): a run cancelled by a
+  # newer push reports nothing, rather than a red check on the commit it made obsolete.
   pr-e2e:
     needs: [e2e-paths, e2e]
-    if: always()
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
