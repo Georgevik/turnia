@@ -21,7 +21,7 @@ A step can roll into the next one in the same session when the developer is ther
 - Before you report **ready to test**:
   - run the unit tests and the E2E tests that cover your change;
   - review your own PR with `/code-review high` and fix what survives;
-  - make sure the `pr-android`, `pr-ios` and `pr-checks` checks are green on GitHub.
+  - make sure the `pr-android`, `pr-ios`, `pr-checks` and `pr-e2e` checks are green on GitHub.
 - The PR title is `TUR-<N> <summary>`. The body has exactly three sections: **What changes?**, **Why?** and **How to test it**. *How to test it* is a list of concrete steps, each with an action and its expected result. After them come `Closes #<N>` and `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
 - Archive the OpenSpec change as the last commit of the PR, once the developer accepts it.
 
@@ -36,7 +36,7 @@ The Firebase emulators and the E2E suite use fixed ports, so only one checkout o
 
 The emulators, Android emulators and processes of other checkouts belong to whoever started them. Never stop them.
 
-CI is free and does not take the emulator turn: `gh workflow run android-e2e.yml --ref <your branch>` runs the whole suite. Never dispatch any other workflow.
+CI is free and does not take the emulator turn: every push to your PR runs the whole suite, reported as `pr-e2e`, so open the PR early when you need it. Never dispatch a workflow.
 
 ## Never
 

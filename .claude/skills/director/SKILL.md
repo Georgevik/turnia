@@ -119,7 +119,7 @@ The workers' messages and the developer drive you. On each one, read the board a
 - **Issue changed or created**: read it, weigh it in the queue, and agree its priority with the developer.
 - **Ready to test**:
   - Read the PR. Check it has `Closes #N`, its three sections, and a *How to test it* with concrete steps.
-  - Check the `pr-android`, `pr-ios` and `pr-checks` checks are green, and look over the diff for anything that breaks `CLAUDE.md`.
+  - Check the `pr-android`, `pr-ios`, `pr-checks` and `pr-e2e` checks are green, and look over the diff for anything that breaks `CLAUDE.md`.
   - Send it back to the worker if something is missing.
   - Otherwise send the developer to test it, in one line: the PR URL and the worker's session.
 - **The developer says «mergea TUR-N»**:
