@@ -83,6 +83,9 @@ left alone.
 Tick **Dry run** to see what the run would change without writing anything to any store: its summary
 lists the Play release, the TestFlight build, the App Store version and the languages it would touch.
 
+Every run's summary also shows the notes themselves: the text of each file in `.github/whatsnew/`,
+by language, with its length.
+
 ## If a run fails partway
 
 Open the failed run and click **Re-run failed jobs**, never **Re-run all jobs**.

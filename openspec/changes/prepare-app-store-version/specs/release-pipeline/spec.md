@@ -114,3 +114,7 @@ change without writing to any store.
 #### Scenario: Dry run
 - **WHEN** the Release notes workflow runs with the dry run ticked
 - **THEN** its summary lists the version, build and localizations it would change, and no store is written
+
+#### Scenario: The summary shows the notes
+- **WHEN** the Release notes workflow runs, from a release or by hand, with or without the dry run
+- **THEN** its summary shows the text of every notes file, by language, with its length

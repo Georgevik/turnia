@@ -97,6 +97,20 @@ jobs:
             echo "Dry run: nothing is written to any store." >> "$GITHUB_STEP_SUMMARY"
           fi
 
+      # What every store gets, so the run's summary shows the text and not only that it was set.
+      - name: Preview the notes
+        run: |
+          {
+            echo "#### Notes"
+            for file in .github/whatsnew/whatsnew-*; do
+              echo
+              echo "**${file##*/whatsnew-}** · $(wc -m < "$file" | tr -d ' ') characters"
+              echo
+              sed 's/^/> /' "$file"
+              echo
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
