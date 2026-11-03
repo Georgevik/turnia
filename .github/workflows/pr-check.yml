@@ -2,7 +2,8 @@ name: PR check
 
 # The fast gate on every pull request to main: it compiles both apps, runs the common tests and
 # checks the Cloud Functions, the OpenSpec changes and the production guard. No E2E: that suite is
-# android-e2e.yml. Branch protection matches on the job names below, so keep them stable.
+# android-e2e.yml. Branch protection matches on the job names below, so keep them stable; the pr- prefix keeps
+# any other workflow's job from satisfying them.
 on:
   pull_request:
     branches: [main]
@@ -18,7 +19,7 @@ permissions:
 
 jobs:
   # The debug app, plus the common tests of core and app/shared on the JVM host.
-  android:
+  pr-android:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -51,7 +52,7 @@ jobs:
             app/shared/build/reports/tests
 
   # The only check iOS gets: the shared Kotlin compiled for the simulator, without Xcode linking it.
-  ios:
+  pr-ios:
     runs-on: macos-26
     timeout-minutes: 30
     steps:
@@ -79,7 +80,7 @@ jobs:
         run: ./gradlew :app:shared:compileKotlinIosSimulatorArm64
 
   # Everything outside Gradle: the Cloud Functions, the OpenSpec changes and specs, the guard hook.
-  checks:
+  pr-checks:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
