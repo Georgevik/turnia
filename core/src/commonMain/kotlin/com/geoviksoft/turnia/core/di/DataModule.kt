@@ -178,6 +178,7 @@ val dataModule: Module = module {
             get(),
             get(),
             get(),
+            get(),
             get()
         )
     }

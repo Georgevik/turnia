@@ -109,7 +109,7 @@
 
   Verify with an instrumented `ProfilePhotoStorageTest`: an upload then a download returns the same
   bytes, and a 150 KB upload fails.
-- [ ] 3.4 Publish and remove photos:
+- [x] 3.4 Publish and remove photos:
   - `UserProfileFunction.setProfilePhoto(photoId | null)` with `trackFunction`;
   - a `ProfilePhotoError` (`UploadFailed`, `RemoveFailed`);
   - `UserRepository.uploadProfilePhoto(bytes)`, which uploads under a fresh id, publishes and then

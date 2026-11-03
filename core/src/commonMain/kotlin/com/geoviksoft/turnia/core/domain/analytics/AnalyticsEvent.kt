@@ -128,6 +128,9 @@ sealed class AnalyticsEvent(
 
     data object AccountDeleted : AnalyticsEvent("account_deleted")
 
+    /** A photo the user uploaded is now their profile's. Removing one is not reported. */
+    data object ProfilePhotoUploaded : AnalyticsEvent("profile_photo_uploaded")
+
     class OnboardShiftShown(via: ShiftSetupVia) : AnalyticsEvent(
         name = "onboard_shift_shown",
         parameters = mapOf("via" to via.value),

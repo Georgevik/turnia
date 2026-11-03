@@ -1,6 +1,7 @@
 package com.geoviksoft.turnia.core.data.datasource.firestorefunctions
 
 import com.geoviksoft.turnia.core.data.datasource.firestore.analytics.trackFunction
+import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.requests.SetProfilePhotoRequest
 import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.requests.UpdateProfileRequest
 import com.geoviksoft.turnia.core.data.logger.Logger
 import com.geoviksoft.turnia.core.data.user.mappers.UsernameErrorMapper
@@ -11,7 +12,7 @@ import com.geoviksoft.turnia.core.system.outcomeCatching
 import dev.gitlive.firebase.functions.FirebaseFunctions
 
 /**
- * Calls `updateProfile` and `deleteAccount`.
+ * Calls `updateProfile`, `setProfilePhoto` and `deleteAccount`.
  */
 class UserProfileFunction(
     private val functions: FirebaseFunctions,
@@ -25,6 +26,14 @@ class UserProfileFunction(
             functions.httpsCallable(FUNCTION_UPDATE_PROFILE)(
                 UpdateProfileRequest(name = name, username = username)
             )
+        }
+
+    /** Publishes the photo already uploaded as [photoId], or removes the photo when it is null. */
+    suspend fun setProfilePhoto(photoId: String?): Outcome<Unit, Throwable> =
+        outcomeCatching(TAG, { it }) {
+            Logger.i(TAG, "Set profile photo")
+            trackFunction(FUNCTION_SET_PROFILE_PHOTO)
+            functions.httpsCallable(FUNCTION_SET_PROFILE_PHOTO)(SetProfilePhotoRequest(photoId))
         }
 
     suspend fun deleteAccount(): Outcome<Unit, DeleteAccountError> =
@@ -47,6 +56,7 @@ class UserProfileFunction(
     companion object {
         private const val TAG = "UserProfileFunction"
         private const val FUNCTION_UPDATE_PROFILE = "updateProfile"
+        private const val FUNCTION_SET_PROFILE_PHOTO = "setProfilePhoto"
         private const val FUNCTION_DELETE_ACCOUNT = "deleteAccount"
         private const val CODE_DELETE_ACCOUNT_LAST_ADMIN = 5003
     }

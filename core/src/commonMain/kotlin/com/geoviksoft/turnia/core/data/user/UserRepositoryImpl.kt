@@ -7,12 +7,15 @@ import com.geoviksoft.turnia.core.data.datasource.firestore.errors.UserProfileEr
 import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.UserProfileFunction
 import com.geoviksoft.turnia.core.data.logger.Logger
 import com.geoviksoft.turnia.core.data.user.mappers.UserDocumentMapper
+import com.geoviksoft.turnia.core.data.datasource.storage.ProfilePhotoStorage
 import com.geoviksoft.turnia.core.domain.analytics.Analytics
 import com.geoviksoft.turnia.core.domain.analytics.AnalyticsEvent
 import com.geoviksoft.turnia.core.domain.model.DeleteAccountError
 import com.geoviksoft.turnia.core.domain.model.EmailAuthError
 import com.geoviksoft.turnia.core.domain.model.User
 import com.geoviksoft.turnia.core.domain.model.UserId
+import com.geoviksoft.turnia.core.domain.model.ProfilePhoto
+import com.geoviksoft.turnia.core.domain.model.ProfilePhotoError
 import com.geoviksoft.turnia.core.domain.model.UserProfile
 import com.geoviksoft.turnia.core.domain.model.UserSession
 import com.geoviksoft.turnia.core.domain.model.UsernameError
@@ -62,8 +65,15 @@ class UserRepositoryImpl(
     private val provisioner: UserProvisioner,
     private val fcmDelegate: FcmDelegate,
     private val analytics: Analytics,
+    profilePhotoStorage: ProfilePhotoStorage,
     scope: CoroutineScope
 ) : UserRepository, FcmDelegate by fcmDelegate {
+
+    private val photos = ProfilePhotoPublisher(
+        upload = profilePhotoStorage::upload,
+        publish = userProfileFunction::setProfilePhoto,
+        analytics = analytics,
+    )
 
     private val _userSession = MutableStateFlow<UserSession>(UserSession.Loading)
 
@@ -252,6 +262,24 @@ class UserRepositoryImpl(
                     Unit.toFailure()
                 },
             )
+    }
+
+    override suspend fun uploadProfilePhoto(bytes: ByteArray): Outcome<ProfilePhoto, ProfilePhotoError> {
+        val user = loggedUser ?: return ProfilePhotoError.UploadFailed.toFailure()
+
+        return photos.upload(user.id, bytes).onSuccess { photo -> withPhoto(photo.photoId) }
+    }
+
+    override suspend fun removeProfilePhoto(): Outcome<Unit, ProfilePhotoError> {
+        if (loggedUser == null) return ProfilePhotoError.RemoveFailed.toFailure()
+
+        return photos.remove().onSuccess { withPhoto(null) }
+    }
+
+    /** The session's own copy, which the server's write reaches only on the next profile read. */
+    private fun withPhoto(photoId: String?) {
+        val user = loggedUser ?: return
+        _userSession.value = UserSession.Authenticated(user.copy(photoId = photoId))
     }
 
     override suspend fun enableShowAds(): Outcome<Unit, Unit> {
