@@ -650,6 +650,12 @@ A PR description has exactly three sections, in this order:
 Every PR to `main` runs `.github/workflows/pr-check.yml` — jobs `pr-android`, `pr-ios` and `pr-checks` — the
 fast gate a merge waits for; the E2E suite is not part of it.
 
+## Agents
+
+Work is tracked as `TUR-N` GitHub issues ([docs/agents/issue-tracker.md](docs/agents/issue-tracker.md)). The
+`/director` skill runs one worker per issue as an `aoe` session; a worker follows
+[docs/agents/workers.md](docs/agents/workers.md), and only the director merges, once the developer accepts.
+
 ## iOS signing & Apple setup
 
 The app is signed by the paid team `83GQ2T4N4H` with automatic signing, so Xcode keeps the App ID's
