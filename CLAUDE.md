@@ -268,14 +268,20 @@ How the calendar behaves once an event is written offline lives in
 [`offline-event-visibility`](openspec/specs/offline-event-visibility/spec.md).
 
 **The rule: who decides the outcome.**
-- An action that writes only what the user alone writes works locally at once.
-- An action whose outcome the server or another person decides needs a connection. That covers a
-  Cloud Function or transaction, uniqueness, a read only the server can answer, and a document
-  shared with others. It also covers an action that is meaningless until it reaches the server,
-  like a group's invitation code.
-- **The one exception is stopping sharing one's calendar.** It writes only the user's own document,
-  but `getSharedCalendar` checks that list for someone else. Queued, it would say *done* while the
-  other person could still read the calendar.
+- **Writes to the calendar are local:** adding, editing and deleting events of any kind, notes and
+  swap offers, whoever else can see them. A clash with someone else's change shows up as a
+  rejection, and the user is told about it.
+- **Writes to what only the user owns are local:** their types, their preferences, their avatar.
+- **Whatever the server or another person decides needs a connection.** That covers:
+  - a Cloud Function or transaction;
+  - uniqueness;
+  - a read only the server can answer;
+  - the group document;
+  - who can see the user's calendar. `getSharedCalendar` checks that list on someone else's behalf,
+    so a queued change to it would say *done* while it was not.
+
+  It also covers an action that is meaningless until it reaches the server, like a group's
+  invitation code.
 
 | Area | Works locally at once | Needs a connection |
 |------|-----------------------|--------------------|
@@ -292,7 +298,9 @@ How the calendar behaves once an event is written offline lives in
 - the user is told only if the server rejects it.
 
 Signing out offline shows no warning about unsent changes. Firestore keeps them on the device, per
-account, and uploads them the next time that account signs in there.
+account, and uploads them the next time that account signs in there. The push-token removal must not
+wait in that queue: once the device is back online it stops receiving the signed-out account's
+notifications, whoever signs in next.
 
 **Needs a connection** means:
 - the button stays enabled;
@@ -309,8 +317,9 @@ in on its own once the connection returns. An offline launch always reaches the 
 **Why the code has to care:** a direct Firestore write lands in the local cache at once, but its
 `commit()` suspends until the server acknowledges it, so it **never fails offline**.
 - A local action must not make its screen wait on that commit.
-- An action that needs a connection but is a Firestore write (creating or editing a group) cannot
-  rely on the commit to fail; it has to check for a connection itself.
+- An action that needs a connection but is a Firestore write cannot rely on the commit to fail; it
+  has to check for a connection itself. That covers creating or editing a group, sharing or
+  stopping sharing the calendar, and a move to a group, whose commits follow its server reads.
 - A callable fails on its own, but only after the SDK's own timeout.
 
 **A new action is not finished until it has its row here and its requirement in `offline-actions`.**

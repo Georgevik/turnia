@@ -8,7 +8,7 @@ what it asks of the code.
 | Mechanism | Used by | With no connection |
 |---|---|---|
 | Callable Cloud Function | take, give back, join, accept, reject, leave, remove, delete group, name and username, delete account, the shared-calendar read, the profile photo (TUR-56) | Fails on its own. With no network it fails quickly. With a network that does not answer it takes up to the SDK's ~70 s timeout. The message is generic today. |
-| Direct Firestore write | events, notes, swap offers, personal types, the shift setup, type colours, avatar, preferences, sharing, creating and editing a group | Lands in the local cache at once and is queued. `commit()` keeps suspending until the server acknowledges it, so it **never fails offline**. A screen that waits on it spins until reconnect, and the write still lands then. |
+| Direct Firestore write | events, notes, swap offers, personal types, the shift setup, type colours, avatar, preferences, sharing and stopping sharing, creating and editing a group, the commits of a move to a group (after its two server reads) | Lands in the local cache at once and is queued. `commit()` keeps suspending until the server acknowledges it, so it **never fails offline**. A screen that waits on it spins until reconnect, and the write still lands then. |
 
 Event writes already meet the contract: the day sheet launches them and waits on nothing
 (`offline-event-visibility`). Every screen that awaits a commit before closing does not.
@@ -32,19 +32,31 @@ Event writes already meet the contract: the day sheet launches them and waits on
 
 ### D1. The rule: who decides the outcome
 
-An action that writes only what the user alone writes works locally at once. An action whose
-outcome the server or another person decides needs a connection. "Decides" covers:
-- a Cloud Function or transaction (take, join, leave);
-- uniqueness (username);
-- a read only the server can answer (the days a move would collide with);
-- a document shared with others (the group).
+Three clauses, in this order:
 
-It also covers an action that is meaningless until it reaches the server: a group's invitation code.
+1. **Writes to the calendar are local.** That means adding, editing and deleting events of any kind,
+   notes and swap offers, whoever else can see them. This is the calendar `offline-event-visibility`
+   already makes offline-first. A clash with someone else's change is resolved by the server, and
+   the user is told when it refuses (TUR-37).
+2. **Writes to what only the user owns are local:** their types, their preferences, their avatar.
+3. **Whatever the server or another person decides needs a connection:**
+   - a Cloud Function or transaction (take, join, leave);
+   - uniqueness (username);
+   - a read only the server can answer (the days a move would collide with);
+   - the group document;
+   - who can see the user's calendar.
 
-**One exception, by the developer's decision:** stopping sharing one's calendar writes only the
-user's own document, but the server checks that list on behalf of someone else
-(`getSharedCalendar`). Queued, it would say *done* while the other person could still read the
-calendar.
+   It also covers an action that is meaningless until it reaches the server: a group's invitation
+   code.
+
+**Who can see the calendar** is in the third clause by the developer's decision on stopping sharing.
+`calendarSharedWith` is the user's own document, but `getSharedCalendar` checks it on someone else's
+behalf, so a queued change would say *done* while it was not. Sharing falls in the same clause, so
+the rule has no exception.
+
+The calendar clause comes first because a group event is a shared document too: read by every
+member, and written by its holder and by admins. Without the clause, the third would wrongly claim
+swap offers and an admin's delete.
 
 *Alternative considered:* classifying by mechanism (callable = server, direct write = local).
 Rejected: editing a group is a direct write, yet it is a full-document `set` that the rules
@@ -69,10 +81,11 @@ nobody could tell an unhandled action from an undecided one, which is today's pr
 | … own colour for a group type shows at once | Shows only once the server acknowledges it | TUR-64 |
 | Profile and preferences work locally at once | Avatar save hangs with a spinner; notifications, hiding and language are met | TUR-63 |
 | Signing out works at once offline | Hangs on the push-token write | TUR-38 |
+| An offline sign-out stops the account's notifications once back online | Not met: offline, the token removal would wait in the signed-out account's queue | TUR-38 |
 | A local change is reported only when the server rejects it | Rejections are lost in silence | TUR-37 |
 | Group and membership actions need a connection | Creating or editing a group hangs, and the write lands on reconnect; callables fail with a generic error | TUR-39, TUR-41 |
-| Shift transfer and move actions need a connection | Generic error | TUR-41 |
-| Account, sharing and people actions need a connection | Stopping sharing is a queued write; the rest fail with a generic error | TUR-62, TUR-41 |
+| Shift transfer and move actions need a connection | Generic error. A move's commits are queued if the connection drops after its server reads, and then run on reconnect | TUR-41; the move's commits: *owner pending* |
+| Account, sharing and people actions need a connection | Sharing and stopping sharing are queued writes. Searching people offline returns cached or empty results with no error. The rest fail with a generic error | TUR-62 (stopping); sharing and search: *owner pending*; TUR-41 |
 | An action that needs a connection says so | No *No connection* error; callables can take ~70 s | TUR-41 |
 | … keeps what the user entered | Mostly met; to verify per screen with the error | TUR-41 |
 | … never runs later on its own | Callables met; creating or editing a group is queued | TUR-39 |
@@ -112,8 +125,13 @@ them when that account signs in again. Signing out offline therefore loses nothi
 - the app's data is not cleared first.
 
 The developer chose no warning, so the 2026-10-30 decision holds without an exception: pending is
-never shown. TUR-38 must make sure the token write it moves out of the sign-out's way does not break
-this.
+never shown.
+
+The same queue would hold the push-token removal that sign-out writes first. Left there, the
+signed-out account's notifications would keep reaching the device, and whoever signs in next, until
+that account came back. The contract therefore requires those notifications to stop once the device
+is back online. How is TUR-38's call; invalidating this device's token with FCM is one way that does
+not depend on the queue.
 
 ### D6. Reads: no staleness marker
 
@@ -138,9 +156,16 @@ Neither overlaps these sections.
 - **[Unsent changes are stranded if the user signs out offline and then clears the app's data, or
   only ever signs in elsewhere]** → Accepted by the developer, in exchange for never showing
   pending (D5).
-- **[Withdrawing an offer offline races with a colleague taking it]** → The withdrawal is
-  rejected on reconnect, since only the holder may move `onSwap`. It is reported under the
-  rejection requirement (TUR-37).
+- **[Withdrawing an offer offline races with a colleague taking it]** → `takeEvent` has already
+  cleared `onSwap` and moved `assigneeId`. A member's withdrawal is rejected on reconnect by the
+  assignee check of the update rule, and is reported under the rejection requirement (TUR-37). An
+  admin's passes that check, but writes `onSwap = false` over `false`, so it changes nothing.
+- **[An admin's offline delete of a shift taken meanwhile is accepted, not rejected]** → A group
+  event's delete is a soft delete through `update`, which the rules allow for any admin. An admin who
+  deletes, offline, a shift a colleague took meanwhile removes the colleague's shift on reconnect
+  with no rejection to report. The same delete made online would show the new holder first. →
+  Reported to the director for TUR-37. The rejection scenario is written for a member who is not an
+  admin.
 - **[Admins cannot fix a group's types offline]** → Rare, and the alternative is a silent loss on
   reconnect (D1).
 - **[A new action is added without a class]** → The `CLAUDE.md` section states the rule, and an

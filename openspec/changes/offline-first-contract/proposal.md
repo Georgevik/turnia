@@ -13,10 +13,11 @@ tests have anything to obey.
 - A new capability states the offline contract for **every** user action. Each one either **works
   locally at once** or **needs a connection** and says so. Reading follows its own rule: show what
   the device holds.
-- The rule that decides the class: an action that writes only what the user alone writes works
-  locally at once. An action whose outcome the server or another person decides needs a connection.
-  The one exception is stopping sharing one's calendar. It writes the user's own document, but the
-  server checks it on someone else's behalf.
+- The rule that decides the class has three clauses:
+  - writes to the calendar are local, whoever else can see them;
+  - writes to what only the user owns are local;
+  - whatever the server or another person decides needs a connection. That includes the group
+    document and who can see the user's calendar, which the server checks on someone else's behalf.
 - What *needs a connection* looks like:
   - the button stays enabled;
   - with no network, *No connection* (*Sin conexión*) shows at once;

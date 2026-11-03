@@ -47,7 +47,7 @@ the new colour at once.
 
 #### Scenario: Confirming the shift setup in airplane mode
 
-- **WHEN** a new user with no connection confirms the shift setup with three shifts selected
+- **WHEN** the user with no connection opens the shift setup from the add pane's empty state and confirms it with three shifts selected
 - **THEN** the setup closes onto the calendar straight away and the three shifts are offered in the add pane
 
 #### Scenario: One's own colour for a group type in airplane mode
@@ -89,6 +89,17 @@ in on that device.
 - **WHEN** the user adds a shift with no connection, signs out, regains a connection and signs in again with the same account on that device
 - **THEN** the shift is uploaded and appears exactly once
 
+### Requirement: An offline sign-out stops the account's notifications once back online
+
+After signing out with no connection, the device SHALL stop receiving that account's notifications as
+soon as it is back online, whoever signs in next and whether or not that account ever signs in there
+again.
+
+#### Scenario: Another account on the device after an offline sign-out
+
+- **WHEN** user A signs out with no connection, user B signs in on that device, the connection returns and a colleague of A takes one of A's shifts
+- **THEN** the device shows no notification meant for A
+
 ### Requirement: A local change is reported only when the server rejects it
 
 A change made by an action that works locally SHALL look the same as one the server has taken, before
@@ -102,7 +113,7 @@ user acting. The user SHALL be told only when the server rejects it.
 
 #### Scenario: A rejected change is reported
 
-- **WHEN** the user deletes a shift offline that a colleague took meanwhile, and then reconnects
+- **WHEN** a member who is not an admin deletes a shift offline that a colleague took meanwhile, and then reconnects
 - **THEN** the user is told the change could not be made
 
 ### Requirement: Group and membership actions need a connection
