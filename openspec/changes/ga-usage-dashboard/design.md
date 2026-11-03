@@ -34,11 +34,11 @@ running-total curves, which were also dropped.
 
 | Question | Where | Built from |
 |---|---|---|
-| Unique and new users per day, events per active user | *Daily summary* (overview report) | Built-in *Active users*, *New users*, *Event count per active user* |
-| Events created per day, and groups created per day | *Events created* (detail report) | *Event name* filtered to `personal_event_created`, `one_off_event_created`, `group_event_created`, `group_created` |
-| Feature use | *Feature use* (detail report) | *Event name* filtered to the swap, hand-back, shared-calendar, move, notes and membership events |
+| Unique and new users per day | *Daily summary* (detail report) | *Date* × built-in *Active users*, *New users* |
+| Events created per day, and events per user | *Events created* (detail report) | *Event name* filtered to `personal_event_created`, `one_off_event_created`, `group_event_created`; *Event count*, *Total users*, *Event count per active user* |
+| Groups created per day, and feature use | *Feature use* (detail report) | *Event name* filtered to `group_created` and the swap, hand-back, shared-calendar, move, notes and membership events; plus the `events_moved` metric |
 | Sign-in method, language, groups | *Users* (detail report) | `method` on `sign_up` / `login`; user properties `app_language`, `group_count`, `is_admin` |
-| Activation | *Activation funnel* (funnel exploration) | `first_open` → `sign_up` → `onboard_shift_completed` → `first_event_added` |
+| Activation | *Activation funnel* (funnel exploration) | `first_open` → `sign_up` → `onboard_shift_completed` or `onboard_shift_skipped` → `first_event_added` |
 | Onboarding and growth prompts | *Onboarding and prompts* (free-form exploration) | `onboard_shift_*` by `via`/`interacted`, `onboard_team_*` by `choice`, `share_prompt_*` by `audience`/`milestone` |
 | Retention D1/D7/D30 | *Retention* (cohort exploration) | First touch, return on any event, daily granularity |
 
@@ -49,9 +49,17 @@ The total of events added is `personal_event_created` + `one_off_event_created` 
 created, so adding `personal_events_moved` to the total would count them twice. The moves are
 reported separately, as the sum of `event_count`.
 
+Every report is a detail report, even the daily summary, because a detail report keyed on *Date*
+gives exactly one row per day. *Events created* has to filter on event name, and a filter applies to
+the whole report, so its *Event count per active user* averages over the users who added an event.
+The average over all users is that report's total divided by the *Daily summary*'s active users.
+That is also why `group_created` lives in *Feature use* and not in *Events created*: there it would
+add groups to the total of events added.
+
 ### `event_count` is registered as a custom metric
 
-A custom dimension groups by value. Summing the events moved needs a **custom metric**. `event_count`
+A custom dimension groups by value. Summing the events moved needs a **custom metric**, named
+`events_moved` in the console. `event_count`
 stays registered as a dimension too, as `CLAUDE.md` already lists it: GA allows the same parameter to
 be both. The other numeric parameters (`type_count`, `milestone`, `custom_type_count`,
 `skipped_count`) stay dimensions only. The dashboard breaks them down by value and never sums them,

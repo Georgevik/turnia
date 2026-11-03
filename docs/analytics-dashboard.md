@@ -150,3 +150,160 @@ también en la tabla de dimensiones.
 
 Resultado: la pestaña *Dimensiones personalizadas* lista 20 (17 de evento y 3 de usuario), y
 *Métricas personalizadas* lista 1.
+
+## 3. La colección "Turnia"
+
+Primero se crean los cuatro informes en la **Biblioteca** (*Library*) y después se juntan en una
+colección que aparece en el menú izquierdo.
+
+### Cómo se crea un informe de detalles
+
+Los cuatro informes se crean igual; solo cambia lo que pones en el panel de la derecha:
+
+1. En el menú izquierdo, **Informes** (*Reports*) → abajo del todo, **Biblioteca** (*Library*).
+   Si no la ves, te falta el rol *Editor*.
+2. Debajo de las colecciones, en la tabla *Informes* (*Reports*), haz clic en **Crear nuevo
+   informe** (*Create new report*) → **Crear informe de detalles** (*Create detail report*) →
+   **Crear desde cero** (*Blank*).
+3. En el panel de la derecha, sección **Datos del informe** (*Report data*):
+   - **Dimensiones** (*Dimensions*) → **Añadir dimensión** (*Add dimension*): busca la dimensión
+     por su nombre y márcala. Con varias, la que tiene el tic de **Establecer como predeterminada**
+     (*Set as default*) en su menú `⋮` es la que se ve al abrir el informe.
+   - **Métricas** (*Metrics*) → **Añadir métrica** (*Add metric*): igual.
+   - **Filtro del informe** (*Report filter*) → **Añadir filtro** (*Add filter*): elige la
+     **Dimensión** (*Dimension*), el **Tipo de coincidencia** (*Match type*) y el **Valor**
+     (*Value*), y pulsa **Aplicar** (*Apply*).
+4. En **Visualizaciones del informe** (*Report visualizations*), deja solo el gráfico que dice cada
+   informe (con el ojo de los demás tachado).
+5. Arriba a la derecha, **Guardar** (*Save*) → **Guardar como informe nuevo** (*Save as a new
+   report*), escribe el **Nombre del informe** (*Report name*) y pulsa **Guardar** (*Save*).
+6. **Volver** (*Back*), la flecha arriba a la izquierda, para regresar a la Biblioteca.
+
+### 3.1 Resumen diario
+
+Usuarios únicos y nuevos, día a día.
+
+| Campo | Valor |
+|---|---|
+| Dimensiones | **Fecha** (*Date*) |
+| Métricas | **Usuarios activos** (*Active users*), **Usuarios nuevos** (*New users*) |
+| Filtro | ninguno |
+| Gráfico | **Gráfico de líneas** (*Line chart*) |
+| Nombre del informe | `Resumen diario` |
+
+Resultado: una línea con los usuarios activos de cada día y una tabla con una fila por día. Haz clic
+en el título de la columna *Fecha* para ordenar del más reciente al más antiguo.
+
+La fila de **Total** de arriba no es la suma de los días: son los usuarios únicos de todo el periodo
+elegido. Quien abre la app tres días cuenta una vez en el total y una vez en cada uno de esos días.
+
+### 3.2 Eventos creados
+
+Cuántos eventos se añaden al calendario, y de qué clase.
+
+| Campo | Valor |
+|---|---|
+| Dimensiones | **Nombre del evento** (*Event name*) |
+| Métricas | **Recuento de eventos** (*Event count*), **Usuarios totales** (*Total users*), **Recuento de eventos por usuario activo** (*Event count per active user*) |
+| Filtro | *Nombre del evento* · **coincide con la expresión regular** (*matches regex*) · el valor de abajo |
+| Gráfico | **Gráfico de líneas** (*Line chart*) |
+| Nombre del informe | `Eventos creados` |
+
+Valor del filtro, en una sola línea:
+
+```
+personal_event_created|one_off_event_created|group_event_created
+```
+
+Resultado: tres filas y tres líneas, una por clase de evento:
+
+- `personal_event_created`: turnos de un tipo propio (los "normales");
+- `one_off_event_created`: eventos puntuales;
+- `group_event_created`: eventos de grupo.
+
+La fila de **Total** es el número de **eventos añadidos** en el periodo. *Recuento de eventos por
+usuario activo* dice cuántos añade, de media, cada usuario que añade alguno. Para la media sobre
+**todos** los usuarios, divide el total entre los *Usuarios activos* del *Resumen diario* en el
+mismo periodo.
+
+Para ver los números de cada día en la tabla, pulsa el **+** junto al título de la columna *Nombre
+del evento* y elige **Fecha** (*Date*) como dimensión secundaria.
+
+Los eventos **movidos** a un grupo no están aquí a propósito: ya se contaron cuando se crearon como
+turnos propios, y sumarlos los contaría dos veces. Salen en *Uso por funcionalidad*.
+
+### 3.3 Uso por funcionalidad
+
+Grupos creados por día, y cuánto se usa cada funcionalidad.
+
+| Campo | Valor |
+|---|---|
+| Dimensiones | **Nombre del evento** (*Event name*) |
+| Métricas | **Recuento de eventos** (*Event count*), **Usuarios totales** (*Total users*), `events_moved` |
+| Filtro | *Nombre del evento* · **coincide con la expresión regular** (*matches regex*) · el valor de abajo |
+| Gráfico | **Gráfico de líneas** (*Line chart*) |
+| Nombre del informe | `Uso por funcionalidad` |
+
+Valor del filtro, en una sola línea:
+
+```
+swap_.*|.*calendar.*|personal_events_moved|.*notes_saved|group_(created|invite_shared|left|deleted)|invitation_opened|join_.*|member_removed|.*_event_type_created|notification_opened|account_deleted
+```
+
+Resultado: una fila por evento. Para leerlas:
+
+| Funcionalidad | Eventos |
+|---|---|
+| Grupos | `group_created` (grupos creados), `group_invite_shared`, `invitation_opened`, `join_group_requested`, `join_group` (solicitud aceptada), `join_request_rejected`, `group_left`, `member_removed`, `group_deleted` |
+| Cambios de turno | `swap_offered`, `swap_withdrawn`, `swap_taken`, `swap_take_lost` (otro llegó antes) |
+| Devoluciones | `swap_returned` |
+| Calendario compartido | `calendar_shared`, `calendar_share_revoked`, `shared_calendar_viewed`, `shared_calendar_hidden` |
+| Mover a grupo | `personal_events_moved` (una vez por movimiento); los eventos movidos son su columna `events_moved` |
+| Notas | `event_notes_saved` (turno propio), `group_event_notes_saved` (evento de grupo) |
+| Tipos de turno | `personal_event_type_created`, `group_event_type_created` |
+| Otros | `notification_opened`, `account_deleted` |
+
+**Grupos creados por día**: en la tabla, marca solo la casilla de la fila `group_created` y el
+gráfico dibuja únicamente esa línea. Lo mismo sirve para cualquier otro evento (hasta cinco a la
+vez).
+
+**Eventos de grupo creados contando los movidos**: `group_event_created` en *Eventos creados* más el
+`events_moved` de la fila `personal_events_moved` de aquí.
+
+### 3.4 Usuarios
+
+Quién usa la app: método de acceso, idioma y grupos.
+
+| Campo | Valor |
+|---|---|
+| Dimensiones | `app_language` (predeterminada), `method`, `group_count`, `is_admin`, **Plataforma** (*Platform*) |
+| Métricas | **Usuarios activos** (*Active users*), **Usuarios nuevos** (*New users*) |
+| Filtro | ninguno |
+| Gráfico | **Gráfico de barras** (*Bar chart*) |
+| Nombre del informe | `Usuarios` |
+
+Resultado: una barra por idioma. Para cambiar de desglose, usa el desplegable del título de la
+primera columna de la tabla y elige otra dimensión.
+
+- `app_language`: `system` si la app sigue al idioma del móvil; si no, `en`, `es`, `fr`, `de` o `it`.
+- `method`: `google`, `apple`, `email` u `other`. Solo se envía al iniciar sesión o al crear la
+  cuenta, así que quien en el periodo solo abrió la app con la sesión ya iniciada sale como
+  `(not set)`. Es normal: mira el resto de filas.
+- `group_count`: `0` es quien usa Turnia sin grupo; `1` o más, con equipo.
+- `is_admin`: `true` si administra al menos un grupo.
+
+### 3.5 Juntar los informes en la colección
+
+1. En la **Biblioteca** (*Library*), arriba, haz clic en **Crear nueva colección** (*Create new
+   collection*) → **Colección en blanco** (*Blank*).
+2. Arriba a la izquierda, cambia *Colección sin título* (*Untitled collection*) por `Turnia`.
+3. Haz clic en **Crear nuevo tema** (*Create new topic*) y llámalo `Uso`.
+4. De la lista **Informes** (*Reports*) de la derecha, arrastra al tema `Uso`, en este orden:
+   `Resumen diario`, `Eventos creados`, `Uso por funcionalidad`, `Usuarios`. Usa la búsqueda de la
+   lista si no los ves.
+5. Haz clic en **Guardar** (*Save*) → **Volver a la biblioteca** (*Back to library*).
+6. En la tarjeta **Turnia**, abre el menú `⋮` → **Publicar** (*Publish*).
+
+Resultado: en el menú izquierdo de *Informes* aparece **Turnia** → **Uso**, con los cuatro informes
+dentro. Arriba a la derecha de cada uno eliges el periodo; para el acumulado desde el lanzamiento,
+elige un intervalo personalizado (*Custom*) que empiece ese día.

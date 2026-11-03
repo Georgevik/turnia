@@ -7,7 +7,7 @@
 
 ## 2. Guide: the "Turnia" collection
 
-- [ ] 2.1 Add the steps to create the four Library reports (*Daily summary*, *Events created*, *Feature use*, *Users*) and the "Turnia" collection that publishes them. Each report gets the template to start from, dimensions, metrics and filters with exact values, how to save it, and what the result should look like. *Events created* states that the total of events added excludes moves. Verify every event name in the filters exists in `AnalyticsEvent.kt`.
+- [x] 2.1 Add the steps to create the four Library reports (*Daily summary*, *Events created*, *Feature use*, *Users*) and the "Turnia" collection that publishes them. Each report gets the template to start from, dimensions, metrics and filters with exact values, how to save it, and what the result should look like. *Events created* states that the total of events added excludes moves. Verify every event name in the filters exists in `AnalyticsEvent.kt`.
 
 ## 3. Guide: Explorations
 
