@@ -9,7 +9,7 @@
 
 ## 2. The E2E jobs in the PR gate
 
-- [ ] 2.1 Append `-pr-<number>` to `android-e2e.yml`'s concurrency group when `github.event.pull_request.number` is set, update its header comment, and verify the `push`, `workflow_dispatch` and release groups are unchanged
+- [x] 2.1 Append `-pr-<number>` to `android-e2e.yml`'s concurrency group when `github.event.pull_request.number` is set, update its header comment, and verify the `push`, `workflow_dispatch` and release groups are unchanged
 - [ ] 2.2 Add `e2e-paths` (merge-commit diff with `fetch-depth: 2`, `run=true` outside `pull_request`), `e2e` (`uses: ./.github/workflows/android-e2e.yml`, `secrets: inherit`, `if` on its output) and `pr-e2e` (`if: always()`, green only when `e2e-paths` succeeded and `e2e` is `success` or `skipped`) to `pr-check.yml`, update its header comment, and verify with `actionlint` or a YAML parse that the workflow is valid
 - [ ] 2.3 Update `CLAUDE.md` (*Pull requests*: the gate now includes `pr-e2e` and when it skips; *E2E tests*: pull requests run the suite) and verify no doc still says the E2E suite is not part of the PR gate (`grep -rn "not part of it" CLAUDE.md .github`)
 
