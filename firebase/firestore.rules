@@ -42,15 +42,18 @@ service cloud.firestore {
     // not see lives under `private`.
     match /users/{uid} {
       allow read: if isSignedIn();
-      allow create: if isSignedIn() && request.auth.uid == uid;
-      // `name` and `username` are copied into every group the user belongs to, so only the
-      // `updateProfile` function may change them — a keeper that ships inside the app is only as
-      // current as the oldest version still installed.
+      // A profile is born without a photo: `photoId` is published by `setProfilePhoto` alone.
+      allow create: if isSignedIn() && request.auth.uid == uid &&
+        !('photoId' in request.resource.data);
+      // `name`, `username` and `photoId` are copied into every group the user belongs to, so only
+      // their functions may change them (`updateProfile`, `setProfilePhoto`) — a keeper that ships
+      // inside the app is only as current as the oldest version still installed.
       // `showAds` only ever goes one way: once a free user has earned the banner, clearing the flag
       // would be a way to hide it.
       allow update: if isSignedIn() && request.auth.uid == uid &&
         request.resource.data.get('name', '') == resource.data.get('name', '') &&
         request.resource.data.get('username', '') == resource.data.get('username', '') &&
+        request.resource.data.get('photoId', null) == resource.data.get('photoId', null) &&
         (resource.data.get('showAds', false) != true ||
           request.resource.data.get('showAds', false) == true);
       allow delete: if isSignedIn() && request.auth.uid == uid;

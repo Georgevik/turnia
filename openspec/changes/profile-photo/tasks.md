@@ -26,7 +26,7 @@
   Declare it in `firebase.json` (`"storage": { "rules": "storage.rules" }`), along with the
   `storage` emulator on port 9199. Verify `firebase emulators:start --only storage` loads the rules,
   after asking the director for the emulator turn.
-- [ ] 2.2 In `firebase/firestore.rules`, `users/{uid}`:
+- [x] 2.2 In `firebase/firestore.rules`, `users/{uid}`:
   - `update` keeps `photoId` unchanged, as it does `name` and `username`;
   - `create` refuses any `photoId`.
 
