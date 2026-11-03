@@ -2,6 +2,7 @@ package com.geoviksoft.turnia.core.data.user
 
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.DocHolder
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.GroupDocument
+import com.geoviksoft.turnia.core.data.datasource.firestore.doc.GroupEditDocument
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.GroupMemberDocument
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.InvitationDocument
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.UserDocument
@@ -11,6 +12,7 @@ import com.geoviksoft.turnia.core.domain.model.UserId
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -56,6 +58,17 @@ class ProfilePhotoMappingTest {
 
         assertEquals("p1", written.getValue("bruno").photoId)
         assertNull(written.getValue("carla").photoId)
+    }
+
+    /** A group save merges what an admin edits and nothing else, so it can never wipe a member's photo. */
+    @Test
+    fun aGroupSaveSendsNoMembership() {
+        val edit = GroupEditDocument.of(group(members = mapOf("bruno" to GroupMemberDocument("Bruno", "bruno", "p1"))))
+            .copy(updateAt = null)
+
+        val sent = Json.encodeToJsonElement(GroupEditDocument.serializer(), edit).jsonObject.keys
+
+        assertEquals(setOf("name", "color", "groupEventTypes", "invitation", "updateAt"), sent)
     }
 
     private fun group(members: Map<String, GroupMemberDocument>) = GroupDocument(

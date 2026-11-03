@@ -5,6 +5,7 @@ import com.geoviksoft.turnia.core.data.datasource.firestore.analytics.trackedSna
 import com.geoviksoft.turnia.core.data.datasource.firestore.analytics.trackWrite
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.DocHolder
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.GroupDocument
+import com.geoviksoft.turnia.core.data.datasource.firestore.doc.GroupEditDocument
 import com.geoviksoft.turnia.core.data.datasource.firestore.errors.GenericFirestoreError
 import com.geoviksoft.turnia.core.data.datasource.firestore.sync.SharedListeners
 import com.geoviksoft.turnia.core.data.datasource.firestore.sync.isConfirmed
@@ -190,14 +191,14 @@ class GroupFirestore(
             syncWrite.committed()
         }
 
-    suspend fun update(groupId: GroupId, group: GroupDocument): Outcome<Unit, GenericFirestoreError> =
+    suspend fun update(groupId: GroupId, edit: GroupEditDocument): Outcome<Unit, GenericFirestoreError> =
         outcomeCatching(TAG, { GenericFirestoreError(it) }) {
-            Logger.d(TAG, "Set group document")
+            Logger.d(TAG, "Merge the admin's edit into the group document")
 
             // The group and its marker in one commit, so both resolve to the same instant and a
-            // reader can see them as equally old.
+            // reader can see them as equally old. Merged, never set whole: see GroupEditDocument.
             val batch = firestore.batch()
-            batch.set(groupDocument(groupId), group)
+            batch.set(groupDocument(groupId), edit, merge = true)
             val syncWrite = groupSyncFirestore.writeGroup(batch, groupId)
             batch.commit()
             trackWrite(TAG, "updateGroup")

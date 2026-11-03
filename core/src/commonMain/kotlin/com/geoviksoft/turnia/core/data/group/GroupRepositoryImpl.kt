@@ -8,6 +8,7 @@ import com.geoviksoft.turnia.core.data.datasource.firestore.RevokedGroupFirestor
 import com.geoviksoft.turnia.core.data.datasource.firestore.UserPrivateFirestore
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.DocHolder
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.GroupDocument
+import com.geoviksoft.turnia.core.data.datasource.firestore.doc.GroupEditDocument
 import com.geoviksoft.turnia.core.data.datasource.firestore.doc.GroupMemberDocument
 import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.GroupEventFunction
 import com.geoviksoft.turnia.core.data.datasource.firestorefunctions.GroupFunction
@@ -184,13 +185,6 @@ class GroupRepositoryImpl(
         val memberUids = current?.doc?.memberUids ?: listOf(userId.value)
         val adminUids = current?.doc?.adminUids ?: listOf(userId.value)
         val revokedUids = current?.doc?.revokedUids.orEmpty()
-        val members = current?.doc?.members ?: mapOf(
-            userId.value to GroupMemberDocument(
-                name = user.displayName.orEmpty(),
-                username = user.username,
-                photoId = user.photoId,
-            )
-        )
 
         // A group without a code is a group nobody can join. The screens mint one up front so the
         // admin can read it before saving; this is what catches a group that arrived without.
@@ -198,10 +192,9 @@ class GroupRepositoryImpl(
             if (group.invitationCode.isBlank()) group.copy(invitationCode = createInvitationCode())
             else group
 
-        val document = groupMapper.map(coded, memberUids, adminUids, revokedUids)
-            .copy(members = members)
+        val edit = GroupEditDocument.of(groupMapper.map(coded, memberUids, adminUids, revokedUids))
 
-        groupFirestore.update(group.id, document).errorOrNull()?.let { error ->
+        groupFirestore.update(group.id, edit).errorOrNull()?.let { error ->
             Logger.e(TAG, "Failed to save group: $error")
             return GroupError.NotFound.toFailure()
         }

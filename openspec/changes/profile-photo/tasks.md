@@ -135,7 +135,7 @@
   photo version per device). Verify the numbers against the audit output of a manual upload on the
   emulator.
 
-- [ ] 3.6 Stop `GroupFirestore.update` from writing the whole group: merge a document holding only
+- [x] 3.6 Stop `GroupFirestore.update` from writing the whole group: merge a document holding only
   what an admin edits (name, colour, event types, invitation, `updateAt`), so `members` is never sent
   and a field a later build adds survives this one. Verify with a unit test that the edit document
   encodes no `members`, `memberUids`, `adminUids` or `revokedUids`, and end to end in 5.3 (an admin's
