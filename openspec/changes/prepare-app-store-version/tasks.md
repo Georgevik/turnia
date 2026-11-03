@@ -21,7 +21,7 @@
 
 ## 5. Documentation
 
-- [ ] 5.1 Update `.github/RELEASE.md`: *Before you release* says the notes are a generic text reused on every release and to edit them only when a release deserves specific notes; the App Store version takes the same version name as Android; the notes section says the App Store version, build and *What's New* are prepared by CI and only *Submit for Review* is left; the release notes workflow's dry run; the export compliance declaration; the new unit test; verify every input and step name it mentions matches the workflows
+- [x] 5.1 Update `.github/RELEASE.md`: *Before you release* says the notes are a generic text reused on every release and to edit them only when a release deserves specific notes; the App Store version takes the same version name as Android; the notes section says the App Store version, build and *What's New* are prepared by CI and only *Submit for Review* is left; the release notes workflow's dry run; the export compliance declaration; the new unit test; verify every input and step name it mentions matches the workflows
 
 ## 6. Integration
 

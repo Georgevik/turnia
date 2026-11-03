@@ -2,8 +2,9 @@
 
 The **Release** workflow ([`workflows/release.yml`](workflows/release.yml)) builds the app and sends
 it to testers: the Android app to Play's **internal testing** track, the iPhone app to **TestFlight**.
-It does not publish to the public. Moving a tested build to production is still done by hand, in
-Play Console and App Store Connect.
+It also prepares the iPhone app's **App Store version** (see *The App Store version*). It does not
+publish to the public. Moving a tested build to production is still done by hand: promoting the
+release in Play Console, and **Submit for Review** in App Store Connect.
 
 ## Before you release
 
@@ -20,7 +21,9 @@ Tick each one off before running the workflow:
    (Play Console → *App integrity*). Without it, Android users who tap an invitation link see the web
    page instead of the app.
 4. **The release notes say what you want.** They are the files in `.github/whatsnew/`, one per
-   language, 500 characters at most each. Keep them short and plain.
+   language, 500 characters at most each. For now they are a generic "improvements and bug fixes"
+   text, and every release ships whatever they say: nothing checks that they changed. Edit them only
+   when a release deserves its own notes, and keep them short and plain.
 
 ## Running a release
 
@@ -39,17 +42,43 @@ Tick each one off before running the workflow:
 5. Leave **Run the Android E2E suite** ticked (see *Skipping the tests* below).
 6. Click **Run workflow**. Recent releases have taken 10–20 minutes.
 
-When it finishes green, the builds are with testers and the release is **tagged** (see *Tags*).
+When it finishes green, the builds are with testers, the App Store version is ready to submit, and
+the release is **tagged** (see *Tags*).
+
+## The App Store version
+
+Once Apple has processed the iPhone build, the release's `testflight-notes` job prepares its App Store
+version in App Store Connect, so the only thing left by hand is **Submit for Review**:
+
+- It finds the version named like the release, or creates it. The name is always the one the
+  workflow computed for **both** apps, so the App Store and Play show the same version; if the build
+  reports another one, the job fails and changes nothing.
+- App Store Connect allows a single version waiting to be submitted. If one is there with an older
+  name that was never submitted, it is renamed to the new version rather than left in the way.
+- It attaches the build, and writes the public *What's New* on each language of the listing from
+  `.github/whatsnew/`. A language with no file there gets the English (`en-GB`) text, and a file for a
+  language the listing does not have is not used; both show as warnings on the run.
+- It **never** submits for review or releases, and it leaves alone any version that is already
+  submitted, in review, approved or waiting for release: then it only warns, and the job stays green.
+
+The iPhone app declares in its `Info.plist` that it uses no encryption beyond what iOS provides
+(`ITSAppUsesNonExemptEncryption`), so builds no longer wait on the export compliance question. If a
+build still reaches App Store Connect without that answer, the job fails and says so.
 
 ## Changing the release notes after a release
 
 The notes in `.github/whatsnew/` go to both stores with every release: to Play with the upload, and
-to TestFlight as *What to Test* a few minutes later, once Apple has processed the build.
+to TestFlight as *What to Test* and to the App Store version as *What's New* a few minutes later, once
+Apple has processed the build.
 
 To change them for a build that is already out, edit the files on `main`, then open GitHub →
 **Actions** → **Release notes** → **Run workflow**. Leave the build number empty to update the last
-release. On Play the notes go with the release when it is promoted to production. For the App Store,
-the public *What's New* text is still typed in App Store Connect when the version is submitted.
+release. On Play the notes go with the release when it is promoted to production. On the App Store
+the run prepares the version as a release would; if that version has already been submitted, it is
+left alone.
+
+Tick **Dry run** to see what the run would change without writing anything to any store: its summary
+lists the Play release, the TestFlight build, the App Store version and the languages it would touch.
 
 ## If a run fails partway
 
@@ -156,6 +185,12 @@ To create it once (Keychain Access on a Mac with access to the team):
 
 If this certificate is ever revoked or expires, repeat the steps above and update both secrets —
 nothing else in the workflow changes.
+
+### The release notes script
+
+`.github/scripts/release-notes.py` does the store work for **Release notes**. The decisions it takes
+(which App Store version a build goes on, which text each language gets) have tests that need
+nothing installed: `python3 .github/scripts/test_release_notes.py`. Run them after changing it.
 
 ### Build machines
 
