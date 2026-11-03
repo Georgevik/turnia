@@ -32,6 +32,9 @@ class E2eNeededTest(unittest.TestCase):
                                ".claude/hooks/guard_production.py", "firebase/hosting/index.html",
                                "LICENSE", "pendingTests.md"))
 
+    def test_store_release_notes_skip(self):
+        self.assertFalse(needs(".github/whatsnew/whatsnew-es-ES"))
+
     def test_documentation_plus_workflow_runs(self):
         self.assertTrue(needs("README.md", ".github/workflows/android-e2e.yml"))
 

@@ -663,7 +663,7 @@ Every PR to `main` runs `.github/workflows/pr-check.yml`, the gate a merge waits
 about 30 minutes and runs on every push to the PR, cancelling the run that push made obsolete. It is
 skipped — and `pr-e2e` is green at once — only when every changed file is on
 [`.github/e2e-ignored-paths.txt`](.github/e2e-ignored-paths.txt): Markdown, `openspec/`, `docs/`,
-`store/`, `.claude/`, `firebase/hosting/`, `app/iosApp/` and a few others. It is an exclusion list, so a
+`store/`, `.claude/`, `firebase/hosting/`, `app/iosApp/`, `.github/whatsnew/` and `LICENSE`. It is an exclusion list, so a
 path that might matter stays off it.
 
 ## iOS signing & Apple setup

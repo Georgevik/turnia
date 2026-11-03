@@ -19,7 +19,7 @@ Every pull request to `main` SHALL run the Android E2E suite on every push to it
 - **THEN** the pull request's E2E result is green and the summary marks that test as retried
 
 ### Requirement: Documentation-only pull requests skip the suite
-The E2E suite SHALL be skipped when, and only when, every changed file matches the ignore list: `*.md` anywhere, `openspec/`, `docs/`, `store/`, `.claude/`, `firebase/hosting/`, `app/iosApp/` and `LICENSE`. A moved file counts by both its old and its new path. Any other file, or a change whose files cannot be listed, SHALL run the suite.
+The E2E suite SHALL be skipped when, and only when, every changed file matches the ignore list: `*.md` anywhere, `openspec/`, `docs/`, `store/`, `.claude/`, `firebase/hosting/`, `app/iosApp/`, `.github/whatsnew/` and `LICENSE`. A moved file counts by both its old and its new path. Any other file, or a change whose files cannot be listed, SHALL run the suite.
 
 #### Scenario: Only Markdown and OpenSpec files
 - **WHEN** a pull request changes only `CLAUDE.md` and files under `openspec/`
@@ -27,6 +27,10 @@ The E2E suite SHALL be skipped when, and only when, every changed file matches t
 
 #### Scenario: Only the iOS app
 - **WHEN** a pull request changes only files under `app/iosApp/`
+- **THEN** the E2E suite does not run and the E2E check is green
+
+#### Scenario: Only the store release notes
+- **WHEN** a pull request changes only files under `.github/whatsnew/`
 - **THEN** the E2E suite does not run and the E2E check is green
 
 #### Scenario: Documentation plus one workflow file

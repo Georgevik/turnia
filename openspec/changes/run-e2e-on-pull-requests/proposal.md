@@ -13,8 +13,8 @@ now gate the merge itself (TUR-21).
   `.github/workflows/android-e2e.yml` from `pr-check.yml`.
 - A cheap first job skips the suite when **every** changed file is on an ignore list of paths that
   cannot affect the Android app or its emulators: `*.md` anywhere, `openspec/`, `docs/`, `store/`,
-  `.claude/`, `firebase/hosting/`, `app/iosApp/`, `LICENSE`. It is an exclusion
-  list, so anything else — `.github/`, `buildSrc/`, `gradle/`, the rest of `firebase/` — runs it.
+  `.claude/`, `firebase/hosting/`, `app/iosApp/`, `.github/whatsnew/`, `LICENSE`. It is an
+  exclusion list, so anything else — the rest of `.github/`, `buildSrc/`, `gradle/`, the rest of `firebase/` — runs it.
 - One job with a fixed name, `pr-e2e`, reports the result: green when the suite passed or was
   skipped, red otherwise. It is the check branch protection requires.
 - Runs of one pull request share a concurrency group, so a new push cancels the obsolete run; parallel
