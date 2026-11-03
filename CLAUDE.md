@@ -32,6 +32,8 @@ yesterday's.
 - Notifications to the parties involved on every relevant change.
 - **Monetization** via ads (free tier) and premium subscriptions (see *Monetization*).
 - **Bounded backend storage**: Firebase only keeps recent events; older ones are purged and live on-device (see *Data retention & local cache*).
+- **Offline-first**: what a user does to their own data works with no connection, at once; what
+  needs the server says so (see *Offline-first contract*).
 
 ## Domain concepts
 
@@ -257,6 +259,70 @@ Firebase must **not** accumulate every past event forever. The backend keeps onl
 - The client treats Firestore as the source of truth for the **recent window** and the local cache as the store of record for **older** events.
 - Only the scheduled Cloud Function deletes past events in bulk; clients never mass-delete history.
 - The local cache is normalized (events reference their types/users by id) to avoid duplication and allow rendering colors/types offline.
+
+## Offline-first contract
+
+Every user action either **works locally at once** or **needs a connection** and says so. The
+requirements live in [`openspec/specs/offline-actions`](openspec/specs/offline-actions/spec.md).
+How the calendar behaves once an event is written offline lives in
+[`offline-event-visibility`](openspec/specs/offline-event-visibility/spec.md).
+
+**The rule: who decides the outcome.**
+- **Writes to the calendar are local:** adding, editing and deleting events of any kind, notes and
+  swap offers, whoever else can see them. A clash with someone else's change shows up as a
+  rejection, and the user is told about it.
+- **Writes to what only the user owns are local:** their types, their preferences, their avatar.
+- **Whatever the server or another person decides needs a connection.** That covers:
+  - a Cloud Function or transaction;
+  - uniqueness;
+  - a read only the server can answer;
+  - the group document;
+  - who can see the user's calendar. `getSharedCalendar` checks that list on someone else's behalf,
+    so a queued change to it would say *done* while it was not.
+
+  It also covers an action that is meaningless until it reaches the server, like a group's
+  invitation code.
+
+| Area | Works locally at once | Needs a connection |
+|------|-----------------------|--------------------|
+| Events | Adding, editing and deleting any event; notes; an admin deleting a group event; offering a shift for swap and withdrawing the offer | Taking a shift; giving it back; moving personal shifts to a group |
+| Types | Creating, editing and deleting a personal type; the shift setup; one's own colour for a group type | — (a group's types are part of the group) |
+| Groups | An event type added to a group still being created, which stays on the form until the group is created | Creating a group; editing one (name, colour, invitation code, auto-approve, its event types); joining with a code; accepting or rejecting a request; leaving, removing a member, deleting a group |
+| Profile and people | The avatar's animal and colour; hiding a calendar shared with you, or showing it again | Name and username; the profile photo; searching people; sharing one's calendar and stopping sharing it |
+| Account and device | Notifications on or off; the app language; signing out | Signing in, creating an account, resetting a password; deleting the account |
+
+**Works locally at once** means:
+- the screen closes as it does online, with no spinner;
+- the change looks the same as one the server has taken, with no pending marker;
+- it uploads on reconnect, even after the app was closed;
+- the user is told only if the server rejects it.
+
+Signing out offline shows no warning about unsent changes. Firestore keeps them on the device, per
+account, and uploads them the next time that account signs in there. The push-token removal must not
+wait in that queue: once the device is back online it stops receiving the signed-out account's
+notifications, whoever signs in next.
+
+**Needs a connection** means:
+- the button stays enabled;
+- with no network, *No connection* (*Sin conexión*) shows at once, within two seconds;
+- with a network that does not answer, it shows within 15 s (the photo upload: 30 s);
+- the message is the same for every action and distinct from a generic failure;
+- what the user typed is kept;
+- nothing is queued: the action never runs later on its own.
+
+**Reading.** A screen shows what the device holds, with no "may be out of date" marker. Where it holds
+nothing, that part says *No connection* instead of an empty state or an endless loader, and it fills
+in on its own once the connection returns. An offline launch always reaches the calendar.
+
+**Why the code has to care:** a direct Firestore write lands in the local cache at once, but its
+`commit()` suspends until the server acknowledges it, so it **never fails offline**.
+- A local action must not make its screen wait on that commit.
+- An action that needs a connection but is a Firestore write cannot rely on the commit to fail; it
+  has to check for a connection itself. That covers creating or editing a group, sharing or
+  stopping sharing the calendar, and a move to a group, whose commits follow its server reads.
+- A callable fails on its own, but only after the SDK's own timeout.
+
+**A new action is not finished until it has its row here and its requirement in `offline-actions`.**
 
 ## Code style
 
