@@ -31,11 +31,16 @@ class MainViewModel(
     /** Only watched to bring the Groups tab up: the tab opens the sheet and clears it. */
     val joinSheetRequested: StateFlow<Boolean> = invitationLinkRepository.joinSheetRequested
 
-    /** The shift setup is owed, and waits for the name when the account still has none. */
+    /**
+     * The shift setup is owed, and waits for the name when the account still has none.
+     *
+     * Eager, because Main leaves composition while the setup covers it: a subscription stopped by then
+     * would hand Main back the `true` it last saw, and the setup the user just finished would open again.
+     */
     val showShiftSetup: StateFlow<Boolean> =
         combine(shiftSetupRepository.shouldShow, userRepository.userSession) { shouldShow, session ->
             shouldShow && session is UserSession.Authenticated && !session.user.needsName
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), initialValue = false)
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = false)
 
     fun destinationHandled() = notificationRepository.destinationHandled()
 }
