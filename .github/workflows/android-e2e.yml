@@ -1,9 +1,10 @@
 name: AndroidE2E
 
-# Run on its own from Actions, called by release.yml to gate the uploads, or on every push to main
-# now that the repo is public and Actions minutes for public repos are free. A reusable-workflow
-# call from release.yml does not show up as a run of this workflow on its own, which is why the
-# push trigger exists separately — it's also what keeps this workflow's own status badge fresh.
+# Run on its own from Actions, called by release.yml to gate the uploads, called by pr-check.yml to
+# gate every pull request, or on every push to main now that the repo is public and Actions minutes
+# for public repos are free. A reusable-workflow call does not show up as a run of this workflow on
+# its own, which is why the push trigger exists separately — it is the safety net for two pull
+# requests that pass apart and fail together, and it keeps this workflow's own status badge fresh.
 on:
   workflow_dispatch:
   workflow_call:
@@ -13,9 +14,11 @@ on:
 # Not `release`: a called workflow in its caller's group is cancelled as a deadlock. Called from
 # Release, github.workflow is the caller's name, so a standalone run never queues behind a release.
 # A manual dispatch gets a group of its own: measuring flakiness takes several runs side by side,
-# and a shared group would cancel every pending one but the last.
+# and a shared group would cancel every pending one but the last. Called from PR check, each pull
+# request (or manual run of PR check) gets a group of its own, or they would queue behind each other;
+# cancelling a run a new push made obsolete is PR check's own group's job.
 concurrency:
-  group: ${{ github.workflow }}-android-e2e${{ github.workflow == 'AndroidE2E' && github.event_name == 'workflow_dispatch' && format('-{0}', github.run_id) || '' }}
+  group: ${{ github.workflow }}-android-e2e${{ github.workflow == 'AndroidE2E' && github.event_name == 'workflow_dispatch' && format('-{0}', github.run_id) || '' }}${{ github.workflow == 'PR check' && format('-pr-{0}', github.event.pull_request.number || github.run_id) || '' }}
   cancel-in-progress: false
 
 permissions:
