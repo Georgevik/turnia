@@ -68,6 +68,19 @@ class PlanVersionTest(unittest.TestCase):
         self.assertGreater(rn.version_key("1.10.0"), rn.version_key("1.9.3"))
 
 
+class CheckVersionNameTest(unittest.TestCase):
+    def test_a_build_of_the_release_version_passes(self):
+        self.assertIsNone(rn.check_version_name("1.12.0", "1.12.0"))
+
+    def test_a_build_of_another_version_is_refused(self):
+        error = rn.check_version_name("1.11.3", "1.12.0")
+        self.assertIn("1.11.3", error)
+        self.assertIn("1.12.0", error)
+
+    def test_without_a_release_version_the_build_decides(self):
+        self.assertIsNone(rn.check_version_name("1.11.3", None))
+
+
 class PlanNotesTest(unittest.TestCase):
     TEXTS = {"en-GB": "en", "es-ES": "es", "fr-FR": "fr", "de-DE": "de", "it": "it"}
 

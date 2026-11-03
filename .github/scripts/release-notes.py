@@ -3,12 +3,16 @@
 
     release-notes.py play <versionCode> [--dry-run]
     release-notes.py testflight <buildNumber> [--dry-run]
+    release-notes.py appstore <buildNumber> [--version-name <x.y.z>] [--dry-run]
 
 --dry-run reads everything as usual and prints what it would write, without writing to any store.
 
 Play: the notes of the internal-track release holding that versionCode. They travel with the
 release when it is promoted. TestFlight: the build's "What to Test", the only notes a TestFlight
-build has; the App Store's "What's New" belongs to the App Store version, written on promotion.
+build has. App Store: finds or creates the App Store version for the build's version name, attaches
+the build and writes "What's New" on its localizations, so only "Submit for Review" is left by hand.
+It never submits, releases or touches a version that is in review or later. --version-name is the
+name the release gave both apps; the step refuses a build that reports another one.
 """
 
 from __future__ import annotations
@@ -241,13 +245,153 @@ def testflight(build_number: str, dry_run: bool) -> None:
     print(f"TestFlight: notes set on build {build_number} ({', '.join(written)})")
 
 
+def check_version_name(build_version: str, release_version: str | None) -> str | None:
+    """Why a build cannot go on the App Store version of this release, if it cannot."""
+    if release_version and build_version != release_version:
+        return (f"build reports version {build_version} but the release is {release_version}; "
+                "Android and iOS must ship the same version name")
+    return None
+
+
+def asc_check(response, what: str) -> dict:
+    if not response.ok:
+        sys.exit(f"::error::App Store Connect refused to {what}: {response.status_code} {response.text}")
+    return response.json() if response.content else {}
+
+
+def build_version_name(session, build_id: str) -> str:
+    # A build's CFBundleShortVersionString lives on its pre-release version, not on the build.
+    version = asc_check(session.get(f"{ASC_API}/builds/{build_id}/preReleaseVersion"),
+                        f"read the version of build {build_id}")
+    return version["data"]["attributes"]["version"]
+
+
+def wait_until_processed(session, build_id: str, build_number: str) -> dict:
+    for _ in range(30):
+        build = asc_check(session.get(f"{ASC_API}/builds/{build_id}"), f"read build {build_number}")
+        attributes = build["data"]["attributes"]
+        state = attributes.get("processingState")
+        if state == "VALID":
+            return attributes
+        if state in ("FAILED", "INVALID"):
+            sys.exit(f"::error::App Store Connect could not process build {build_number}: {state}")
+        time.sleep(60)
+    sys.exit(f"::error::Build {build_number} was still processing after 30 minutes; re-run this job")
+
+
+def list_versions(session, app_id: str) -> list[AppStoreVersion]:
+    response = session.get(
+        f"{ASC_API}/apps/{app_id}/appStoreVersions",
+        params={"filter[platform]": "IOS", "limit": 200,
+                "fields[appStoreVersions]": "versionString,appVersionState,appStoreState"},
+    )
+    return [
+        AppStoreVersion(
+            id=v["id"],
+            name=v["attributes"]["versionString"],
+            state=v["attributes"].get("appVersionState") or v["attributes"].get("appStoreState") or "UNKNOWN",
+        )
+        for v in asc_check(response, "list the App Store versions")["data"]
+    ]
+
+
+def list_localizations(session, version_id: str) -> dict[str, str]:
+    """Locale → localization id of an App Store version."""
+    response = session.get(f"{ASC_API}/appStoreVersions/{version_id}/appStoreVersionLocalizations",
+                           params={"limit": 200})
+    data = asc_check(response, "list the version's localizations")["data"]
+    return {loc["attributes"]["locale"]: loc["id"] for loc in data}
+
+
+def appstore(build_number: str, dry_run: bool, release_version: str | None = None) -> None:
+    session = asc_session()
+    app = find_app(session)
+    build = find_build(session, app["id"], build_number)
+
+    name = build_version_name(session, build["id"])
+    mismatch = check_version_name(name, release_version)
+    if mismatch:
+        sys.exit(f"::error::{mismatch}")
+
+    attributes = wait_until_processed(session, build["id"], build_number)
+    if attributes.get("usesNonExemptEncryption") is None:
+        sys.exit(f"::error::Build {build_number} is missing its export compliance declaration "
+                 "(ITSAppUsesNonExemptEncryption in Info.plist); it cannot be attached or submitted")
+
+    versions = list_versions(session, app["id"])
+    plan = plan_version(versions, name)
+    if plan.action == "skip":
+        print(f"::warning::App Store: nothing changed, {plan.reason}")
+        return
+
+    texts = {asc_locale(lang): text for lang, text in notes().items()}
+    if dry_run:
+        # A new version starts with the localizations of the latest one, so those are the ones shown.
+        source = plan.version or max(versions, key=lambda v: version_key(v.name), default=None)
+        locales = list(list_localizations(session, source.id)) if source else []
+        planned = plan_notes(locales, texts)
+        what = {"use": f"use version {name}", "create": f"create version {name}",
+                "rename": f"rename version {plan.version.name if plan.version else ''} to {name}"}[plan.action]
+        print(f"App Store: would {what}, attach build {build_number} and set What's New on "
+              f"{', '.join(planned.texts) or 'its localizations'}")
+        report_notes(planned)
+        return
+
+    if plan.action == "create":
+        created = asc_check(session.post(f"{ASC_API}/appStoreVersions", json={"data": {
+            "type": "appStoreVersions",
+            "attributes": {"platform": "IOS", "versionString": name},
+            "relationships": {"app": {"data": {"type": "apps", "id": app["id"]}}},
+        }}), f"create version {name}")
+        version_id = created["data"]["id"]
+        print(f"App Store: created version {name}")
+    else:
+        version_id = plan.version.id
+        if plan.action == "rename":
+            asc_check(session.patch(f"{ASC_API}/appStoreVersions/{version_id}", json={"data": {
+                "type": "appStoreVersions", "id": version_id, "attributes": {"versionString": name},
+            }}), f"rename version {plan.version.name} to {name}")
+            print(f"App Store: renamed version {plan.version.name} to {name}")
+
+    asc_check(session.patch(f"{ASC_API}/appStoreVersions/{version_id}/relationships/build",
+                            json={"data": {"type": "builds", "id": build["id"]}}),
+              f"attach build {build_number} to version {name}")
+    print(f"App Store: build {build_number} attached to version {name}")
+
+    localizations = list_localizations(session, version_id)
+    planned = plan_notes(list(localizations), texts)
+    for locale, text in planned.texts.items():
+        asc_check(session.patch(f"{ASC_API}/appStoreVersionLocalizations/{localizations[locale]}", json={"data": {
+            "type": "appStoreVersionLocalizations", "id": localizations[locale], "attributes": {"whatsNew": text},
+        }}), f"set the {locale} What's New")
+    print(f"App Store: What's New set on version {name} ({', '.join(planned.texts)})")
+    report_notes(planned)
+
+
+def report_notes(planned: NotesPlan) -> None:
+    for locale in planned.fallbacks:
+        print(f"::warning::App Store: {locale} has no notes file and gets the en-GB text")
+    for locale in planned.unused:
+        print(f"::warning::App Store: the {locale} notes were not used; the listing has no {locale} localization")
+
+
 def main(argv: list[str]) -> None:
     dry_run = "--dry-run" in argv
     args = [a for a in argv if a != "--dry-run"]
-    commands = {"play": play, "testflight": testflight}
-    if len(args) != 2 or args[0] not in commands:
+    release_version = None
+    if "--version-name" in args:
+        at = args.index("--version-name")
+        if at + 1 >= len(args):
+            sys.exit(__doc__)
+        release_version = args[at + 1] or None
+        del args[at:at + 2]
+    commands = {"play": play, "testflight": testflight, "appstore": appstore}
+    if len(args) != 2 or args[0] not in commands or (release_version and args[0] != "appstore"):
         sys.exit(__doc__)
-    commands[args[0]](args[1], dry_run)
+    if args[0] == "appstore":
+        appstore(args[1], dry_run, release_version)
+    else:
+        commands[args[0]](args[1], dry_run)
 
 
 if __name__ == "__main__":
