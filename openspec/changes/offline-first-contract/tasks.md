@@ -17,7 +17,7 @@
 
   Verify that every action named in `specs/offline-actions/spec.md` appears in the table, and that
   nothing from `CLAUDE.local.md` is written there.
-- [ ] 1.3 Read the rest of `CLAUDE.md` for statements the contract contradicts (*Business rules*,
+- [x] 1.3 Read the rest of `CLAUDE.md` for statements the contract contradicts (*Business rules*,
   *Error handling & UI state*, *Sensitive points*) and align them. Verify with a search for
   "offline" and "connection" that no remaining sentence disagrees with the new section.
 
