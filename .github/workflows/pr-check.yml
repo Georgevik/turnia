@@ -1,9 +1,10 @@
 name: PR check
 
-# The fast gate on every pull request to main: it compiles both apps, runs the common tests and
-# checks the Cloud Functions, the OpenSpec changes and the production guard. No E2E: that suite is
-# android-e2e.yml. Branch protection matches on the job names below, so keep them stable; the pr- prefix keeps
-# any other workflow's job from satisfying them.
+# The gate on every pull request to main: it compiles both apps, runs the common tests, checks the
+# Cloud Functions, the OpenSpec changes and the production guard, and runs the Android E2E suite
+# (android-e2e.yml) unless every changed file is on .github/e2e-ignored-paths.txt. Branch protection
+# matches on the pr- job names below, so keep them stable; the pr- prefix keeps any other workflow's
+# job from satisfying them.
 on:
   pull_request:
     branches: [main]
@@ -106,3 +107,59 @@ jobs:
 
       - name: Test which pull requests skip the E2E suite
         run: python3 .github/scripts/test_e2e_needed.py
+
+  # Whether the E2E suite has to run: not when every file the pull request changes is on the ignore
+  # list. HEAD is the pull request merged into main and HEAD^1 is main, so their diff is exactly what
+  # the pull request would change. An empty list, or any other event, runs the suite.
+  e2e-paths:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      run: ${{ steps.decide.outputs.run }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
+
+      - name: Decide whether the E2E suite runs
+        id: decide
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_NAME" != pull_request ]; then
+            echo "run=true" | tee -a "$GITHUB_OUTPUT"
+          else
+            git diff --name-only HEAD^1 HEAD | tee /dev/stderr | python3 .github/scripts/e2e-needed.py .github/e2e-ignored-paths.txt
+          fi
+
+  e2e:
+    needs: e2e-paths
+    if: needs.e2e-paths.outputs.run == 'true'
+    uses: ./.github/workflows/android-e2e.yml
+    secrets: inherit
+
+  # The check branch protection requires, rather than e2e itself: a skipped caller of a reusable
+  # workflow reports under another name than the one it reports when it runs, so a required e2e
+  # would wait forever on every pull request that skips the suite.
+  pr-e2e:
+    needs: [e2e-paths, e2e]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check the E2E result
+        env:
+          PATHS_RESULT: ${{ needs.e2e-paths.result }}
+          RUN: ${{ needs.e2e-paths.outputs.run }}
+          E2E_RESULT: ${{ needs.e2e.result }}
+        run: |
+          echo "Skip decision: $PATHS_RESULT (run=$RUN). E2E suite: $E2E_RESULT."
+          if [ "$PATHS_RESULT" = success ] && [ "$RUN" = false ] && [ "$E2E_RESULT" = skipped ]; then
+            echo "### E2E skipped: every changed file is on .github/e2e-ignored-paths.txt" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if [ "$PATHS_RESULT" = success ] && [ "$E2E_RESULT" = success ]; then
+            exit 0
+          fi
+          echo "::error::The E2E suite did not pass (skip decision: $PATHS_RESULT, suite: $E2E_RESULT)."
+          exit 1
