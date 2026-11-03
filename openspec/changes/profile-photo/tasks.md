@@ -18,7 +18,7 @@
 
 ## 2. Backend: rules, emulator, functions
 
-- [ ] 2.1 Add `firebase/storage.rules` as in design D3:
+- [x] 2.1 Add `firebase/storage.rules` as in design D3:
   - read when signed in;
   - create by the owner only, at most 100 KB, `image/webp`, file name `^[A-Za-z0-9_-]{1,64}\.webp$`;
   - no update and no delete.
