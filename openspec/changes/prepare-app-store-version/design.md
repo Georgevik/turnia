@@ -42,12 +42,22 @@ which is what replaces typing the public text by hand.
 *Alternative:* a separate job in `release.yml`. Rejected: it would duplicate the Python setup and the
 manual workflow would not reach it.
 
-### 2. The version name comes from the build
+### 2. The version name is the release's, checked against the build
 
-The build's `preReleaseVersion` relationship carries its `CFBundleShortVersionString`
-(`GET /builds/{id}?include=preReleaseVersion`). The script reads it there instead of taking a
-`versionName` argument, so the manual workflow, which only knows a build number, needs no new input
-and can never pair a build with the wrong version.
+`validate` already computes one version name for both apps: Gradle gets it as `versionName`, Xcode as
+`MARKETING_VERSION`. `release.yml` passes it on to `release-notes.yml` (a new optional `versionName`
+input on `workflow_call`), and the script receives it as `--version-name`. It then reads the build's
+own `CFBundleShortVersionString` from its `preReleaseVersion` relationship
+(`GET /builds/{id}?include=preReleaseVersion`) and fails, before any write, if the two differ. The App
+Store version is always named with that one value, so iOS and Android stay on the same name; a
+renamed editable version (§4) takes it too.
+
+A manual *Release notes* run only knows a build number, so without `--version-name` the build's own
+version is used: it is the name that release computed, because the archive was stamped with it.
+
+*Alternative:* derive the name from the build only. Rejected as the sole source: the explicit check is
+what turns "the two apps go together" from an accident of the archive step into something the run
+proves.
 
 ### 3. Wait for processing, then check compliance
 
@@ -106,16 +116,15 @@ which is exempt.
 Rejected: it is a legal declaration, so it belongs in reviewed source, and the plist also covers a
 build archived by hand in Xcode.
 
-### 7. The notes guard runs in `validate`, with a `reuseNotes` override
+### 7. Generic notes, reused on purpose
 
-After resolving the last tag, `validate` fetches that one commit
-(`git fetch --depth=1 origin tag <last>`) and runs `git diff --quiet <last> HEAD -- .github/whatsnew`.
-Unchanged and `reuseNotes` unticked → `::error::` and exit 1, before the E2E suite or any build spends
-time. Unchanged and ticked → `::warning::` plus a summary block, like *Tests skipped*. It is inline
-shell, as the rest of `validate` is.
+There is no check that `.github/whatsnew` changed between releases: the developer decided the notes
+are, for now, a generic text about improvements and bug fixes, the same for every release. The five
+files are rewritten to that text, each in its language and well under Play's 500 characters, and
+RELEASE.md says to edit them only when a release deserves specific notes.
 
-*Alternative:* warn only. Kept as the fallback if the developer prefers it (Proposal point), but a
-warning on a green run is the kind of thing that got 1.8.1's notes shipped ever since.
+*Alternative:* fail or warn on unchanged notes. Rejected by the developer: with generic notes,
+unchanged is the normal case.
 
 ### 8. Dry run everywhere
 
@@ -136,8 +145,8 @@ and covers `plan_version`, `plan_notes` and version-name ordering.
   instead of writing; the warning names the state.
 - [Processing takes longer than 30 minutes] → the step fails with a clear message; *Re-run failed
   jobs* or a manual *Release notes* run finishes it, since it is idempotent.
-- [The first release after this ships fails on the notes guard] → intended: the notes really are
-  stale since 1.8.1. RELEASE.md says to edit them, or tick `reuseNotes`.
+- [Generic notes say nothing about a release with real news] → RELEASE.md says to edit the files
+  when a release deserves it; the next release then simply ships them.
 - [The plist declaration is wrong if strong non-exempt crypto is ever added] → the comment on the key
   says to revisit it then; the developer confirms the declaration now.
 - [The Admin API key can do more than this needs] → unchanged from today; the script's endpoints are
@@ -145,7 +154,7 @@ and covers `plan_version`, `plan_notes` and version-name ordering.
 
 ## Migration Plan
 
-Nothing to migrate. The first real check is the next release: the run fails on the notes guard
-unless the notes are edited; once they are, the App Store version appears in App Store Connect with
-the build and the notes. Rollback is reverting the PR; versions it created stay editable in App Store
+Nothing to migrate. The first real check is a dry run of *Release notes* on the last build, then the
+next release: the App Store version appears in App Store Connect with the build, the release's version
+name and the generic notes. Rollback is reverting the PR; versions it created stay editable in App Store
 Connect.

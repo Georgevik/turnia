@@ -77,22 +77,30 @@ build still has no answer to it.
 - **WHEN** the App Store step finds a processed build whose encryption question is unanswered
 - **THEN** it fails, saying the build is missing its export compliance declaration, and attaches nothing
 
-### Requirement: A release refuses notes that did not change
-The Release workflow SHALL fail before building anything when `.github/whatsnew` is identical to the
-one in the last release tag, unless the run explicitly declares that the notes are reused. A run that
-reuses them SHALL show a warning on its summary.
+### Requirement: The App Store version carries the release's version name
+The App Store version CI prepares SHALL be named with the version name the Release workflow computed,
+which is also Android's `versionName` for that release. CI SHALL NOT derive or invent another name,
+and SHALL fail without touching App Store Connect when the uploaded build's version differs from it.
 
-#### Scenario: Notes unchanged
+#### Scenario: Both apps ship the same name
+- **WHEN** a release computes version 1.12.0 and uploads both apps
+- **THEN** Play's release has versionName 1.12.0 and the App Store version CI prepares is named 1.12.0
+
+#### Scenario: A renamed version follows the release
+- **WHEN** an unsubmitted 1.11.3 is the editable version and the release computes 1.12.0
+- **THEN** the version is renamed to exactly 1.12.0, the name Android got
+
+#### Scenario: The build does not match the release
+- **WHEN** the release computed 1.12.0 but the processed build reports version 1.11.3
+- **THEN** the step fails, naming both versions, and changes nothing in App Store Connect
+
+### Requirement: Release notes are reused until someone edits them
+A release SHALL ship whatever `.github/whatsnew` holds, whether or not it changed since the last
+release, without failing or warning about it.
+
+#### Scenario: Notes unchanged since the last release
 - **WHEN** the Release workflow runs and no file in `.github/whatsnew` changed since the last release tag
-- **THEN** it fails in validation, before any build or test, saying the notes were not updated
-
-#### Scenario: Notes deliberately reused
-- **WHEN** the notes are unchanged and the run is started with the reuse-notes option ticked
-- **THEN** the release proceeds and its summary warns that the previous release's notes ship again
-
-#### Scenario: Notes changed
-- **WHEN** any file in `.github/whatsnew` differs from the last release tag
-- **THEN** validation passes without a notes warning
+- **THEN** the release proceeds and every store gets the same notes as the previous release
 
 ### Requirement: Release notes can be re-applied to an existing build
 Running the **Release notes** workflow for a build SHALL update its Play notes, its TestFlight notes

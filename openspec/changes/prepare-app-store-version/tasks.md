@@ -8,20 +8,20 @@
 ## 2. App Store version
 
 - [ ] 2.1 Add the pure `plan_version(versions, name)` and `plan_notes(locales, notes)` of design §4–5, with version-name ordering, and `.github/scripts/test_release_notes.py` (plain `unittest`) covering create, use, rename, skip-in-flight, skip-done, skip-older-build, unknown state, own notes, en-GB fallback and unused files; verify `python3 .github/scripts/test_release_notes.py` passes with no packages installed
-- [ ] 2.2 Add the `appstore <buildNumber>` subcommand: find the build, read its version name from `preReleaseVersion`, wait for `processingState == VALID`, fail on unanswered `usesNonExemptEncryption`, apply the version plan, attach the build, write `whatsNew` on existing localizations, print one summary line per action; confirm each endpoint and state list against Apple's API reference and verify by reading that no call reaches `reviewSubmissions`, `appStoreVersionSubmissions` or `appStoreVersionReleaseRequests`
-- [ ] 2.3 In `.github/workflows/release-notes.yml`, add the *Prepare the App Store version* step after *Update TestFlight* (same `ios` condition and secrets), the `dryRun` input on `workflow_dispatch` and `workflow_call` passed to every step, and `timeout-minutes: 75`; update the header comments of `release-notes.yml` and the `testflight-notes` job in `release.yml`; verify with `actionlint` (or `python3 -c "import yaml…"` if it is not installed) that both files parse
+- [ ] 2.2 Add the `appstore <buildNumber> [--version-name X]` subcommand: find the build, read its version name from `preReleaseVersion` and fail before any write if it differs from `--version-name`, wait for `processingState == VALID`, fail on unanswered `usesNonExemptEncryption`, apply the version plan, attach the build, write `whatsNew` on existing localizations, print one summary line per action; confirm each endpoint and state list against Apple's API reference and add a unit test for the version-name mismatch; verify `python3 .github/scripts/test_release_notes.py` passes and, by reading, that no call reaches `reviewSubmissions`, `appStoreVersionSubmissions` or `appStoreVersionReleaseRequests`
+- [ ] 2.3 In `.github/workflows/release-notes.yml`, add the *Prepare the App Store version* step after *Update TestFlight* (same `ios` condition and secrets), the `dryRun` input on `workflow_dispatch` and `workflow_call` passed to every step, an optional `versionName` input on `workflow_call` that `release.yml`'s `testflight-notes` job fills from `validate` and the App Store step passes as `--version-name`, and `timeout-minutes: 75`; update the header comments of `release-notes.yml` and the `testflight-notes` job in `release.yml`; verify with `actionlint` (or `python3 -c "import yaml…"` if it is not installed) that both files parse
 
 ## 3. Export compliance
 
 - [ ] 3.1 Add `ITSAppUsesNonExemptEncryption` = `false` to `app/iosApp/iosApp/Info.plist` with a comment on why it is exempt and when to revisit it; verify `plutil -lint app/iosApp/iosApp/Info.plist` passes and an iOS build (`xcodebuild … build` for the simulator, or the `pr-ios` check) still succeeds
 
-## 4. Notes guard
+## 4. Generic notes
 
-- [ ] 4.1 In `release.yml`, add the `reuseNotes` boolean input (default `false`) and, in `validate` after *Resolve the version*, fetch the last tag at depth 1 and fail on `git diff --quiet <last> HEAD -- .github/whatsnew` unless `reuseNotes`, which instead warns and adds a *Release notes reused* summary block; verify the shell locally on this branch (`git diff --quiet v1.11.2-207 HEAD -- .github/whatsnew` exits 0, i.e. unchanged) and that the file parses
+- [ ] 4.1 Rewrite the five `.github/whatsnew/whatsnew-*` files to a short generic "improvements and bug fixes" text, each in its own language; verify each is under 500 characters (`wc -m .github/whatsnew/*`) and contains no feature-specific wording
 
 ## 5. Documentation
 
-- [ ] 5.1 Update `.github/RELEASE.md`: *Before you release* says the guard fails on unchanged notes and when to tick *Reuse notes*; the notes section says the App Store version, build and *What's New* are prepared by CI and only *Submit for Review* is left; the release notes workflow's dry run; the export compliance declaration; the new unit test; verify every input and step name it mentions matches the workflows
+- [ ] 5.1 Update `.github/RELEASE.md`: *Before you release* says the notes are a generic text reused on every release and to edit them only when a release deserves specific notes; the App Store version takes the same version name as Android; the notes section says the App Store version, build and *What's New* are prepared by CI and only *Submit for Review* is left; the release notes workflow's dry run; the export compliance declaration; the new unit test; verify every input and step name it mentions matches the workflows
 
 ## 6. Integration
 
@@ -29,5 +29,5 @@
 
 ## Workflow follow-up
 
-- The developer runs the real check (an agent cannot dispatch store workflows): *Release notes* from the PR branch with `platforms: ios` and *Dry run* ticked, then without it once satisfied, and the notes guard on the next release.
+- The developer runs the real check (an agent cannot dispatch store workflows): *Release notes* from the PR branch with `platforms: ios` and *Dry run* ticked, then without it once satisfied, and checks the next release leaves the same version name on Play and the App Store.
 - Archive the change as the last commit of the PR once the developer accepts it.
