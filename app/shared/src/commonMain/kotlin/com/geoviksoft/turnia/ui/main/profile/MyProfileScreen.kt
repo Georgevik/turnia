@@ -70,6 +70,9 @@ import turnia.app.shared.generated.resources.profile_error_username_taken
 import turnia.app.shared.generated.resources.profile_field_email
 import turnia.app.shared.generated.resources.profile_field_name
 import turnia.app.shared.generated.resources.profile_field_username
+import turnia.app.shared.generated.resources.profile_photo_error_remove
+import turnia.app.shared.generated.resources.profile_photo_error_unreadable
+import turnia.app.shared.generated.resources.profile_photo_error_upload
 import turnia.app.shared.generated.resources.profile_save
 import turnia.app.shared.generated.resources.profile_title
 
@@ -276,6 +279,9 @@ private fun ProfileMessage.message(): String = stringResource(
         ProfileMessage.SaveFailed -> Res.string.profile_error_save
         ProfileMessage.DeleteAccountLastAdmin -> Res.string.profile_delete_account_error_last_admin
         ProfileMessage.DeleteAccountFailed -> Res.string.profile_delete_account_error
+        ProfileMessage.PhotoUnreadable -> Res.string.profile_photo_error_unreadable
+        ProfileMessage.PhotoUploadFailed -> Res.string.profile_photo_error_upload
+        ProfileMessage.PhotoRemoveFailed -> Res.string.profile_photo_error_remove
     }
 )
 

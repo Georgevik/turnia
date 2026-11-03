@@ -190,7 +190,7 @@
 
 ## 5. Profile screen
 
-- [ ] 5.1 Extend `MyProfileUi` and `MyProfileViewModel` as in design D8:
+- [x] 5.1 Extend `MyProfileUi` and `MyProfileViewModel` as in design D8:
   - `photoId`, `avatarMenuOpen` and `PhotoStep` (`Idle | Cropping | Uploading`);
   - upload, remove and cancel;
   - `ProfileMessage.PhotoUploadFailed` and `PhotoRemoveFailed`;
