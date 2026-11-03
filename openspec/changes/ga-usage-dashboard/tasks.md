@@ -23,7 +23,7 @@
 
 ## 6. Integration check
 
-- [ ] 6.1 Run a script over `docs/analytics-dashboard.md` that extracts every backticked snake_case name and checks it against the strings in `AnalyticsEvent.kt`, `AnalyticsUserProperty.kt` and the GA built-ins the guide uses (`first_open`, `screen_view`), and run `openspec validate ga-usage-dashboard`. Verify both report no mismatch.
+- [x] 6.1 Run a script over `docs/analytics-dashboard.md` that extracts every backticked snake_case name and checks it against the strings in `AnalyticsEvent.kt`, `AnalyticsUserProperty.kt` and the GA built-ins the guide uses (`first_open`, `screen_view`), and run `openspec validate ga-usage-dashboard`. Verify both report no mismatch.
 
 ## Workflow follow-up
 
