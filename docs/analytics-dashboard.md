@@ -346,6 +346,33 @@ Resultado: en el menú izquierdo de *Informes* aparece **Turnia** → **Uso**, c
 dentro. Arriba a la derecha de cada uno eliges el periodo; para el acumulado desde el lanzamiento,
 elige un intervalo personalizado (*Custom*) que empiece ese día.
 
+### 3.7 Que sea tu página principal
+
+GA no tiene un botón para convertir una colección en la página de inicio, pero con estos dos pasos
+abrir GA te deja en tu dashboard en un clic.
+
+**Guardar el informe en marcadores:**
+
+1. Abre **Informes** (*Reports*) → **Turnia** → **Uso** → **Resumen diario**.
+2. Guarda la página en los marcadores del navegador, o ponla como página de inicio. La dirección
+   lleva la propiedad y el informe, así que se abre directamente ahí.
+
+**Dejar solo "Turnia" en el menú:**
+
+1. **Informes** (*Reports*) → **Biblioteca** (*Library*).
+2. En cada tarjeta de colección que no sea **Turnia** (por ejemplo *Ciclo de vida*, *Life cycle*, o
+   *Usuario*, *User*), abre el menú `⋮` → **Anular publicación** (*Unpublish*).
+
+Resultado: en el menú izquierdo de *Informes* solo quedan *Resumen de informes* (*Reports
+snapshot*), *Tiempo real* (*Realtime*) y **Turnia**. No se borra nada: las colecciones siguen en la
+Biblioteca, y su menú `⋮` → **Publicar** (*Publish*) las devuelve al menú cuando quieras.
+
+**Opcional, si tu consola lo permite:** *Informes* → **Resumen de informes** (*Reports snapshot*) es
+lo primero que se ve al abrir *Informes*. El lápiz de arriba a la derecha (**Personalizar informe**,
+*Customize report*) → **Añadir tarjetas** (*Add cards*) permite elegir sus tarjetas. Si en esa lista
+aparecen `Resumen diario` o `Eventos creados`, añádelas y pulsa **Guardar** (*Save*). Si no
+aparecen, GA no deja poner informes personalizados ahí, y basta con los dos pasos anteriores.
+
 ## 4. Exploraciones
 
 Los embudos y la retención solo existen en **Explorar** (*Explore*), en el menú izquierdo. Una
