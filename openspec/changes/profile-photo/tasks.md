@@ -135,13 +135,14 @@
 
   Verify with an Android instrumented test (a 4000×3000 JPEG with GPS EXIF comes out as a 384×384
   WebP of at most 100 KB with no EXIF) and an `iosSimulatorArm64Test` for the size and dimensions.
-- [ ] 4.2 Set up Coil 3:
-  - one `ImageLoader` with a disk cache;
-  - a `Fetcher` for `ProfilePhoto(uid, photoId)`, keyed `{uid}/{photoId}`, that downloads through
-    `ProfilePhotoStorage` on a miss;
-  - a `prime(photo, bytes)` that the repository calls after a successful upload.
+- [x] 4.2 Set up Coil 3:
+  - `ProfilePhotoCache`: the photos' bytes on disk, keyed `{uid}/{photoId}`, downloading through
+    `ProfilePhotoStorage` only on a miss, with a `prime(photo, bytes)` the profile screen calls
+    after a successful upload;
+  - one `ImageLoader`, set at the root, with a `Fetcher` and a `Keyer` for `ProfilePhoto` that read
+    through that cache (Coil's own disk cache is off: it would be a second copy).
 
-  Verify with a unit test over a fake storage: a second load does not download, and a primed photo
+  Verify with a unit test over a fake download: a second load does not download, and a primed photo
   never downloads.
 - [ ] 4.3 Change `UserAvatar` to take `AnimalAvatar` and an optional `ProfilePhoto`. It always draws
   the animal and draws the loaded photo over it, clipped to the circle. Update every caller:

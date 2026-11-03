@@ -31,8 +31,11 @@ import com.geoviksoft.turnia.ui.system.TurniaSnackbarHost
 import com.geoviksoft.turnia.ui.system.TurniaTheme
 import com.geoviksoft.turnia.ui.system.photo.LocalPhotoPicker
 import com.geoviksoft.turnia.ui.system.photo.PhotoPicker
+import com.geoviksoft.turnia.ui.system.photo.ProfilePhotoCache
+import com.geoviksoft.turnia.ui.system.photo.profilePhotoImageLoader
 import com.geoviksoft.turnia.ui.system.photo.rememberPhotoPicker
 import com.geoviksoft.turnia.ui.system.rememberTextSharer
+import coil3.compose.setSingletonImageLoaderFactory
 import org.koin.compose.getKoin
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -48,6 +51,8 @@ fun App(vm: RootViewModel = koinViewModel()) {
     val userSession by vm.userSession.collectAsStateWithLifecycle(UserSession.Loading)
     val pendingJoinCode by vm.pendingJoinCode.collectAsStateWithLifecycle()
     val buildInfo: BuildInfo = koinInject()
+    val photoCache: ProfilePhotoCache = koinInject()
+    setSingletonImageLoaderFactory { context -> profilePhotoImageLoader(context, photoCache) }
     // Bound only by the E2E suite, to see what would have been shared.
     val koin = getKoin()
     val textSharer: TextSharer? = remember(koin) { koin.getOrNull() }

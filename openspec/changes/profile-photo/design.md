@@ -148,11 +148,12 @@ already works for names. The round-trip is the smallest correct step.
 - **Upload timeout:** 30 s, then the task is cancelled. The native SDKs otherwise retry for up to
   10 minutes, and the user would watch a spinner offline.
 - **Images:** Coil 3 with a custom `Fetcher` for a `ProfilePhoto(uid, photoId)` model.
-  - It stores the bytes in Coil's disk cache under `{uid}/{photoId}` and serves later loads from
-    there. Paths never change, so nothing ever invalidates.
-  - **Priming:** after a successful upload, the encoded bytes are written into that cache under the
-    new key. The user's own new photo then appears at once, with no download and no flash of the
-    animal.
+  - The bytes live in `ProfilePhotoCache`, a disk cache keyed `{uid}/{photoId}` that downloads only
+    on a miss. Paths never change, so nothing ever invalidates. Coil keeps the decoded images in
+    memory and its own disk cache is off.
+  - **Priming:** after a successful upload, the profile screen writes the encoded bytes into that
+    cache under the new key. The user's own new photo then appears at once, with no download and no
+    flash of the animal.
 
 ### D7. Drawing the avatar
 
