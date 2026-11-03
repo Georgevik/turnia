@@ -32,6 +32,8 @@ yesterday's.
 - Notifications to the parties involved on every relevant change.
 - **Monetization** via ads (free tier) and premium subscriptions (see *Monetization*).
 - **Bounded backend storage**: Firebase only keeps recent events; older ones are purged and live on-device (see *Data retention & local cache*).
+- **Offline-first**: what a user does to their own data works with no connection, at once; what
+  needs the server says so (see *Offline-first contract*).
 
 ## Domain concepts
 

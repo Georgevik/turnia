@@ -2,7 +2,7 @@
 
 ## 1. The contract in `CLAUDE.md`
 
-- [ ] 1.1 Add offline-first to *Goals* as one bullet: what the user does to their own data works
+- [x] 1.1 Add offline-first to *Goals* as one bullet: what the user does to their own data works
   with no connection, and what needs the server says so. Verify that it sits with the other goals
   and links to the new section.
 - [ ] 1.2 Add an *Offline-first contract* section right after *Data retention & local cache*. It
