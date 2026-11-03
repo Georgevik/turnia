@@ -175,14 +175,25 @@ Los cinco informes se crean igual; solo cambia lo que pones en el panel de la de
 2. Debajo de las colecciones, en la tabla *Informes* (*Reports*), haz clic en **Crear nuevo
    informe** (*Create new report*) → **Crear informe de detalles** (*Create detail report*) →
    **Crear desde cero** (*Blank*).
-3. En el panel de la derecha, sección **Datos del informe** (*Report data*):
-   - **Dimensiones** (*Dimensions*) → **Añadir dimensión** (*Add dimension*): busca la dimensión
-     por su nombre y márcala. Con varias, la que tiene el tic de **Establecer como predeterminada**
-     (*Set as default*) en su menú `⋮` es la que se ve al abrir el informe.
-   - **Métricas** (*Metrics*) → **Añadir métrica** (*Add metric*): igual.
-   - **Filtro del informe** (*Report filter*) → **Añadir filtro** (*Add filter*): elige la
-     **Dimensión** (*Dimension*), el **Tipo de coincidencia** (*Match type*) y el **Valor**
-     (*Value*), y pulsa **Aplicar** (*Apply*).
+3. Rellena el panel de la derecha, sección **Datos del informe** (*Report data*). La tabla de cada
+   informe tiene tres filas, *Dimensiones*, *Métricas* y *Filtro*, y cada una corresponde al
+   apartado del panel con el mismo nombre. Con el *Resumen diario* de ejemplo (dimensión *Fecha*,
+   métricas *Usuarios activos* y *Usuarios nuevos*, sin filtro):
+   1. **Dimensiones** (*Dimensions*): haz clic en ese apartado → abajo, **Añadir dimensión** (*Add
+      dimension*) → escribe `Fecha` en el buscador → haz clic en **Fecha** (*Date*) → **Aplicar**
+      (*Apply*), abajo del panel.
+   2. **Métricas** (*Metrics*): haz clic en ese apartado → **Añadir métrica** (*Add metric*) →
+      escribe `Usuarios activos` → elígela. Otra vez **Añadir métrica** → `Usuarios nuevos` →
+      elígela. Pulsa **Aplicar** (*Apply*).
+   3. **Filtro del informe** (*Report filter*): solo si la tabla lo pide. Haz clic en **Añadir
+      filtro** (*Add filter*) → en **Dimensión** (*Dimension*), elige `Nombre del evento` → en
+      **Tipo de coincidencia** (*Match type*), lo que diga la tabla (por ejemplo `coincide
+      exactamente con`) → en **Valor** (*Value*), escribe el valor de la tabla (por ejemplo
+      `group_created`) → **Aplicar** (*Apply*).
+
+   Si la tabla lista varias dimensiones (solo pasa en *Usuarios*), la que dice *predeterminada* se
+   marca así: en la lista de **Dimensiones**, pasa el ratón por ella → menú `⋮` → **Establecer como
+   predeterminada** (*Set as default*). Con una sola dimensión no hay que hacer nada.
 4. En **Visualizaciones del informe** (*Report visualizations*), deja solo el gráfico que dice cada
    informe (con el ojo de los demás tachado).
 5. Arriba a la derecha, **Guardar** (*Save*) → **Guardar como informe nuevo** (*Save as a new
