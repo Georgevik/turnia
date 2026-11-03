@@ -33,7 +33,7 @@ Three jobs are added to `pr-check.yml`:
 
 ```
  e2e-paths --(run?)--> e2e (uses android-e2e.yml) --+
-     |                                              +--> pr-e2e  (if: always())
+     |                                              +--> pr-e2e  (if: !cancelled())
      +----------------------------------------------+
 ```
 
@@ -45,7 +45,7 @@ dispatch, release) must never be cancelled.
 
 ### `pr-e2e` is a small aggregator job
 
-`pr-e2e` `needs: [e2e-paths, e2e]`, runs `if: always()`, and fails unless `e2e-paths` succeeded and
+`pr-e2e` `needs: [e2e-paths, e2e]`, runs `if: !cancelled()`, and fails unless `e2e-paths` succeeded and
 `e2e` is `success` or `skipped`. This is the required check. Requiring the suite's own job does not
 work: a caller job that is skipped reports under its own name (`e2e`) instead of the name it reports
 when it runs (`e2e / android-e2e`), so a skipped run would leave the required check waiting forever.
@@ -54,9 +54,9 @@ The `pr-` prefix keeps the existing rule that no other workflow can satisfy a re
 ### The skip decision is a script over the merge commit's diff
 
 `e2e-paths` checks out the pull request's merge commit with `fetch-depth: 2` and lists
-`git diff --name-only HEAD^1 HEAD`. The first parent is the tip of `main`, so the list is exactly
+`git diff --name-only --no-renames HEAD^1 HEAD` (both sides of a move, so moving app code into an ignored path still runs the suite). The first parent is the tip of `main`, so the list is exactly
 what the pull request would change, with no full-history fetch. The list goes to
-`.github/scripts/e2e-needed.py`, which reads the patterns from `.github/e2e-ignored-paths.txt` and
+`.github/scripts/e2e_needed.py`, which reads the patterns from `.github/e2e-ignored-paths.txt` and
 writes `run=true|false` to `$GITHUB_OUTPUT`. It answers `run=true` when any file matches no pattern,
 when the list is empty, or when the event is not a pull request (a manual dispatch of `PR check`).
 
@@ -88,7 +88,7 @@ which re-runs the suite anyway.
 
 ## Risks / Trade-offs
 
-- [A pull request that touches the app waits ~30 minutes, ~68 with the retry] → accepted in the
+- [A pull request that touches the app waits ~30 minutes, longer with the retry, within the job's 45-minute limit] → accepted in the
   explore; cancelling obsolete runs keeps the wait to the latest push.
 - [The ignore list skips something that mattered] → it is an exclusion list, `.github/` always runs,
   and `main` still runs the suite after every merge.

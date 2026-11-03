@@ -13,7 +13,7 @@ now gate the merge itself (TUR-21).
   `.github/workflows/android-e2e.yml` from `pr-check.yml`.
 - A cheap first job skips the suite when **every** changed file is on an ignore list of paths that
   cannot affect the Android app or its emulators: `*.md` anywhere, `openspec/`, `docs/`, `store/`,
-  `.claude/`, `firebase/hosting/`, `app/iosApp/`, `LICENSE`, `pendingTests.md`. It is an exclusion
+  `.claude/`, `firebase/hosting/`, `app/iosApp/`, `LICENSE`. It is an exclusion
   list, so anything else — `.github/`, `buildSrc/`, `gradle/`, the rest of `firebase/` — runs it.
 - One job with a fixed name, `pr-e2e`, reports the result: green when the suite passed or was
   skipped, red otherwise. It is the check branch protection requires.
@@ -43,4 +43,4 @@ now gate the merge itself (TUR-21).
 - Branch protection is the developer's: once this is merged, add `pr-e2e` to the required checks.
 - `release.yml` is untouched (TUR-48 is changing it). Fork pull requests get no
   `GOOGLE_SERVICES_JSON_BASE64`, so their E2E run would fail; TUR-22's `demo-` project removes that need.
-- Every pull request that touches the app waits ~30 minutes (up to ~68 with the retry) before it can merge.
+- Every pull request that touches the app waits ~30 minutes (longer with the retry, within the job's 45-minute limit) before it can merge.

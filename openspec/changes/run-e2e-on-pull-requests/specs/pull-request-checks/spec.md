@@ -19,7 +19,7 @@ Every pull request to `main` SHALL run the Android E2E suite on every push to it
 - **THEN** the pull request's E2E result is green and the summary marks that test as retried
 
 ### Requirement: Documentation-only pull requests skip the suite
-The E2E suite SHALL be skipped when, and only when, every changed file matches the ignore list: `*.md` anywhere, `openspec/`, `docs/`, `store/`, `.claude/`, `firebase/hosting/`, `app/iosApp/`, `LICENSE` and `pendingTests.md`. Any other file, or a change whose files cannot be listed, SHALL run the suite.
+The E2E suite SHALL be skipped when, and only when, every changed file matches the ignore list: `*.md` anywhere, `openspec/`, `docs/`, `store/`, `.claude/`, `firebase/hosting/`, `app/iosApp/` and `LICENSE`. A moved file counts by both its old and its new path. Any other file, or a change whose files cannot be listed, SHALL run the suite.
 
 #### Scenario: Only Markdown and OpenSpec files
 - **WHEN** a pull request changes only `CLAUDE.md` and files under `openspec/`
@@ -33,12 +33,16 @@ The E2E suite SHALL be skipped when, and only when, every changed file matches t
 - **WHEN** a pull request changes `README.md` and `.github/workflows/android-e2e.yml`
 - **THEN** the E2E suite runs
 
+#### Scenario: App code moved into an ignored path
+- **WHEN** a pull request only moves a file from `core/` to `docs/`
+- **THEN** the E2E suite runs
+
 #### Scenario: Firebase outside hosting
 - **WHEN** a pull request changes only `firebase/firestore.rules`
 - **THEN** the E2E suite runs
 
 ### Requirement: One stable E2E check
-A pull request SHALL report its E2E result through a single check named `pr-e2e`, present on every pull request to `main`. It SHALL be green when the suite passed or was skipped by the ignore list, and red when the suite failed, was cancelled, or the skip decision failed.
+A pull request SHALL report its E2E result through a single check named `pr-e2e`, present on every pull request to `main`. It SHALL be green when the suite passed or was skipped by the ignore list, and red when the suite failed or the skip decision failed. A run cancelled by a newer push SHALL NOT report a red `pr-e2e` on the commit it made obsolete.
 
 #### Scenario: Suite skipped
 - **WHEN** the ignore list skips the suite

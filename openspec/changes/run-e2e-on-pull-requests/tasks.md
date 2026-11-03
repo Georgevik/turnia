@@ -3,14 +3,14 @@
 ## 1. The skip decision
 
 - [x] 1.1 Add `.github/e2e-ignored-paths.txt` with the ignore list from the spec (one `fnmatch` pattern per line, a header saying `*` also crosses `/`) and verify it holds exactly the paths the explore settled
-- [x] 1.2 Add `.github/scripts/e2e-needed.py`, reading changed paths on stdin and writing `run=true|false` to `$GITHUB_OUTPUT` (and to stdout), and verify `printf 'CLAUDE.md\ncore/x.kt\n' | python3 .github/scripts/e2e-needed.py .github/e2e-ignored-paths.txt` prints `run=true`
+- [x] 1.2 Add `.github/scripts/e2e_needed.py`, reading changed paths on stdin and writing `run=true|false` to `$GITHUB_OUTPUT` (and to stdout), and verify `printf 'CLAUDE.md\ncore/x.kt\n' | python3 .github/scripts/e2e_needed.py .github/e2e-ignored-paths.txt` prints `run=true`
 - [x] 1.3 Add `.github/scripts/test_e2e_needed.py` covering every skip scenario of the spec plus the empty list, and verify `python3 .github/scripts/test_e2e_needed.py` passes on Python 3.9
 - [x] 1.4 Run that test in the `pr-checks` job of `pr-check.yml` and verify the job's step list shows it next to the production guard's test
 
 ## 2. The E2E jobs in the PR gate
 
 - [x] 2.1 Append `-pr-<number>` to `android-e2e.yml`'s concurrency group when `github.event.pull_request.number` is set, update its header comment, and verify the `push`, `workflow_dispatch` and release groups are unchanged
-- [x] 2.2 Add `e2e-paths` (merge-commit diff with `fetch-depth: 2`, `run=true` outside `pull_request`), `e2e` (`uses: ./.github/workflows/android-e2e.yml`, `secrets: inherit`, `if` on its output) and `pr-e2e` (`if: always()`, green only when `e2e-paths` succeeded and `e2e` is `success` or `skipped`) to `pr-check.yml`, update its header comment, and verify with `actionlint` or a YAML parse that the workflow is valid
+- [x] 2.2 Add `e2e-paths` (merge-commit diff with `fetch-depth: 2`, `run=true` outside `pull_request`), `e2e` (`uses: ./.github/workflows/android-e2e.yml`, `secrets: inherit`, `if` on its output) and `pr-e2e` (`if: !cancelled()`, green only when `e2e-paths` succeeded and `e2e` is `success` or `skipped`) to `pr-check.yml`, update its header comment, and verify with `actionlint` or a YAML parse that the workflow is valid
 - [x] 2.3 Update `CLAUDE.md` (*Pull requests*: the gate now includes `pr-e2e` and when it skips; *E2E tests*: pull requests run the suite) and verify no doc still says the E2E suite is not part of the PR gate (`grep -rn "not part of it" CLAUDE.md .github`)
 
 ## 3. Verification on GitHub
