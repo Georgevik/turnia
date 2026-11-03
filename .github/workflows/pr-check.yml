@@ -103,3 +103,6 @@ jobs:
 
       - name: Test the production guard
         run: python3 .claude/hooks/test_guard_production.py
+
+      - name: Test which pull requests skip the E2E suite
+        run: python3 .github/scripts/test_e2e_needed.py
