@@ -1,5 +1,6 @@
 import { onCall } from "firebase-functions/v2/https";
-import { FieldValue, Firestore, WriteBatch, getFirestore } from "firebase-admin/firestore";
+import { DocumentSnapshot, FieldValue, Firestore, WriteBatch, getFirestore } from "firebase-admin/firestore";
+import { getStorage } from "firebase-admin/storage";
 import { TurniaError } from "./errors";
 import { requireFields, requireUid } from "./requests";
 import { markGroupUpdated, markUserUpdated } from "./sync";
@@ -30,6 +31,30 @@ export function writeJoinRequestPointer(
 
 /** Mirrors `isValidUsername` in the app: 3-20 of a-z, 0-9, `_` or `.`. */
 const USERNAME_PATTERN = /^[a-z0-9_.]{3,20}$/;
+
+/** The file name `storage.rules` accepts under `profilePhotos/{uid}/`, without its `.webp`. */
+const PHOTO_ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/;
+
+/** The size `storage.rules` caps an upload at, checked again in case the rules ever loosen. */
+const PHOTO_MAX_BYTES = 100 * 1024;
+
+/** Where a user's profile photos live. Only the current one survives a `setProfilePhoto`. */
+export function profilePhotoFolder(uid: string): string {
+  return `profilePhotos/${uid}/`;
+}
+
+/**
+ * A member's entry on `groups/{g}.members`, from their profile. The photo is copied only when there
+ * is one: an entry without `photoId` is how a member with no photo reads.
+ */
+export function memberEntry(user: DocumentSnapshot): { name: string; username: string; photoId?: string } {
+  const photoId = user.get("photoId") as string | undefined;
+  return {
+    name: (user.get("name") as string | undefined) ?? "",
+    username: (user.get("username") as string | undefined) ?? "",
+    ...(photoId ? { photoId } : {}),
+  };
+}
 
 /** One device to push to, kept next to its owner so a dead token can be pruned from the right list. */
 export type PushTarget = { uid: string; token: string };
@@ -123,4 +148,84 @@ export const updateProfile = onCall({ enforceAppCheck: true }, async (request) =
   );
 
   return { name, username, status: "updated" as const };
+});
+
+/**
+ * Publishes the caller's profile photo, or removes it, and carries the change to every copy.
+ *
+ * The client uploads the file itself, to `profilePhotos/{uid}/{photoId}.webp`, and then calls this
+ * with the id; `{ photoId: null }` removes the photo. Like the name, the photo is copied into every
+ * group the user belongs to — a colleague sees it arrive with the group they already listen to,
+ * instead of reading the profile — so it needs a keeper, and the rules forbid the client from
+ * writing `photoId` on its own document.
+ *
+ * Afterwards every other file in the user's folder is deleted: the photo this one replaced, and any
+ * upload that never got as far as this call. What survives is whatever the profile names once the
+ * write is done, read again rather than taken from the request, so two devices publishing at once
+ * cannot each delete the other's file and leave the profile pointing at nothing.
+ *
+ * Request data: `{ photoId: string | null }`
+ * Returns: `{ photoId, status: "updated" }`
+ */
+export const setProfilePhoto = onCall({ enforceAppCheck: true }, async (request) => {
+  const uid = requireUid(request);
+  const requested = (request.data as Record<string, unknown> | undefined)?.photoId;
+  if (requested !== null && (typeof requested !== "string" || !PHOTO_ID_PATTERN.test(requested))) {
+    throw TurniaError.InvalidArgument;
+  }
+  const photoId = requested as string | null;
+
+  const bucket = getStorage().bucket();
+  const folder = profilePhotoFolder(uid);
+  if (photoId) {
+    const file = bucket.file(`${folder}${photoId}.webp`);
+    const [exists] = await file.exists();
+    if (!exists) throw TurniaError.SetProfilePhotoNotFound;
+    const [metadata] = await file.getMetadata();
+    if (Number(metadata.size) > PHOTO_MAX_BYTES || metadata.contentType !== "image/webp") {
+      throw TurniaError.SetProfilePhotoInvalid;
+    }
+  }
+  const photo = photoId ?? FieldValue.delete();
+
+  const db = getFirestore();
+  const userRef = db.doc(`users/${uid}`);
+
+  // The profile and the reservation's marker resolve to the same instant, or a searcher's cache
+  // never settles; a user who has no reservation yet has no marker to move.
+  await db.runTransaction(async (tx) => {
+    const user = await tx.get(userRef);
+    const username = user.get("username") as string | undefined;
+    const reservationRef = username ? db.doc(`usernames/${username}`) : null;
+    const reservation = reservationRef ? await tx.get(reservationRef) : null;
+
+    tx.set(userRef, { photoId: photo, updateAt: FieldValue.serverTimestamp() }, { merge: true });
+    if (reservationRef && reservation?.get("uid") === uid) {
+      tx.update(reservationRef, { updateAt: FieldValue.serverTimestamp() });
+    }
+    markUserUpdated(db, tx, uid, "profile");
+  });
+
+  // Entry and sync marker in one batch per group, as `updateProfile` writes the name.
+  const groups = await db.collection("groups").where("memberUids", "array-contains", uid).get();
+  await Promise.all(
+    groups.docs.map((group) => {
+      const batch = db.batch();
+      batch.update(group.ref, {
+        [`members.${uid}.photoId`]: photo,
+        updateAt: FieldValue.serverTimestamp(),
+      });
+      markGroupUpdated(db, batch, group.id);
+      return batch.commit();
+    })
+  );
+
+  const current = (await userRef.get()).get("photoId") as string | undefined;
+  const keep = current ? `${folder}${current}.webp` : null;
+  const [files] = await bucket.getFiles({ prefix: folder });
+  await Promise.all(
+    files.filter((file) => file.name !== keep).map((file) => file.delete({ ignoreNotFound: true }))
+  );
+
+  return { photoId, status: "updated" as const };
 });

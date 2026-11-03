@@ -39,7 +39,7 @@
   - `firebase/test/README.md`: the `storage` key and the new fixture.
 
   Verify `AuthFlowsTest` and `GroupFlowsTest` still pass with the Storage emulator running.
-- [ ] 2.4 Add the `setProfilePhoto` callable (`firebase/functions/src/users.ts`, exported from
+- [x] 2.4 Add the `setProfilePhoto` callable (`firebase/functions/src/users.ts`, exported from
   `index.ts`, `enforceAppCheck: true`), as in design D2:
   - validate `photoId` (pattern or null);
   - check the file's metadata (exists, ≤ 100 KB, `image/webp`);
