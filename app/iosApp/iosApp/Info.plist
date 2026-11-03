@@ -20,6 +20,12 @@
 	<string>$(ADMOB_APP_ID)</string>
 	<key>AdMobBannerUnitId</key>
 	<string>$(ADMOB_BANNER_UNIT_ID)</string>
+	<!-- Export compliance: Turnia only uses the encryption iOS provides (HTTPS to Firebase, Google and
+	     AdMob, Sign in with Apple), which is exempt. Declaring it here keeps App Store Connect from
+	     holding every build on the encryption question. Revisit it if the app ever adds its own
+	     cryptography. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<!-- Deactivated in Debug, by build configuration (Configuration/Config.xcconfig). -->
 	<key>FIREBASE_ANALYTICS_COLLECTION_DEACTIVATED</key>
 	<string>$(ANALYTICS_COLLECTION_DEACTIVATED)</string>

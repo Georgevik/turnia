@@ -13,7 +13,7 @@
 
 ## 3. Export compliance
 
-- [ ] 3.1 Add `ITSAppUsesNonExemptEncryption` = `false` to `app/iosApp/iosApp/Info.plist` with a comment on why it is exempt and when to revisit it; verify `plutil -lint app/iosApp/iosApp/Info.plist` passes and an iOS build (`xcodebuild … build` for the simulator, or the `pr-ios` check) still succeeds
+- [x] 3.1 Add `ITSAppUsesNonExemptEncryption` = `false` to `app/iosApp/iosApp/Info.plist` with a comment on why it is exempt and when to revisit it; verify `plutil -lint app/iosApp/iosApp/Info.plist` passes and an iOS build (`xcodebuild … build` for the simulator, or the `pr-ios` check) still succeeds
 
 ## 4. Generic notes
 
