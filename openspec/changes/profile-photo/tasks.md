@@ -72,7 +72,7 @@
       rollout.
 
   Verify the text agrees with the specs and design.
-- [ ] 2.7 Add `ProfilePhotoBackendTest` under `e2e/flows`: instrumented, no UI, signed in through
+- [x] 2.7 Add `ProfilePhotoBackendTest` under `e2e/flows`: instrumented, no UI, signed in through
   the SDK. It covers:
   - upload through `StorageRest`, then `setProfilePhoto` writes `photoId` on the profile, the
     reservation marker and both group copies, and deletes an orphan file;
